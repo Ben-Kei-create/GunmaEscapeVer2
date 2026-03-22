@@ -98,8 +98,8 @@ Game.Maps.maebashi = (function() {
     { x: 29, y: 11, target: 'takasaki', spawnX: 1, spawnY: 11, dir: 'right' },
     { x: 0,  y: 10, target: 'shimonita', spawnX: 28, spawnY: 10, dir: 'left' },
     { x: 0,  y: 11, target: 'shimonita', spawnX: 28, spawnY: 11, dir: 'left' },
-    { x: 14, y: 0,  target: 'kusatsu', spawnX: 14, spawnY: 18, dir: 'up' },
-    { x: 15, y: 0,  target: 'kusatsu', spawnX: 15, spawnY: 18, dir: 'up' },
+    { x: 14, y: 1,  target: 'kusatsu', spawnX: 14, spawnY: 18, dir: 'up' },
+    { x: 15, y: 1,  target: 'kusatsu', spawnX: 15, spawnY: 18, dir: 'up' },
     { x: 14, y: 19, target: 'tsumagoi', spawnX: 14, spawnY: 1, dir: 'down' },
     { x: 15, y: 19, target: 'tsumagoi', spawnX: 15, spawnY: 1, dir: 'down' }
   ];

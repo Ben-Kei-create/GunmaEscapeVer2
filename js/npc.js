@@ -16,10 +16,6 @@ Game.NPC = (function() {
         dialogLines = ['結界は既に解かれておる。県境を越えよ！'];
       }
       onDialogEnd = null;
-    } else if (npc.id === 'cabbageGuardian' && !Game.Player.hasItem('onsenKey') &&
-               !Game.Player.hasItem('darumaEye') && !Game.Player.hasItem('konnyakuPass')) {
-      dialogLines = npc.dialog;
-      onDialogEnd = null;
     } else if (npc.id === 'cabbageGuardian' && npc.allKeysDialog &&
                Game.Player.hasItem('onsenKey') && Game.Player.hasItem('darumaEye') &&
                Game.Player.hasItem('konnyakuPass')) {

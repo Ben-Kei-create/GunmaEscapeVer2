@@ -28,6 +28,11 @@ Game.Map = (function() {
     var tile = getTile(x, y);
     if (tile === -1) return false;
 
+    // Check border - only passable with all keys
+    if (tile === Game.Config.TILE.BORDER) {
+      return Game.Player.hasAllKeys();
+    }
+
     // Check if tile type is passable
     if (Game.Config.PASSABLE.indexOf(tile) === -1) return false;
 
@@ -36,11 +41,6 @@ Game.Map = (function() {
       for (var i = 0; i < currentMap.npcs.length; i++) {
         if (currentMap.npcs[i].x === x && currentMap.npcs[i].y === y) return false;
       }
-    }
-
-    // Check border - only passable with all keys and crest
-    if (tile === Game.Config.TILE.BORDER) {
-      return Game.Player.hasAllKeys();
     }
 
     return true;

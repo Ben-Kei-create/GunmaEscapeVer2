@@ -57,6 +57,16 @@ Game.Audio = (function() {
       [330, 0.3], [330, 0.3], [330, 0.6],
       [294, 0.3], [294, 0.3], [294, 0.6],
       [330, 0.3], [392, 0.3], [392, 0.6]
+    ],
+    shop: [
+      [392, 0.2], [440, 0.2], [494, 0.2], [523, 0.2],
+      [494, 0.2], [440, 0.2], [392, 0.4],
+      [349, 0.2], [392, 0.2], [440, 0.2], [392, 0.4],
+      [330, 0.2], [349, 0.2], [392, 0.2], [349, 0.4]
+    ],
+    event: [
+      [262, 0.5], [294, 0.5], [330, 0.5], [262, 0.5],
+      [294, 0.5], [330, 0.5], [349, 0.5], [330, 0.5]
     ]
   };
 
@@ -139,11 +149,16 @@ Game.Audio = (function() {
     return muted;
   }
 
+  function isBgmPlaying() {
+    return currentBgm !== null;
+  }
+
   return {
     init: init,
     playBgm: playBgm,
     stopBgm: stopBgm,
     playSfx: playSfx,
-    toggleMute: toggleMute
+    toggleMute: toggleMute,
+    isBgmPlaying: isBgmPlaying
   };
 })();

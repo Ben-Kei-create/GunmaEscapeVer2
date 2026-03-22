@@ -121,6 +121,8 @@ Game.Main = (function() {
         var battleResult = Game.Battle.update();
         if (battleResult) {
           if (battleResult.result === 'victory') {
+            // Give gold reward
+            Game.Player.addGold(battleResult.goldReward || 50);
             // Show defeated dialog
             Game.NPC.showDefeatedDialog(battleResult.npc);
             dialogText = Game.NPC.getCurrentDialog();
@@ -138,6 +140,7 @@ Game.Main = (function() {
         var puzzleResult = Game.Puzzle.update();
         if (puzzleResult) {
           if (puzzleResult.result === 'success') {
+            Game.Player.addGold(40);
             Game.NPC.showDefeatedDialog(puzzleResult.npc);
             dialogText = Game.NPC.getCurrentDialog();
             setState(Game.Config.STATE.DIALOG);
@@ -145,6 +148,28 @@ Game.Main = (function() {
           } else {
             setState(Game.Config.STATE.EXPLORING);
             Game.Audio.playBgm('field');
+          }
+        }
+        break;
+
+      case Game.Config.STATE.SHOP:
+        var shopResult = Game.Shop.update();
+        if (shopResult) {
+          if (shopResult.result === 'exit') {
+            setState(Game.Config.STATE.EXPLORING);
+            Game.Audio.playBgm('field');
+          }
+        }
+        break;
+
+      case Game.Config.STATE.EVENT:
+        var eventResult = Game.Event.update();
+        if (eventResult) {
+          if (eventResult.result === 'done') {
+            setState(Game.Config.STATE.EXPLORING);
+            if (!Game.Audio.isBgmPlaying()) {
+              Game.Audio.playBgm('field');
+            }
           }
         }
         break;
@@ -218,8 +243,52 @@ Game.Main = (function() {
         setState(Game.Config.STATE.PUZZLE);
         Game.Puzzle.start('quiz', npc);
         break;
+      case 'event_opening':
+        if (npc) npc.defeated = true;
+        setState(Game.Config.STATE.EVENT);
+        Game.Event.start('opening', function() {
+          setState(Game.Config.STATE.EXPLORING);
+          Game.Audio.playBgm('field');
+        });
+        break;
+      case 'event_firstKey':
+        setState(Game.Config.STATE.EVENT);
+        Game.Event.start('firstKey', function() {
+          setState(Game.Config.STATE.EXPLORING);
+          Game.Audio.playBgm('field');
+        });
+        break;
+      case 'event_preBoss':
+        setState(Game.Config.STATE.EVENT);
+        Game.Event.start('preBoss', function() {
+          setState(Game.Config.STATE.EXPLORING);
+          Game.Audio.playBgm('field');
+        });
+        break;
+      case 'event_allKeys':
+        setState(Game.Config.STATE.EVENT);
+        Game.Event.start('allKeys', function() {
+          setState(Game.Config.STATE.EXPLORING);
+          Game.Audio.playBgm('field');
+        });
+        break;
+      case 'event_preEnding':
+        setState(Game.Config.STATE.EVENT);
+        Game.Event.start('preEnding', function() {
+          setState(Game.Config.STATE.ENDING);
+        });
+        break;
       default:
-        setState(Game.Config.STATE.EXPLORING);
+        // Check for shop actions: shop_<shopName>_<item1>,<item2>,...
+        if (action.indexOf('shop_') === 0) {
+          var parts = action.substring(5).split('_');
+          var shopName = parts[0];
+          var shopItemIds = parts[1] ? parts[1].split(',') : [];
+          setState(Game.Config.STATE.SHOP);
+          Game.Shop.start(shopName, shopItemIds);
+        } else {
+          setState(Game.Config.STATE.EXPLORING);
+        }
     }
   }
 
@@ -248,6 +317,9 @@ Game.Main = (function() {
     var pd = Game.Player.getData();
     pd.hp = 100;
     pd.maxHp = 100;
+    pd.gold = 100;
+    pd.weapon = null;
+    pd.armor = null;
     pd.inventory = [];
   }
 
@@ -280,6 +352,14 @@ Game.Main = (function() {
 
       case Game.Config.STATE.PUZZLE:
         Game.Puzzle.draw();
+        break;
+
+      case Game.Config.STATE.SHOP:
+        Game.Shop.draw();
+        break;
+
+      case Game.Config.STATE.EVENT:
+        Game.Event.draw();
         break;
 
       case Game.Config.STATE.MENU:

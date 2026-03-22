@@ -10,6 +10,9 @@ Game.Player = (function() {
     maxHp: 100,
     attack: 12,
     defense: 5,
+    gold: 100,
+    weapon: null,   // equipped weapon item ID
+    armor: null,    // equipped armor item ID
     inventory: [],
     moving: false,
     moveTimer: 0,
@@ -190,6 +193,46 @@ Game.Player = (function() {
            hasItem('konnyakuPass') && hasItem('cabbageCrest');
   }
 
+  function getAttack() {
+    var base = data.attack;
+    if (data.weapon) {
+      var w = Game.Items.get(data.weapon);
+      if (w && w.attackBonus) base += w.attackBonus;
+    }
+    return base;
+  }
+
+  function getDefense() {
+    var base = data.defense;
+    if (data.armor) {
+      var a = Game.Items.get(data.armor);
+      if (a && a.defenseBonus) base += a.defenseBonus;
+    }
+    return base;
+  }
+
+  function equip(itemId) {
+    var item = Game.Items.get(itemId);
+    if (!item) return false;
+    if (item.type === 'weapon') {
+      if (data.weapon) addItem(data.weapon); // unequip old
+      data.weapon = itemId;
+      removeItem(itemId);
+      return true;
+    }
+    if (item.type === 'armor') {
+      if (data.armor) addItem(data.armor);
+      data.armor = itemId;
+      removeItem(itemId);
+      return true;
+    }
+    return false;
+  }
+
+  function addGold(amount) {
+    data.gold = Math.max(0, data.gold + amount);
+  }
+
   function getData() { return data; }
 
   return {
@@ -202,6 +245,10 @@ Game.Player = (function() {
     removeItem: removeItem,
     heal: heal,
     hasAllKeys: hasAllKeys,
+    getAttack: getAttack,
+    getDefense: getDefense,
+    equip: equip,
+    addGold: addGold,
     getData: getData
   };
 })();

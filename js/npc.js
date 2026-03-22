@@ -11,7 +11,17 @@ Game.NPC = (function() {
     dialogIndex = 0;
 
     if (npc.defeated) {
-      dialogLines = ['...'];
+      // Shop NPCs always reopen
+      if (npc.afterDialog && npc.afterDialog.indexOf('shop_') === 0) {
+        dialogLines = npc.dialog;
+        onDialogEnd = npc.afterDialog;
+        return dialogLines[0];
+      }
+      if (npc.defeatedDialog) {
+        dialogLines = npc.defeatedDialog;
+      } else {
+        dialogLines = ['...'];
+      }
       if (npc.id === 'cabbageGuardian' && Game.Player.hasAllKeys()) {
         dialogLines = ['結界は既に解かれておる。県境を越えよ！'];
       }

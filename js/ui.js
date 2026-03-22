@@ -91,6 +91,9 @@ Game.UI = (function() {
       hpRatio > 0.3 ? Game.Config.COLORS.HP_GREEN : Game.Config.COLORS.HP_RED);
     R.drawText('HP ' + pd.hp, Game.Config.CANVAS_WIDTH - 98, 8, '#fff', 10);
 
+    // Gold display
+    R.drawText(pd.gold + 'G', Game.Config.CANVAS_WIDTH - 45, 8, '#ffdd44', 10);
+
     // Key items indicator
     var keyItems = ['onsenKey', 'darumaEye', 'konnyakuPass', 'cabbageCrest'];
     var keyColors = ['#88ccee', '#cc2222', '#888888', '#44bb44'];
@@ -146,9 +149,16 @@ Game.UI = (function() {
     R.drawTextJP('メニュー', 200, 40, C.COLORS.GOLD, 16, 'center');
 
     // Stats
-    R.drawTextJP('HP: ' + pd.hp + '/' + pd.maxHp, 120, 70, '#fff', 13);
-    R.drawTextJP('攻撃力: ' + pd.attack, 120, 90, '#fff', 13);
-    R.drawTextJP('防御力: ' + pd.defense, 120, 110, '#fff', 13);
+    R.drawTextJP('HP: ' + pd.hp + '/' + pd.maxHp, 120, 65, '#fff', 13);
+    R.drawTextJP('攻撃力: ' + Game.Player.getAttack(), 120, 83, '#fff', 13);
+    R.drawTextJP('防御力: ' + Game.Player.getDefense(), 120, 101, '#fff', 13);
+    R.drawTextJP('所持金: ' + pd.gold + 'G', 120, 119, '#ffdd44', 13);
+
+    // Equipment
+    var wName = pd.weapon ? Game.Items.get(pd.weapon).name : 'なし';
+    var aName = pd.armor ? Game.Items.get(pd.armor).name : 'なし';
+    R.drawTextJP('武器: ' + wName, 260, 83, '#aaa', 11);
+    R.drawTextJP('防具: ' + aName, 260, 101, '#aaa', 11);
 
     // Line separator
     R.drawRectAbsolute(120, 132, 240, 1, '#446');

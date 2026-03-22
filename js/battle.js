@@ -34,7 +34,7 @@ Game.Battle = (function() {
     onsenMonkey: {
       name: '温泉猿',
       hp: 50, maxHp: 50,
-      attack: 12, defense: 3,
+      attack: 12, defense: 3, goldReward: 60,
       sprite: [
         [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
         [0,0,0,0,0,1,1,1,1,1,0,0,0,0,0,0],
@@ -58,7 +58,7 @@ Game.Battle = (function() {
     cabbage: {
       name: '巨大キャベツ',
       hp: 60, maxHp: 60,
-      attack: 15, defense: 4,
+      attack: 15, defense: 4, goldReward: 100,
       sprite: [
         [0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0],
         [0,0,0,0,0,0,1,2,1,0,0,0,0,0,0,0],
@@ -175,7 +175,7 @@ Game.Battle = (function() {
 
             // Apply damage
             var playerData = Game.Player.getData();
-            var dmg = Math.max(1, total + playerData.attack - enemy.defense);
+            var dmg = Math.max(1, total + Game.Player.getAttack() - enemy.defense);
             enemy.hp -= dmg;
             shakeX = 4 + diceCount;
             Game.Audio.playSfx('hit');
@@ -189,7 +189,7 @@ Game.Battle = (function() {
             if (enemy.hp <= 0) {
               enemy.hp = 0;
               phase = 'victory';
-              message = dmg + 'ダメージ！ ' + enemy.name + 'を倒した！';
+              message = dmg + 'ダメージ！ ' + enemy.name + 'を倒した！ ' + (enemy.goldReward || 50) + 'G獲得！';
               messageTimer = 60;
             }
           } else {
@@ -215,7 +215,7 @@ Game.Battle = (function() {
         if (animTimer <= 0) {
           phase = 'enemyAttack';
           var playerData = Game.Player.getData();
-          var dmg = Math.max(1, enemy.attack - playerData.defense + Math.floor(Math.random() * 5));
+          var dmg = Math.max(1, enemy.attack - Game.Player.getDefense() + Math.floor(Math.random() * 5));
           playerData.hp -= dmg;
           message = enemy.name + 'の攻撃！ ' + dmg + 'ダメージ！';
           messageTimer = 45;
@@ -241,7 +241,7 @@ Game.Battle = (function() {
         active = false;
         Game.Audio.stopBgm();
         Game.Audio.playSfx('victory');
-        return { result: 'victory', npc: npcRef };
+        return { result: 'victory', npc: npcRef, goldReward: enemy.goldReward || 50 };
 
       case 'defeat':
         active = false;
@@ -251,7 +251,7 @@ Game.Battle = (function() {
       case 'useItem':
         phase = 'enemyAttack';
         var playerData2 = Game.Player.getData();
-        var dmg2 = Math.max(1, enemy.attack - playerData2.defense + Math.floor(Math.random() * 5));
+        var dmg2 = Math.max(1, enemy.attack - Game.Player.getDefense() + Math.floor(Math.random() * 5));
         playerData2.hp -= dmg2;
         message = enemy.name + 'の攻撃！ ' + dmg2 + 'ダメージ！';
         messageTimer = 45;

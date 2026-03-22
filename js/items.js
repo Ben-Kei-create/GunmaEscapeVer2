@@ -74,14 +74,101 @@ Game.Items = (function() {
       name: '薬草',
       desc: 'HPを30回復する',
       type: 'heal',
-      healAmount: 30
+      healAmount: 30,
+      price: 15
     },
     yakimanju: {
       id: 'yakimanju',
       name: '焼きまんじゅう',
       desc: '群馬名物。HPを50回復する',
       type: 'heal',
-      healAmount: 50
+      healAmount: 50,
+      price: 30
+    },
+    superYakimanju: {
+      id: 'superYakimanju',
+      name: '特上焼きまんじゅう',
+      desc: 'HPを100回復する最高級品',
+      type: 'heal',
+      healAmount: 100,
+      price: 80
+    },
+
+    // Weapons
+    woodenSword: {
+      id: 'woodenSword',
+      name: '木の剣',
+      desc: '攻撃力+3',
+      type: 'weapon',
+      attackBonus: 3,
+      price: 50
+    },
+    ironSword: {
+      id: 'ironSword',
+      name: '鉄の剣',
+      desc: '攻撃力+7',
+      type: 'weapon',
+      attackBonus: 7,
+      price: 120
+    },
+    darumaBat: {
+      id: 'darumaBat',
+      name: 'だるまバット',
+      desc: '攻撃力+10 だるまの力が宿る',
+      type: 'weapon',
+      attackBonus: 10,
+      price: 200
+    },
+    gunmaSword: {
+      id: 'gunmaSword',
+      name: '上州の剣',
+      desc: '攻撃力+15 群馬最強の剣',
+      type: 'weapon',
+      attackBonus: 15,
+      price: 350
+    },
+
+    // Armor
+    leatherArmor: {
+      id: 'leatherArmor',
+      name: '皮の鎧',
+      desc: '防御力+3',
+      type: 'armor',
+      defenseBonus: 3,
+      price: 40
+    },
+    ironArmor: {
+      id: 'ironArmor',
+      name: '鉄の鎧',
+      desc: '防御力+6',
+      type: 'armor',
+      defenseBonus: 6,
+      price: 100
+    },
+    konnyakuArmor: {
+      id: 'konnyakuArmor',
+      name: 'こんにゃく鎧',
+      desc: '防御力+9 弾力で攻撃を弾く',
+      type: 'armor',
+      defenseBonus: 9,
+      price: 180
+    },
+    onsenArmor: {
+      id: 'onsenArmor',
+      name: '温泉の鎧',
+      desc: '防御力+13 温泉パワー',
+      type: 'armor',
+      defenseBonus: 13,
+      price: 300
+    },
+
+    // Dice upgrade item
+    extraDice: {
+      id: 'extraDice',
+      name: 'サイコロ追加',
+      desc: '戦闘で振れるサイコロが1個増える',
+      type: 'dice',
+      price: 150
     }
   };
 

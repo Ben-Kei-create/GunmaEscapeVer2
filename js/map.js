@@ -8,6 +8,9 @@ Game.Map = (function() {
     currentMap = Game.Maps[mapId];
     if (!currentMap) return;
     Game.Player.init(spawnX, spawnY);
+    if (Game.Weather) {
+      Game.Weather.setMapWeather(currentMap.name || currentMapId);
+    }
   }
 
   function getCurrentMap() {
@@ -76,6 +79,9 @@ Game.Map = (function() {
 
   function draw() {
     if (!currentMap) return;
+    if (Game.Renderer.drawParallaxBackground) {
+      Game.Renderer.drawParallaxBackground(currentMap);
+    }
     for (var y = 0; y < Game.Config.MAP_ROWS; y++) {
       for (var x = 0; x < Game.Config.MAP_COLS; x++) {
         Game.Renderer.drawTile(currentMap.tiles[y][x], x, y);

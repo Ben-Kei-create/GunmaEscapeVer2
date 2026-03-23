@@ -46,7 +46,113 @@ Game.Legacy = (function() {
     { id: 'onsen_culture', number: 27, name: '湯もみ文化', category: 'culture', rarity: 2, description: '草津に伝わる湯もみ歌と湯治の知恵。', unlocked: false, unlockType: 'puzzle', unlockValue: 'quiz' },
     { id: 'yamato_takeru', number: 28, name: 'ヤマトタケル', category: 'legends', rarity: 4, description: '上毛の山野を越えたと伝わる英雄。', unlocked: false, unlockType: 'hidden', unlockValue: 'yamato_takeru' },
     { id: 'centipede_myth', number: 29, name: '大百足伝説', category: 'legends', rarity: 4, description: '山に棲む巨大百足を退治したという怪異譚。', unlocked: false, unlockType: 'hidden', unlockValue: 'centipede_myth' },
-    { id: 'akagi_princess', number: 30, name: '赤城姫', category: 'legends', rarity: 5, description: '赤城山を見守る姫神。霧の彼方にその影を見る。', unlocked: false, unlockType: 'hidden', unlockValue: 'akagi_princess' }
+    { id: 'akagi_princess', number: 30, name: '赤城姫', category: 'legends', rarity: 5, description: '赤城山を見守る姫神。霧の彼方にその影を見る。', unlocked: false, unlockType: 'hidden', unlockValue: 'akagi_princess' },
+
+    // ============================================================
+    //  第1章〜第6章 重要レガシーカード（#31〜#60）
+    //  ★ = A/B/Cエンド分岐に関わる重要カード
+    // ============================================================
+
+    // ── 第1章：赤城の霧と博打の目 ──
+    { id: 'sato_letter', number: 31, name: '佐藤の置き手紙', category: 'items', rarity: 3,
+      description: '「前橋に来い」とだけ書かれた一通。佐藤の筆跡が震えている。',
+      unlocked: false, unlockType: 'story', unlockValue: 'sato_letter_found' },
+    { id: 'number_plate', number: 32, name: '剥がれたナンバープレート', category: 'items', rarity: 4,
+      description: '暗鞍が最後まで捨てられなかった、誇りの残骸。「群馬500」の文字。',
+      unlocked: false, unlockType: 'boss', unlockValue: 'angura_boss_defeated' },
+    { id: 'akagi_oroshi', number: 33, name: '赤城おろし', category: 'culture', rarity: 3,
+      description: '赤城山から吹き下ろすからっ風。この土地に生きる者は皆この風に鍛えられる。',
+      unlocked: false, unlockType: 'hidden', unlockValue: 'karakaze_event' },
+    { id: 'first_dice_memory', number: 34, name: '最初のダイスの記憶', category: 'items', rarity: 2,
+      description: '佐藤から手渡された最初のダイス。群馬の掟を知る始まり。',
+      unlocked: false, unlockType: 'story', unlockValue: 'dice_obtained' },
+
+    // ── 第2章：榛名の地下と盲信 ──
+    { id: 'mud_scoop', number: 35, name: '泥まみれのスコップ', category: 'items', rarity: 3,
+      description: '爆根たちが必死に土地を掘り起こした痕。泥の味だけが信仰だった。',
+      unlocked: false, unlockType: 'boss', unlockValue: 'gobou_fang_defeated' },
+    { id: 'haruna_darkness', number: 36, name: '榛名の暗闇', category: 'locations', rarity: 3,
+      description: '光を拒む洞窟の闇。ここでは目よりも耳を頼りに歩く。',
+      unlocked: false, unlockType: 'map', unlockValue: 'haruna_cave' },
+    { id: 'blind_prayer', number: 37, name: '盲目の祈祷書', category: 'culture', rarity: 4,
+      description: '爆根の経典。「光を恐れよ、泥を愛せよ」と繰り返し書かれている。',
+      unlocked: false, unlockType: 'hidden', unlockValue: 'bakkon_prayer' },
+
+    // ── 第3章：妙義の石門と残響 ──
+    { id: 'myogi_crag', number: 38, name: '妙義の奇岩', category: 'locations', rarity: 4,
+      description: '鋸歯のような岩壁。時を止めてでも過去を守ろうとする荒々気の聖域。',
+      unlocked: false, unlockType: 'map', unlockValue: 'myogi_gate' },
+    { id: 'stopped_clock', number: 39, name: '止まった時計', category: 'items', rarity: 3,
+      description: '針が動かない時計を磨き続ける老人がいた。時間が進むと消えるから。',
+      unlocked: false, unlockType: 'hidden', unlockValue: 'stopped_clock_event' },
+    { id: 'furuya_clash', number: 40, name: '古谷との衝突', category: 'characters', rarity: 4,
+      description: '不器用な仲間との本気のぶつかり合い。ダイスだけが正直だった。',
+      unlocked: false, unlockType: 'boss', unlockValue: 'furuya_battle_cleared' },
+
+    // ── 第4章：白根の噴煙と侵食 ──
+    { id: 'frozen_yuflower', number: 41, name: '凍れる湯花', category: 'items', rarity: 4,
+      description: '白根火口の猛毒ガスの中で結晶化した湯花。熱いのに冷たい不思議な石。',
+      unlocked: false, unlockType: 'hidden', unlockValue: 'yuflower_crystal' },
+    { id: 'akagi_petrified', number: 42, name: '石化のアカギ', category: 'characters', rarity: 5,
+      description: '赤城山の侵食に呑まれ、石と化した案内人。いつか必ず元に戻す。',
+      unlocked: false, unlockType: 'story', unlockValue: 'akagi_petrified' },
+    { id: 'kumako_lullaby', number: 43, name: '熊子の子守唄', category: 'culture', rarity: 5,
+      description: '「痛くないよ…自分が誰かも忘れたから」。癒やしの裏の侵食の恐怖。',
+      unlocked: false, unlockType: 'boss', unlockValue: 'kumako_steam_defeated' },
+    { id: 'lakeside_onsen', number: 44, name: '湖底の温泉郷', category: 'locations', rarity: 4,
+      description: '湯隠たちが守りたかった、幻の癒やし。今は誰も辿り着けない。',
+      unlocked: false, unlockType: 'hidden', unlockValue: 'lakeside_onsen_found' },
+
+    // ── 第5章：県立上毛学園と補習 ──  ★ED分岐カード含む
+    { id: 'empty_seat_note', number: 45, name: '空席のノートの切れ端', category: 'items', rarity: 5,
+      description: '佐藤の席で見つけたメモ。「ここにいたい」と書かれている。★',
+      unlocked: false, unlockType: 'story', unlockValue: 'sato_seat_found' },
+    { id: 'missing_photo', number: 46, name: '欠けた卒業写真', category: 'items', rarity: 5,
+      description: '佐藤の顔だけが白く飛んだ写真。記憶のアンカーが欠けている。★',
+      unlocked: false, unlockType: 'story', unlockValue: 'missing_photo_found' },
+    { id: 'gakuen_chime', number: 47, name: '上毛学園のチャイム', category: 'culture', rarity: 3,
+      description: '授業の始まりと終わりを告げる音。ここでは記憶の書き換えの合図。',
+      unlocked: false, unlockType: 'map', unlockValue: 'gakuen_entered' },
+    { id: 'juke_taunt', number: 48, name: 'ジュークの挑発状', category: 'characters', rarity: 4,
+      description: '「お前はただのプレイヤーだ」。掟を突きつけるライバルの怒り。',
+      unlocked: false, unlockType: 'boss', unlockValue: 'juke_gakuen_defeated' },
+
+    // ── 第6章：谷川岳と国境のトンネル ──  ★ED分岐カード含む
+    { id: 'return_name_book', number: 49, name: '返り名の手帳', category: 'culture', rarity: 3,
+      description: '風返しの村で名乗らされた偽名の記録。ここでは本名を名乗ると消される。',
+      unlocked: false, unlockType: 'hidden', unlockValue: 'return_name_event' },
+    { id: 'unreachable_ticket', number: 50, name: '届かない切符', category: 'items', rarity: 4,
+      description: '改札機の前で崩れ落ちた乗客の影。チャージが…足りない…。',
+      unlocked: false, unlockType: 'hidden', unlockValue: 'ticket_ghost_event' },
+    { id: 'shinjuku_ticket', number: 51, name: '現実の切符（新宿）', category: 'items', rarity: 5,
+      description: '佐藤のポケットに残っていた、新宿行きの切符。現実は、まだ繋がっている。★',
+      unlocked: false, unlockType: 'story', unlockValue: 'sato_kumako_tunnel_cleared' },
+    { id: 'akagi_revival', number: 52, name: 'アカギの復活', category: 'characters', rarity: 5,
+      description: '石の殻を破り、再び立ち上がった案内人。真の相棒がここに蘇る。',
+      unlocked: false, unlockType: 'story', unlockValue: 'akagi_revived' },
+    { id: 'echo_bell', number: 53, name: '反響の鈴', category: 'items', rarity: 3,
+      description: '返声の番が落とした鈴。音の反響だけが正しい道を示す。',
+      unlocked: false, unlockType: 'boss', unlockValue: 'echo_guardian_defeated' },
+    { id: 'border_tunnel', number: 54, name: '国境のトンネル', category: 'locations', rarity: 5,
+      description: '群馬と新潟を繋ぐ結界の最深部。名前を捨てなければ通れない。',
+      unlocked: false, unlockType: 'map', unlockValue: 'border_tunnel' },
+
+    // ── エンド分岐フラグカード（後半章で入手、ここに定義） ──  ★
+    { id: 'soaked_album', number: 55, name: '水浸しのアルバム', category: 'items', rarity: 5,
+      description: '顔が滲んで誰か分からない、沈んだ思い出。佐藤の記憶のアンカー。★',
+      unlocked: false, unlockType: 'story', unlockValue: 'soaked_album_found' },
+    { id: 'furuya_usb', number: 56, name: '古谷のUSBメモリ', category: 'items', rarity: 5,
+      description: '結界のほころびをハッキングする、彼の孤独な戦いの記録。★',
+      unlocked: false, unlockType: 'story', unlockValue: 'furuya_usb_found' },
+    { id: 'sato_id_card', number: 57, name: '佐藤の学生証', category: 'items', rarity: 5,
+      description: '彼が現実へ帰るための切符。絶対に連れて帰るという誓い。★',
+      unlocked: false, unlockType: 'story', unlockValue: 'sato_id_found' },
+    { id: 'eyeless_dice', number: 58, name: '目のないダイス（真）', category: 'items', rarity: 5,
+      description: 'ジュークから受け取る、彼自身の存在証明。全ての面が白い。★C案フラグ',
+      unlocked: false, unlockType: 'story', unlockValue: 'juke_true_dice' },
+    { id: 'gunma_handbook', number: 59, name: '群馬県民手帳', category: 'culture', rarity: 5,
+      description: '土地の全ての記憶と文化が記された、このゲーム最大の証。',
+      unlocked: false, unlockType: 'hidden', unlockValue: 'all_chapters_complete' }
   ];
 
   var cardById = {};

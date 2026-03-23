@@ -35,8 +35,322 @@ Game.Story = (function() {
     'ナンバー12': { color: '#222222', accent: '#444444', label: '12' },
     '花':    { color: '#cc88aa', accent: '#ffaacc', label: '花' },
     '佐藤':  { color: '#3366aa', accent: '#5588cc', label: '佐' },
-    'ユウマ': { color: '#664422', accent: '#886633', label: '幽' }
+    'ユウマ': { color: '#664422', accent: '#886633', label: '幽' },
+    '山川':  { color: '#557744', accent: '#77aa55', label: '山' },
+    '古谷':  { color: '#554488', accent: '#7766aa', label: '古' },
+    '熊子':  { color: '#663322', accent: '#884433', label: '熊' },
+    '学園長': { color: '#334455', accent: '#556677', label: '長' }
   };
+
+  // ============================================================
+  //  第1章〜第3章 イベント配列
+  //  各 event_id → scene配列 (story engine の step 形式)
+  // ============================================================
+
+  var chapterEvents = {
+
+    // ── 第1章「覚醒 ─ 赤城の記憶」 ──────────────────
+
+    'ch1_opening': [
+      { type: 'set_bg', bg: 'black' },
+      { type: 'fade_in' },
+      { type: 'narration', text: '...目が覚めると、知らない土地だった。' },
+      { type: 'narration', text: '道路標識には「群馬県」の三文字。' },
+      { type: 'narration', text: '記憶がない。自分の名前すら思い出せない。' },
+      { type: 'dialog', speaker: '主人公', text: 'ここは...どこだ？' },
+      { type: 'dialog', speaker: '主人公', text: '頭がぼんやりする。何も思い出せない。' },
+      { type: 'set_flag', flag: 'ch1_started' },
+      { type: 'narration', text: '足元に一通の手紙が落ちている。' },
+      { type: 'play_sfx', sfx: 'item' },
+      { type: 'dialog', speaker: '主人公', text: '「前橋に来い。佐藤」...佐藤？知っている名前のような...。' },
+      { type: 'set_flag', flag: 'sato_letter_found' }
+    ],
+
+    'ch1_first_encounter': [
+      { type: 'set_bg', bg: 'forest' },
+      { type: 'fade_in' },
+      { type: 'narration', text: '森の中を彷徨っていると、人影が見えた。' },
+      { type: 'show_character', name: 'アカギ', position: 'right' },
+      { type: 'dialog', speaker: 'アカギ', text: 'おい、そこのお前。この土地を歩くな。' },
+      { type: 'dialog', speaker: 'アカギ', text: 'ここには...掟がある。余所者は立ち入れない。' },
+      { type: 'dialog', speaker: '主人公', text: '掟？何のことだ？' },
+      { type: 'dialog', speaker: 'アカギ', text: '...記憶がないのか。ならばなおさら危ない。' },
+      { type: 'dialog', speaker: 'アカギ', text: '俺はアカギ。この辺りの道案内をしている。' },
+      { type: 'choice', speaker: 'アカギ', text: 'どうする？ 一緒に来るか、一人で行くか。', choices: [
+        { text: '一緒に行く', goto: 11 },
+        { text: '一人で行く', goto: 14 }
+      ]},
+      // goto:11 → 一緒に行く
+      { type: 'dialog', speaker: 'アカギ', text: '賢い選択だ。前橋まで案内してやる。' },
+      { type: 'party_join', id: 'akagi', name: 'アカギ' },
+      { type: 'set_flag', flag: 'akagi_joined_ch1' },
+      // goto:14 → 一人で行く（合流は後で強制発生）
+      { type: 'dialog', speaker: 'アカギ', text: '...まあいい。だが死にたくなければ結界の外に出るな。' },
+      { type: 'dialog', speaker: 'アカギ', text: '前橋の方角はあちらだ。気をつけろ。' },
+      { type: 'set_flag', flag: 'akagi_warned' }
+    ],
+
+    'ch1_maebashi_arrival': [
+      { type: 'set_bg', bg: 'village' },
+      { type: 'fade_in' },
+      { type: 'narration', text: '前橋の街に辿り着いた。' },
+      { type: 'narration', text: '人の気配はあるが、どこか...よそよそしい。' },
+      { type: 'dialog', speaker: '主人公', text: '佐藤の手紙には「前橋に来い」とだけ書いてあった。' },
+      { type: 'dialog', speaker: '主人公', text: '何を探せばいい？' },
+      { type: 'set_flag', flag: 'maebashi_reached' },
+      { type: 'check_flag', flag: 'akagi_joined_ch1', gotoTrue: 8, gotoFalse: 10 },
+      // gotoTrue:8
+      { type: 'dialog', speaker: 'アカギ', text: 'この先に宿場がある。まずは情報を集めろ。' },
+      { type: 'narration', text: 'アカギが案内してくれた。' },
+      // gotoFalse:10
+      { type: 'narration', text: '一人で街を歩く。情報を探さなくては。' }
+    ],
+
+    'ch1_sato_encounter': [
+      { type: 'set_bg', bg: 'village_interior' },
+      { type: 'fade_in' },
+      { type: 'show_character', name: '佐藤', position: 'center' },
+      { type: 'dialog', speaker: '佐藤', text: '...来たか。' },
+      { type: 'dialog', speaker: '主人公', text: '佐藤！お前なのか！？' },
+      { type: 'dialog', speaker: '佐藤', text: 'その記憶の欠け方...やはりお前も侵食されていたか。' },
+      { type: 'dialog', speaker: '主人公', text: '侵食？何のことだ？' },
+      { type: 'dialog', speaker: '佐藤', text: 'この土地には古い結界がある。' },
+      { type: 'dialog', speaker: '佐藤', text: '結界が弱まると、中にいる者の記憶が薄れていく。' },
+      { type: 'dialog', speaker: '佐藤', text: '俺たちは車で群馬に入った。4人で。' },
+      { type: 'dialog', speaker: '主人公', text: '4人...？俺と佐藤と、あと誰が...。' },
+      { type: 'dialog', speaker: '佐藤', text: '山川と古谷。...思い出せないか？' },
+      { type: 'dialog', speaker: '佐藤', text: '今は説明している時間がない。' },
+      { type: 'dialog', speaker: '佐藤', text: 'ユウマという男を探せ。群馬の奥地に消えたらしい。' },
+      { type: 'dialog', speaker: '佐藤', text: '俺は俺で別の路線を辿る。' },
+      { type: 'give_item', item: 'normalDice' },
+      { type: 'dialog', speaker: '佐藤', text: 'これを持っていけ。この土地では「ダイス」が力になる。' },
+      { type: 'dice_tutorial', text: 'ダイスを振ってみよう！（Zキーで止める）' },
+      { type: 'set_flag', flag: 'sato_met_ch1' },
+      { type: 'set_flag', flag: 'dice_obtained' },
+      { type: 'hide_character', name: '佐藤' },
+      { type: 'narration', text: '佐藤は足早に去っていった。' },
+      { type: 'dialog', speaker: '主人公', text: '山川...古谷...。名前だけは、どこかで聞いたことがある気がする。' }
+    ],
+
+    'ch1_boss_sato_test': [
+      // 佐藤が主人公の力を試すイベント戦
+      { type: 'set_bg', bg: 'battle_field' },
+      { type: 'dialog', speaker: '佐藤', text: '...一つ確認させろ。' },
+      { type: 'dialog', speaker: '佐藤', text: 'お前が本物かどうか、この土地が見せる幻でないかどうか。' },
+      { type: 'shake', duration: 20 },
+      { type: 'dialog', speaker: '佐藤', text: '来い。ダイスで証明しろ。' },
+      { type: 'start_battle', enemy: 'satoTest' },
+      { type: 'dialog', speaker: '佐藤', text: '...間違いない。お前は本物だ。' },
+      { type: 'dialog', speaker: '佐藤', text: '先を急げ。高崎へ向かえ。' },
+      { type: 'set_flag', flag: 'sato_test_cleared' },
+      { type: 'heal' }
+    ],
+
+    'ch1_ending': [
+      { type: 'set_bg', bg: 'chapter_end' },
+      { type: 'fade_in' },
+      { type: 'narration', text: '── 第一章「覚醒 ─ 赤城の記憶」 完 ──' },
+      { type: 'narration', text: '記憶を失った主人公。佐藤との再会。' },
+      { type: 'narration', text: '結界、侵食、そして消えた男・ユウマ。' },
+      { type: 'narration', text: '群馬の奥地に、何が待っているのか。' },
+      { type: 'set_flag', flag: 'ch1_complete' },
+      { type: 'end_chapter', next: 2 },
+      { type: 'fade_out' }
+    ],
+
+    // ── 第2章「路線 ─ 高崎・草津を往く」 ──────────────
+
+    'ch2_opening': [
+      { type: 'set_bg', bg: 'black' },
+      { type: 'fade_in' },
+      { type: 'narration', text: '── 第二章「路線 ─ 高崎・草津を往く」──' },
+      { type: 'set_phase', phase: 'ch2' },
+      { type: 'narration', text: '佐藤の言葉を頼りに、高崎へ向かう。' },
+      { type: 'dialog', speaker: 'アカギ', text: '高崎にはだるま師匠がいる。' },
+      { type: 'dialog', speaker: 'アカギ', text: 'あの人なら古い路線について知っているかもしれない。' },
+      { type: 'dialog', speaker: '主人公', text: '路線...？' },
+      { type: 'dialog', speaker: 'アカギ', text: 'この土地を走る力の流れのことだ。' },
+      { type: 'dialog', speaker: 'アカギ', text: '鉄道に沿って結界が張られている。路線が途切れると結界も綻ぶ。' },
+      { type: 'set_flag', flag: 'ch2_started' }
+    ],
+
+    'ch2_takasaki_daruma': [
+      { type: 'set_bg', bg: 'village' },
+      { type: 'fade_in' },
+      { type: 'narration', text: '高崎の町に入ると、巨大なだるまが並んでいた。' },
+      { type: 'dialog', speaker: 'アカギ', text: 'だるま師匠に会いに行こう。あの人が路線の鍵を握っている。' },
+      { type: 'set_flag', flag: 'takasaki_entered' }
+    ],
+
+    'ch2_daruma_master_pre': [
+      { type: 'set_bg', bg: 'village_interior' },
+      { type: 'fade_in' },
+      { type: 'dialog', speaker: 'だるま師匠', text: '七転び八起き。何度でも立ち上がれ。' },
+      { type: 'dialog', speaker: 'だるま師匠', text: 'お前の記憶が欠けているのは、結界の侵食のせいだ。' },
+      { type: 'dialog', speaker: 'だるま師匠', text: 'だが心配するな。心に刻まれた記憶は消えない。' },
+      { type: 'dialog', speaker: 'だるま師匠', text: '...まずはお前の覚悟を見せてもらおう。' },
+      { type: 'start_battle', enemy: 'darumaMaster' },
+      { type: 'dialog', speaker: 'だるま師匠', text: 'よし、合格だ。これを持っていけ。' },
+      { type: 'give_item', item: 'darumaDice' },
+      { type: 'set_flag', flag: 'daruma_master_cleared' }
+    ],
+
+    'ch2_kusatsu_arrival': [
+      { type: 'set_bg', bg: 'konuma' },
+      { type: 'fade_in' },
+      { type: 'narration', text: '湯けむりの中に、草津の温泉街が現れた。' },
+      { type: 'dialog', speaker: 'アカギ', text: 'ここが草津だ。温泉の力は侵食を和らげる。' },
+      { type: 'dialog', speaker: 'アカギ', text: 'だが...番人がいる。通してもらえるかどうか。' },
+      { type: 'set_flag', flag: 'kusatsu_entered' }
+    ],
+
+    'ch2_onsen_monkey_battle': [
+      { type: 'set_bg', bg: 'konuma' },
+      { type: 'dialog', speaker: '温泉猿', text: 'キキーッ！ここは俺の湯だ！' },
+      { type: 'dialog', speaker: '温泉猿', text: '入りたきゃ俺に勝ってから来い！' },
+      { type: 'start_battle', enemy: 'onsenMonkey' },
+      { type: 'dialog', speaker: '温泉猿', text: 'キキ...やるじゃねぇか。好きなだけ浸かれ。' },
+      { type: 'give_item', item: 'onsenDice' },
+      { type: 'heal' },
+      { type: 'set_flag', flag: 'onsen_monkey_cleared' },
+      { type: 'narration', text: '温泉に浸かり、体力が回復した。侵食の痛みが少し和らぐ。' }
+    ],
+
+    'ch2_tamura_village': [
+      { type: 'set_bg', bg: 'village' },
+      { type: 'fade_in' },
+      { type: 'show_character', name: '龝櫻', position: 'center' },
+      { type: 'dialog', speaker: '龝櫻', text: 'よく来たな、旅人よ。' },
+      { type: 'dialog', speaker: '龝櫻', text: 'わしは龝櫻。この村を預かる者だ。' },
+      { type: 'dialog', speaker: '龝櫻', text: 'お前が探しているユウマという男は...確かにここを通った。' },
+      { type: 'dialog', speaker: '龝櫻', text: 'だが、谷川岳の先...国境のトンネルに消えたきり戻らぬ。' },
+      { type: 'dialog', speaker: '主人公', text: '国境のトンネル...？' },
+      { type: 'dialog', speaker: '龝櫻', text: '群馬と新潟を繋ぐ古い路線の先にある。' },
+      { type: 'dialog', speaker: '龝櫻', text: 'あそこは結界が最も深い場所だ。安易に近づくな。' },
+      { type: 'set_flag', flag: 'tamura_visited' },
+      { type: 'set_flag', flag: 'yuuma_clue_tamura' },
+      { type: 'hide_character', name: '龝櫻' }
+    ],
+
+    'ch2_ending': [
+      { type: 'set_bg', bg: 'chapter_end' },
+      { type: 'fade_in' },
+      { type: 'narration', text: '── 第二章「路線 ─ 高崎・草津を往く」 完 ──' },
+      { type: 'narration', text: '路線と結界の関係。龝櫻の助言。' },
+      { type: 'narration', text: 'ユウマの足跡は、国境のトンネルへと続いていた。' },
+      { type: 'set_flag', flag: 'ch2_complete' },
+      { type: 'end_chapter', next: 3 },
+      { type: 'fade_out' }
+    ],
+
+    // ── 第3章「侵食 ─ 赤城山の影」 ──────────────────
+
+    'ch3_opening': [
+      { type: 'set_bg', bg: 'black' },
+      { type: 'fade_in' },
+      { type: 'narration', text: '── 第三章「侵食 ─ 赤城山の影」──' },
+      { type: 'set_phase', phase: 'ch3' },
+      { type: 'narration', text: '龝櫻の助言に従い、赤城山方面を調査することになった。' },
+      { type: 'dialog', speaker: 'アカギ', text: '赤城山は...俺の名の由来でもある。' },
+      { type: 'dialog', speaker: 'アカギ', text: 'あの山には古い力が眠っている。侵食の源がそこにあるかもしれない。' },
+      { type: 'set_flag', flag: 'ch3_started' }
+    ],
+
+    'ch3_shimonita': [
+      { type: 'set_bg', bg: 'village' },
+      { type: 'fade_in' },
+      { type: 'narration', text: '下仁田に立ち寄る。こんにゃくの匂いが漂う山あいの宿場。' },
+      { type: 'dialog', speaker: 'アカギ', text: 'ここの大王に会えば、赤城山への道が開けるかもしれない。' },
+      { type: 'set_flag', flag: 'shimonita_entered' }
+    ],
+
+    'ch3_konnyaku_king_battle': [
+      { type: 'set_bg', bg: 'village_interior' },
+      { type: 'fade_in' },
+      { type: 'dialog', speaker: 'こんにゃく大王', text: 'ほう、余所者か。この地を通りたければ掟に従え。' },
+      { type: 'dialog', speaker: 'こんにゃく大王', text: 'わしのクイズに答え、ダイスで勝負せよ！' },
+      { type: 'start_battle', enemy: 'konnyakuKing' },
+      { type: 'dialog', speaker: 'こんにゃく大王', text: 'むぅ...見事だ。赤城への道、通してやろう。' },
+      { type: 'give_item', item: 'konnyakuDice' },
+      { type: 'set_flag', flag: 'konnyaku_king_cleared' }
+    ],
+
+    'ch3_tsumagoi': [
+      { type: 'set_bg', bg: 'forest' },
+      { type: 'fade_in' },
+      { type: 'narration', text: '嬬恋の高原。見渡す限りのキャベツ畑が広がる。' },
+      { type: 'dialog', speaker: 'アカギ', text: 'この畑を守る番人がいる。' },
+      { type: 'dialog', speaker: 'アカギ', text: '力ずくでは通れない。正面から挑め。' },
+      { type: 'set_flag', flag: 'tsumagoi_entered' }
+    ],
+
+    'ch3_cabbage_guardian_battle': [
+      { type: 'set_bg', bg: 'battle_field' },
+      { type: 'dialog', speaker: 'キャベツ番人', text: 'この大地を荒らす者は許さん！' },
+      { type: 'start_battle', enemy: 'cabbageGuardian' },
+      { type: 'dialog', speaker: 'キャベツ番人', text: '...見事な闘いだった。先へ進め。' },
+      { type: 'give_item', item: 'cabbageDice' },
+      { type: 'set_flag', flag: 'cabbage_guardian_cleared' }
+    ],
+
+    'ch3_akagi_approach': [
+      { type: 'set_bg', bg: 'akagi_ranch' },
+      { type: 'fade_in' },
+      { type: 'narration', text: '赤城山の麓。霧が深くなり、侵食が強くなっている。' },
+      { type: 'dialog', speaker: 'アカギ', text: '...俺の体に異変が起きている。' },
+      { type: 'dialog', speaker: 'アカギ', text: 'この山の侵食は、俺にも影響しているようだ。' },
+      { type: 'dialog', speaker: '主人公', text: 'アカギ！大丈夫か？' },
+      { type: 'shake', duration: 30 },
+      { type: 'dialog', speaker: 'アカギ', text: 'ぐっ...体が重い。少し休ませてくれ。' },
+      { type: 'set_flag', flag: 'akagi_weakened' }
+    ],
+
+    'ch3_akagi_petrify': [
+      { type: 'set_bg', bg: 'akagi_ranch' },
+      { type: 'narration', text: '赤城山の侵食が、アカギの体を蝕んでいく。' },
+      { type: 'shake', duration: 40 },
+      { type: 'dialog', speaker: 'アカギ', text: '...すまない。もう動けない。' },
+      { type: 'dialog', speaker: 'アカギ', text: '俺の体が...石に...。' },
+      { type: 'dialog', speaker: '主人公', text: 'アカギ！！' },
+      { type: 'play_sfx', sfx: 'hit' },
+      { type: 'narration', text: 'アカギの体が灰色に変わり、動かなくなった。' },
+      { type: 'narration', text: '── 石化。赤城山の侵食が引き起こした呪い。' },
+      { type: 'dialog', speaker: '主人公', text: 'くそっ...必ず元に戻す。絶対にだ。' },
+      { type: 'set_flag', flag: 'akagi_petrified' },
+      { type: 'set_flag', flag: 'party_akagi_lost' },
+      { type: 'legacy_card', cardId: 'akagi_petrified', name: '石化のアカギ',
+        description: '赤城山の侵食に呑まれ、石と化した案内人。' }
+    ],
+
+    'ch3_angura_first': [
+      { type: 'set_bg', bg: 'forest' },
+      { type: 'fade_in' },
+      { type: 'narration', text: 'アングラの見張りが道を塞いでいる。' },
+      { type: 'dialog', speaker: 'アングラの見張り', text: '...ここから先は我らの領域だ。' },
+      { type: 'dialog', speaker: 'アングラの見張り', text: '引き返せ。さもなくば消す。' },
+      { type: 'dialog', speaker: '主人公', text: 'アカギを元に戻すためには、先に進むしかない！' },
+      { type: 'start_battle', enemy: 'anguraGuard' },
+      { type: 'dialog', speaker: '主人公', text: 'アングラ...一体何者だ？' },
+      { type: 'set_flag', flag: 'angura_guard_cleared' }
+    ],
+
+    'ch3_ending': [
+      { type: 'set_bg', bg: 'chapter_end' },
+      { type: 'fade_in' },
+      { type: 'narration', text: '── 第三章「侵食 ─ 赤城山の影」 完 ──' },
+      { type: 'narration', text: 'アカギの石化。アングラの影。深まる侵食。' },
+      { type: 'narration', text: 'アカギを救う手がかりを求めて、旅は続く。' },
+      { type: 'set_flag', flag: 'ch3_complete' },
+      { type: 'end_chapter', next: 4 },
+      { type: 'fade_out' }
+    ]
+  };
+
+  // Helper: start a named chapter event
+  function startChapterEvent(eventId, callback) {
+    var ev = chapterEvents[eventId];
+    if (ev) startEvent(ev, callback);
+  }
 
   // Chapter 3 story scenes
   var ch3Scenes = {
@@ -846,6 +1160,8 @@ Game.Story = (function() {
     getBgImage: getBgImage,
     reset: reset,
     startCh3Scene: startCh3Scene,
+    startChapterEvent: startChapterEvent,
+    getChapterEvents: function() { return chapterEvents; },
     saveFlags: saveFlags,
     loadFlags: loadFlags,
     exportFlags: exportFlags,

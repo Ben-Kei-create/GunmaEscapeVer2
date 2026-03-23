@@ -180,6 +180,285 @@ Game.Battle = (function() {
     }
   };
 
+  // ============================================================
+  //  第1章〜第6章 ボス固有ギミック定義
+  //  battle.js の update / executeAction から参照する
+  // ============================================================
+
+  var bossGimmicks = {
+
+    // ── 第1章 ──────────────────────────────
+
+    // 佐藤テスト戦（チュートリアル）― 優先実装
+    satoTest: {
+      boss_id: 'satoTest',
+      passive: {
+        id: 'mentor_mercy',
+        description: 'HPが0になっても1残る（負けイベントではない確認戦）',
+        apply: function(enemy, dmg) {
+          if (enemy.hp - dmg <= 0) { enemy.hp = 1; return true; }
+          return false;
+        }
+      },
+      phase_change: null,  // フェーズ変化なし
+      special_move: {
+        id: 'sato_lecture',
+        name: '佐藤の説教',
+        description: '3ターン目に強制発動。ダメージではなく次のダイス出目+2',
+        trigger: function(turnCount) { return turnCount === 3; },
+        effect: function(playerEffects, addEffectFn) {
+          addEffectFn(playerEffects, 'dice_bonus', 1, 2);
+        },
+        message: '佐藤「ダイスの目をよく見ろ。数字の裏を読め」'
+      },
+      victory_flag: 'sato_test_cleared'
+    },
+
+    // 暗鞍ナンバー12（章ボス）
+    anguraBoss: {
+      boss_id: 'anguraBoss',
+      passive: {
+        id: 'heavy_cargo',
+        description: '荷車の重み。毎ターン自身の素早さ-1、だが攻撃力+2',
+        apply: function(enemy, turnCount) {
+          enemy.attack += 2;
+          // 行動遅延は外部処理
+        }
+      },
+      phase_change: {
+        condition: function(enemy) { return enemy.hp <= enemy.maxHp * 0.4; },
+        action: function(enemy) {
+          enemy.defense = Math.max(0, enemy.defense - 5);
+          enemy.attack += 8;
+          return '荷車が崩壊した！ナンバー12は身軽になり攻撃力が上がった！';
+        }
+      },
+      special_move: {
+        id: 'cargo_rush',
+        name: '荷車突進',
+        description: '大ダメージ突進。使用後1ターン行動不能',
+        trigger: function(turnCount, enemy) { return turnCount % 4 === 0 && enemy.hp > 0; },
+        damage: function(enemy) { return Math.floor(enemy.attack * 1.8); },
+        self_stun: 1,
+        message: 'ナンバー12は荷車ごと突っ込んできた！'
+      },
+      victory_flag: 'angura_boss_defeated'
+    },
+
+    // ── 第2章 ──────────────────────────────
+
+    // ゴボウ牙主（爆根の長）
+    gobouFang: {
+      boss_id: 'gobouFang',
+      passive: {
+        id: 'underground_faith',
+        description: '地中潜伏。2ターンに1回地面に潜り、攻撃が当たらない',
+        apply: function(enemy, turnCount) {
+          return turnCount % 2 === 0; // trueなら潜伏中
+        }
+      },
+      phase_change: {
+        condition: function(enemy) { return enemy.hp <= enemy.maxHp * 0.3; },
+        action: function(enemy) {
+          enemy.attack += 10;
+          return '牙主は地表に飛び出した！「光が…痛ェ！だがもう逃げねェ！」';
+        }
+      },
+      special_move: {
+        id: 'root_eruption',
+        name: '根の噴出',
+        description: '地面から根が噴き出し、3ターン後に大ダメージ',
+        trigger: function(turnCount) { return turnCount === 5 || turnCount === 10; },
+        setup_turns: 3,
+        damage: function(enemy) { return Math.floor(enemy.attack * 2.5); },
+        message: '地面がひび割れ始めた…！（3ターン後に噴出！）'
+      },
+      victory_flag: 'gobou_fang_defeated'
+    },
+
+    // ── 第3章 ──────────────────────────────
+
+    // 古谷（人間同士のリスペクト戦闘）
+    furuyaBattle: {
+      boss_id: 'furuyaBattle',
+      passive: {
+        id: 'mutual_respect',
+        description: 'リスペクト戦闘。互いのダイス出目差で勝敗が決まる',
+        apply: function(enemy, playerDiceTotal) {
+          // 古谷も内部でダイスを振る
+          var furuyaRoll = Math.floor(Math.random() * 6) + 1 +
+                           Math.floor(Math.random() * 6) + 1;
+          return { playerRoll: playerDiceTotal, furuyaRoll: furuyaRoll };
+        }
+      },
+      phase_change: {
+        condition: function(enemy) { return enemy.hp <= enemy.maxHp * 0.25; },
+        action: function(enemy) {
+          return '古谷「…ダイスには逆らえないか。お前の勝ちだ」';
+        }
+      },
+      special_move: {
+        id: 'lone_hack',
+        name: '孤独のハック',
+        description: 'プレイヤーのダイス1個の出目を強制的に1にする',
+        trigger: function(turnCount) { return turnCount % 3 === 0; },
+        effect: function(diceResults) {
+          if (diceResults.length > 0) diceResults[0] = 1;
+        },
+        message: '古谷「俺は一人でやる。お前のダイスなんか要らない」'
+      },
+      victory_flag: 'furuya_battle_cleared'
+    },
+
+    // ── 第4章 ──────────────────────────────
+
+    // 白井熊子・湯煙形態（優先実装）
+    kumako_steam: {
+      boss_id: 'kumako_steam',
+      passive: {
+        id: 'heal_inversion',
+        description: '回復反転結界。回復ダイス(H系)のHP回復がダメージに変わる',
+        apply: function(healAmount) {
+          return -healAmount; // 回復がダメージに
+        }
+      },
+      phase_change: {
+        condition: function(enemy) { return enemy.hp <= enemy.maxHp * 0.5; },
+        action: function(enemy) {
+          enemy.defense += 5;
+          return '熊子の輪郭が揺らぎ、液状に変わった！「痛い？ ならもっと溶けなさい」';
+        }
+      },
+      special_move: {
+        id: 'dissolving_embrace',
+        name: '溶解の抱擁',
+        description: '味方全体に中ダメージ＋回復封印2ターン',
+        trigger: function(turnCount) { return turnCount % 3 === 0; },
+        damage: function(enemy) { return Math.floor(enemy.attack * 1.2); },
+        debuff: { type: 'heal_seal', turns: 2 },
+        message: '熊子「温めてあげるわ♪ 全部、溶かしてあげる」'
+      },
+      victory_flag: 'kumako_steam_defeated'
+    },
+
+    // ── 第5章 ──────────────────────────────
+
+    // ジューク（妙義団トップ）
+    juke_gakuen: {
+      boss_id: 'juke_gakuen',
+      passive: {
+        id: 'rule_overwrite',
+        description: '掟の書き換え。ランダムでダイス1個の出目を強制変更',
+        apply: function(diceResults) {
+          var idx = Math.floor(Math.random() * diceResults.length);
+          var original = diceResults[idx];
+          diceResults[idx] = 1;
+          return { index: idx, before: original, after: 1 };
+        }
+      },
+      phase_change: {
+        condition: function(enemy) { return enemy.hp <= enemy.maxHp * 0.35; },
+        action: function(enemy) {
+          enemy.attack += 6;
+          return 'ジューク「お前が踏み越えていく掟の痛み…知れ」';
+        }
+      },
+      special_move: {
+        id: 'forgotten_route',
+        name: '忘れられた経路',
+        description: 'プレイヤーのコマンドを1つランダムで封印（1ターン）',
+        trigger: function(turnCount) { return turnCount === 2 || turnCount === 6; },
+        effect: function(menuItems) {
+          var idx = Math.floor(Math.random() * menuItems.length);
+          return { sealed: idx, sealedName: menuItems[idx] };
+        },
+        message: 'ジューク「その選択肢、俺が預かっておく」'
+      },
+      victory_flag: 'juke_gakuen_defeated'
+    },
+
+    // ── 第6章 ──────────────────────────────
+
+    // 佐藤＆熊子・車窓形態（優先実装）
+    sato_kumako_tunnel: {
+      boss_id: 'sato_kumako_tunnel',
+      passive: {
+        id: 'dual_phase',
+        description: '二重戦闘。佐藤と熊子が交互に行動する',
+        apply: function(turnCount) {
+          return turnCount % 2 === 0 ? 'sato' : 'kumako';
+        }
+      },
+      phase_change: {
+        condition: function(enemy) { return enemy.hp <= enemy.maxHp * 0.3; },
+        action: function(enemy) {
+          return '佐藤「もうやめろ…！俺を殴り続けて何になる！」\n' +
+                 '熊子の姿が薄れ、佐藤だけが残った。';
+        }
+      },
+      special_move: {
+        id: 'memory_weight',
+        name: '記憶の重し',
+        description: '佐藤が自らのHPを削り、プレイヤーに2ターン行動遅延',
+        trigger: function(turnCount, enemy) {
+          return turnCount === 4 && enemy.hp > enemy.maxHp * 0.3;
+        },
+        self_damage: function(enemy) { return Math.floor(enemy.maxHp * 0.1); },
+        debuff: { type: 'slow', turns: 2 },
+        message: '佐藤「お前らの現実は、俺が絶対に守る…！」'
+      },
+      victory_flag: 'sato_kumako_tunnel_cleared'
+    },
+
+    // 返声の番（6章中ボス）
+    echo_guardian: {
+      boss_id: 'echo_guardian',
+      passive: {
+        id: 'echo_copy',
+        description: '反響コピー。プレイヤーの前ターンの攻撃を模倣して返す',
+        lastPlayerDamage: 0,
+        apply: function(gimmick) {
+          return Math.floor(gimmick.lastPlayerDamage * 0.6);
+        }
+      },
+      phase_change: null,
+      special_move: {
+        id: 'name_steal',
+        name: '名前の略奪',
+        description: 'パーティメンバー1人の名前を奪い、1ターン操作不能にする',
+        trigger: function(turnCount) { return turnCount % 5 === 0; },
+        message: '返声の番「お前の名前、しばらく借りるぞ…」'
+      },
+      victory_flag: 'echo_guardian_defeated'
+    }
+  };
+
+  // 佐藤テスト戦の敵データ（ch1_boss_sato_test用）
+  enemies.satoTest = {
+    name: '佐藤（確認戦）',
+    hp: 40, maxHp: 40,
+    attack: 8, defense: 3, goldReward: 0,
+    sprite: [
+      [0,0,0,1,1,1,1,1,0,0,0,0,0,0,0,0],
+      [0,0,1,2,2,2,2,2,1,0,0,0,0,0,0,0],
+      [0,0,1,3,2,2,3,2,1,0,0,0,0,0,0,0],
+      [0,0,1,2,2,4,2,2,1,0,0,0,0,0,0,0],
+      [0,0,0,1,1,1,1,1,0,0,0,0,0,0,0,0],
+      [0,0,1,5,5,5,5,5,1,0,0,0,0,0,0,0],
+      [0,1,5,5,5,5,5,5,5,1,0,0,0,0,0,0],
+      [0,1,5,5,5,5,5,5,5,1,0,0,0,0,0,0],
+      [0,0,1,5,5,5,5,5,1,0,0,0,0,0,0,0],
+      [0,0,1,6,6,0,6,6,1,0,0,0,0,0,0,0],
+      [0,0,1,6,6,0,6,6,1,0,0,0,0,0,0,0],
+      [0,0,0,7,7,0,7,7,0,0,0,0,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+    ],
+    palette: { 1:'#446', 2:'#aab', 3:'#22f', 4:'#c88', 5:'#369', 6:'#247', 7:'#335' }
+  };
+
   var menuItems = ['たたかう', 'アイテム', 'にげる'];
 
   // Status effect helpers
@@ -890,6 +1169,8 @@ Game.Battle = (function() {
     start: start,
     update: update,
     draw: draw,
-    isActive: isActive
+    isActive: isActive,
+    getBossGimmick: function(bossId) { return bossGimmicks[bossId] || null; },
+    getAllBossGimmicks: function() { return bossGimmicks; }
   };
 })();

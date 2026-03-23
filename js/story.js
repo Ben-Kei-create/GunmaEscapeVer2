@@ -343,6 +343,312 @@ Game.Story = (function() {
       { type: 'set_flag', flag: 'ch3_complete' },
       { type: 'end_chapter', next: 4 },
       { type: 'fade_out' }
+    ],
+
+    // ── 第4章「石化 ─ 白根の噴煙」 ──────────────────
+
+    'ch4_opening': [
+      { type: 'set_bg', bg: 'black' },
+      { type: 'fade_in' },
+      { type: 'narration', text: '── 第四章「石化 ─ 白根の噴煙」──' },
+      { type: 'set_phase', phase: 'ch4' },
+      { type: 'narration', text: 'アカギが石に変わった。' },
+      { type: 'narration', text: '主人公は一人、白根山方面へ手がかりを探しに向かう。' },
+      { type: 'dialog', speaker: '主人公', text: 'アカギを元に戻す方法...龝櫻なら知っているかもしれない。' },
+      { type: 'set_flag', flag: 'ch4_started' }
+    ],
+
+    'ch4_shuuou_advice': [
+      { type: 'set_bg', bg: 'village_interior' },
+      { type: 'fade_in' },
+      { type: 'show_character', name: '龝櫻', position: 'center' },
+      { type: 'dialog', speaker: '龝櫻', text: '石化を解くには、侵食の源を断つしかない。' },
+      { type: 'dialog', speaker: '龝櫻', text: '白根の火口に、結界を蝕む力の結晶がある。' },
+      { type: 'dialog', speaker: '龝櫻', text: 'だが白根は危険だ。噴煙の中に「湯隠」の長がいる。' },
+      { type: 'dialog', speaker: '龝櫻', text: '白井熊子という名だ。...油断するな。' },
+      { type: 'dialog', speaker: '主人公', text: '熊子...。行くしかない。' },
+      { type: 'set_flag', flag: 'kumako_info_received' },
+      { type: 'hide_character', name: '龝櫻' }
+    ],
+
+    'ch4_shirane_approach': [
+      { type: 'set_bg', bg: 'forest' },
+      { type: 'fade_in' },
+      { type: 'narration', text: '白根山への登山道。硫黄の匂いが鼻を刺す。' },
+      { type: 'narration', text: '霧が濃い。視界は数メートルしかない。' },
+      { type: 'dialog', speaker: '主人公', text: '一人は...やっぱり心細いな。' },
+      { type: 'check_flag', flag: 'sato_met_ch1', gotoTrue: 5, gotoFalse: 7 },
+      // gotoTrue:5
+      { type: 'dialog', speaker: '主人公', text: '佐藤が言っていた。山川と古谷。あいつらも群馬にいるのか？' },
+      { type: 'narration', text: '仲間の記憶が、かすかに蘇りかける。' },
+      // gotoFalse:7
+      { type: 'narration', text: '足元の石が崩れる。慎重に進むしかない。' },
+      { type: 'set_flag', flag: 'shirane_entered' }
+    ],
+
+    'ch4_kumako_encounter': [
+      { type: 'set_bg', bg: 'konuma' },
+      { type: 'fade_in' },
+      { type: 'narration', text: '噴煙の向こうに、人影が立っている。' },
+      { type: 'show_character', name: '熊子', position: 'center' },
+      { type: 'dialog', speaker: '熊子', text: 'あら...お客さん？' },
+      { type: 'dialog', speaker: '熊子', text: '温めてあげましょうか。体も、記憶も。' },
+      { type: 'dialog', speaker: '主人公', text: 'お前が白井熊子か...！' },
+      { type: 'dialog', speaker: '熊子', text: '怖い顔しないで。痛くないわよ。' },
+      { type: 'dialog', speaker: '熊子', text: '...全部、溶かしてあげるから。' },
+      { type: 'shake', duration: 25 },
+      { type: 'set_flag', flag: 'kumako_met' }
+    ],
+
+    'ch4_kumako_battle': [
+      { type: 'set_bg', bg: 'battle_field' },
+      { type: 'dialog', speaker: '熊子', text: '回復？ ここでは毒よ。覚えておきなさい。' },
+      { type: 'narration', text: '熊子の結界内では、回復の力が反転する！' },
+      { type: 'play_sfx', sfx: 'hit' },
+      { type: 'start_battle', enemy: 'kumako_steam' },
+      { type: 'dialog', speaker: '熊子', text: '...負けちゃった。でも、気持ちよかったわ。' },
+      { type: 'dialog', speaker: '熊子', text: 'あなたの仲間、谷川岳の先にいたわよ。' },
+      { type: 'dialog', speaker: '熊子', text: '石化を解く結晶...持っていきなさい。' },
+      { type: 'give_item', item: 'purifyStone' },
+      { type: 'set_flag', flag: 'kumako_steam_defeated' },
+      { type: 'legacy_card', cardId: 'kumako_lullaby', name: '熊子の子守唄',
+        description: '癒やしの裏の侵食の恐怖。' },
+      { type: 'hide_character', name: '熊子' }
+    ],
+
+    'ch4_yuflower_discovery': [
+      { type: 'set_bg', bg: 'konuma' },
+      { type: 'fade_in' },
+      { type: 'narration', text: '火口付近で不思議な結晶を見つけた。' },
+      { type: 'narration', text: '熱いのに冷たい。湯花が凍りついたような石。' },
+      { type: 'set_flag', flag: 'yuflower_crystal' },
+      { type: 'legacy_card', cardId: 'frozen_yuflower', name: '凍れる湯花',
+        description: '白根火口で結晶化した不思議な湯花。' }
+    ],
+
+    'ch4_ending': [
+      { type: 'set_bg', bg: 'chapter_end' },
+      { type: 'fade_in' },
+      { type: 'narration', text: '── 第四章「石化 ─ 白根の噴煙」 完 ──' },
+      { type: 'narration', text: '熊子を倒し、浄化の石を手に入れた。' },
+      { type: 'narration', text: 'アカギを元に戻せるかもしれない。' },
+      { type: 'narration', text: 'だが、谷川岳の先に何が待っているのか...。' },
+      { type: 'set_flag', flag: 'ch4_complete' },
+      { type: 'end_chapter', next: 5 },
+      { type: 'fade_out' }
+    ],
+
+    // ── 第5章「学園 ─ 上毛の教室」 ──────────────────
+
+    'ch5_opening': [
+      { type: 'set_bg', bg: 'black' },
+      { type: 'fade_in' },
+      { type: 'narration', text: '── 第五章「学園 ─ 上毛の教室」──' },
+      { type: 'set_phase', phase: 'ch5' },
+      { type: 'narration', text: '旅の途中、不思議な建物に迷い込んだ。' },
+      { type: 'narration', text: '校門には「県立上毛学園」の看板。' },
+      { type: 'dialog', speaker: '主人公', text: '...学校？なぜこんな場所に。' },
+      { type: 'set_flag', flag: 'ch5_started' },
+      { type: 'set_flag', flag: 'gakuen_entered' }
+    ],
+
+    'ch5_gakuen_explore': [
+      { type: 'set_bg', bg: 'village_interior' },
+      { type: 'fade_in' },
+      { type: 'narration', text: '廊下を歩く。チャイムが鳴る。' },
+      { type: 'play_sfx', sfx: 'confirm' },
+      { type: 'narration', text: '教室には机が並んでいるが、座っているのは影のような生徒たち。' },
+      { type: 'dialog', speaker: '主人公', text: 'この学校は...記憶の中の場所なのか？' },
+      { type: 'dialog', speaker: '主人公', text: '待て...あの席。あれは佐藤の席だ。' },
+      { type: 'narration', text: '佐藤の席には、ノートの切れ端が残されていた。' },
+      { type: 'dialog', speaker: '主人公', text: '「ここにいたい」...佐藤が書いたのか？' },
+      { type: 'set_flag', flag: 'sato_seat_found' },
+      { type: 'legacy_card', cardId: 'empty_seat_note', name: '空席のノートの切れ端',
+        description: '佐藤の席で見つけたメモ。' }
+    ],
+
+    'ch5_missing_photo': [
+      { type: 'set_bg', bg: 'village_interior' },
+      { type: 'fade_in' },
+      { type: 'narration', text: '職員室の壁に、古い卒業写真が飾られている。' },
+      { type: 'dialog', speaker: '主人公', text: 'これは...俺たちの写真？' },
+      { type: 'narration', text: '写真の中の一人だけ、顔が白く飛んでいる。' },
+      { type: 'dialog', speaker: '主人公', text: '佐藤の顔が...消えている。' },
+      { type: 'dialog', speaker: '主人公', text: '記憶のアンカーが欠けている、ということか...？' },
+      { type: 'set_flag', flag: 'missing_photo_found' },
+      { type: 'legacy_card', cardId: 'missing_photo', name: '欠けた卒業写真',
+        description: '佐藤の顔だけが白く飛んだ写真。' }
+    ],
+
+    'ch5_gakuencho_encounter': [
+      { type: 'set_bg', bg: 'village_interior' },
+      { type: 'fade_in' },
+      { type: 'show_character', name: '学園長', position: 'center' },
+      { type: 'dialog', speaker: '学園長', text: '...授業中ですよ。席に着きなさい。' },
+      { type: 'dialog', speaker: '主人公', text: 'あなたは...？' },
+      { type: 'dialog', speaker: '学園長', text: 'この学園は、記憶を書き換える場所です。' },
+      { type: 'dialog', speaker: '学園長', text: '侵食された記憶を正しく上書きし、安全に保つ。' },
+      { type: 'dialog', speaker: '学園長', text: 'あなたの仲間の佐藤くんも...ここで書き換えられた。' },
+      { type: 'dialog', speaker: '主人公', text: '佐藤の記憶が書き換えられた...？' },
+      { type: 'dialog', speaker: '学園長', text: '彼は自分からそれを望んだのです。' },
+      { type: 'dialog', speaker: '学園長', text: '「現実に帰りたくない」と。' },
+      { type: 'shake', duration: 20 },
+      { type: 'set_flag', flag: 'gakuencho_truth' },
+      { type: 'hide_character', name: '学園長' }
+    ],
+
+    'ch5_juke_confrontation': [
+      { type: 'set_bg', bg: 'battle_field' },
+      { type: 'fade_in' },
+      { type: 'narration', text: '屋上に立つ影。風が強い。' },
+      { type: 'dialog', speaker: 'ジューク', text: 'お前がここまで来るとはな。' },
+      { type: 'dialog', speaker: 'ジューク', text: '掟を壊す気か？この土地のルールを。' },
+      { type: 'dialog', speaker: '主人公', text: '佐藤を連れ戻す。それだけだ。' },
+      { type: 'dialog', speaker: 'ジューク', text: 'お前はただのプレイヤーだ。' },
+      { type: 'dialog', speaker: 'ジューク', text: '掟の痛みを知れ。' },
+      { type: 'start_battle', enemy: 'juke_gakuen' },
+      { type: 'dialog', speaker: 'ジューク', text: '...なるほど。お前のダイスは確かに強い。' },
+      { type: 'dialog', speaker: 'ジューク', text: 'だが佐藤は...自分の意志でここにいる。' },
+      { type: 'dialog', speaker: 'ジューク', text: 'それでも連れ戻すのか？' },
+      { type: 'choice', speaker: '主人公', text: '...。', choices: [
+        { text: 'それでも連れ帰る', goto: 15 },
+        { text: '佐藤の意志を尊重する', goto: 17 }
+      ]},
+      // goto:15
+      { type: 'dialog', speaker: '主人公', text: 'あいつが望んでいなくても、俺はあいつを迎えに来た。' },
+      { type: 'set_flag', flag: 'sato_rescue_determined' },
+      // goto:17
+      { type: 'dialog', speaker: '主人公', text: '...佐藤に、直接聞きたい。' },
+      { type: 'set_flag', flag: 'sato_will_respected' },
+      { type: 'set_flag', flag: 'juke_gakuen_defeated' },
+      { type: 'legacy_card', cardId: 'juke_taunt', name: 'ジュークの挑発状',
+        description: '掟を突きつけるライバルの怒り。' }
+    ],
+
+    'ch5_ending': [
+      { type: 'set_bg', bg: 'chapter_end' },
+      { type: 'fade_in' },
+      { type: 'narration', text: '── 第五章「学園 ─ 上毛の教室」 完 ──' },
+      { type: 'narration', text: '佐藤の記憶は書き換えられていた。' },
+      { type: 'narration', text: '彼自身の意志で。' },
+      { type: 'narration', text: 'それでも...谷川岳の先に、答えがあるはずだ。' },
+      { type: 'set_flag', flag: 'ch5_complete' },
+      { type: 'end_chapter', next: 6 },
+      { type: 'fade_out' }
+    ],
+
+    // ── 第6章「国境 ─ 谷川岳のトンネル」 ──────────────
+
+    'ch6_opening': [
+      { type: 'set_bg', bg: 'black' },
+      { type: 'fade_in' },
+      { type: 'narration', text: '── 第六章「国境 ─ 谷川岳のトンネル」──' },
+      { type: 'set_phase', phase: 'ch6' },
+      { type: 'narration', text: '谷川岳。群馬と新潟の県境。' },
+      { type: 'narration', text: '結界が最も深い場所。国境のトンネルが待っている。' },
+      { type: 'dialog', speaker: '主人公', text: 'ここまで来た。あとは...トンネルを越えるだけだ。' },
+      { type: 'set_flag', flag: 'ch6_started' }
+    ],
+
+    'ch6_akagi_revival': [
+      { type: 'set_bg', bg: 'akagi_shrine' },
+      { type: 'fade_in' },
+      { type: 'narration', text: '浄化の石を、アカギの石化した体に当てる。' },
+      { type: 'pause', duration: 60 },
+      { type: 'shake', duration: 40 },
+      { type: 'play_sfx', sfx: 'victory' },
+      { type: 'narration', text: '── ひびが入り、石の殻が砕けていく。' },
+      { type: 'show_character', name: 'アカギ', position: 'center' },
+      { type: 'dialog', speaker: 'アカギ', text: '...ぐっ...ここは...。' },
+      { type: 'dialog', speaker: '主人公', text: 'アカギ！目が覚めたか！' },
+      { type: 'dialog', speaker: 'アカギ', text: '...ああ。長い夢を見ていたような気がする。' },
+      { type: 'dialog', speaker: 'アカギ', text: '...お前、一人でここまで来たのか。' },
+      { type: 'dialog', speaker: '主人公', text: '当たり前だ。仲間だろ。' },
+      { type: 'party_join', id: 'akagi', name: 'アカギ' },
+      { type: 'set_flag', flag: 'akagi_revived' },
+      { type: 'set_flag', flag: 'party_akagi_restored' },
+      { type: 'legacy_card', cardId: 'akagi_revival', name: 'アカギの復活',
+        description: '石の殻を破り、再び立ち上がった案内人。' },
+      { type: 'hide_character', name: 'アカギ' }
+    ],
+
+    'ch6_kazekaeshi_village': [
+      { type: 'set_bg', bg: 'village' },
+      { type: 'fade_in' },
+      { type: 'narration', text: '風返しの村。谷川岳の麓にある小さな集落。' },
+      { type: 'narration', text: 'ここでは本名を名乗ると、存在が消されるという。' },
+      { type: 'dialog', speaker: 'アカギ', text: '偽名を使え。本名は絶対に言うな。' },
+      { type: 'dialog', speaker: '主人公', text: '...俺は本名を知らないから、逆に安全かもな。' },
+      { type: 'dialog', speaker: 'アカギ', text: '...皮肉なものだ。' },
+      { type: 'set_flag', flag: 'kazekaeshi_visited' },
+      { type: 'set_flag', flag: 'return_name_event' }
+    ],
+
+    'ch6_echo_guardian_battle': [
+      { type: 'set_bg', bg: 'forest' },
+      { type: 'fade_in' },
+      { type: 'narration', text: 'トンネルの入口に、反響のように揺れる影が立っている。' },
+      { type: 'dialog', speaker: '返声の番', text: '...お前の名前を、しばらく借りるぞ。' },
+      { type: 'dialog', speaker: 'アカギ', text: '名前を奪う番人か。気をつけろ！' },
+      { type: 'start_battle', enemy: 'echo_guardian' },
+      { type: 'dialog', speaker: '返声の番', text: '...お前の名前は...結局、空っぽだった。' },
+      { type: 'dialog', speaker: '主人公', text: '空っぽでも、俺は俺だ。' },
+      { type: 'set_flag', flag: 'echo_guardian_defeated' },
+      { type: 'give_item', item: 'echoBell' },
+      { type: 'legacy_card', cardId: 'echo_bell', name: '反響の鈴',
+        description: '返声の番が落とした鈴。' }
+    ],
+
+    'ch6_tunnel_entrance': [
+      { type: 'set_bg', bg: 'black' },
+      { type: 'fade_in' },
+      { type: 'narration', text: '国境のトンネル。暗闇が続く。' },
+      { type: 'narration', text: '足音だけが反響する。' },
+      { type: 'dialog', speaker: 'アカギ', text: '...この先は結界の最深部だ。' },
+      { type: 'dialog', speaker: 'アカギ', text: '名前を捨てなければ、通れないかもしれない。' },
+      { type: 'dialog', speaker: '主人公', text: '名前を捨てる...？' },
+      { type: 'dialog', speaker: 'アカギ', text: '自分が何者かを忘れることで、結界をすり抜ける。' },
+      { type: 'dialog', speaker: 'アカギ', text: '...危険な賭けだ。' },
+      { type: 'set_flag', flag: 'tunnel_entered' },
+      { type: 'set_flag', flag: 'border_tunnel' }
+    ],
+
+    'ch6_sato_kumako_tunnel': [
+      { type: 'set_bg', bg: 'black' },
+      { type: 'shake', duration: 30 },
+      { type: 'narration', text: 'トンネルの奥で、佐藤が立ちはだかっている。' },
+      { type: 'narration', text: '...その隣に、溶けかけた熊子の影。' },
+      { type: 'show_character', name: '佐藤', position: 'left' },
+      { type: 'show_character', name: '熊子', position: 'right' },
+      { type: 'dialog', speaker: '佐藤', text: '来るな。俺はもう...戻れない。' },
+      { type: 'dialog', speaker: '佐藤', text: '現実になんか帰りたくない。ここがいいんだ。' },
+      { type: 'dialog', speaker: '熊子', text: '佐藤くんは私が守るわ。温かくしてあげる。' },
+      { type: 'dialog', speaker: '主人公', text: '佐藤...！目を覚ませ！' },
+      { type: 'dialog', speaker: '佐藤', text: 'お前らの現実は...俺が絶対に守る！' },
+      { type: 'start_battle', enemy: 'sato_kumako_tunnel' },
+      { type: 'clear_characters' },
+      { type: 'dialog', speaker: '佐藤', text: '...もうやめろ。分かった。分かったよ。' },
+      { type: 'dialog', speaker: '佐藤', text: 'でも...俺のポケットにこれがある限り。' },
+      { type: 'narration', text: '佐藤のポケットから、新宿行きの切符が落ちた。' },
+      { type: 'give_item', item: 'shinjukuTicket' },
+      { type: 'set_flag', flag: 'sato_kumako_tunnel_cleared' },
+      { type: 'legacy_card', cardId: 'shinjuku_ticket', name: '現実の切符（新宿）',
+        description: '現実は、まだ繋がっている。' },
+      { type: 'dialog', speaker: '佐藤', text: '...先に行け。俺は...もう少しだけ、ここにいる。' },
+      { type: 'dialog', speaker: '主人公', text: '待ってるからな。絶対に迎えに来る。' }
+    ],
+
+    'ch6_ending': [
+      { type: 'set_bg', bg: 'chapter_end' },
+      { type: 'fade_in' },
+      { type: 'narration', text: '── 第六章「国境 ─ 谷川岳のトンネル」 完 ──' },
+      { type: 'narration', text: 'アカギの復活。国境のトンネル。' },
+      { type: 'narration', text: '佐藤は「戻れない」と言った。' },
+      { type: 'narration', text: 'だが新宿行きの切符が、現実への道を示している。' },
+      { type: 'narration', text: '旅は、後半へと続く──' },
+      { type: 'set_flag', flag: 'ch6_complete' },
+      { type: 'end_chapter', next: 7 },
+      { type: 'fade_out' }
     ]
   };
 
@@ -988,6 +1294,60 @@ Game.Story = (function() {
 
       case 'chapter_end':
         R.drawRectAbsolute(0, 0, C.CANVAS_WIDTH, C.CANVAS_HEIGHT, '#0a0a1a');
+        break;
+
+      case 'gakuen':
+        // School interior (ch5)
+        R.drawRectAbsolute(0, 0, C.CANVAS_WIDTH, C.CANVAS_HEIGHT, '#2a2a3a');
+        R.drawRectAbsolute(0, 200, C.CANVAS_WIDTH, 120, '#4a4a3a');
+        // Desks
+        for (var d = 0; d < 4; d++) {
+          ctx.fillStyle = '#5a4a3a';
+          ctx.fillRect(60 + d * 100, 140, 60, 30);
+          ctx.fillStyle = '#4a3a2a';
+          ctx.fillRect(70 + d * 100, 170, 10, 30);
+          ctx.fillRect(110 + d * 100, 170, 10, 30);
+        }
+        // Blackboard
+        R.drawRectAbsolute(100, 20, 280, 100, '#2a4a2a');
+        R.drawRectAbsolute(105, 25, 270, 90, '#1a3a1a');
+        R.drawTextJP('上毛学園', 190, 60, '#aaccaa', 14);
+        break;
+
+      case 'tunnel':
+        // Dark tunnel (ch6)
+        R.drawRectAbsolute(0, 0, C.CANVAS_WIDTH, C.CANVAS_HEIGHT, '#050508');
+        // Tunnel walls
+        ctx.fillStyle = '#1a1a22';
+        ctx.beginPath();
+        ctx.moveTo(0, 0); ctx.lineTo(120, 80); ctx.lineTo(120, 240); ctx.lineTo(0, 320);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(480, 0); ctx.lineTo(360, 80); ctx.lineTo(360, 240); ctx.lineTo(480, 320);
+        ctx.fill();
+        // Rails
+        R.drawRectAbsolute(140, 260, 200, 3, '#333');
+        R.drawRectAbsolute(140, 275, 200, 3, '#333');
+        // Faint light at end
+        ctx.fillStyle = 'rgba(180,200,220,0.08)';
+        ctx.beginPath();
+        ctx.arc(240, 160, 40, 0, Math.PI * 2);
+        ctx.fill();
+        break;
+
+      case 'shirane':
+        // Mt Shirane volcanic area (ch4)
+        R.drawRectAbsolute(0, 0, C.CANVAS_WIDTH, C.CANVAS_HEIGHT, '#1a1a0a');
+        R.drawRectAbsolute(0, 180, C.CANVAS_WIDTH, 140, '#3a3a1a');
+        // Sulfur vents
+        for (var v = 0; v < 5; v++) {
+          var vx = 40 + v * 95;
+          ctx.fillStyle = '#4a4a1a';
+          ctx.fillRect(vx, 165, 20, 15);
+          ctx.fillStyle = 'rgba(220,220,100,0.15)';
+          var st = Date.now() / 1500 + v;
+          ctx.fillRect(vx - 10, 100 + Math.sin(st) * 20, 40, 60);
+        }
         break;
 
       default:

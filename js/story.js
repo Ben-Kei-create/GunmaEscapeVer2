@@ -26,6 +26,55 @@ Game.Story = (function() {
   var pauseTimer = 0;
   var bgmOverride = null;
 
+  // Character portraits (8x8 pixel grids, scaled to 64x64)
+  var portraits = {
+    '主人公': { color: '#888888', accent: '#aaaaaa', label: '?' },
+    'アカギ': { color: '#8b4422', accent: '#cc6633', label: 'A' },
+    '龝櫻':  { color: '#333344', accent: '#555566', label: '翁' },
+    '国定忠治': { color: '#223366', accent: '#4455aa', label: '忠' },
+    'ナンバー12': { color: '#222222', accent: '#444444', label: '12' },
+    '花':    { color: '#cc88aa', accent: '#ffaacc', label: '花' },
+    '佐藤':  { color: '#3366aa', accent: '#5588cc', label: '佐' },
+    'ユウマ': { color: '#664422', accent: '#886633', label: '幽' }
+  };
+
+  // Chapter 3 story scenes
+  var ch3Scenes = {
+    'ch3_foreshadow': [
+      { type: 'set_bg', bg: 'black' },
+      { type: 'fade_in' },
+      { type: 'narration', text: '...夢を見ている。' },
+      { type: 'dialog', speaker: '主人公', text: 'ユウマさんに連れていかれた...？' },
+      { type: 'dialog', speaker: '主人公', text: '佐藤の置き手紙にあった名前だ。' },
+      { type: 'dialog', speaker: 'アカギ', text: 'ユウマは群馬の奥地に消えた人物だ。' },
+      { type: 'dialog', speaker: 'アカギ', text: '谷川岳の向こう...新潟との県境に何かがある。' },
+      { type: 'choice', speaker: 'アカギ', text: 'どうする？', choices: [
+        { text: '調べに行く', goto: 8 },
+        { text: '仲間を待つ', goto: 10 }
+      ]},
+      { type: 'dialog', speaker: '主人公', text: '行こう。真実を確かめなければ。' },
+      { type: 'narration', text: '第三章へ続く...' },
+      { type: 'dialog', speaker: '主人公', text: '...まずは仲間を集めよう。' },
+      { type: 'narration', text: '第三章へ続く...' }
+    ],
+    'yuuma_clue_1': [
+      { type: 'set_bg', bg: 'village_interior' },
+      { type: 'dialog', speaker: '謎の商人', text: 'ユウマ？...ああ、あの男か。' },
+      { type: 'dialog', speaker: '謎の商人', text: '三国峠を越えていったよ。もう何年も前の話だがね。' },
+      { type: 'dialog', speaker: '謎の商人', text: '群馬と新潟の境...あそこには不思議な力が渦巻いている。' }
+    ],
+    'friend_flashback': [
+      { type: 'set_bg', bg: 'black' },
+      { type: 'fade_in' },
+      { type: 'narration', text: '記憶が蘇る...' },
+      { type: 'dialog', speaker: '主人公', text: '下北沢を出たあの日...4人で笑っていた。' },
+      { type: 'dialog', speaker: '主人公', text: '佐藤は運転しながら歌っていた。フルヤはずっとスマホをいじっていた。' },
+      { type: 'dialog', speaker: '主人公', text: '山川は助手席で地図を広げて...「群馬って何があるんだ？」' },
+      { type: 'dialog', speaker: '主人公', text: '...全部、思い出せる。なのに自分の名前だけが...' },
+      { type: 'fade_out' }
+    ]
+  };
+
   // Story progress flags
   function setFlag(flag) { storyFlags[flag] = true; }
   function hasFlag(flag) { return !!storyFlags[flag]; }
@@ -319,10 +368,20 @@ Game.Story = (function() {
     // Handle shake
     if (shakeTimer > 0) shakeTimer--;
 
-    // Handle typewriter effect
+    // Handle typewriter effect with variable speed
     if (typewriterText && typewriterIndex < typewriterText.length) {
       typewriterTimer++;
-      if (typewriterTimer >= typewriterSpeed) {
+      // Variable speed: pause longer on punctuation
+      var currentChar = typewriterText.charAt(typewriterIndex);
+      var charSpeed = typewriterSpeed;
+      if (currentChar === '。' || currentChar === '…' || currentChar === '！' || currentChar === '？') {
+        charSpeed = typewriterSpeed + 8; // pause on punctuation
+      } else if (currentChar === '、' || currentChar === ',') {
+        charSpeed = typewriterSpeed + 4;
+      } else if (currentChar === '*') {
+        charSpeed = typewriterSpeed * 2; // dramatic text marker
+      }
+      if (typewriterTimer >= charSpeed) {
         typewriterTimer = 0;
         typewriterIndex++;
         currentText = typewriterText.substring(0, typewriterIndex);
@@ -427,6 +486,11 @@ Game.Story = (function() {
 
     ctx.restore();
 
+    // Draw character portrait if speaker has one
+    if (currentSpeaker && portraits[currentSpeaker]) {
+      drawPortrait(R, C, currentSpeaker);
+    }
+
     // Draw dialog box if we have text
     if (currentText || (choices && choices.length > 0)) {
       drawStoryDialog(R, C);
@@ -437,6 +501,21 @@ Game.Story = (function() {
       ctx.fillStyle = 'rgba(0,0,0,' + fadeAlpha + ')';
       ctx.fillRect(0, 0, C.CANVAS_WIDTH, C.CANVAS_HEIGHT);
     }
+  }
+
+  function drawPortrait(R, C, speaker) {
+    var p = portraits[speaker];
+    if (!p) return;
+    var px = 12, py = C.CANVAS_HEIGHT - 100 - 70;
+    // Portrait frame
+    R.drawRectAbsolute(px - 2, py - 2, 68, 68, '#888');
+    R.drawRectAbsolute(px, py, 64, 64, p.color);
+    // Accent rectangle (face area)
+    R.drawRectAbsolute(px + 16, py + 12, 32, 24, p.accent);
+    // Label
+    R.drawTextJP(p.label, px + 20, py + 40, '#fff', 16);
+    // Name below portrait
+    R.drawTextJP(speaker, px, py + 66, '#ccc', 9);
   }
 
   function drawSceneBg(R, C, scene) {
@@ -723,6 +802,26 @@ Game.Story = (function() {
     pauseTimer = 0;
   }
 
+  // Start a named Ch3 scene
+  function startCh3Scene(sceneId, callback) {
+    var scene = ch3Scenes[sceneId];
+    if (scene) startEvent(scene, callback);
+  }
+
+  // Save/load story flags to localStorage
+  function saveFlags() {
+    try {
+      localStorage.setItem('gunmaEscape_storyFlags', JSON.stringify(storyFlags));
+    } catch (e) {}
+  }
+
+  function loadFlags() {
+    try {
+      var saved = localStorage.getItem('gunmaEscape_storyFlags');
+      if (saved) storyFlags = JSON.parse(saved);
+    } catch (e) {}
+  }
+
   return {
     startEvent: startEvent,
     queueEvent: queueEvent,
@@ -736,6 +835,9 @@ Game.Story = (function() {
     setPhase: setPhase,
     getChapter: getChapter,
     getBgImage: getBgImage,
-    reset: reset
+    reset: reset,
+    startCh3Scene: startCh3Scene,
+    saveFlags: saveFlags,
+    loadFlags: loadFlags
   };
 })();

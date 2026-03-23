@@ -1,4 +1,4 @@
-// Battle system with special dice
+// Battle system with special dice, status effects, combo, and boss phases
 Game.Battle = (function() {
   var active = false;
   var enemy = null;
@@ -20,6 +20,15 @@ Game.Battle = (function() {
   var currentDice = 0;
   var diceFlashTimer = 0;
   var healTotal = 0;       // total healing from heal dice
+
+  // Status effects system
+  var playerEffects = [];  // { type, turnsLeft, value }
+  var enemyEffects = [];
+  var comboText = '';
+  var comboTimer = 0;
+  var comboMultiplier = 1;
+  var bossEnraged = false;
+  var enrageTimer = 0;
 
   var enemies = {
     onsenMonkey: {
@@ -45,6 +54,30 @@ Game.Battle = (function() {
         [0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0]
       ],
       palette: { 1:'#553322', 2:'#aa7744', 3:'#111', 4:'#cc6666' }
+    },
+    ishidanGuard: {
+      name: '石段番人',
+      hp: 55, maxHp: 55,
+      attack: 14, defense: 5, goldReward: 80,
+      sprite: [
+        [0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0],
+        [0,0,0,1,2,2,2,2,2,2,1,0,0,0,0,0],
+        [0,0,0,1,2,2,2,2,2,2,1,0,0,0,0,0],
+        [0,0,0,1,3,2,2,2,3,2,1,0,0,0,0,0],
+        [0,0,0,1,2,2,4,4,2,2,1,0,0,0,0,0],
+        [0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0],
+        [0,0,0,1,5,5,5,5,5,5,1,0,0,0,0,0],
+        [0,0,1,5,5,5,5,5,5,5,5,1,0,0,0,0],
+        [0,0,1,5,5,5,5,5,5,5,5,1,0,0,0,0],
+        [0,0,0,1,5,5,5,5,5,5,1,0,0,0,0,0],
+        [0,0,0,1,5,5,5,5,5,5,1,0,0,0,0,0],
+        [0,0,0,1,6,6,0,0,6,6,1,0,0,0,0,0],
+        [0,0,0,1,6,6,0,0,6,6,1,0,0,0,0,0],
+        [0,0,0,0,7,7,0,0,7,7,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+      ],
+      palette: { 1:'#554433', 2:'#aa8866', 3:'#111', 4:'#cc9966', 5:'#665544', 6:'#443322', 7:'#332211' }
     },
     cabbage: {
       name: '巨大キャベツ',
@@ -147,6 +180,58 @@ Game.Battle = (function() {
 
   var menuItems = ['たたかう', 'アイテム', 'にげる'];
 
+  // Status effect helpers
+  function addEffect(list, type, turnsLeft, value) {
+    // Don't stack same type, refresh instead
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].type === type) {
+        list[i].turnsLeft = turnsLeft;
+        list[i].value = value;
+        return;
+      }
+    }
+    list.push({ type: type, turnsLeft: turnsLeft, value: value });
+  }
+
+  function tickEffects(list) {
+    for (var i = list.length - 1; i >= 0; i--) {
+      list[i].turnsLeft--;
+      if (list[i].turnsLeft <= 0) list.splice(i, 1);
+    }
+  }
+
+  function hasEffect(list, type) {
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].type === type) return list[i];
+    }
+    return null;
+  }
+
+  function getEffectBonus(list, type) {
+    var e = hasEffect(list, type);
+    return e ? e.value : 0;
+  }
+
+  // Combo detection: count matching dice values
+  function detectCombo(results) {
+    var counts = {};
+    for (var i = 0; i < results.length; i++) {
+      var p = parseFace(results[i]);
+      if (p.type === 'damage' && p.value > 0) {
+        var k = p.value;
+        counts[k] = (counts[k] || 0) + 1;
+      }
+    }
+    var maxCount = 0;
+    for (var k in counts) {
+      if (counts[k] > maxCount) maxCount = counts[k];
+    }
+    if (maxCount >= 4) return { mult: 2.0, text: '群馬フィーバー！×2.0' };
+    if (maxCount >= 3) return { mult: 1.5, text: 'トリプル！×1.5' };
+    if (maxCount >= 2) return { mult: 1.2, text: 'コンボ！×1.2' };
+    return { mult: 1.0, text: '' };
+  }
+
   function start(enemyId, npc) {
     active = true;
     npcRef = npc;
@@ -155,6 +240,13 @@ Game.Battle = (function() {
     phase = 'menu';
     message = enemy.name + 'が現れた！';
     messageTimer = 60;
+    playerEffects = [];
+    enemyEffects = [];
+    comboText = '';
+    comboTimer = 0;
+    comboMultiplier = 1;
+    bossEnraged = false;
+    enrageTimer = 0;
     Game.Audio.stopBgm();
     Game.Audio.playBgm('battle');
   }
@@ -271,21 +363,65 @@ Game.Battle = (function() {
               }
             }
 
+            // Combo detection
+            var combo = detectCombo(diceResults);
+            comboMultiplier = combo.mult;
+            comboText = combo.text;
+            comboTimer = combo.text ? 60 : 0;
+
+            // Apply status effect bonuses
+            var atkBonus = getEffectBonus(playerEffects, 'attack_up');
+            var enemyDefReduction = hasEffect(enemyEffects, 'stun') ? Math.floor(enemy.defense / 2) : 0;
+
             phase = 'diceResult';
             animTimer = 30;
 
-            // Apply damage
-            var dmg = Math.max(0, damageTotal + Game.Player.getAttack() - enemy.defense);
+            // Apply damage with combo multiplier
+            var baseDmg = damageTotal + Game.Player.getAttack() + atkBonus - (enemy.defense - enemyDefReduction);
+            var dmg = Math.max(0, Math.floor(baseDmg * comboMultiplier));
             if (damageTotal > 0 && dmg < 1) dmg = 1;
             if (dmg > 0) {
               enemy.hp -= dmg;
               shakeX = 4 + battleDice.length;
               Game.Audio.playSfx('hit');
+              if (Game.Particles) Game.Particles.emit('damage', 280, 60, { count: 8 });
             }
 
-            // Apply healing
-            if (healTotal > 0) {
-              Game.Player.heal(healTotal);
+            // Apply healing (including onsen_heal effect)
+            var onsenHeal = getEffectBonus(playerEffects, 'onsen_heal');
+            if (healTotal > 0 || onsenHeal > 0) {
+              Game.Player.heal(healTotal + onsenHeal);
+              if (Game.Particles) Game.Particles.emit('heal', 100, 210, { count: 5 });
+            }
+
+            // Trigger status effects from dice types
+            for (var d = 0; d < battleDice.length; d++) {
+              if (!diceResults[d]) continue;
+              var dp = parseFace(diceResults[d]);
+              var diceId = battleDice[d].id || '';
+              if (diceId === 'fireDice' && dp.type === 'damage' && dp.value >= 7) {
+                addEffect(enemyEffects, 'burn', 3, 5);
+              }
+              if (diceId === 'onsenDice' && dp.type === 'heal') {
+                addEffect(playerEffects, 'onsen_heal', 2, 3);
+              }
+              if (diceId === 'konnyakuDice' && dp.type === 'damage' && dp.value >= 10) {
+                addEffect(enemyEffects, 'stun', 1, 0);
+              }
+              if (diceId === 'gunmaDice' && dp.type === 'damage' && dp.value >= 10) {
+                addEffect(playerEffects, 'attack_up', 2, 5);
+                if (Game.Particles) Game.Particles.emit('thunder', 240, 100, { count: 12 });
+              }
+              if (diceId === 'cabbageDice' && dp.type === 'damage' && dp.value >= 15) {
+                addEffect(playerEffects, 'defense_up', 2, 5);
+              }
+            }
+
+            // Apply burn damage to enemy
+            var burnEff = hasEffect(enemyEffects, 'burn');
+            if (burnEff) {
+              enemy.hp -= burnEff.value;
+              dmg += burnEff.value;
             }
 
             // Build message
@@ -296,10 +432,21 @@ Game.Battle = (function() {
             if (healTotal > 0) {
               msgParts.push('HP' + healTotal + '回復');
             }
+            if (comboText) {
+              msgParts.push(comboText);
+            }
             if (msgParts.length === 0) {
               message = 'ミス！何も起きなかった...';
             } else {
               message = msgParts.join('！ ') + '！';
+            }
+
+            // Boss enrage check (HP > 100 and below 50%)
+            if (!bossEnraged && enemy.maxHp > 100 && enemy.hp > 0 && enemy.hp <= enemy.maxHp / 2) {
+              bossEnraged = true;
+              enrageTimer = 60;
+              enemy.attack = Math.floor(enemy.attack * 1.2);
+              message += ' 怒り状態！';
             }
 
             if (enemy.hp <= 0) {
@@ -307,6 +454,7 @@ Game.Battle = (function() {
               phase = 'victory';
               message = message + ' ' + enemy.name + 'を倒した！ ' + (enemy.goldReward || 50) + 'G獲得！';
               messageTimer = 60;
+              if (Game.Particles) Game.Particles.emit('victory', 240, 100, { count: 30 });
             }
           } else {
             message = '次のサイコロ！ 止めろ！';
@@ -329,27 +477,40 @@ Game.Battle = (function() {
       case 'playerAttack':
         animTimer--;
         if (animTimer <= 0) {
-          phase = 'enemyAttack';
-          var playerData = Game.Player.getData();
-          var dmg = Math.max(1, enemy.attack - Game.Player.getDefense() + Math.floor(Math.random() * 5));
-          playerData.hp -= dmg;
-          message = enemy.name + 'の攻撃！ ' + dmg + 'ダメージ！';
-          messageTimer = 45;
-          Game.Audio.playSfx('damage');
-          shakeX = 5;
+          // Check if enemy is stunned
+          var stunned = hasEffect(enemyEffects, 'stun');
+          if (stunned) {
+            phase = 'enemyAttack';
+            message = enemy.name + 'は痺れて動けない！';
+            messageTimer = 45;
+          } else {
+            phase = 'enemyAttack';
+            var playerData = Game.Player.getData();
+            var defBonus = getEffectBonus(playerEffects, 'defense_up');
+            var dmg = Math.max(1, enemy.attack - (Game.Player.getDefense() + defBonus) + Math.floor(Math.random() * 5));
+            playerData.hp -= dmg;
+            message = enemy.name + 'の攻撃！ ' + dmg + 'ダメージ！';
+            messageTimer = 45;
+            Game.Audio.playSfx('damage');
+            shakeX = 5;
+            if (Game.Particles) Game.Particles.emit('damage', 100, 220, { count: 6 });
 
-          if (playerData.hp <= 0) {
-            playerData.hp = 0;
-            phase = 'defeat';
-            message = '力尽きた...';
-            messageTimer = 90;
-            Game.Audio.stopBgm();
-            Game.Audio.playSfx('gameover');
+            if (playerData.hp <= 0) {
+              playerData.hp = 0;
+              phase = 'defeat';
+              message = '力尽きた...';
+              messageTimer = 90;
+              Game.Audio.stopBgm();
+              Game.Audio.playSfx('gameover');
+            }
           }
         }
         break;
 
       case 'enemyAttack':
+        // Tick status effects at end of round
+        tickEffects(playerEffects);
+        tickEffects(enemyEffects);
         phase = 'menu';
         break;
 
@@ -530,13 +691,52 @@ Game.Battle = (function() {
     // Enemy
     if (enemy) {
       var ex = 200 + (shakeX > 0 ? (Math.random() - 0.5) * shakeX : 0);
-      R.drawSpriteAbsolute(enemy.sprite, ex, 30, enemy.palette, 5);
+      // Boss enrage: tint palette red
+      var pal = enemy.palette;
+      if (bossEnraged) {
+        pal = {};
+        for (var pk in enemy.palette) {
+          pal[pk] = enemy.palette[pk];
+        }
+        // Shift color 1 to reddish when enraged
+        pal[1] = '#882222';
+      }
+      R.drawSpriteAbsolute(enemy.sprite, ex, 30, pal, 5);
+
+      // Enrage text
+      if (enrageTimer > 0) {
+        enrageTimer--;
+        R.drawTextJP('怒り状態！', 220, 20, '#ff4444', 14);
+      }
 
       R.drawRectAbsolute(160, 120, 160, 12, '#333');
       var hpRatio = enemy.hp / enemy.maxHp;
       R.drawRectAbsolute(161, 121, 158 * hpRatio, 10,
         hpRatio > 0.3 ? C.COLORS.HP_GREEN : C.COLORS.HP_RED);
       R.drawTextJP(enemy.name + ' HP:' + enemy.hp + '/' + enemy.maxHp, 160, 135, '#fff', 12);
+
+      // Enemy status effect icons
+      var esx = 160;
+      for (var ei = 0; ei < enemyEffects.length; ei++) {
+        var eLabel = '';
+        var eCol = '#fff';
+        switch (enemyEffects[ei].type) {
+          case 'burn': eLabel = '炎'; eCol = '#ff4422'; break;
+          case 'stun': eLabel = '痺'; eCol = '#ffdd22'; break;
+        }
+        if (eLabel) {
+          R.drawRectAbsolute(esx, 148, 16, 14, 'rgba(0,0,0,0.6)');
+          R.drawTextJP(eLabel, esx + 1, 149, eCol, 10);
+          esx += 18;
+        }
+      }
+    }
+
+    // Combo text display
+    if (comboTimer > 0) {
+      comboTimer--;
+      var comboCol = comboMultiplier >= 2.0 ? '#ff44ff' : '#ffdd44';
+      R.drawTextJP(comboText, 180, 155, comboCol, 16);
     }
 
     // Player stats
@@ -548,6 +748,23 @@ Game.Battle = (function() {
     var playerHpRatio = pd.hp / pd.maxHp;
     R.drawRectAbsolute(26, 231, 168 * playerHpRatio, 8,
       playerHpRatio > 0.3 ? C.COLORS.HP_GREEN : C.COLORS.HP_RED);
+
+    // Player status effect icons
+    var psx = 25;
+    for (var pi = 0; pi < playerEffects.length; pi++) {
+      var pLabel = '';
+      var pCol = '#fff';
+      switch (playerEffects[pi].type) {
+        case 'attack_up': pLabel = '攻↑'; pCol = '#ff6644'; break;
+        case 'defense_up': pLabel = '防↑'; pCol = '#4488ff'; break;
+        case 'onsen_heal': pLabel = '湯'; pCol = '#44dd44'; break;
+      }
+      if (pLabel) {
+        R.drawRectAbsolute(psx, 242, 20, 14, 'rgba(0,0,0,0.6)');
+        R.drawTextJP(pLabel, psx + 1, 243, pCol, 9);
+        psx += 22;
+      }
+    }
 
     // Dice display
     if (phase === 'diceRoll' || phase === 'diceResult') {

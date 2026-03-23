@@ -41,15 +41,28 @@ Game.Main = (function() {
   }
 
   function update(dt) {
-    if (Game.Weather) {
-      Game.Weather.update();
-    }
+    if (Game.Weather) Game.Weather.update();
+    if (Game.Particles) Game.Particles.update();
+    if (Game.UI.updatePopups) Game.UI.updatePopups();
+    if (Game.Renderer.updateEffects) Game.Renderer.updateEffects();
 
     switch (state) {
       case Game.Config.STATE.TITLE:
+        if (Game.UI.updateTitleMenu) Game.UI.updateTitleMenu();
         if (Game.Input.isPressed('confirm')) {
-          Game.Audio.playSfx('confirm');
-          startGame();
+          var sel = Game.UI.getTitleSelection ? Game.UI.getTitleSelection() : 0;
+          if (sel === 0) {
+            Game.Audio.playSfx('confirm');
+            startGame();
+          } else if (sel === 1 && Game.Save && Game.Save.hasSave(0)) {
+            Game.Audio.playSfx('confirm');
+            Game.Save.load(0);
+            setState(Game.Config.STATE.EXPLORING);
+            Game.Audio.playBgm('field');
+          } else if (sel === 2) {
+            Game.Audio.playSfx('confirm');
+            // Show achievements (toggle back with confirm)
+          }
         }
         break;
 
@@ -211,6 +224,13 @@ Game.Main = (function() {
         transitionAlpha += 0.05;
         if (transitionAlpha >= 1) {
           Game.Map.load(transitionTarget, transitionSpawnX, transitionSpawnY);
+          // Auto-save on map transition
+          if (Game.Save && Game.Save.autoSave) Game.Save.autoSave();
+          // Set weather for new map
+          if (Game.Weather && Game.Weather.setMapWeather) {
+            var curMap = Game.Map.getCurrentMap();
+            if (curMap) Game.Weather.setMapWeather(curMap.name);
+          }
           transitionAlpha = 1;
           state = 'transition_out';
         }
@@ -291,6 +311,11 @@ Game.Main = (function() {
           setState(Game.Config.STATE.ENDING);
         });
         break;
+      // Ikaho battle
+      case 'battle_ishidanGuard':
+        setState(Game.Config.STATE.BATTLE);
+        Game.Battle.start('ishidanGuard', npc);
+        break;
       // Chapter 2 battles
       case 'battle_angura_guard':
         setState(Game.Config.STATE.BATTLE);
@@ -336,7 +361,7 @@ Game.Main = (function() {
     Game.Audio.playBgm('field');
 
     // Reset all NPC states
-    var allMaps = ['maebashi', 'takasaki', 'kusatsu', 'shimonita', 'tsumagoi',
+    var allMaps = ['maebashi', 'takasaki', 'kusatsu', 'ikaho', 'shimonita', 'tomioka', 'tsumagoi',
                    'tamura', 'forest', 'konuma', 'onuma', 'akagi_ranch', 'akagi_shrine'];
     for (var m = 0; m < allMaps.length; m++) {
       var mapData = Game.Maps[allMaps[m]];
@@ -421,6 +446,8 @@ Game.Main = (function() {
 
       case Game.Config.STATE.BATTLE:
         Game.Battle.draw();
+        if (Game.Particles) Game.Particles.draw();
+        if (Game.UI.drawPopups) Game.UI.drawPopups();
         break;
 
       case Game.Config.STATE.PUZZLE:
@@ -462,10 +489,12 @@ Game.Main = (function() {
     Game.Renderer.setCamera(pd.x + 8, pd.y + 8);
     Game.Map.draw();
     Game.Player.draw();
-    if (Game.Weather) {
-      Game.Weather.draw();
-    }
+    if (Game.Particles) Game.Particles.draw();
+    if (Game.Weather) Game.Weather.draw();
+    if (Game.Renderer.drawEffects) Game.Renderer.drawEffects();
     Game.UI.drawHUD();
+    if (Game.UI.drawMinimap) Game.UI.drawMinimap();
+    if (Game.UI.drawPopups) Game.UI.drawPopups();
   }
 
   // Start when page loads

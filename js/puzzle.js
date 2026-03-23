@@ -293,11 +293,12 @@ Game.Puzzle = (function() {
     laneX: [140, 240, 340]
   };
 
-  function start(puzzleType, npc) {
+  function start(puzzleType, npc, options) {
     active = true;
     type = puzzleType;
     npcRef = npc;
     result = null;
+    var opts = options || {};
 
     if (type === 'daruma') {
       daruma.stack = [];
@@ -307,9 +308,20 @@ Game.Puzzle = (function() {
       daruma.phase = 'moving';
       daruma.lives = 3;
     } else if (type === 'quiz') {
-      // Pick 3 random questions
-      var shuffled = quiz.questions.slice().sort(function() { return Math.random() - 0.5; });
-      quiz.selectedQuestions = shuffled.slice(0, 3);
+      // Filter by difficulty if specified, otherwise use all
+      var pool = quiz.questions;
+      if (opts.difficulty) {
+        var filtered = [];
+        for (var qi = 0; qi < pool.length; qi++) {
+          // Questions without difficulty field are treated as difficulty 1
+          var qDiff = pool[qi].difficulty || 1;
+          if (qDiff <= opts.difficulty) filtered.push(pool[qi]);
+        }
+        if (filtered.length >= 3) pool = filtered;
+      }
+      var count = opts.count || 3;
+      var shuffled = pool.slice().sort(function() { return Math.random() - 0.5; });
+      quiz.selectedQuestions = shuffled.slice(0, count);
       quiz.currentQ = 0;
       quiz.score = 0;
       quiz.selectedChoice = 0;

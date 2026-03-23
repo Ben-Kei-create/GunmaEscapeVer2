@@ -899,14 +899,14 @@ Game.Story = (function() {
       { type: 'start_battle', enemy: 'juke_final' },
       { type: 'set_flag', flag: 'juke_final_defeated' },
       { type: 'legacy_card', cardId: 'juke_broken_rule', name: '砕けた掟の石版',
-        description: '番人が守り続けた最後の掟。' }
+        description: '番人が守り続けた最後の掟。' },
+      { type: 'route_ending' }
     ],
 
     'ch10_ending_A': [
       { type: 'set_bg', bg: 'black' },
       { type: 'fade_in' },
       { type: 'narration', text: '── Ending A「帰還」──' },
-      { type: 'check_flag', flag: 'sato_rescue_determined' },
       { type: 'narration', text: 'トンネルの先に光が見える。' },
       { type: 'play_sfx', sfx: 'victory' },
       { type: 'dialog', speaker: '佐藤', text: 'さあ、お前たちの路線へ帰れ。' },
@@ -926,7 +926,6 @@ Game.Story = (function() {
       { type: 'set_bg', bg: 'black' },
       { type: 'fade_in' },
       { type: 'narration', text: '── Ending B「残留」──' },
-      { type: 'check_flag', flag: 'sato_will_respected' },
       { type: 'narration', text: '切符は手の中で溶けてしまった。' },
       { type: 'dialog', speaker: '佐藤', text: 'お前も残る道を選んだか。' },
       { type: 'dialog', speaker: '主人公', text: 'この記憶を手放したくないんだ。' },
@@ -1010,6 +1009,31 @@ Game.Story = (function() {
   function setFlag(flag) { storyFlags[flag] = true; }
   function hasFlag(flag) { return !!storyFlags[flag]; }
   function clearFlag(flag) { delete storyFlags[flag]; }
+  // ── ED分岐ロジック ──
+  // ch5: sato_rescue_determined (連れ帰る) / sato_will_respected (意志を尊重)
+  // ch9: furuya_join_true (一緒に探す) / furuya_join_false (無理に誘わない)
+  //
+  // Ending A「帰還」: 両方ポジティブ（rescue + join）
+  // Ending B「残留」: 佐藤の意志を尊重した場合
+  // Ending C「反転」: それ以外（デフォルト＝真のED）
+  function resolveEnding() {
+    var rescueSato = hasFlag('sato_rescue_determined');
+    var respectSato = hasFlag('sato_will_respected');
+    var furuyaJoined = hasFlag('furuya_join_true');
+    var furuyaAlone = hasFlag('furuya_join_false');
+
+    // Ending A: 佐藤を連れ帰る意志 ＋ 古谷と共に探す
+    if (rescueSato && furuyaJoined) {
+      return 'ch10_ending_A';
+    }
+    // Ending B: 佐藤の意志を尊重した
+    if (respectSato) {
+      return 'ch10_ending_B';
+    }
+    // Ending C: デフォルト（反転エンド）
+    return 'ch10_ending_C';
+  }
+
   function getPhase() { return phase; }
   function setPhase(p) { phase = p; }
   function getChapter() { return chapter; }
@@ -1147,6 +1171,40 @@ Game.Story = (function() {
         }
         processStep();
         break;
+
+      case 'route_ending':
+        // Determine ending based on accumulated flags
+        var endingId = resolveEnding();
+        var endingEvent = chapterEvents[endingId];
+        if (endingEvent) {
+          currentEvent = endingEvent;
+          stepIndex = 0;
+          processStep();
+        } else {
+          stepIndex++;
+          processStep();
+        }
+        return;
+
+      case 'start_quiz':
+        // Trigger quiz puzzle from story event
+        // Usage: { type: 'start_quiz', difficulty: 2, count: 3 }
+        var quizDiff = step.difficulty || 1;
+        var quizCount = step.count || 3;
+        var afterQuiz = currentEvent.slice(stepIndex + 1);
+        var afterQuizCallback = onEventEnd;
+        endEvent();
+        Game.Main.setState(Game.Config.STATE.PUZZLE);
+        Game.Puzzle.start('quiz', null, { difficulty: quizDiff, count: quizCount });
+        // Resume story after quiz ends (handled by main.js puzzle completion)
+        onEventEnd = function() {
+          if (afterQuiz.length > 0) {
+            startEvent(afterQuiz, afterQuizCallback);
+          } else if (afterQuizCallback) {
+            afterQuizCallback();
+          }
+        };
+        return;
 
       case 'give_item':
         Game.Player.addItem(step.item);
@@ -1350,6 +1408,11 @@ Game.Story = (function() {
         Game.Audio.playSfx('confirm');
         var chosen = choices[choiceIndex];
         choices = null;
+        // Set flag if the choice defines one
+        if (chosen.flag) {
+          setFlag(chosen.flag);
+          saveFlags();
+        }
         if (chosen.goto !== undefined) {
           stepIndex = chosen.goto;
         } else {
@@ -1836,6 +1899,7 @@ Game.Story = (function() {
     saveFlags: saveFlags,
     loadFlags: loadFlags,
     exportFlags: exportFlags,
-    importFlags: importFlags
+    importFlags: importFlags,
+    resolveEnding: resolveEnding
   };
 })();

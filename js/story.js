@@ -822,6 +822,15 @@ Game.Story = (function() {
     } catch (e) {}
   }
 
+  function exportFlags() {
+    return JSON.parse(JSON.stringify(storyFlags || {}));
+  }
+
+  function importFlags(flags) {
+    storyFlags = JSON.parse(JSON.stringify(flags || {}));
+    saveFlags();
+  }
+
   return {
     startEvent: startEvent,
     queueEvent: queueEvent,
@@ -838,6 +847,8 @@ Game.Story = (function() {
     reset: reset,
     startCh3Scene: startCh3Scene,
     saveFlags: saveFlags,
-    loadFlags: loadFlags
+    loadFlags: loadFlags,
+    exportFlags: exportFlags,
+    importFlags: importFlags
   };
 })();

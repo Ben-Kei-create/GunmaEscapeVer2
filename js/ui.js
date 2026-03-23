@@ -10,9 +10,14 @@ Game.UI = (function() {
   var minimapVisible = true;
   var titleSelection = 0;
   var fieldMenuState = {
+    section: 0,
     itemIndex: 0,
     commandIndex: 0,
     commandActive: false,
+    diceSlotIndex: 0,
+    diceEquipIndex: 0,
+    diceEquipActive: false,
+    armorIndex: 0,
     message: '',
     messageTimer: 0
   };
@@ -80,8 +85,8 @@ Game.UI = (function() {
 
     // Menu selection
     blinkTimer++;
-    var menuOptions = ['はじめから', 'つづきから', '実績'];
-    var hasSave = Game.Save && Game.Save.hasSave(0);
+    var menuOptions = ['はじめから', 'つづきから', 'あいことば', '実績'];
+    var hasSave = Game.Save && Game.Save.hasAnySave && Game.Save.hasAnySave();
     for (var mi = 0; mi < menuOptions.length; mi++) {
       var myy = 210 + mi * 24;
       var selected = (mi === titleSelection);
@@ -173,7 +178,7 @@ Game.UI = (function() {
     var R = Game.Renderer;
     var C = Game.Config;
     var pd = Game.Player.getData();
-    var visibleItems = 6;
+    var equipped = Game.Player.getEquippedDice();
 
     R.drawDialogBox(100, 30, 280, 260);
     var chTitle = pd.chapter === 2 ? '第二章 赤城の闇編' : '第一章 群馬脱出編';
@@ -186,62 +191,27 @@ Game.UI = (function() {
     var aName = pd.armor ? Game.Items.get(pd.armor).name : 'なし';
     R.drawTextJP('防具: ' + aName, 260, 78, '#aaa', 11);
 
-    // Dice loadout
-    R.drawRectAbsolute(120, 114, 240, 1, '#446');
-    R.drawTextJP('サイコロ装備:', 120, 119, C.COLORS.GOLD, 12);
-    var equipped = Game.Player.getEquippedDice();
-    var ctx = R.getContext();
-    for (var d = 0; d < equipped.length; d++) {
-      var di = Game.Items.get(equipped[d]);
-      if (!di) continue;
-      var dy = 136 + d * 16;
-      // Color swatch
-      R.drawRectAbsolute(130, dy + 1, 10, 10, di.color || '#fff');
-      ctx.strokeStyle = '#555';
-      ctx.lineWidth = 1;
-      ctx.strokeRect(130, dy + 1, 10, 10);
-      R.drawTextJP(di.name, 145, dy, '#ccc', 10);
-      // Show faces
-      R.drawTextJP('[' + di.faces.join('-') + ']', 260, dy, '#888', 9);
+    // Tabs
+    var tabs = ['もちもの', 'サイコロ', 'ぼうぐ'];
+    var tabX = 120;
+    for (var t = 0; t < tabs.length; t++) {
+      var tx = tabX + t * 76;
+      var activeTab = (fieldMenuState.section === t);
+      R.drawRectAbsolute(tx, 112, 68, 18, activeTab ? 'rgba(255,204,0,0.16)' : 'rgba(255,255,255,0.06)');
+      R.drawTextJP(tabs[t], tx + 8, 116, activeTab ? C.COLORS.GOLD : '#aaa', 11);
     }
+    R.drawRectAbsolute(120, 134, 240, 1, '#446');
 
-    // Line separator
-    var invY = 136 + Math.max(equipped.length, 1) * 16 + 4;
-    R.drawRectAbsolute(120, invY, 240, 1, '#446');
-
-    // Inventory
-    R.drawTextJP('持ち物:', 120, invY + 5, C.COLORS.GOLD, 12);
-    if (pd.inventory.length === 0) {
-      R.drawTextJP('（なし）', 140, invY + 22, '#888', 11);
-    } else {
-      var maxOffset = Math.max(0, pd.inventory.length - visibleItems);
-      var scrollOffset = Math.min(maxOffset, Math.max(0, fieldMenuState.itemIndex - visibleItems + 1));
-      for (var i = scrollOffset; i < pd.inventory.length && i < scrollOffset + visibleItems; i++) {
-        var item = Game.Items.get(pd.inventory[i]);
-        var name = item ? item.name : pd.inventory[i];
-        var iy = invY + 22 + (i - scrollOffset) * 16;
-        if (iy > 264) break;
-        var selected = (i === fieldMenuState.itemIndex);
-        var prefix = selected ? '▶ ' : '・';
-        R.drawTextJP(prefix + name, 130, iy, selected ? C.COLORS.GOLD : '#fff', 11);
-      }
-
-      var selectedId = pd.inventory[fieldMenuState.itemIndex];
-      var selectedItem = selectedId ? Game.Items.get(selectedId) : null;
-      if (selectedItem) {
-        R.drawRectAbsolute(120, 246, 240, 1, '#446');
-        R.drawTextJP(selectedItem.desc || '説明なし', 122, 251, '#aaa', 10);
-      }
-
-      if (fieldMenuState.commandActive && selectedItem) {
-        var commands = getFieldMenuCommands(selectedItem);
-        R.drawDialogBox(272, 176, 88, commands.length * 18 + 12);
-        for (var ci = 0; ci < commands.length; ci++) {
-          var cSelected = (ci === fieldMenuState.commandIndex);
-          var cPrefix = cSelected ? '▶ ' : '  ';
-          R.drawTextJP(cPrefix + commands[ci], 282, 184 + ci * 18, cSelected ? C.COLORS.GOLD : '#fff', 11);
-        }
-      }
+    switch (fieldMenuState.section) {
+      case 0:
+        drawItemMenuSection(R, C, pd);
+        break;
+      case 1:
+        drawDiceMenuSection(R, C, pd, equipped);
+        break;
+      case 2:
+        drawArmorMenuSection(R, C, pd);
+        break;
     }
 
     if (fieldMenuState.messageTimer > 0 && fieldMenuState.message) {
@@ -249,19 +219,141 @@ Game.UI = (function() {
       R.drawTextJP(fieldMenuState.message, 126, 269, '#fff', 10);
     }
 
-    R.drawTextJP('Z/Space: 決定  X: 戻る', 152, 288, '#888', 10);
+    R.drawTextJP('←→: 切替  Z/Space: 決定  X: 戻る', 126, 288, '#888', 10);
+  }
+
+  function drawItemMenuSection(R, C, pd) {
+    var visibleItems = 6;
+    var areaY = 140;
+    R.drawTextJP('持ち物:', 120, areaY, C.COLORS.GOLD, 12);
+
+    if (pd.inventory.length === 0) {
+      R.drawTextJP('（なし）', 140, areaY + 18, '#888', 11);
+      return;
+    }
+
+    var maxOffset = Math.max(0, pd.inventory.length - visibleItems);
+    var scrollOffset = Math.min(maxOffset, Math.max(0, fieldMenuState.itemIndex - visibleItems + 1));
+    for (var i = scrollOffset; i < pd.inventory.length && i < scrollOffset + visibleItems; i++) {
+      var item = Game.Items.get(pd.inventory[i]);
+      var name = item ? item.name : pd.inventory[i];
+      var iy = areaY + 18 + (i - scrollOffset) * 16;
+      var selected = (i === fieldMenuState.itemIndex);
+      var prefix = selected ? '▶ ' : '・';
+      R.drawTextJP(prefix + name, 130, iy, selected ? C.COLORS.GOLD : '#fff', 11);
+    }
+
+    var selectedId = pd.inventory[fieldMenuState.itemIndex];
+    var selectedItem = selectedId ? Game.Items.get(selectedId) : null;
+    if (selectedItem) {
+      R.drawRectAbsolute(120, 244, 240, 1, '#446');
+      R.drawTextJP(selectedItem.desc || '説明なし', 122, 248, '#aaa', 10);
+    }
+
+    if (fieldMenuState.commandActive && selectedItem) {
+      var commands = getFieldMenuCommands(selectedItem);
+      R.drawDialogBox(272, 176, 88, commands.length * 18 + 12);
+      for (var ci = 0; ci < commands.length; ci++) {
+        var cSelected = (ci === fieldMenuState.commandIndex);
+        var cPrefix = cSelected ? '▶ ' : '  ';
+        R.drawTextJP(cPrefix + commands[ci], 282, 184 + ci * 18, cSelected ? C.COLORS.GOLD : '#fff', 11);
+      }
+    }
+  }
+
+  function drawDiceMenuSection(R, C, pd, equipped) {
+    var ctx = R.getContext();
+    var ownedDice = getOwnedDiceOptions();
+    var visibleDice = 5;
+    R.drawTextJP('装備スロット:', 120, 140, C.COLORS.GOLD, 12);
+
+    for (var s = 0; s < pd.diceSlots; s++) {
+      var slotY = 158 + s * 18;
+      var selectedSlot = (s === fieldMenuState.diceSlotIndex);
+      var di = Game.Items.get(equipped[s] || 'normalDice');
+      var prefix = selectedSlot ? '▶ ' : '  ';
+      R.drawTextJP(prefix + 'スロット' + (s + 1), 124, slotY, selectedSlot ? C.COLORS.GOLD : '#fff', 11);
+      if (di) {
+        R.drawRectAbsolute(210, slotY + 2, 10, 10, di.color || '#fff');
+        ctx.strokeStyle = '#555';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(210, slotY + 2, 10, 10);
+        R.drawTextJP(di.name, 226, slotY, '#ccc', 10);
+      }
+    }
+
+    var selectedDie = Game.Items.get(equipped[fieldMenuState.diceSlotIndex] || 'normalDice');
+    if (selectedDie) {
+      R.drawRectAbsolute(120, 214, 240, 1, '#446');
+      R.drawTextJP('出目: ' + selectedDie.faces.join(' - '), 122, 220, '#fff', 11);
+      R.drawTextJP(selectedDie.desc || '説明なし', 122, 236, '#aaa', 10);
+    }
+
+    if (!fieldMenuState.diceEquipActive) {
+      R.drawTextJP('決定で入れ替え', 238, 196, '#888', 10);
+      return;
+    }
+
+    R.drawDialogBox(250, 150, 110, 100);
+    var maxOffset = Math.max(0, ownedDice.length - visibleDice);
+    var scrollOffset = Math.min(maxOffset, Math.max(0, fieldMenuState.diceEquipIndex - visibleDice + 1));
+    for (var i = scrollOffset; i < ownedDice.length && i < scrollOffset + visibleDice; i++) {
+      var option = ownedDice[i];
+      var selected = (i === fieldMenuState.diceEquipIndex);
+      var prefix2 = selected ? '▶ ' : '  ';
+      var label = option.item ? option.item.name : option.name;
+      R.drawTextJP(prefix2 + label, 258, 160 + (i - scrollOffset) * 16, selected ? C.COLORS.GOLD : '#fff', 10);
+    }
+    if (ownedDice[fieldMenuState.diceEquipIndex] && ownedDice[fieldMenuState.diceEquipIndex].item) {
+      R.drawTextJP(ownedDice[fieldMenuState.diceEquipIndex].item.faces.join('-'), 258, 236, '#88dd88', 9);
+    }
+  }
+
+  function drawArmorMenuSection(R, C, pd) {
+    var armorOptions = getOwnedArmorOptions();
+    var visibleArmor = 4;
+    var currentArmor = pd.armor ? Game.Items.get(pd.armor) : null;
+    R.drawTextJP('現在の防具:', 120, 140, C.COLORS.GOLD, 12);
+    R.drawTextJP(currentArmor ? currentArmor.name : 'なし', 200, 140, '#fff', 12);
+    R.drawTextJP(currentArmor ? currentArmor.desc : '装備していない', 120, 158, '#aaa', 10);
+
+    R.drawRectAbsolute(120, 176, 240, 1, '#446');
+    R.drawTextJP('装備候補:', 120, 182, C.COLORS.GOLD, 12);
+
+    var maxOffset = Math.max(0, armorOptions.length - visibleArmor);
+    var scrollOffset = Math.min(maxOffset, Math.max(0, fieldMenuState.armorIndex - visibleArmor + 1));
+    for (var i = scrollOffset; i < armorOptions.length && i < scrollOffset + visibleArmor; i++) {
+      var option = armorOptions[i];
+      var selected = (i === fieldMenuState.armorIndex);
+      var prefix = selected ? '▶ ' : '  ';
+      var label = option.item ? option.item.name : 'はずす';
+      R.drawTextJP(prefix + label, 130, 200 + (i - scrollOffset) * 16, selected ? C.COLORS.GOLD : '#fff', 11);
+    }
+
+    var selectedArmor = armorOptions[fieldMenuState.armorIndex];
+    if (selectedArmor) {
+      R.drawRectAbsolute(120, 244, 240, 1, '#446');
+      var desc = selectedArmor.item ? selectedArmor.item.desc : '現在の防具を外す';
+      R.drawTextJP(desc, 122, 248, '#aaa', 10);
+    }
   }
 
   function clampFieldMenuSelection() {
-    var inventory = Game.Player.getData().inventory;
+    var pd = Game.Player.getData();
+    var inventory = pd.inventory;
+    var armorOptions = getOwnedArmorOptions();
     if (inventory.length <= 0) {
       fieldMenuState.itemIndex = 0;
       fieldMenuState.commandIndex = 0;
       fieldMenuState.commandActive = false;
-      return;
+    } else {
+      if (fieldMenuState.itemIndex >= inventory.length) fieldMenuState.itemIndex = inventory.length - 1;
+      if (fieldMenuState.itemIndex < 0) fieldMenuState.itemIndex = 0;
     }
-    if (fieldMenuState.itemIndex >= inventory.length) fieldMenuState.itemIndex = inventory.length - 1;
-    if (fieldMenuState.itemIndex < 0) fieldMenuState.itemIndex = 0;
+    if (fieldMenuState.diceSlotIndex >= pd.diceSlots) fieldMenuState.diceSlotIndex = pd.diceSlots - 1;
+    if (fieldMenuState.diceSlotIndex < 0) fieldMenuState.diceSlotIndex = 0;
+    if (fieldMenuState.armorIndex >= armorOptions.length) fieldMenuState.armorIndex = armorOptions.length - 1;
+    if (fieldMenuState.armorIndex < 0) fieldMenuState.armorIndex = 0;
   }
 
   function getFieldMenuCommands(item) {
@@ -276,16 +368,54 @@ Game.UI = (function() {
     fieldMenuState.messageTimer = timer || 45;
   }
 
-  function openFieldMenu() {
+  function getOwnedDiceOptions() {
+    var inventory = Game.Player.getData().inventory;
+    var options = [{ id: 'normalDice', item: Game.Items.get('normalDice'), name: 'ふつうのサイコロ' }];
+    for (var i = 0; i < inventory.length; i++) {
+      var item = Game.Items.get(inventory[i]);
+      if (item && item.type === 'dice') {
+        options.push({ id: inventory[i], item: item, name: item.name });
+      }
+    }
+    return options;
+  }
+
+  function getOwnedArmorOptions() {
+    var inventory = Game.Player.getData().inventory;
+    var options = [{ id: null, item: null }];
+    for (var i = 0; i < inventory.length; i++) {
+      var item = Game.Items.get(inventory[i]);
+      if (item && item.type === 'armor') {
+        options.push({ id: inventory[i], item: item });
+      }
+    }
+    return options;
+  }
+
+  function changeFieldMenuSection(dir) {
+    fieldMenuState.section = (fieldMenuState.section + dir + 3) % 3;
     fieldMenuState.commandActive = false;
     fieldMenuState.commandIndex = 0;
+    fieldMenuState.diceEquipActive = false;
+    fieldMenuState.diceEquipIndex = 0;
+    clampFieldMenuSelection();
+    Game.Audio.playSfx('confirm');
+  }
+
+  function openFieldMenu() {
+    fieldMenuState.section = 0;
+    fieldMenuState.commandActive = false;
+    fieldMenuState.commandIndex = 0;
+    fieldMenuState.diceEquipActive = false;
+    fieldMenuState.diceEquipIndex = 0;
     fieldMenuState.message = '';
     fieldMenuState.messageTimer = 0;
     clampFieldMenuSelection();
   }
 
   function updateFieldMenu() {
-    var inventory = Game.Player.getData().inventory;
+    var pd = Game.Player.getData();
+    var inventory = pd.inventory;
     clampFieldMenuSelection();
 
     if (fieldMenuState.messageTimer > 0) {
@@ -294,6 +424,24 @@ Game.UI = (function() {
         fieldMenuState.messageTimer = 0;
       }
       return null;
+    }
+
+    if (!fieldMenuState.commandActive && !fieldMenuState.diceEquipActive) {
+      if (Game.Input.isPressed('left')) {
+        changeFieldMenuSection(-1);
+        return null;
+      }
+      if (Game.Input.isPressed('right')) {
+        changeFieldMenuSection(1);
+        return null;
+      }
+    }
+
+    if (fieldMenuState.section === 1) {
+      return updateDiceMenu(pd);
+    }
+    if (fieldMenuState.section === 2) {
+      return updateArmorMenu();
     }
 
     if (!fieldMenuState.commandActive) {
@@ -374,6 +522,88 @@ Game.UI = (function() {
       return null;
     }
 
+    return null;
+  }
+
+  function updateDiceMenu(pd) {
+    var ownedDice = getOwnedDiceOptions();
+    if (!fieldMenuState.diceEquipActive) {
+      if (Game.Input.isPressed('up')) {
+        fieldMenuState.diceSlotIndex = (fieldMenuState.diceSlotIndex - 1 + pd.diceSlots) % pd.diceSlots;
+        Game.Audio.playSfx('confirm');
+      }
+      if (Game.Input.isPressed('down')) {
+        fieldMenuState.diceSlotIndex = (fieldMenuState.diceSlotIndex + 1) % pd.diceSlots;
+        Game.Audio.playSfx('confirm');
+      }
+      if (Game.Input.isPressed('confirm')) {
+        fieldMenuState.diceEquipActive = true;
+        fieldMenuState.diceEquipIndex = 0;
+        Game.Audio.playSfx('confirm');
+      }
+      if (Game.Input.isPressed('cancel')) {
+        return { close: true };
+      }
+      return null;
+    }
+
+    if (Game.Input.isPressed('up')) {
+      fieldMenuState.diceEquipIndex = (fieldMenuState.diceEquipIndex - 1 + ownedDice.length) % ownedDice.length;
+      Game.Audio.playSfx('confirm');
+    }
+    if (Game.Input.isPressed('down')) {
+      fieldMenuState.diceEquipIndex = (fieldMenuState.diceEquipIndex + 1) % ownedDice.length;
+      Game.Audio.playSfx('confirm');
+    }
+    if (Game.Input.isPressed('cancel')) {
+      fieldMenuState.diceEquipActive = false;
+      fieldMenuState.diceEquipIndex = 0;
+      Game.Audio.playSfx('cancel');
+      return null;
+    }
+    if (!Game.Input.isPressed('confirm')) return null;
+
+    var selected = ownedDice[fieldMenuState.diceEquipIndex];
+    if (selected && Game.Player.equipDice(selected.id, fieldMenuState.diceSlotIndex)) {
+      fieldMenuState.diceEquipActive = false;
+      fieldMenuState.diceEquipIndex = 0;
+      setFieldMenuMessage(selected.item.name + 'をスロット' + (fieldMenuState.diceSlotIndex + 1) + 'に装備！', 55);
+      Game.Audio.playSfx('item');
+    }
+    return null;
+  }
+
+  function updateArmorMenu() {
+    var armorOptions = getOwnedArmorOptions();
+    if (Game.Input.isPressed('up')) {
+      fieldMenuState.armorIndex = (fieldMenuState.armorIndex - 1 + armorOptions.length) % armorOptions.length;
+      Game.Audio.playSfx('confirm');
+    }
+    if (Game.Input.isPressed('down')) {
+      fieldMenuState.armorIndex = (fieldMenuState.armorIndex + 1) % armorOptions.length;
+      Game.Audio.playSfx('confirm');
+    }
+    if (Game.Input.isPressed('cancel')) {
+      return { close: true };
+    }
+    if (!Game.Input.isPressed('confirm')) return null;
+
+    var selected = armorOptions[fieldMenuState.armorIndex];
+    if (!selected || !selected.item) {
+      if (Game.Player.unequipArmor && Game.Player.unequipArmor()) {
+        setFieldMenuMessage('防具を外した。', 45);
+        Game.Audio.playSfx('item');
+      } else {
+        setFieldMenuMessage('外せる防具がない。', 40);
+        Game.Audio.playSfx('cancel');
+      }
+      return null;
+    }
+
+    if (Game.Player.equipArmor(selected.id)) {
+      setFieldMenuMessage(selected.item.name + 'を装備した！', 50);
+      Game.Audio.playSfx('item');
+    }
     return null;
   }
 
@@ -520,11 +750,11 @@ Game.UI = (function() {
   function getTitleSelection() { return titleSelection; }
   function updateTitleMenu() {
     if (Game.Input.isPressed('up')) {
-      titleSelection = (titleSelection - 1 + 3) % 3;
+      titleSelection = (titleSelection - 1 + 4) % 4;
       Game.Audio.playSfx('confirm');
     }
     if (Game.Input.isPressed('down')) {
-      titleSelection = (titleSelection + 1) % 3;
+      titleSelection = (titleSelection + 1) % 4;
       Game.Audio.playSfx('confirm');
     }
   }

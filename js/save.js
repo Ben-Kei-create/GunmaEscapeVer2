@@ -1,7 +1,9 @@
-// Save system using localStorage
+// Save system using localStorage + passphrase export
 Game.Save = (function() {
   var MAX_SLOTS = 3;
-  var VERSION = 1;
+  var VERSION = 2;
+  var PASSPHRASE_PREFIX = 'GM2';
+  var BASE32_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
   var runtime = window.__gunmaSaveRuntime || {
     accumulatedPlayTime: 0,
     sessionStartedAt: Date.now()
@@ -16,6 +18,10 @@ Game.Save = (function() {
     return slot >= 1 && slot <= MAX_SLOTS;
   }
 
+  function getStorageKey(slot) {
+    return 'gunmaEscape_slot_' + slot;
+  }
+
   function getCurrentPlayTime() {
     return runtime.accumulatedPlayTime + (Date.now() - runtime.sessionStartedAt);
   }
@@ -25,9 +31,20 @@ Game.Save = (function() {
     runtime.sessionStartedAt = Date.now();
   }
 
+  function getKeyItemsFromInventory(inventory) {
+    var result = [];
+    for (var i = 0; i < inventory.length; i++) {
+      var itemDef = Game.Items.get(inventory[i]);
+      if (itemDef && itemDef.type === 'key') {
+        result.push(inventory[i]);
+      }
+    }
+    return result;
+  }
+
   function getPlayerSnapshot() {
     var playerData = Game.Player.getData();
-    var snapshot = {
+    return {
       hp: playerData.hp,
       maxHp: playerData.maxHp,
       attack: playerData.attack,
@@ -45,19 +62,6 @@ Game.Save = (function() {
       diceSlots: playerData.diceSlots,
       chapter: playerData.chapter
     };
-
-    return snapshot;
-  }
-
-  function getKeyItemsFromInventory(inventory) {
-    var result = [];
-    for (var i = 0; i < inventory.length; i++) {
-      var itemDef = Game.Items.get(inventory[i]);
-      if (itemDef && itemDef.type === 'key') {
-        result.push(inventory[i]);
-      }
-    }
-    return result;
   }
 
   function getNpcStates() {
@@ -91,6 +95,13 @@ Game.Save = (function() {
     return states;
   }
 
+  function getStoryFlags() {
+    if (Game.Story && Game.Story.exportFlags) {
+      return Game.Story.exportFlags();
+    }
+    return {};
+  }
+
   function buildSaveData() {
     var playerSnapshot = getPlayerSnapshot();
     var currentMapId = Game.Map.getCurrentMapId();
@@ -105,13 +116,14 @@ Game.Save = (function() {
       mapLabel: currentMap ? currentMap.name : currentMapId,
       player: playerSnapshot,
       npcStates: getNpcStates(),
-      itemStates: getItemStates()
+      itemStates: getItemStates(),
+      storyFlags: getStoryFlags()
     };
   }
 
   function readSave(slot) {
     if (!isValidSlot(slot)) return null;
-    var raw = localStorage.getItem('gunmaEscape_slot_' + slot);
+    var raw = localStorage.getItem(getStorageKey(slot));
     if (!raw) return null;
     try {
       return JSON.parse(raw);
@@ -123,7 +135,7 @@ Game.Save = (function() {
   function writeSave(slot, data) {
     if (!isValidSlot(slot)) return false;
     try {
-      localStorage.setItem('gunmaEscape_slot_' + slot, JSON.stringify(data));
+      localStorage.setItem(getStorageKey(slot), JSON.stringify(data));
       return true;
     } catch (err) {
       return false;
@@ -168,6 +180,16 @@ Game.Save = (function() {
     }
   }
 
+  function applyStoryFlags(storyFlags) {
+    if (Game.Story && Game.Story.importFlags) {
+      Game.Story.importFlags(storyFlags || {});
+      return;
+    }
+    if (Game.Story && Game.Story.saveFlags) {
+      Game.Story.saveFlags();
+    }
+  }
+
   function applyPlayerData(savedPlayer) {
     if (!savedPlayer) return;
 
@@ -197,27 +219,404 @@ Game.Save = (function() {
     }
   }
 
-  function save(slot) {
-    var data = buildSaveData();
-    return writeSave(slot, data);
-  }
-
-  function load(slot) {
-    var data = readSave(slot);
+  function applySaveData(data) {
     if (!data || !data.player || !data.mapName || !Game.Maps[data.mapName]) {
       return false;
     }
 
-    applyNpcStates(data.npcStates);
-    applyItemStates(data.itemStates);
+    applyNpcStates(data.npcStates || {});
+    applyItemStates(data.itemStates || {});
     Game.Map.load(data.mapName, data.player.tileX, data.player.tileY);
     applyPlayerData(data.player);
+    applyStoryFlags(data.storyFlags || {});
     setPlayTime(data.playTime || 0);
     return true;
   }
 
+  function getMapCatalog() {
+    return Object.keys(Game.Maps || {}).sort();
+  }
+
+  function getItemCatalog() {
+    return Object.keys(Game.Items.getAll ? Game.Items.getAll() : {}).sort();
+  }
+
+  function getDirectionCatalog() {
+    return ['up', 'down', 'left', 'right'];
+  }
+
+  function indexOfOr(list, value, fallback) {
+    var index = list.indexOf(value);
+    return index >= 0 ? index : fallback;
+  }
+
+  function encodeIdList(ids, catalog) {
+    var encoded = [];
+    for (var i = 0; i < ids.length; i++) {
+      var index = catalog.indexOf(ids[i]);
+      if (index >= 0) encoded.push(index);
+    }
+    return encoded;
+  }
+
+  function decodeIdList(indexes, catalog) {
+    var result = [];
+    for (var i = 0; i < indexes.length; i++) {
+      if (catalog[indexes[i]]) result.push(catalog[indexes[i]]);
+    }
+    return result;
+  }
+
+  function packBooleanArray(flags) {
+    if (!flags.length) return '';
+    var bytes = [];
+    var current = 0;
+    var bitCount = 0;
+
+    for (var i = 0; i < flags.length; i++) {
+      current = (current << 1) | (flags[i] ? 1 : 0);
+      bitCount++;
+      if (bitCount === 8) {
+        bytes.push(current);
+        current = 0;
+        bitCount = 0;
+      }
+    }
+
+    if (bitCount > 0) {
+      current = current << (8 - bitCount);
+      bytes.push(current);
+    }
+
+    var hex = '';
+    for (var j = 0; j < bytes.length; j++) {
+      var part = bytes[j].toString(16).toUpperCase();
+      hex += (part.length < 2 ? '0' + part : part);
+    }
+    return hex;
+  }
+
+  function unpackBooleanArray(hex, totalBits) {
+    var flags = [];
+    if (!hex) {
+      for (var i = 0; i < totalBits; i++) flags.push(false);
+      return flags;
+    }
+
+    for (var i = 0; i < hex.length; i += 2) {
+      var value = parseInt(hex.substring(i, i + 2), 16);
+      if (isNaN(value)) value = 0;
+      for (var bit = 7; bit >= 0 && flags.length < totalBits; bit--) {
+        flags.push(((value >> bit) & 1) === 1);
+      }
+    }
+
+    while (flags.length < totalBits) flags.push(false);
+    return flags;
+  }
+
+  function encodeNpcStatesCompact(npcStates) {
+    var mapCatalog = getMapCatalog();
+    var flags = [];
+    for (var i = 0; i < mapCatalog.length; i++) {
+      var map = Game.Maps[mapCatalog[i]];
+      if (!map || !map.npcs) continue;
+      for (var n = 0; n < map.npcs.length; n++) {
+        flags.push(!!(npcStates && npcStates[mapCatalog[i]] && npcStates[mapCatalog[i]][map.npcs[n].id]));
+      }
+    }
+    return packBooleanArray(flags);
+  }
+
+  function decodeNpcStatesCompact(hex) {
+    var mapCatalog = getMapCatalog();
+    var totalBits = 0;
+    for (var i = 0; i < mapCatalog.length; i++) {
+      var map = Game.Maps[mapCatalog[i]];
+      totalBits += map && map.npcs ? map.npcs.length : 0;
+    }
+
+    var flags = unpackBooleanArray(hex, totalBits);
+    var states = {};
+    var bitIndex = 0;
+
+    for (var m = 0; m < mapCatalog.length; m++) {
+      var mapId = mapCatalog[m];
+      var map = Game.Maps[mapId];
+      states[mapId] = {};
+      if (!map || !map.npcs) continue;
+      for (var n = 0; n < map.npcs.length; n++) {
+        states[mapId][map.npcs[n].id] = !!flags[bitIndex++];
+      }
+    }
+
+    return states;
+  }
+
+  function encodeItemStatesCompact(itemStates) {
+    var mapCatalog = getMapCatalog();
+    var flags = [];
+    for (var i = 0; i < mapCatalog.length; i++) {
+      var map = Game.Maps[mapCatalog[i]];
+      var savedItems = itemStates && itemStates[mapCatalog[i]] ? itemStates[mapCatalog[i]] : [];
+      if (!map || !map.items) continue;
+      for (var itemIndex = 0; itemIndex < map.items.length; itemIndex++) {
+        var itemState = findItemState(savedItems, map.items[itemIndex].id, itemIndex);
+        flags.push(!!(itemState && itemState.taken));
+      }
+    }
+    return packBooleanArray(flags);
+  }
+
+  function decodeItemStatesCompact(hex) {
+    var mapCatalog = getMapCatalog();
+    var totalBits = 0;
+    for (var i = 0; i < mapCatalog.length; i++) {
+      var map = Game.Maps[mapCatalog[i]];
+      totalBits += map && map.items ? map.items.length : 0;
+    }
+
+    var flags = unpackBooleanArray(hex, totalBits);
+    var states = {};
+    var bitIndex = 0;
+
+    for (var m = 0; m < mapCatalog.length; m++) {
+      var mapId = mapCatalog[m];
+      var map = Game.Maps[mapId];
+      states[mapId] = [];
+      if (!map || !map.items) continue;
+      for (var itemIndex = 0; itemIndex < map.items.length; itemIndex++) {
+        states[mapId].push({
+          id: map.items[itemIndex].id,
+          taken: !!flags[bitIndex++]
+        });
+      }
+    }
+
+    return states;
+  }
+
+  function minifySaveData(data) {
+    var mapCatalog = getMapCatalog();
+    var itemCatalog = getItemCatalog();
+    var directions = getDirectionCatalog();
+    var player = data.player || {};
+    var activeStoryFlags = [];
+    var flagSource = data.storyFlags || {};
+
+    for (var flag in flagSource) {
+      if (flagSource.hasOwnProperty(flag) && flagSource[flag]) {
+        activeStoryFlags.push(flag);
+      }
+    }
+    activeStoryFlags.sort();
+
+    return {
+      v: VERSION,
+      t: data.playTime || 0,
+      m: indexOfOr(mapCatalog, data.mapName, 0),
+      p: [
+        player.hp || 0,
+        player.maxHp || 0,
+        player.attack || 0,
+        player.defense || 0,
+        player.gold || 0,
+        player.tileX || 0,
+        player.tileY || 0,
+        indexOfOr(directions, player.direction || 'down', 1),
+        player.diceSlots || 1,
+        player.chapter || 1,
+        indexOfOr(itemCatalog, player.armor, -1),
+        encodeIdList(player.equippedDice || [], itemCatalog),
+        encodeIdList(player.inventory || [], itemCatalog)
+      ],
+      n: encodeNpcStatesCompact(data.npcStates || {}),
+      i: encodeItemStatesCompact(data.itemStates || {}),
+      s: activeStoryFlags
+    };
+  }
+
+  function expandPortableData(compact) {
+    if (!compact || !compact.p || typeof compact.m !== 'number') return null;
+
+    var mapCatalog = getMapCatalog();
+    var itemCatalog = getItemCatalog();
+    var directions = getDirectionCatalog();
+    var mapName = mapCatalog[compact.m];
+    if (!mapName) return null;
+
+    var playerData = compact.p;
+    var equippedDice = decodeIdList(playerData[11] || [], itemCatalog);
+    if (!equippedDice.length) equippedDice = ['normalDice'];
+    var inventory = decodeIdList(playerData[12] || [], itemCatalog);
+    var storyFlags = {};
+    for (var i = 0; i < (compact.s || []).length; i++) {
+      storyFlags[compact.s[i]] = true;
+    }
+
+    return {
+      version: compact.v || VERSION,
+      savedAt: Date.now(),
+      playTime: compact.t || 0,
+      chapter: playerData[9] || 1,
+      mapName: mapName,
+      mapLabel: Game.Maps[mapName] ? Game.Maps[mapName].name : mapName,
+      player: {
+        hp: playerData[0] || 1,
+        maxHp: playerData[1] || 100,
+        attack: playerData[2] || 12,
+        defense: playerData[3] || 5,
+        gold: playerData[4] || 0,
+        tileX: playerData[5] || 0,
+        tileY: playerData[6] || 0,
+        x: (playerData[5] || 0) * Game.Config.TILE_SIZE,
+        y: (playerData[6] || 0) * Game.Config.TILE_SIZE,
+        direction: directions[playerData[7]] || 'down',
+        diceSlots: playerData[8] || 1,
+        chapter: playerData[9] || 1,
+        armor: playerData[10] >= 0 ? itemCatalog[playerData[10]] : null,
+        equippedDice: equippedDice,
+        inventory: inventory,
+        keyItems: getKeyItemsFromInventory(inventory)
+      },
+      npcStates: decodeNpcStatesCompact(compact.n || ''),
+      itemStates: decodeItemStatesCompact(compact.i || ''),
+      storyFlags: storyFlags
+    };
+  }
+
+  function encodeBase32(text) {
+    var bytes = new TextEncoder().encode(text);
+    var output = '';
+    var value = 0;
+    var bits = 0;
+
+    for (var i = 0; i < bytes.length; i++) {
+      value = (value << 8) | bytes[i];
+      bits += 8;
+      while (bits >= 5) {
+        output += BASE32_ALPHABET[(value >>> (bits - 5)) & 31];
+        bits -= 5;
+      }
+    }
+
+    if (bits > 0) {
+      output += BASE32_ALPHABET[(value << (5 - bits)) & 31];
+    }
+
+    return output;
+  }
+
+  function decodeBase32(text) {
+    var clean = (text || '').toUpperCase().replace(/[^A-Z2-7]/g, '');
+    var bytes = [];
+    var value = 0;
+    var bits = 0;
+
+    for (var i = 0; i < clean.length; i++) {
+      var charValue = BASE32_ALPHABET.indexOf(clean.charAt(i));
+      if (charValue < 0) continue;
+      value = (value << 5) | charValue;
+      bits += 5;
+      if (bits >= 8) {
+        bytes.push((value >>> (bits - 8)) & 255);
+        bits -= 8;
+      }
+    }
+
+    return new TextDecoder().decode(new Uint8Array(bytes));
+  }
+
+  function checksumText(text) {
+    var sum = 0;
+    for (var i = 0; i < text.length; i++) {
+      sum = ((sum * 33) + text.charCodeAt(i)) & 1048575;
+    }
+    return sum;
+  }
+
+  function encodeBase32Number(number, digits) {
+    var output = '';
+    var value = number >>> 0;
+    for (var i = 0; i < digits; i++) {
+      output = BASE32_ALPHABET.charAt(value & 31) + output;
+      value = value >>> 5;
+    }
+    return output;
+  }
+
+  function formatPassphrase(raw) {
+    var groups = [];
+    groups.push(raw.substring(0, PASSPHRASE_PREFIX.length));
+    for (var i = PASSPHRASE_PREFIX.length; i < raw.length; i += 4) {
+      groups.push(raw.substring(i, i + 4));
+    }
+    return groups.join(' ');
+  }
+
+  function parsePassphrase(text) {
+    var clean = (text || '').toUpperCase().replace(/[^A-Z2-7]/g, '');
+    if (clean.indexOf(PASSPHRASE_PREFIX) !== 0) {
+      return { success: false, error: 'あいことばの形式がちがう。' };
+    }
+
+    var checksum = clean.substring(PASSPHRASE_PREFIX.length, PASSPHRASE_PREFIX.length + 4);
+    var body = clean.substring(PASSPHRASE_PREFIX.length + 4);
+    if (!checksum || !body) {
+      return { success: false, error: 'あいことばが短すぎる。' };
+    }
+
+    try {
+      var raw = decodeBase32(body);
+      if (encodeBase32Number(checksumText(raw), 4) !== checksum) {
+        return { success: false, error: 'あいことばがこわれている。' };
+      }
+      var compact = JSON.parse(raw);
+      var expanded = expandPortableData(compact);
+      if (!expanded) {
+        return { success: false, error: 'このあいことばは使えない。' };
+      }
+      return { success: true, data: expanded };
+    } catch (err) {
+      return { success: false, error: 'あいことばを読み取れない。' };
+    }
+  }
+
+  function save(slot) {
+    var data = buildSaveData();
+    if (Game.Story && Game.Story.saveFlags) Game.Story.saveFlags();
+    return writeSave(slot, data);
+  }
+
+  function load(slot) {
+    return applySaveData(readSave(slot));
+  }
+
+  function loadPassphrase(text) {
+    var parsed = parsePassphrase(text);
+    if (!parsed.success) return parsed;
+    if (!applySaveData(parsed.data)) {
+      return { success: false, error: 'あいことばの内容が古い。' };
+    }
+    return { success: true, data: parsed.data };
+  }
+
+  function createPassphrase() {
+    var compact = minifySaveData(buildSaveData());
+    var raw = JSON.stringify(compact);
+    var checksum = encodeBase32Number(checksumText(raw), 4);
+    return formatPassphrase(PASSPHRASE_PREFIX + checksum + encodeBase32(raw));
+  }
+
   function hasSave(slot) {
     return !!readSave(slot);
+  }
+
+  function hasAnySave() {
+    for (var slot = 1; slot <= MAX_SLOTS; slot++) {
+      if (hasSave(slot)) return true;
+    }
+    return false;
   }
 
   function getSlotInfo(slot) {
@@ -243,14 +642,17 @@ Game.Save = (function() {
 
   function deleteSave(slot) {
     if (!isValidSlot(slot)) return false;
-    localStorage.removeItem('gunmaEscape_slot_' + slot);
+    localStorage.removeItem(getStorageKey(slot));
     return true;
   }
 
   return {
     save: save,
     load: load,
+    loadPassphrase: loadPassphrase,
+    createPassphrase: createPassphrase,
     hasSave: hasSave,
+    hasAnySave: hasAnySave,
     getSlotInfo: getSlotInfo,
     autoSave: autoSave,
     deleteSave: deleteSave

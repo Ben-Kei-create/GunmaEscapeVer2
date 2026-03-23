@@ -14,6 +14,8 @@ Game.Main = (function() {
     Game.Input.init();
     Game.Audio.init();
     setState(Game.Config.STATE.TITLE);
+    window.advanceTime = advanceTime;
+    window.render_game_to_text = renderGameToText;
 
     // Mute key
     window.addEventListener('keydown', function(e) {
@@ -54,12 +56,15 @@ Game.Main = (function() {
           if (sel === 0) {
             Game.Audio.playSfx('confirm');
             startGame();
-          } else if (sel === 1 && Game.Save && Game.Save.hasSave(0)) {
+          } else if (sel === 1 && Game.Save && Game.Save.hasAnySave && Game.Save.hasAnySave()) {
             Game.Audio.playSfx('confirm');
-            Game.Save.load(0);
-            setState(Game.Config.STATE.EXPLORING);
-            Game.Audio.playBgm('field');
+            Game.SaveMenu.open({ context: 'title', action: 'load' });
+            setState(Game.Config.STATE.SAVE);
           } else if (sel === 2) {
+            Game.Audio.playSfx('confirm');
+            Game.SaveMenu.open({ context: 'title', action: 'passphrase' });
+            setState(Game.Config.STATE.SAVE);
+          } else if (sel === 3) {
             Game.Audio.playSfx('confirm');
             // Show achievements (toggle back with confirm)
           }
@@ -209,6 +214,16 @@ Game.Main = (function() {
         }
         break;
 
+      case Game.Config.STATE.SAVE:
+        var saveResult = Game.SaveMenu.update ? Game.SaveMenu.update() : null;
+        if (saveResult && saveResult.closeTo) {
+          setState(saveResult.closeTo);
+          if (saveResult.loaded && saveResult.closeTo === Game.Config.STATE.EXPLORING) {
+            Game.Audio.playBgm('field');
+          }
+        }
+        break;
+
       case Game.Config.STATE.TRANSITION:
         transitionAlpha += 0.05;
         if (transitionAlpha >= 1) {
@@ -330,6 +345,14 @@ Game.Main = (function() {
           setState(Game.Config.STATE.ENDING);
         });
         break;
+      case 'save_priest':
+        if (Game.SaveMenu && Game.SaveMenu.open) {
+          Game.SaveMenu.open({ context: 'field' });
+          setState(Game.Config.STATE.SAVE);
+        } else {
+          setState(Game.Config.STATE.EXPLORING);
+        }
+        break;
       default:
         // Check for shop actions: shop_<shopName>_<item1>,<item2>,...
         if (action.indexOf('shop_') === 0) {
@@ -376,6 +399,11 @@ Game.Main = (function() {
     pd.equippedDice = ['normalDice'];
     pd.armor = null;
     pd.inventory = [];
+
+    if (Game.Story && Game.Story.reset) {
+      Game.Story.reset();
+      if (Game.Story.saveFlags) Game.Story.saveFlags();
+    }
   }
 
   function startChapter2() {
@@ -456,6 +484,15 @@ Game.Main = (function() {
         Game.UI.drawMenu();
         break;
 
+      case Game.Config.STATE.SAVE:
+        if (Game.SaveMenu && Game.SaveMenu.getContext && Game.SaveMenu.getContext() === 'title') {
+          Game.UI.drawTitleScreen();
+        } else {
+          renderExploring();
+        }
+        if (Game.SaveMenu && Game.SaveMenu.draw) Game.SaveMenu.draw();
+        break;
+
       case Game.Config.STATE.TRANSITION:
       case 'transition_out':
         renderExploring();
@@ -484,6 +521,36 @@ Game.Main = (function() {
     Game.UI.drawHUD();
     if (Game.UI.drawMinimap) Game.UI.drawMinimap();
     if (Game.UI.drawPopups) Game.UI.drawPopups();
+  }
+
+  function advanceTime(ms) {
+    var steps = Math.max(1, Math.round((ms || 16) / (1000 / 60)));
+    for (var i = 0; i < steps; i++) {
+      Game.Input.update();
+      update(1000 / 60);
+      render();
+    }
+    return Promise.resolve();
+  }
+
+  function renderGameToText() {
+    var pd = Game.Player.getData();
+    return JSON.stringify({
+      mode: state,
+      titleSelection: Game.UI.getTitleSelection ? Game.UI.getTitleSelection() : 0,
+      map: Game.Map.getCurrentMapId ? Game.Map.getCurrentMapId() : '',
+      player: {
+        tileX: pd.tileX,
+        tileY: pd.tileY,
+        direction: pd.direction,
+        hp: pd.hp,
+        maxHp: pd.maxHp,
+        gold: pd.gold,
+        chapter: pd.chapter
+      },
+      hasAnySave: Game.Save && Game.Save.hasAnySave ? Game.Save.hasAnySave() : false,
+      saveMenuContext: Game.SaveMenu && Game.SaveMenu.getContext ? Game.SaveMenu.getContext() : null
+    });
   }
 
   // Start when page loads

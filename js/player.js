@@ -241,6 +241,13 @@ Game.Player = (function() {
     return true;
   }
 
+  function unequipArmor() {
+    if (!data.armor) return false;
+    addItem(data.armor);
+    data.armor = null;
+    return true;
+  }
+
   function addGold(amount) {
     data.gold = Math.max(0, data.gold + amount);
   }
@@ -263,6 +270,7 @@ Game.Player = (function() {
     addDiceSlot: addDiceSlot,
     getEquippedDice: getEquippedDice,
     equipArmor: equipArmor,
+    unequipArmor: unequipArmor,
     addGold: addGold,
     getData: getData
   };

@@ -50,6 +50,7 @@ Game.Config = {
     MENU: 'menu',
     TRANSITION: 'transition',
     SHOP: 'shop',
+    SAVE: 'save',
     EVENT: 'event',
     ENDING: 'ending',
     GAMEOVER: 'gameover'

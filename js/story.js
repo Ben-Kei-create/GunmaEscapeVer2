@@ -649,6 +649,317 @@ Game.Story = (function() {
       { type: 'set_flag', flag: 'ch6_complete' },
       { type: 'end_chapter', next: 7 },
       { type: 'fade_out' }
+    ],
+
+    // ── 第7章「合流 ─ 山川の覚悟」 ──────────────────
+
+    'ch7_opening': [
+      { type: 'set_bg', bg: 'konuma' },
+      { type: 'fade_in' },
+      { type: 'narration', text: '── 第七章「合流 ─ 山川の覚悟」──' },
+      { type: 'set_phase', phase: 'ch7' },
+      { type: 'narration', text: '榛名湖は濃い霧に包まれていた。' },
+      { type: 'dialog', speaker: 'アカギ', text: 'この霧、結界の澱みだな。' },
+      { type: 'dialog', speaker: '？？？', text: '地図と地形が全く合わない…' },
+      { type: 'dialog', speaker: '主人公', text: '山川！？無事だったのか！' },
+      { type: 'show_character', name: '山川', position: 'center' },
+      { type: 'dialog', speaker: '山川', text: 'お前か。記憶は戻ったのか？' },
+      { type: 'dialog', speaker: '主人公', text: '自分の名前すらまだだ。' },
+      { type: 'dialog', speaker: '山川', text: '俺もだ。助手席の記憶しかない。' },
+      { type: 'set_flag', flag: 'ch7_started' },
+      { type: 'set_flag', flag: 'yamakawa_found' }
+    ],
+
+    'ch7_mid1': [
+      { type: 'set_bg', bg: 'forest' },
+      { type: 'fade_in' },
+      { type: 'narration', text: '榛名湖畔の道を進む。霧がさらに濃くなる。' },
+      { type: 'dialog', speaker: '山川', text: '俺の地図じゃここは行き止まりだ。' },
+      { type: 'dialog', speaker: 'アカギ', text: '土地の掟だ。道は作ればいい。' },
+      { type: 'dialog', speaker: '山川', text: '相変わらず野蛮な理屈だ。' },
+      { type: 'dialog', speaker: '主人公', text: 'でも、進むしかないんだ。' },
+      { type: 'set_flag', flag: 'haruna_path_blocked' }
+    ],
+
+    'ch7_mid2': [
+      { type: 'set_bg', bg: 'forest' },
+      { type: 'fade_in' },
+      { type: 'narration', text: '足元の景色がぐにゃりと歪む。' },
+      { type: 'shake', duration: 25 },
+      { type: 'dialog', speaker: 'アカギ', text: '気をつけろ、侵食が始まってる。' },
+      { type: 'dialog', speaker: '山川', text: 'ただ見てるだけはもう終わりだ。' },
+      { type: 'dialog', speaker: '山川', text: '俺も前線に立つ。覚悟は決めた。' },
+      { type: 'set_flag', flag: 'yamakawa_resolve' },
+      { type: 'legacy_card', cardId: 'yamakawa_map', name: '山川の古地図',
+        description: '現実と結界の狭間で書き換わった地図。' }
+    ],
+
+    'ch7_boss_pre': [
+      { type: 'set_bg', bg: 'konuma' },
+      { type: 'fade_in' },
+      { type: 'narration', text: '湖面から巨大な影が這い上がる。' },
+      { type: 'shake', duration: 35 },
+      { type: 'dialog', speaker: 'ジューク', text: '結界の底からのお出ましだぜ。' },
+      { type: 'dialog', speaker: '主人公', text: '邪魔するなよ、ジューク！' },
+      { type: 'dialog', speaker: '山川', text: '俺の解析で弱点を突く！行くぞ！' },
+      { type: 'start_battle', enemy: 'haruna_lake_beast' },
+      { type: 'set_flag', flag: 'haruna_beast_defeated' },
+      { type: 'legacy_card', cardId: 'haruna_mist', name: '榛名の霧粒',
+        description: '湖底から這い出た獣が残した結界の残滓。' }
+    ],
+
+    'ch7_ending': [
+      { type: 'set_bg', bg: 'chapter_end' },
+      { type: 'fade_in' },
+      { type: 'dialog', speaker: '山川', text: 'なんとか退けたな。' },
+      { type: 'dialog', speaker: 'アカギ', text: 'やるじゃないか、地図男。' },
+      { type: 'dialog', speaker: '山川', text: 'フッ…これからは頼りにしてくれ。' },
+      { type: 'narration', text: '山川が正式に戦闘に加わった！' },
+      { type: 'party_join', id: 'yamakawa', name: '山川' },
+      { type: 'narration', text: '── 第七章「合流 ─ 山川の覚悟」 完 ──' },
+      { type: 'set_flag', flag: 'ch7_complete' },
+      { type: 'set_flag', flag: 'party_yamakawa' },
+      { type: 'end_chapter', next: 8 },
+      { type: 'fade_out' }
+    ],
+
+    // ── 第8章「深層 ─ 結界の綻び」 ──────────────────
+
+    'ch8_opening': [
+      { type: 'set_bg', bg: 'forest' },
+      { type: 'fade_in' },
+      { type: 'narration', text: '── 第八章「深層 ─ 結界の綻び」──' },
+      { type: 'set_phase', phase: 'ch8' },
+      { type: 'narration', text: '尾瀬の湿原は泥に沈みかけていた。' },
+      { type: 'dialog', speaker: '山川', text: '結界の綻びがここにも…' },
+      { type: 'dialog', speaker: '主人公', text: '侵食のスピードが上がってる。' },
+      { type: 'set_flag', flag: 'ch8_started' },
+      { type: 'set_flag', flag: 'oze_entered' }
+    ],
+
+    'ch8_mid1': [
+      { type: 'set_bg', bg: 'forest' },
+      { type: 'fade_in' },
+      { type: 'narration', text: '湿原の木道が侵食で崩れかけている。' },
+      { type: 'dialog', speaker: 'ジューク', text: '路線が繋がりかけてる証拠さ。' },
+      { type: 'dialog', speaker: '主人公', text: 'どこへ繋がろうとしてるんだ？' },
+      { type: 'dialog', speaker: 'ジューク', text: 'お前らの大事な現実ってやつだ。' },
+      { type: 'set_flag', flag: 'rosen_revelation' }
+    ],
+
+    'ch8_mid2': [
+      { type: 'set_bg', bg: 'forest' },
+      { type: 'fade_in' },
+      { type: 'narration', text: '結界の裂け目から冷たい風が吹き込む。' },
+      { type: 'dialog', speaker: 'アカギ', text: 'この土地の記憶が流れ出すのか。' },
+      { type: 'dialog', speaker: '山川', text: 'それは防がなきゃいけない。' },
+      { type: 'dialog', speaker: '主人公', text: '急ごう、まだ間に合うはずだ。' },
+      { type: 'set_flag', flag: 'memory_leak_aware' }
+    ],
+
+    'ch8_boss_pre': [
+      { type: 'set_bg', bg: 'battle_field' },
+      { type: 'fade_in' },
+      { type: 'narration', text: '泥の中から異形が姿を現す。' },
+      { type: 'shake', duration: 30 },
+      { type: 'dialog', speaker: 'アカギ', text: '土地の記憶の成れの果てか。' },
+      { type: 'dialog', speaker: '主人公', text: '倒して、結界を縫い止める！' },
+      { type: 'start_battle', enemy: 'oze_mud_wraith' },
+      { type: 'set_flag', flag: 'oze_wraith_defeated' },
+      { type: 'legacy_card', cardId: 'oze_silt', name: '尾瀬の泥花',
+        description: '泥から咲いた結界の記憶の花。' }
+    ],
+
+    'ch8_ending': [
+      { type: 'set_bg', bg: 'chapter_end' },
+      { type: 'fade_in' },
+      { type: 'narration', text: '泥の中に沈むスマホを見つけた。' },
+      { type: 'give_item', item: 'furuyaPhone' },
+      { type: 'dialog', speaker: '山川', text: 'これは…古谷のものだ。' },
+      { type: 'dialog', speaker: '主人公', text: '水上の方へ向かったのか。' },
+      { type: 'dialog', speaker: 'アカギ', text: 'あいつ、一人で何を考えてる…' },
+      { type: 'narration', text: '── 第八章「深層 ─ 結界の綻び」 完 ──' },
+      { type: 'set_flag', flag: 'ch8_complete' },
+      { type: 'set_flag', flag: 'furuya_phone_found' },
+      { type: 'legacy_card', cardId: 'furuya_phone', name: '古谷の水没スマホ',
+        description: '泥に沈んでいた古谷の痕跡。' },
+      { type: 'end_chapter', next: 9 },
+      { type: 'fade_out' }
+    ],
+
+    // ── 第9章「孤独 ─ 古谷の選択」 ──────────────────
+
+    'ch9_opening': [
+      { type: 'set_bg', bg: 'forest' },
+      { type: 'fade_in' },
+      { type: 'narration', text: '── 第九章「孤独 ─ 古谷の選択」──' },
+      { type: 'set_phase', phase: 'ch9' },
+      { type: 'narration', text: '水上の谷に冷たい風が吹く。' },
+      { type: 'dialog', speaker: '主人公', text: '古谷！どこにいる！' },
+      { type: 'dialog', speaker: '古谷', text: '…来るなと言ったはずだ。' },
+      { type: 'narration', text: '岩陰から古谷が姿を現した。' },
+      { type: 'show_character', name: '古谷', position: 'center' },
+      { type: 'set_flag', flag: 'ch9_started' },
+      { type: 'set_flag', flag: 'furuya_found' }
+    ],
+
+    'ch9_mid1': [
+      { type: 'set_bg', bg: 'forest' },
+      { type: 'fade_in' },
+      { type: 'dialog', speaker: '山川', text: 'なぜ一人で結界の奥へ来た？' },
+      { type: 'dialog', speaker: '古谷', text: '俺が一人で路線を断つためだ。' },
+      { type: 'dialog', speaker: 'アカギ', text: '自己犠牲のつもりかよ。' },
+      { type: 'dialog', speaker: '古谷', text: '俺みたいな奴が消えても...誰も困らない。' },
+      { type: 'set_flag', flag: 'furuya_sacrifice_intent' }
+    ],
+
+    'ch9_mid2': [
+      { type: 'set_bg', bg: 'forest' },
+      { type: 'fade_in' },
+      { type: 'dialog', speaker: '古谷', text: '俺の居場所はどこにもないんだ。' },
+      { type: 'choice', speaker: '主人公', text: 'どうする？', choices: [
+        { text: '一緒に記憶を探そう', flag: 'furuya_join_true' },
+        { text: '無理には誘わない', flag: 'furuya_join_false' }
+      ]},
+      { type: 'set_flag', flag: 'furuya_choice_made' }
+    ],
+
+    'ch9_boss_pre': [
+      { type: 'set_bg', bg: 'battle_field' },
+      { type: 'fade_in' },
+      { type: 'narration', text: '古谷の背後に黒い影が迫る！' },
+      { type: 'shake', duration: 30 },
+      { type: 'dialog', speaker: '主人公', text: '危ない、古谷！' },
+      { type: 'dialog', speaker: '古谷', text: 'くそっ、囲まれたか！' },
+      { type: 'dialog', speaker: 'ジューク', text: '掟の番人の恐さを教えてやるよ。' },
+      { type: 'start_battle', enemy: 'juke_minakami' },
+      { type: 'set_flag', flag: 'juke_minakami_defeated' },
+      { type: 'legacy_card', cardId: 'juke_decree', name: 'ジュークの裁定書',
+        description: '掟の番人が下した最後の判決。' }
+    ],
+
+    'ch9_ending': [
+      { type: 'set_bg', bg: 'chapter_end' },
+      { type: 'fade_in' },
+      { type: 'dialog', speaker: '古谷', text: '…助かった。迷惑かけたな。' },
+      { type: 'dialog', speaker: '主人公', text: '俺たちは仲間だろ。' },
+      { type: 'dialog', speaker: '古谷', text: 'ああ、最後まで付き合うさ。' },
+      { type: 'narration', text: '古谷が正式に戦闘に加わった！' },
+      { type: 'party_join', id: 'furuya', name: '古谷' },
+      { type: 'narration', text: '── 第九章「孤独 ─ 古谷の選択」 完 ──' },
+      { type: 'set_flag', flag: 'ch9_complete' },
+      { type: 'set_flag', flag: 'party_furuya' },
+      { type: 'end_chapter', next: 10 },
+      { type: 'fade_out' }
+    ],
+
+    // ── 第10章「帰還 ─ 名前を取り戻す旅」 ─────────────
+
+    'ch10_opening': [
+      { type: 'set_bg', bg: 'tunnel' },
+      { type: 'fade_in' },
+      { type: 'narration', text: '── 最終章「帰還 ─ 名前を取り戻す旅」──' },
+      { type: 'set_phase', phase: 'ch10' },
+      { type: 'narration', text: '国境の長いトンネルの入り口。' },
+      { type: 'dialog', speaker: 'アカギ', text: 'この奥にすべてがあるんだな。' },
+      { type: 'dialog', speaker: '主人公', text: '佐藤を助け、名前を取り戻す。' },
+      { type: 'set_flag', flag: 'ch10_started' },
+      { type: 'set_flag', flag: 'final_tunnel_entered' }
+    ],
+
+    'ch10_mid1': [
+      { type: 'set_bg', bg: 'tunnel' },
+      { type: 'fade_in' },
+      { type: 'narration', text: '暗闇の奥に、見覚えのある背中。' },
+      { type: 'show_character', name: '佐藤', position: 'center' },
+      { type: 'dialog', speaker: '主人公', text: '佐藤！無事だったか！' },
+      { type: 'dialog', speaker: '佐藤', text: '…なぜ来た。路線が繋がるぞ。' },
+      { type: 'dialog', speaker: '山川', text: '君を置いて帰れるわけないだろ。' },
+      { type: 'set_flag', flag: 'sato_final_encounter' }
+    ],
+
+    'ch10_mid2': [
+      { type: 'set_bg', bg: 'tunnel' },
+      { type: 'fade_in' },
+      { type: 'dialog', speaker: '佐藤', text: '俺の記憶が路線の核なんだ。' },
+      { type: 'dialog', speaker: '古谷', text: 'お前一人に背負わせはしない。' },
+      { type: 'dialog', speaker: '主人公', text: '全員で現実に帰るんだ！' },
+      { type: 'dialog', speaker: '佐藤', text: '…お前ら、変わったな。' },
+      { type: 'set_flag', flag: 'sato_core_revealed' }
+    ],
+
+    'ch10_boss_pre': [
+      { type: 'set_bg', bg: 'battle_field' },
+      { type: 'fade_in' },
+      { type: 'narration', text: '結界の主が真の姿を現す。' },
+      { type: 'shake', duration: 50 },
+      { type: 'play_sfx', sfx: 'hit' },
+      { type: 'dialog', speaker: 'ジューク', text: 'さあ、最後の掟を越えてみせろ！' },
+      { type: 'dialog', speaker: '主人公', text: 'これが、俺たちの決着だ！' },
+      { type: 'start_battle', enemy: 'juke_final' },
+      { type: 'set_flag', flag: 'juke_final_defeated' },
+      { type: 'legacy_card', cardId: 'juke_broken_rule', name: '砕けた掟の石版',
+        description: '番人が守り続けた最後の掟。' }
+    ],
+
+    'ch10_ending_A': [
+      { type: 'set_bg', bg: 'black' },
+      { type: 'fade_in' },
+      { type: 'narration', text: '── Ending A「帰還」──' },
+      { type: 'check_flag', flag: 'sato_rescue_determined' },
+      { type: 'narration', text: 'トンネルの先に光が見える。' },
+      { type: 'play_sfx', sfx: 'victory' },
+      { type: 'dialog', speaker: '佐藤', text: 'さあ、お前たちの路線へ帰れ。' },
+      { type: 'dialog', speaker: '主人公', text: 'ああ、思い出した。俺の名は…' },
+      { type: 'dialog', speaker: '山川', text: 'ついに境界を越えるんだな。' },
+      { type: 'dialog', speaker: 'アカギ', text: '達者でな、相棒！' },
+      { type: 'narration', text: '未明の始発駅に、鐘が鳴る。' },
+      { type: 'narration', text: '主人公は名前を取り戻し、現実に帰還した。' },
+      { type: 'set_flag', flag: 'ending_A' },
+      { type: 'legacy_card', cardId: 'dawn_bell', name: '始発の鐘',
+        description: '名前を取り戻し、境界を越えた証。' },
+      { type: 'narration', text: '── Fin. ──' },
+      { type: 'fade_out' }
+    ],
+
+    'ch10_ending_B': [
+      { type: 'set_bg', bg: 'black' },
+      { type: 'fade_in' },
+      { type: 'narration', text: '── Ending B「残留」──' },
+      { type: 'check_flag', flag: 'sato_will_respected' },
+      { type: 'narration', text: '切符は手の中で溶けてしまった。' },
+      { type: 'dialog', speaker: '佐藤', text: 'お前も残る道を選んだか。' },
+      { type: 'dialog', speaker: '主人公', text: 'この記憶を手放したくないんだ。' },
+      { type: 'dialog', speaker: 'ジューク', text: '物好きめ。永遠にここで迷え。' },
+      { type: 'narration', text: '溶け残った切符が風に舞う。' },
+      { type: 'narration', text: '主人公は名前を思い出せないまま、この土地に留まった。' },
+      { type: 'set_flag', flag: 'ending_B' },
+      { type: 'legacy_card', cardId: 'melted_ticket', name: '溶けた切符',
+        description: '帰れなかった者の記念。' },
+      { type: 'narration', text: '── Fin. ──' },
+      { type: 'fade_out' }
+    ],
+
+    'ch10_ending_C': [
+      { type: 'set_bg', bg: 'black' },
+      { type: 'fade_in' },
+      { type: 'narration', text: '── Ending C「反転」──' },
+      { type: 'narration', text: 'トンネルを抜け、現実に帰還した。' },
+      { type: 'play_sfx', sfx: 'victory' },
+      { type: 'dialog', speaker: '古谷', text: 'やった…ついに脱出したぞ！' },
+      { type: 'dialog', speaker: '主人公', text: '…待て。スマホの画面がおかしい。' },
+      { type: 'shake', duration: 60 },
+      { type: 'dialog', speaker: 'ジューク', text: '境界線が反転したのさ。' },
+      { type: 'dialog', speaker: 'ジューク', text: '現実が、こっちを迎えに来た。' },
+      { type: 'narration', text: 'おまえはグンマーからにげられない' },
+      { type: 'pause', duration: 120 },
+      { type: 'narration', text: '主人公は脱出したはずだった。だが...。' },
+      { type: 'set_flag', flag: 'ending_C' },
+      { type: 'legacy_card', cardId: 'inverted_border', name: '反転した境界線',
+        description: '逃げられない。グンマーは永遠に。' },
+      { type: 'narration', text: '── Fin. ──' },
+      { type: 'narration', text: '── To be continued in GunmaEscape 2... ──' },
+      { type: 'fade_out' }
     ]
   };
 

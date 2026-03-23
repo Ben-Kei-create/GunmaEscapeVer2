@@ -39,8 +39,9 @@ Game.UI = (function() {
     R.drawTextJP('〜 Escape from Gunma 〜', 130, 100 + yOff, '#aaaacc', 14);
 
     // Subtitle
-    R.drawTextJP('群馬県は一度入ったら出られない...', 115, 145, '#888', 12);
-    R.drawTextJP('4つの証を集めて県境の結界を破れ！', 110, 165, '#888', 12);
+    R.drawTextJP('群馬県は一度入ったら出られない...', 115, 140, '#888', 12);
+    R.drawTextJP('4つの証を集めて県境の結界を破れ！', 110, 158, '#888', 12);
+    R.drawTextJP('第一章「群馬脱出編」 第二章「赤城の闇編」', 85, 178, '#555', 10);
 
     // Decorative daruma
     var darumaPalette = { 1:'#882222', 2:'#cc3333', 3:'#000' };
@@ -69,7 +70,7 @@ Game.UI = (function() {
     R.drawTextJP('M: ミュート', 50, 293, '#666', 10);
 
     // Version
-    R.drawText('v1.0', 430, 305, '#444', 10);
+    R.drawText('v2.0', 430, 305, '#444', 10);
   }
 
   function drawHUD() {
@@ -77,10 +78,11 @@ Game.UI = (function() {
     var pd = Game.Player.getData();
     var map = Game.Map.getCurrentMap();
 
-    // Area name
+    // Area name with chapter
     if (map) {
-      R.drawDialogBox(5, 5, 80, 22);
-      R.drawTextJP(map.name, 15, 9, '#fff', 12);
+      var chLabel = pd.chapter === 2 ? '二章' : '一章';
+      R.drawDialogBox(5, 5, 100, 22);
+      R.drawTextJP(chLabel + ' ' + map.name, 12, 9, '#fff', 11);
     }
 
     // HP bar (mini)
@@ -90,6 +92,9 @@ Game.UI = (function() {
     R.drawRectAbsolute(Game.Config.CANVAS_WIDTH - 103, 7, 96 * hpRatio, 14,
       hpRatio > 0.3 ? Game.Config.COLORS.HP_GREEN : Game.Config.COLORS.HP_RED);
     R.drawText('HP ' + pd.hp, Game.Config.CANVAS_WIDTH - 98, 8, '#fff', 10);
+
+    // Gold display
+    R.drawText(pd.gold + 'G', Game.Config.CANVAS_WIDTH - 45, 8, '#ffdd44', 10);
 
     // Key items indicator
     var keyItems = ['onsenKey', 'darumaEye', 'konnyakuPass', 'cabbageCrest'];
@@ -143,31 +148,54 @@ Game.UI = (function() {
     var pd = Game.Player.getData();
 
     R.drawDialogBox(100, 30, 280, 260);
-    R.drawTextJP('メニュー', 200, 40, C.COLORS.GOLD, 16, 'center');
+    var chTitle = pd.chapter === 2 ? '第二章 赤城の闇編' : '第一章 群馬脱出編';
+    R.drawTextJP(chTitle, 200, 38, C.COLORS.GOLD, 12, 'center');
 
     // Stats
-    R.drawTextJP('HP: ' + pd.hp + '/' + pd.maxHp, 120, 70, '#fff', 13);
-    R.drawTextJP('攻撃力: ' + pd.attack, 120, 90, '#fff', 13);
-    R.drawTextJP('防御力: ' + pd.defense, 120, 110, '#fff', 13);
+    R.drawTextJP('HP: ' + pd.hp + '/' + pd.maxHp, 120, 60, '#fff', 13);
+    R.drawTextJP('防御力: ' + Game.Player.getDefense(), 120, 78, '#fff', 13);
+    R.drawTextJP('所持金: ' + pd.gold + 'G', 120, 96, '#ffdd44', 13);
+    var aName = pd.armor ? Game.Items.get(pd.armor).name : 'なし';
+    R.drawTextJP('防具: ' + aName, 260, 78, '#aaa', 11);
+
+    // Dice loadout
+    R.drawRectAbsolute(120, 114, 240, 1, '#446');
+    R.drawTextJP('サイコロ装備:', 120, 119, C.COLORS.GOLD, 12);
+    var equipped = Game.Player.getEquippedDice();
+    var ctx = R.getContext();
+    for (var d = 0; d < equipped.length; d++) {
+      var di = Game.Items.get(equipped[d]);
+      if (!di) continue;
+      var dy = 136 + d * 16;
+      // Color swatch
+      R.drawRectAbsolute(130, dy + 1, 10, 10, di.color || '#fff');
+      ctx.strokeStyle = '#555';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(130, dy + 1, 10, 10);
+      R.drawTextJP(di.name, 145, dy, '#ccc', 10);
+      // Show faces
+      R.drawTextJP('[' + di.faces.join('-') + ']', 260, dy, '#888', 9);
+    }
 
     // Line separator
-    R.drawRectAbsolute(120, 132, 240, 1, '#446');
+    var invY = 136 + Math.max(equipped.length, 1) * 16 + 4;
+    R.drawRectAbsolute(120, invY, 240, 1, '#446');
 
     // Inventory
-    R.drawTextJP('持ち物:', 120, 140, C.COLORS.GOLD, 13);
+    R.drawTextJP('持ち物:', 120, invY + 5, C.COLORS.GOLD, 12);
     if (pd.inventory.length === 0) {
-      R.drawTextJP('（なし）', 140, 162, '#888', 12);
+      R.drawTextJP('（なし）', 140, invY + 22, '#888', 11);
     } else {
       for (var i = 0; i < pd.inventory.length; i++) {
         var item = Game.Items.get(pd.inventory[i]);
         var name = item ? item.name : pd.inventory[i];
-        var y = 162 + i * 18;
-        if (y > 260) break;
-        R.drawTextJP('・' + name, 130, y, '#fff', 12);
+        var iy = invY + 22 + i * 16;
+        if (iy > 264) break;
+        R.drawTextJP('・' + name, 130, iy, '#fff', 11);
       }
     }
 
-    R.drawTextJP('Xキーで閉じる', 185, 270, '#888', 10);
+    R.drawTextJP('Xキーで閉じる', 185, 272, '#888', 10);
   }
 
   function drawGameOver() {
@@ -184,28 +212,44 @@ Game.UI = (function() {
 
   function drawEnding() {
     var R = Game.Renderer;
+    var pd = Game.Player.getData();
     R.clear('#001122');
 
     titleTimer++;
     var yOff = Math.sin(titleTimer / 40) * 2;
 
-    R.drawTextJP('脱出成功！', 170, 40 + yOff, Game.Config.COLORS.GOLD, 28);
-    R.drawTextJP('群馬県からの脱出に成功した！', 115, 90, '#fff', 14);
+    if (pd.chapter >= 2) {
+      // Chapter 2 ending
+      R.drawTextJP('赤城の闇、晴れる', 130, 35 + yOff, Game.Config.COLORS.GOLD, 24);
+      R.drawTextJP('暗鞍を倒し、タムラ村に平和が戻った。', 85, 80, '#fff', 13);
 
-    R.drawTextJP('...しかし、本当に', 165, 130, '#aaa', 12);
-    R.drawTextJP('脱出できたのだろうか？', 150, 150, '#aaa', 12);
+      R.drawTextJP('群馬から脱出はできなかった。', 120, 115, '#aaa', 12);
+      R.drawTextJP('だが、ここで生きる意味を見つけた。', 110, 135, '#aaa', 12);
 
-    R.drawTextJP('周りを見渡すと...', 170, 185, '#888', 12);
-    R.drawTextJP('そこにはまた群馬県が広がっていた。', 100, 210, '#cc8844', 13);
+      R.drawTextJP('サイコロに宿る力...', 160, 170, '#cc8844', 12);
+      R.drawTextJP('それは「リスペクト」の証だった。', 120, 190, '#cc8844', 12);
 
-    R.drawTextJP('〜 Fin 〜', 210, 250, Game.Config.COLORS.GOLD, 14);
+      R.drawTextJP('〜 Complete 〜', 185, 230, Game.Config.COLORS.GOLD, 16);
+      R.drawTextJP('全二章クリア おめでとう！', 145, 260, '#fff', 12);
+    } else {
+      R.drawTextJP('脱出成功！', 170, 40 + yOff, Game.Config.COLORS.GOLD, 28);
+      R.drawTextJP('群馬県からの脱出に成功した！', 115, 90, '#fff', 14);
 
-    R.drawText('Credits:', 200, 275, '#555', 10);
-    R.drawTextJP('制作：群馬県観光局（非公式）', 145, 290, '#444', 10);
+      R.drawTextJP('...しかし、本当に', 165, 130, '#aaa', 12);
+      R.drawTextJP('脱出できたのだろうか？', 150, 150, '#aaa', 12);
+
+      R.drawTextJP('周りを見渡すと...', 170, 185, '#888', 12);
+      R.drawTextJP('そこにはまた群馬県が広がっていた。', 100, 210, '#cc8844', 13);
+
+      R.drawTextJP('〜 Fin 〜', 210, 250, Game.Config.COLORS.GOLD, 14);
+    }
+
+    R.drawText('Credits:', 200, 280, '#555', 10);
+    R.drawTextJP('制作：群馬県観光局（非公式）', 145, 293, '#444', 10);
 
     blinkTimer++;
     if (blinkTimer % 60 < 40) {
-      R.drawTextJP('Zキーでタイトルに戻る', 150, 305, '#fff', 10);
+      R.drawTextJP('Zキーでタイトルに戻る', 150, 308, '#fff', 10);
     }
   }
 

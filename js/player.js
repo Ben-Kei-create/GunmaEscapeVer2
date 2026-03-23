@@ -10,6 +10,11 @@ Game.Player = (function() {
     maxHp: 100,
     attack: 12,
     defense: 5,
+    gold: 100,
+    chapter: 1,                  // current chapter (1 or 2)
+    diceSlots: 1,                // max dice slots (1-5)
+    equippedDice: ['normalDice'], // array of dice item IDs
+    armor: null,    // equipped armor item ID
     inventory: [],
     moving: false,
     moveTimer: 0,
@@ -190,6 +195,56 @@ Game.Player = (function() {
            hasItem('konnyakuPass') && hasItem('cabbageCrest');
   }
 
+  function getAttack() {
+    return data.attack;
+  }
+
+  function getDefense() {
+    var base = data.defense;
+    if (data.armor) {
+      var a = Game.Items.get(data.armor);
+      if (a && a.defenseBonus) base += a.defenseBonus;
+    }
+    return base;
+  }
+
+  function equipDice(diceId, slot) {
+    var item = Game.Items.get(diceId);
+    if (!item || item.type !== 'dice') return false;
+    if (slot < 0 || slot >= data.diceSlots) return false;
+    // Put old die back to inventory (if not normalDice)
+    if (data.equippedDice[slot] && data.equippedDice[slot] !== 'normalDice') {
+      addItem(data.equippedDice[slot]);
+    }
+    data.equippedDice[slot] = diceId;
+    removeItem(diceId);
+    return true;
+  }
+
+  function addDiceSlot() {
+    if (data.diceSlots >= 5) return false;
+    data.diceSlots++;
+    data.equippedDice.push('normalDice');
+    return true;
+  }
+
+  function getEquippedDice() {
+    return data.equippedDice.slice(0, data.diceSlots);
+  }
+
+  function equipArmor(itemId) {
+    var item = Game.Items.get(itemId);
+    if (!item || item.type !== 'armor') return false;
+    if (data.armor) addItem(data.armor);
+    data.armor = itemId;
+    removeItem(itemId);
+    return true;
+  }
+
+  function addGold(amount) {
+    data.gold = Math.max(0, data.gold + amount);
+  }
+
   function getData() { return data; }
 
   return {
@@ -202,6 +257,13 @@ Game.Player = (function() {
     removeItem: removeItem,
     heal: heal,
     hasAllKeys: hasAllKeys,
+    getAttack: getAttack,
+    getDefense: getDefense,
+    equipDice: equipDice,
+    addDiceSlot: addDiceSlot,
+    getEquippedDice: getEquippedDice,
+    equipArmor: equipArmor,
+    addGold: addGold,
     getData: getData
   };
 })();

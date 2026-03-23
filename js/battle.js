@@ -1,20 +1,31 @@
-// Battle system
+// Battle system with special dice
 Game.Battle = (function() {
   var active = false;
   var enemy = null;
   var npcRef = null;
   var menuIndex = 0;
-  var phase = 'menu'; // menu, playerAttack, enemyAttack, victory, defeat
+  var phase = 'menu';
   var message = '';
   var messageTimer = 0;
   var animTimer = 0;
   var shakeX = 0;
 
+  // Dice system
+  var battleDice = [];     // array of dice definitions for this battle
+  var diceValues = [];     // current displayed face index for each die
+  var diceStopped = [];
+  var diceResults = [];    // final face values (number or 'H3' etc)
+  var diceTimer = 0;
+  var diceSpeed = 3;
+  var currentDice = 0;
+  var diceFlashTimer = 0;
+  var healTotal = 0;       // total healing from heal dice
+
   var enemies = {
     onsenMonkey: {
       name: '温泉猿',
       hp: 50, maxHp: 50,
-      attack: 12, defense: 3,
+      attack: 12, defense: 3, goldReward: 60,
       sprite: [
         [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
         [0,0,0,0,0,1,1,1,1,1,0,0,0,0,0,0],
@@ -38,7 +49,7 @@ Game.Battle = (function() {
     cabbage: {
       name: '巨大キャベツ',
       hp: 60, maxHp: 60,
-      attack: 15, defense: 4,
+      attack: 15, defense: 4, goldReward: 100,
       sprite: [
         [0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0],
         [0,0,0,0,0,0,1,2,1,0,0,0,0,0,0,0],
@@ -58,6 +69,79 @@ Game.Battle = (function() {
         [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
       ],
       palette: { 1:'#2d6e1e', 2:'#44bb44', 3:'#66dd66' }
+    },
+    // Chapter 2 enemies
+    anguraGuard: {
+      name: 'アングラの見張り',
+      hp: 80, maxHp: 80,
+      attack: 18, defense: 6, goldReward: 120,
+      sprite: [
+        [0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0],
+        [0,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0],
+        [0,0,1,3,1,3,1,1,0,0,0,0,0,0,0,0],
+        [0,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0],
+        [0,0,0,1,4,4,1,0,0,0,0,0,0,0,0,0],
+        [0,0,1,4,4,4,4,1,0,0,0,0,0,0,0,0],
+        [0,1,4,4,4,4,4,4,1,0,0,0,0,0,0,0],
+        [0,1,4,4,4,4,4,4,1,0,0,0,0,0,0,0],
+        [0,0,1,4,4,4,4,1,0,0,0,0,0,0,0,0],
+        [0,0,1,5,5,5,5,1,0,0,0,0,0,0,0,0],
+        [0,0,1,5,0,0,5,1,0,0,0,0,0,0,0,0],
+        [0,0,1,6,0,0,6,1,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+      ],
+      palette: { 1:'#444', 3:'#ff0000', 4:'#333', 5:'#222', 6:'#111' }
+    },
+    chuji: {
+      name: '国定忠治',
+      hp: 120, maxHp: 120,
+      attack: 22, defense: 8, goldReward: 200,
+      sprite: [
+        [0,0,0,1,1,1,1,1,0,0,0,0,0,0,0,0],
+        [0,0,1,1,1,1,1,1,1,0,0,0,0,0,0,0],
+        [0,0,1,2,2,2,2,2,1,0,0,0,0,0,0,0],
+        [0,0,1,3,2,2,3,2,1,0,0,0,0,0,0,0],
+        [0,0,1,2,2,4,2,2,1,0,0,0,0,0,0,0],
+        [0,0,0,1,1,1,1,1,0,0,0,0,0,0,0,0],
+        [0,1,5,5,5,5,5,5,5,1,0,0,0,0,0,0],
+        [1,5,5,5,5,5,5,5,5,5,1,0,0,0,0,0],
+        [1,5,5,5,5,5,5,5,5,5,1,0,0,0,0,0],
+        [0,1,5,5,5,5,5,5,5,1,0,0,0,0,0,0],
+        [0,0,1,5,5,5,5,5,1,0,0,0,0,0,0,0],
+        [0,0,1,6,6,0,6,6,1,0,0,0,0,0,0,0],
+        [0,0,1,6,6,0,6,6,1,0,0,0,0,0,0,0],
+        [0,0,0,7,7,0,7,7,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+      ],
+      palette: { 1:'#444', 2:'#aaa', 3:'#ff0', 4:'#c88', 5:'#226', 6:'#335', 7:'#443' }
+    },
+    anguraBoss: {
+      name: 'ナンバー12-グンマ',
+      hp: 180, maxHp: 180,
+      attack: 28, defense: 10, goldReward: 500,
+      sprite: [
+        [0,0,1,1,1,1,1,1,1,0,0,0,0,0,0,0],
+        [0,1,2,2,2,2,2,2,2,1,0,0,0,0,0,0],
+        [0,1,3,2,2,2,2,3,2,1,0,0,0,0,0,0],
+        [0,1,2,2,2,4,2,2,2,1,0,0,0,0,0,0],
+        [0,0,1,1,1,1,1,1,1,0,0,0,0,0,0,0],
+        [0,1,5,5,5,5,5,5,5,1,0,0,0,0,0,0],
+        [1,5,5,5,5,5,5,5,5,5,1,0,0,0,0,0],
+        [1,5,5,5,5,5,5,5,5,5,1,0,0,0,0,0],
+        [0,1,5,5,5,5,5,5,5,1,0,0,0,0,0,0],
+        [0,0,1,6,6,0,6,6,1,0,0,0,0,0,0,0],
+        [0,0,1,6,6,0,6,6,1,0,0,0,0,0,0,0],
+        [0,0,0,7,7,0,7,7,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+      ],
+      palette: { 1:'#333', 2:'#888', 3:'#f00', 4:'#c88', 5:'#2a2a3a', 6:'#333', 7:'#222' }
     }
   };
 
@@ -75,12 +159,67 @@ Game.Battle = (function() {
     Game.Audio.playBgm('battle');
   }
 
+  // Parse a face value: number or 'H3' (heal 3)
+  function parseFace(face) {
+    if (typeof face === 'number') return { type: 'damage', value: face };
+    if (typeof face === 'string' && face.charAt(0) === 'H') {
+      return { type: 'heal', value: parseInt(face.substring(1)) || 0 };
+    }
+    return { type: 'damage', value: 0 };
+  }
+
+  // Get display text for a face value
+  function faceText(face) {
+    if (typeof face === 'number') return '' + face;
+    if (typeof face === 'string' && face.charAt(0) === 'H') return 'H' + face.substring(1);
+    return '0';
+  }
+
+  // Get display number for cycling animation
+  function faceDisplayNum(face) {
+    var p = parseFace(face);
+    return p.value;
+  }
+
+  function startDiceRoll() {
+    phase = 'diceRoll';
+    var equipped = Game.Player.getEquippedDice();
+    battleDice = [];
+    diceValues = [];
+    diceStopped = [];
+    diceResults = [];
+    currentDice = 0;
+    diceTimer = 0;
+    diceFlashTimer = 0;
+    healTotal = 0;
+
+    for (var i = 0; i < equipped.length; i++) {
+      var diceItem = Game.Items.get(equipped[i]);
+      if (!diceItem || !diceItem.faces) {
+        diceItem = Game.Items.get('normalDice');
+      }
+      battleDice.push(diceItem);
+      diceValues.push(0); // face index
+      diceStopped.push(false);
+      diceResults.push(null);
+    }
+    message = 'スペース/エンターで止めろ！';
+  }
+
   function update() {
     if (!active) return;
 
+    if (shakeX > 0.5) {
+      shakeX *= 0.85;
+    } else {
+      shakeX = 0;
+    }
+
+    if (diceFlashTimer > 0) diceFlashTimer--;
+
     if (messageTimer > 0) {
       messageTimer--;
-      return;
+      if (phase !== 'diceRoll') return;
     }
 
     switch (phase) {
@@ -98,12 +237,101 @@ Game.Battle = (function() {
         }
         break;
 
+      case 'diceRoll':
+        diceTimer++;
+        if (diceTimer >= diceSpeed) {
+          diceTimer = 0;
+          for (var i = 0; i < battleDice.length; i++) {
+            if (!diceStopped[i]) {
+              diceValues[i] = (diceValues[i] + 1) % 6;
+            }
+          }
+        }
+
+        if (Game.Input.isPressed('confirm') && currentDice < battleDice.length) {
+          var die = battleDice[currentDice];
+          var faceIdx = diceValues[currentDice];
+          var face = die.faces[faceIdx];
+          diceStopped[currentDice] = true;
+          diceResults[currentDice] = face;
+          diceFlashTimer = 8;
+          Game.Audio.playSfx('confirm');
+          currentDice++;
+
+          if (currentDice >= battleDice.length) {
+            // All dice stopped — calculate results
+            var damageTotal = 0;
+            healTotal = 0;
+            for (var j = 0; j < diceResults.length; j++) {
+              var parsed = parseFace(diceResults[j]);
+              if (parsed.type === 'damage') {
+                damageTotal += parsed.value;
+              } else if (parsed.type === 'heal') {
+                healTotal += parsed.value;
+              }
+            }
+
+            phase = 'diceResult';
+            animTimer = 30;
+
+            // Apply damage
+            var dmg = Math.max(0, damageTotal + Game.Player.getAttack() - enemy.defense);
+            if (damageTotal > 0 && dmg < 1) dmg = 1;
+            if (dmg > 0) {
+              enemy.hp -= dmg;
+              shakeX = 4 + battleDice.length;
+              Game.Audio.playSfx('hit');
+            }
+
+            // Apply healing
+            if (healTotal > 0) {
+              Game.Player.heal(healTotal);
+            }
+
+            // Build message
+            var msgParts = [];
+            if (damageTotal > 0) {
+              msgParts.push(dmg + 'ダメージ');
+            }
+            if (healTotal > 0) {
+              msgParts.push('HP' + healTotal + '回復');
+            }
+            if (msgParts.length === 0) {
+              message = 'ミス！何も起きなかった...';
+            } else {
+              message = msgParts.join('！ ') + '！';
+            }
+
+            if (enemy.hp <= 0) {
+              enemy.hp = 0;
+              phase = 'victory';
+              message = message + ' ' + enemy.name + 'を倒した！ ' + (enemy.goldReward || 50) + 'G獲得！';
+              messageTimer = 60;
+            }
+          } else {
+            message = '次のサイコロ！ 止めろ！';
+          }
+        }
+        break;
+
+      case 'diceResult':
+        animTimer--;
+        if (animTimer <= 0) {
+          if (enemy.hp <= 0) {
+            phase = 'victory';
+          } else {
+            phase = 'playerAttack';
+            animTimer = 5;
+          }
+        }
+        break;
+
       case 'playerAttack':
         animTimer--;
         if (animTimer <= 0) {
           phase = 'enemyAttack';
           var playerData = Game.Player.getData();
-          var dmg = Math.max(1, enemy.attack - playerData.defense + Math.floor(Math.random() * 5));
+          var dmg = Math.max(1, enemy.attack - Game.Player.getDefense() + Math.floor(Math.random() * 5));
           playerData.hp -= dmg;
           message = enemy.name + 'の攻撃！ ' + dmg + 'ダメージ！';
           messageTimer = 45;
@@ -122,8 +350,6 @@ Game.Battle = (function() {
         break;
 
       case 'enemyAttack':
-        shakeX *= 0.8;
-        if (Math.abs(shakeX) < 0.5) shakeX = 0;
         phase = 'menu';
         break;
 
@@ -131,7 +357,7 @@ Game.Battle = (function() {
         active = false;
         Game.Audio.stopBgm();
         Game.Audio.playSfx('victory');
-        return { result: 'victory', npc: npcRef };
+        return { result: 'victory', npc: npcRef, goldReward: enemy.goldReward || 50 };
 
       case 'defeat':
         active = false;
@@ -141,7 +367,7 @@ Game.Battle = (function() {
       case 'useItem':
         phase = 'enemyAttack';
         var playerData2 = Game.Player.getData();
-        var dmg2 = Math.max(1, enemy.attack - playerData2.defense + Math.floor(Math.random() * 5));
+        var dmg2 = Math.max(1, enemy.attack - Game.Player.getDefense() + Math.floor(Math.random() * 5));
         playerData2.hp -= dmg2;
         message = enemy.name + 'の攻撃！ ' + dmg2 + 'ダメージ！';
         messageTimer = 45;
@@ -168,26 +394,10 @@ Game.Battle = (function() {
   function executeAction(index) {
     var playerData = Game.Player.getData();
     switch (index) {
-      case 0: // Attack
-        var dmg = Math.max(1, playerData.attack - enemy.defense + Math.floor(Math.random() * 6));
-        enemy.hp -= dmg;
-        message = 'プレイヤーの攻撃！ ' + dmg + 'ダメージ！';
-        messageTimer = 45;
-        Game.Audio.playSfx('hit');
-        shakeX = 3;
-
-        if (enemy.hp <= 0) {
-          enemy.hp = 0;
-          phase = 'victory';
-          message = enemy.name + 'を倒した！';
-          messageTimer = 60;
-        } else {
-          phase = 'playerAttack';
-          animTimer = 5;
-        }
+      case 0:
+        startDiceRoll();
         break;
-
-      case 1: // Item
+      case 1:
         var inv = playerData.inventory;
         var healItem = null;
         for (var i = 0; i < inv.length; i++) {
@@ -209,8 +419,7 @@ Game.Battle = (function() {
           messageTimer = 30;
         }
         break;
-
-      case 2: // Flee
+      case 2:
         if (Math.random() < 0.5) {
           message = '逃げ出した！';
           messageTimer = 30;
@@ -225,39 +434,104 @@ Game.Battle = (function() {
     }
   }
 
+  // Draw a single die with custom color and face value
+  function drawDie(R, ctx, x, y, diceItem, faceIdx, size, stopped, flash) {
+    var s = size || 48;
+    var face = diceItem.faces[faceIdx % diceItem.faces.length];
+    var parsed = parseFace(face);
+    var dieColor = diceItem.color || '#ffffff';
+    var dotCol = diceItem.dotColor || '#111111';
+
+    // Shadow
+    R.drawRectAbsolute(x + 2, y + 2, s, s, '#222233');
+
+    // Die face color
+    var faceColor = flash ? '#ffffee' : dieColor;
+    if (stopped && !flash) {
+      // Slightly darken when stopped
+      faceColor = dieColor;
+    }
+    R.drawRectAbsolute(x, y, s, s, faceColor);
+
+    // Border
+    ctx.strokeStyle = stopped ? '#886622' : '#444466';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x, y, s, s);
+
+    // Corners
+    var cc = '#888888';
+    R.drawRectAbsolute(x, y, 2, 2, cc);
+    R.drawRectAbsolute(x + s - 2, y, 2, 2, cc);
+    R.drawRectAbsolute(x, y + s - 2, 2, 2, cc);
+    R.drawRectAbsolute(x + s - 2, y + s - 2, 2, 2, cc);
+
+    // Draw the value as a number in the center (for custom faces)
+    var displayVal = parsed.value;
+    var displayStr = '' + displayVal;
+    var textColor = dotCol;
+
+    if (parsed.type === 'heal') {
+      // Heal faces: show green with + sign
+      textColor = '#22aa22';
+      displayStr = '+' + displayVal;
+    }
+
+    // For values 1-6, draw traditional dot pattern too
+    if (parsed.type === 'damage' && displayVal >= 1 && displayVal <= 6) {
+      var dotPositions = {
+        1: [[3,3]],
+        2: [[1,1],[5,5]],
+        3: [[1,1],[3,3],[5,5]],
+        4: [[1,1],[1,5],[5,1],[5,5]],
+        5: [[1,1],[1,5],[3,3],[5,1],[5,5]],
+        6: [[1,1],[1,3],[1,5],[5,1],[5,3],[5,5]]
+      };
+      var dots = dotPositions[displayVal];
+      var dotSize = Math.floor(s / 7);
+      for (var i = 0; i < dots.length; i++) {
+        var dx = x + Math.floor(dots[i][0] * s / 7) + Math.floor(dotSize / 4);
+        var dy = y + Math.floor(dots[i][1] * s / 7) + Math.floor(dotSize / 4);
+        R.drawRectAbsolute(dx, dy, dotSize, dotSize, dotCol);
+      }
+    } else {
+      // For large numbers or heal, draw the number text
+      var fontSize = s > 34 ? 18 : 14;
+      R.drawTextJP(displayStr, x + Math.floor(s / 2) - (displayStr.length * fontSize / 4),
+        y + Math.floor(s / 2) - Math.floor(fontSize / 2), textColor, fontSize);
+    }
+
+    // Die name label (tiny, below die)
+    if (stopped && diceItem.id !== 'normalDice') {
+      var shortName = diceItem.name.substring(0, 4);
+      R.drawTextJP(shortName, x, y + s + 1, '#888', 7);
+    }
+  }
+
   function draw() {
     if (!active) return;
 
     var R = Game.Renderer;
     var C = Game.Config;
+    var ctx = R.getContext();
 
     // Background
     R.drawRectAbsolute(0, 0, C.CANVAS_WIDTH, C.CANVAS_HEIGHT, '#111122');
 
-    // Draw grid lines for atmosphere
-    var ctx = R.getContext();
+    // Grid
     ctx.strokeStyle = '#222244';
     ctx.lineWidth = 1;
     for (var i = 0; i < C.CANVAS_WIDTH; i += 32) {
-      ctx.beginPath();
-      ctx.moveTo(i, 0);
-      ctx.lineTo(i, C.CANVAS_HEIGHT);
-      ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, C.CANVAS_HEIGHT); ctx.stroke();
     }
     for (var i = 0; i < C.CANVAS_HEIGHT; i += 32) {
-      ctx.beginPath();
-      ctx.moveTo(0, i);
-      ctx.lineTo(C.CANVAS_WIDTH, i);
-      ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(C.CANVAS_WIDTH, i); ctx.stroke();
     }
 
-    // Enemy sprite (scaled up)
+    // Enemy
     if (enemy) {
       var ex = 200 + (shakeX > 0 ? (Math.random() - 0.5) * shakeX : 0);
-      R.drawSpriteAbsolute(enemy.sprite || enemies.onsenMonkey.sprite,
-        ex, 30, enemy.palette || enemies.onsenMonkey.palette, 5);
+      R.drawSpriteAbsolute(enemy.sprite, ex, 30, enemy.palette, 5);
 
-      // Enemy HP bar
       R.drawRectAbsolute(160, 120, 160, 12, '#333');
       var hpRatio = enemy.hp / enemy.maxHp;
       R.drawRectAbsolute(161, 121, 158 * hpRatio, 10,
@@ -270,11 +544,36 @@ Game.Battle = (function() {
     R.drawDialogBox(10, 200, 200, 60);
     R.drawTextJP('HP: ' + pd.hp + '/' + pd.maxHp, 25, 210, '#fff', 14);
 
-    // HP bar
     R.drawRectAbsolute(25, 230, 170, 10, '#333');
     var playerHpRatio = pd.hp / pd.maxHp;
     R.drawRectAbsolute(26, 231, 168 * playerHpRatio, 8,
       playerHpRatio > 0.3 ? C.COLORS.HP_GREEN : C.COLORS.HP_RED);
+
+    // Dice display
+    if (phase === 'diceRoll' || phase === 'diceResult') {
+      var diceCount = battleDice.length;
+      R.drawDialogBox(220, 150, 250, 80);
+
+      var dieSize = 44;
+      if (diceCount > 2) dieSize = 38;
+      if (diceCount > 3) dieSize = 34;
+      if (diceCount > 4) dieSize = 28;
+
+      var totalWidth = diceCount * dieSize + (diceCount - 1) * 6;
+      var startX = 220 + Math.floor((250 - totalWidth) / 2);
+      var dieY = 150 + Math.floor((80 - dieSize) / 2) - 3;
+
+      for (var i = 0; i < diceCount; i++) {
+        var dx = startX + i * (dieSize + 6);
+        var isFlashing = (diceFlashTimer > 0 && i === currentDice - 1);
+        drawDie(R, ctx, dx, dieY, battleDice[i], diceValues[i], dieSize, diceStopped[i], isFlashing);
+
+        // Active indicator
+        if (!diceStopped[i] && i === currentDice && phase === 'diceRoll') {
+          R.drawTextJP('▲', dx + Math.floor(dieSize / 2) - 5, dieY + dieSize + 8, C.COLORS.GOLD, 10);
+        }
+      }
+    }
 
     // Menu
     if (phase === 'menu' && messageTimer <= 0) {
@@ -286,10 +585,25 @@ Game.Battle = (function() {
       }
     }
 
+    // Dice loadout indicator
+    var equipped = Game.Player.getEquippedDice();
+    if (equipped.length > 0) {
+      for (var i = 0; i < equipped.length; i++) {
+        var di = Game.Items.get(equipped[i]);
+        if (di) {
+          var boxX = 10 + i * 14;
+          R.drawRectAbsolute(boxX, 268, 12, 12, di.color || '#fff');
+          ctx.strokeStyle = '#555';
+          ctx.lineWidth = 1;
+          ctx.strokeRect(boxX, 268, 12, 12);
+        }
+      }
+    }
+
     // Message
     if (message) {
-      R.drawDialogBox(10, 280, 460, 35);
-      R.drawTextJP(message, 20, 288, '#fff', 14);
+      R.drawDialogBox(10, 282, 460, 35);
+      R.drawTextJP(message, 20, 290, '#fff', 14);
     }
   }
 

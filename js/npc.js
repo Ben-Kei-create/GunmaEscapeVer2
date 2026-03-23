@@ -11,14 +11,20 @@ Game.NPC = (function() {
     dialogIndex = 0;
 
     if (npc.defeated) {
-      dialogLines = ['...'];
+      // Shop NPCs always reopen
+      if (npc.afterDialog && npc.afterDialog.indexOf('shop_') === 0) {
+        dialogLines = npc.dialog;
+        onDialogEnd = npc.afterDialog;
+        return dialogLines[0];
+      }
+      if (npc.defeatedDialog) {
+        dialogLines = npc.defeatedDialog;
+      } else {
+        dialogLines = ['...'];
+      }
       if (npc.id === 'cabbageGuardian' && Game.Player.hasAllKeys()) {
         dialogLines = ['結界は既に解かれておる。県境を越えよ！'];
       }
-      onDialogEnd = null;
-    } else if (npc.id === 'cabbageGuardian' && !Game.Player.hasItem('onsenKey') &&
-               !Game.Player.hasItem('darumaEye') && !Game.Player.hasItem('konnyakuPass')) {
-      dialogLines = npc.dialog;
       onDialogEnd = null;
     } else if (npc.id === 'cabbageGuardian' && npc.allKeysDialog &&
                Game.Player.hasItem('onsenKey') && Game.Player.hasItem('darumaEye') &&
@@ -55,7 +61,7 @@ Game.NPC = (function() {
     currentNpc = npc;
     dialogIndex = 0;
     dialogLines = npc.defeatedDialog;
-    onDialogEnd = null;
+    onDialogEnd = npc.afterDefeat || null;
     npc.defeated = true;
     if (npc.giveItem) {
       Game.Player.addItem(npc.giveItem);

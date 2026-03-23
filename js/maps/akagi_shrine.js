@@ -45,7 +45,7 @@ Game.Maps.akagi_shrine = (function() {
         'けど、お前を見て...思い出したぜ...',
         '誰かを"運ぶ"気持ちをよ...'
       ],
-      giveItem: 'akagiKey',
+      afterDefeat: 'event_ch2_ending',
       sprite: [
         [0,0,1,1,1,1,1,1,1,0,0,0,0,0,0,0],
         [0,1,2,2,2,2,2,2,2,1,0,0,0,0,0,0],

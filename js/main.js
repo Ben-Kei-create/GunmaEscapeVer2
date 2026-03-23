@@ -121,6 +121,7 @@ Game.Main = (function() {
 
         // Open menu
         if (Game.Input.isPressed('cancel')) {
+          if (Game.UI.openFieldMenu) Game.UI.openFieldMenu();
           setState(Game.Config.STATE.MENU);
           Game.Audio.playSfx('confirm');
         }
@@ -201,22 +202,10 @@ Game.Main = (function() {
         break;
 
       case Game.Config.STATE.MENU:
-        if (Game.Input.isPressed('cancel')) {
+        var menuResult = Game.UI.updateFieldMenu ? Game.UI.updateFieldMenu() : null;
+        if (menuResult && menuResult.close) {
           setState(Game.Config.STATE.EXPLORING);
           Game.Audio.playSfx('cancel');
-        }
-        // Use heal item from menu
-        if (Game.Input.isPressed('confirm')) {
-          var inv = Game.Player.getData().inventory;
-          for (var i = 0; i < inv.length; i++) {
-            var itemDef2 = Game.Items.get(inv[i]);
-            if (itemDef2 && itemDef2.type === 'heal') {
-              Game.Player.heal(itemDef2.healAmount);
-              Game.Player.removeItem(inv[i]);
-              Game.Audio.playSfx('item');
-              break;
-            }
-          }
         }
         break;
 

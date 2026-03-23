@@ -9,6 +9,13 @@ Game.UI = (function() {
   var blinkTimer = 0;
   var minimapVisible = true;
   var titleSelection = 0;
+  var fieldMenuState = {
+    itemIndex: 0,
+    commandIndex: 0,
+    commandActive: false,
+    message: '',
+    messageTimer: 0
+  };
 
   // Damage number popups
   var damagePopups = [];
@@ -166,6 +173,7 @@ Game.UI = (function() {
     var R = Game.Renderer;
     var C = Game.Config;
     var pd = Game.Player.getData();
+    var visibleItems = 6;
 
     R.drawDialogBox(100, 30, 280, 260);
     var chTitle = pd.chapter === 2 ? '第二章 赤城の闇編' : '第一章 群馬脱出編';
@@ -206,16 +214,167 @@ Game.UI = (function() {
     if (pd.inventory.length === 0) {
       R.drawTextJP('（なし）', 140, invY + 22, '#888', 11);
     } else {
-      for (var i = 0; i < pd.inventory.length; i++) {
+      var maxOffset = Math.max(0, pd.inventory.length - visibleItems);
+      var scrollOffset = Math.min(maxOffset, Math.max(0, fieldMenuState.itemIndex - visibleItems + 1));
+      for (var i = scrollOffset; i < pd.inventory.length && i < scrollOffset + visibleItems; i++) {
         var item = Game.Items.get(pd.inventory[i]);
         var name = item ? item.name : pd.inventory[i];
-        var iy = invY + 22 + i * 16;
+        var iy = invY + 22 + (i - scrollOffset) * 16;
         if (iy > 264) break;
-        R.drawTextJP('・' + name, 130, iy, '#fff', 11);
+        var selected = (i === fieldMenuState.itemIndex);
+        var prefix = selected ? '▶ ' : '・';
+        R.drawTextJP(prefix + name, 130, iy, selected ? C.COLORS.GOLD : '#fff', 11);
+      }
+
+      var selectedId = pd.inventory[fieldMenuState.itemIndex];
+      var selectedItem = selectedId ? Game.Items.get(selectedId) : null;
+      if (selectedItem) {
+        R.drawRectAbsolute(120, 246, 240, 1, '#446');
+        R.drawTextJP(selectedItem.desc || '説明なし', 122, 251, '#aaa', 10);
+      }
+
+      if (fieldMenuState.commandActive && selectedItem) {
+        var commands = getFieldMenuCommands(selectedItem);
+        R.drawDialogBox(272, 176, 88, commands.length * 18 + 12);
+        for (var ci = 0; ci < commands.length; ci++) {
+          var cSelected = (ci === fieldMenuState.commandIndex);
+          var cPrefix = cSelected ? '▶ ' : '  ';
+          R.drawTextJP(cPrefix + commands[ci], 282, 184 + ci * 18, cSelected ? C.COLORS.GOLD : '#fff', 11);
+        }
       }
     }
 
-    R.drawTextJP('Xキーで閉じる', 185, 272, '#888', 10);
+    if (fieldMenuState.messageTimer > 0 && fieldMenuState.message) {
+      R.drawDialogBox(120, 266, 240, 18);
+      R.drawTextJP(fieldMenuState.message, 126, 269, '#fff', 10);
+    }
+
+    R.drawTextJP('Z/Space: 決定  X: 戻る', 152, 288, '#888', 10);
+  }
+
+  function clampFieldMenuSelection() {
+    var inventory = Game.Player.getData().inventory;
+    if (inventory.length <= 0) {
+      fieldMenuState.itemIndex = 0;
+      fieldMenuState.commandIndex = 0;
+      fieldMenuState.commandActive = false;
+      return;
+    }
+    if (fieldMenuState.itemIndex >= inventory.length) fieldMenuState.itemIndex = inventory.length - 1;
+    if (fieldMenuState.itemIndex < 0) fieldMenuState.itemIndex = 0;
+  }
+
+  function getFieldMenuCommands(item) {
+    if (!item) return ['やめる'];
+    if (item.type === 'heal') return ['つかう', 'すてる', 'やめる'];
+    if (item.type === 'key') return ['やめる'];
+    return ['すてる', 'やめる'];
+  }
+
+  function setFieldMenuMessage(text, timer) {
+    fieldMenuState.message = text;
+    fieldMenuState.messageTimer = timer || 45;
+  }
+
+  function openFieldMenu() {
+    fieldMenuState.commandActive = false;
+    fieldMenuState.commandIndex = 0;
+    fieldMenuState.message = '';
+    fieldMenuState.messageTimer = 0;
+    clampFieldMenuSelection();
+  }
+
+  function updateFieldMenu() {
+    var inventory = Game.Player.getData().inventory;
+    clampFieldMenuSelection();
+
+    if (fieldMenuState.messageTimer > 0) {
+      fieldMenuState.messageTimer--;
+      if (Game.Input.isPressed('confirm') || Game.Input.isPressed('cancel')) {
+        fieldMenuState.messageTimer = 0;
+      }
+      return null;
+    }
+
+    if (!fieldMenuState.commandActive) {
+      if (Game.Input.isPressed('up') && inventory.length > 0) {
+        fieldMenuState.itemIndex = (fieldMenuState.itemIndex - 1 + inventory.length) % inventory.length;
+        Game.Audio.playSfx('confirm');
+      }
+      if (Game.Input.isPressed('down') && inventory.length > 0) {
+        fieldMenuState.itemIndex = (fieldMenuState.itemIndex + 1) % inventory.length;
+        Game.Audio.playSfx('confirm');
+      }
+      if (Game.Input.isPressed('confirm')) {
+        if (inventory.length > 0) {
+          fieldMenuState.commandActive = true;
+          fieldMenuState.commandIndex = 0;
+          Game.Audio.playSfx('confirm');
+        }
+      }
+      if (Game.Input.isPressed('cancel')) {
+        return { close: true };
+      }
+      return null;
+    }
+
+    var selectedId = inventory[fieldMenuState.itemIndex];
+    var selectedItem = selectedId ? Game.Items.get(selectedId) : null;
+    var commands = getFieldMenuCommands(selectedItem);
+
+    if (Game.Input.isPressed('up')) {
+      fieldMenuState.commandIndex = (fieldMenuState.commandIndex - 1 + commands.length) % commands.length;
+      Game.Audio.playSfx('confirm');
+    }
+    if (Game.Input.isPressed('down')) {
+      fieldMenuState.commandIndex = (fieldMenuState.commandIndex + 1) % commands.length;
+      Game.Audio.playSfx('confirm');
+    }
+    if (Game.Input.isPressed('cancel')) {
+      fieldMenuState.commandActive = false;
+      fieldMenuState.commandIndex = 0;
+      Game.Audio.playSfx('cancel');
+      return null;
+    }
+    if (!Game.Input.isPressed('confirm')) return null;
+
+    var command = commands[fieldMenuState.commandIndex];
+    if (command === 'やめる') {
+      fieldMenuState.commandActive = false;
+      fieldMenuState.commandIndex = 0;
+      Game.Audio.playSfx('cancel');
+      return null;
+    }
+
+    if (command === 'つかう' && selectedItem && selectedItem.type === 'heal') {
+      Game.Player.heal(selectedItem.healAmount);
+      Game.Player.removeItem(selectedId);
+      fieldMenuState.commandActive = false;
+      fieldMenuState.commandIndex = 0;
+      clampFieldMenuSelection();
+      setFieldMenuMessage(selectedItem.name + 'を使った！ HPが' + selectedItem.healAmount + '回復！', 60);
+      Game.Audio.playSfx('item');
+      return null;
+    }
+
+    if (command === 'すてる') {
+      if (selectedItem && selectedItem.type === 'key') {
+        fieldMenuState.commandActive = false;
+        fieldMenuState.commandIndex = 0;
+        setFieldMenuMessage('だいじなものは すてられない！', 45);
+        Game.Audio.playSfx('cancel');
+        return null;
+      }
+      Game.Player.removeItem(selectedId);
+      fieldMenuState.commandActive = false;
+      fieldMenuState.commandIndex = 0;
+      clampFieldMenuSelection();
+      setFieldMenuMessage((selectedItem ? selectedItem.name : selectedId) + 'をすてた。', 45);
+      Game.Audio.playSfx('cancel');
+      return null;
+    }
+
+    return null;
   }
 
   function drawGameOver() {
@@ -388,6 +547,8 @@ Game.UI = (function() {
     drawPopups: drawPopups,
     getTitleSelection: getTitleSelection,
     updateTitleMenu: updateTitleMenu,
-    toggleMinimap: toggleMinimap
+    toggleMinimap: toggleMinimap,
+    openFieldMenu: openFieldMenu,
+    updateFieldMenu: updateFieldMenu
   };
 })();

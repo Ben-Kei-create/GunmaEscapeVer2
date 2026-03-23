@@ -9,6 +9,8 @@ Game.Battle = (function() {
   var messageTimer = 0;
   var animTimer = 0;
   var shakeX = 0;
+  var itemMenuIndex = 0;
+  var itemMenuItems = [];
 
   // Dice system
   var battleDice = [];     // array of dice definitions for this battle
@@ -237,6 +239,8 @@ Game.Battle = (function() {
     npcRef = npc;
     enemy = JSON.parse(JSON.stringify(enemies[enemyId]));
     menuIndex = 0;
+    itemMenuIndex = 0;
+    itemMenuItems = [];
     phase = 'menu';
     message = enemy.name + 'が現れた！';
     messageTimer = 60;
@@ -326,6 +330,25 @@ Game.Battle = (function() {
         }
         if (Game.Input.isPressed('confirm')) {
           executeAction(menuIndex);
+        }
+        break;
+
+      case 'itemMenu':
+        if (Game.Input.isPressed('up')) {
+          itemMenuIndex = (itemMenuIndex - 1 + itemMenuItems.length) % itemMenuItems.length;
+          Game.Audio.playSfx('confirm');
+        }
+        if (Game.Input.isPressed('down')) {
+          itemMenuIndex = (itemMenuIndex + 1) % itemMenuItems.length;
+          Game.Audio.playSfx('confirm');
+        }
+        if (Game.Input.isPressed('cancel')) {
+          phase = 'menu';
+          message = '';
+          Game.Audio.playSfx('cancel');
+        }
+        if (Game.Input.isPressed('confirm')) {
+          useSelectedItem();
         }
         break;
 
@@ -560,21 +583,22 @@ Game.Battle = (function() {
         break;
       case 1:
         var inv = playerData.inventory;
-        var healItem = null;
+        itemMenuItems = [];
+        itemMenuIndex = 0;
         for (var i = 0; i < inv.length; i++) {
           var item = Game.Items.get(inv[i]);
           if (item && item.type === 'heal') {
-            healItem = item;
-            Game.Player.removeItem(inv[i]);
-            break;
+            itemMenuItems.push({
+              id: inv[i],
+              item: item
+            });
           }
         }
-        if (healItem) {
-          Game.Player.heal(healItem.healAmount);
-          message = healItem.name + 'を使った！ HPが' + healItem.healAmount + '回復！';
-          messageTimer = 45;
-          Game.Audio.playSfx('item');
-          phase = 'useItem';
+        if (itemMenuItems.length > 0) {
+          phase = 'itemMenu';
+          message = '使うアイテムを選べ';
+          messageTimer = 0;
+          Game.Audio.playSfx('confirm');
         } else {
           message = '使えるアイテムがない！';
           messageTimer = 30;
@@ -593,6 +617,27 @@ Game.Battle = (function() {
         }
         break;
     }
+  }
+
+  function useSelectedItem() {
+    if (!itemMenuItems.length) {
+      phase = 'menu';
+      return;
+    }
+    var selected = itemMenuItems[itemMenuIndex];
+    if (!selected || !selected.item) {
+      phase = 'menu';
+      return;
+    }
+
+    Game.Player.removeItem(selected.id);
+    Game.Player.heal(selected.item.healAmount);
+    message = selected.item.name + 'を使った！ HPが' + selected.item.healAmount + '回復！';
+    messageTimer = 45;
+    Game.Audio.playSfx('item');
+    itemMenuItems = [];
+    itemMenuIndex = 0;
+    phase = 'useItem';
   }
 
   // Draw a single die with custom color and face value
@@ -799,6 +844,21 @@ Game.Battle = (function() {
         var color = (i === menuIndex) ? C.COLORS.GOLD : '#fff';
         var prefix = (i === menuIndex) ? '▶ ' : '  ';
         R.drawTextJP(prefix + menuItems[i], 315, 212 + i * 22, color, 14);
+      }
+    }
+
+    if (phase === 'itemMenu' && messageTimer <= 0) {
+      R.drawDialogBox(280, 184, 180, 96);
+      for (var ii = 0; ii < itemMenuItems.length; ii++) {
+        var selected = (ii === itemMenuIndex);
+        var itemName = itemMenuItems[ii].item.name;
+        var prefix2 = selected ? '▶ ' : '  ';
+        var col2 = selected ? C.COLORS.GOLD : '#fff';
+        R.drawTextJP(prefix2 + itemName, 292, 194 + ii * 18, col2, 12);
+      }
+      if (itemMenuItems[itemMenuIndex]) {
+        R.drawTextJP('HP+' + itemMenuItems[itemMenuIndex].item.healAmount, 292, 252, '#88dd88', 11);
+        R.drawTextJP('Xで戻る', 392, 252, '#888', 10);
       }
     }
 

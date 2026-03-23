@@ -61,7 +61,7 @@ Game.NPC = (function() {
     currentNpc = npc;
     dialogIndex = 0;
     dialogLines = npc.defeatedDialog;
-    onDialogEnd = null;
+    onDialogEnd = npc.afterDefeat || null;
     npc.defeated = true;
     if (npc.giveItem) {
       Game.Player.addItem(npc.giveItem);

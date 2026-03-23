@@ -74,7 +74,7 @@ Game.Maps.shimonita = (function() {
       'いらっしゃい！下仁田のこんにゃく商店だ！',
       '上州の最強装備もあるよ！'
     ],
-    afterDialog: 'shop_こんにゃく商店_superYakimanju,konnyakuDice,cabbageDice,gunmaDice,onsenArmor,diceSlot',
+    afterDialog: 'shop_こんにゃく商店_superYakimanju,onsenArmor,diceSlot',
     sprite: [
       [0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0],
       [0,0,1,2,2,2,2,1,0,0,0,0,0,0,0,0],

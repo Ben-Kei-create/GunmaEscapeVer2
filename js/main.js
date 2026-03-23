@@ -73,12 +73,21 @@ Game.Main = (function() {
           break;
         }
 
-        // Check border crossing (victory condition)
+        // Check border crossing
         var tile = Game.Map.getTile(pd.tileX, pd.tileY);
         if (tile === Game.Config.TILE.BORDER && Game.Player.hasAllKeys()) {
-          setState(Game.Config.STATE.ENDING);
-          Game.Audio.stopBgm();
-          Game.Audio.playSfx('victory');
+          if (pd.chapter === 1) {
+            // Chapter 1 complete → transition to Chapter 2
+            Game.Audio.stopBgm();
+            setState(Game.Config.STATE.EVENT);
+            Game.Event.start('ch1_ending', function() {
+              startChapter2();
+            });
+          } else {
+            setState(Game.Config.STATE.ENDING);
+            Game.Audio.stopBgm();
+            Game.Audio.playSfx('victory');
+          }
           break;
         }
 
@@ -278,6 +287,31 @@ Game.Main = (function() {
           setState(Game.Config.STATE.ENDING);
         });
         break;
+      // Chapter 2 battles
+      case 'battle_angura_guard':
+        setState(Game.Config.STATE.BATTLE);
+        Game.Battle.start('anguraGuard', npc);
+        break;
+      case 'battle_chuji':
+        setState(Game.Config.STATE.EVENT);
+        Game.Event.start('preChuji', function() {
+          setState(Game.Config.STATE.BATTLE);
+          Game.Battle.start('chuji', npc);
+        });
+        break;
+      case 'battle_angura_boss':
+        setState(Game.Config.STATE.EVENT);
+        Game.Event.start('preAnguraBoss', function() {
+          setState(Game.Config.STATE.BATTLE);
+          Game.Battle.start('anguraBoss', npc);
+        });
+        break;
+      case 'event_ch2_ending':
+        setState(Game.Config.STATE.EVENT);
+        Game.Event.start('ch2_ending', function() {
+          setState(Game.Config.STATE.ENDING);
+        });
+        break;
       default:
         // Check for shop actions: shop_<shopName>_<item1>,<item2>,...
         if (action.indexOf('shop_') === 0) {
@@ -298,9 +332,10 @@ Game.Main = (function() {
     Game.Audio.playBgm('field');
 
     // Reset all NPC states
-    var maps = ['maebashi', 'takasaki', 'kusatsu', 'shimonita', 'tsumagoi'];
-    for (var m = 0; m < maps.length; m++) {
-      var mapData = Game.Maps[maps[m]];
+    var allMaps = ['maebashi', 'takasaki', 'kusatsu', 'shimonita', 'tsumagoi',
+                   'tamura', 'forest', 'konuma', 'onuma', 'akagi_ranch', 'akagi_shrine'];
+    for (var m = 0; m < allMaps.length; m++) {
+      var mapData = Game.Maps[allMaps[m]];
       if (mapData && mapData.npcs) {
         for (var n = 0; n < mapData.npcs.length; n++) {
           mapData.npcs[n].defeated = false;
@@ -318,10 +353,43 @@ Game.Main = (function() {
     pd.hp = 100;
     pd.maxHp = 100;
     pd.gold = 100;
+    pd.chapter = 1;
     pd.diceSlots = 1;
     pd.equippedDice = ['normalDice'];
     pd.armor = null;
     pd.inventory = [];
+  }
+
+  function startChapter2() {
+    var pd = Game.Player.getData();
+    pd.chapter = 2;
+    // Keep current stats/gold/armor, but clear Ch1 keys
+    pd.inventory = pd.inventory.filter(function(id) {
+      var item = Game.Items.get(id);
+      return !item || item.type !== 'key';
+    });
+    // Reset Ch2 map NPCs
+    var ch2Maps = ['tamura', 'forest', 'konuma', 'onuma', 'akagi_ranch', 'akagi_shrine'];
+    for (var m = 0; m < ch2Maps.length; m++) {
+      var mapData = Game.Maps[ch2Maps[m]];
+      if (mapData && mapData.npcs) {
+        for (var n = 0; n < mapData.npcs.length; n++) {
+          mapData.npcs[n].defeated = false;
+        }
+      }
+      if (mapData && mapData.items) {
+        for (var i = 0; i < mapData.items.length; i++) {
+          mapData.items[i].taken = false;
+        }
+      }
+    }
+    // Load forest (Ch2 starting map)
+    Game.Map.load('forest', 10, 10);
+    setState(Game.Config.STATE.EVENT);
+    Game.Event.start('ch2_opening', function() {
+      setState(Game.Config.STATE.EXPLORING);
+      Game.Audio.playBgm('field');
+    });
   }
 
   function startTransition(target, spawnX, spawnY) {

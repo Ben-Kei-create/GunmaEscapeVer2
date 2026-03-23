@@ -131,8 +131,29 @@ Game.Event = (function() {
       }
     ],
 
-    // Pre-ending
+    // Pre-ending (Ch2 only)
     preEnding: [
+      {
+        bg: '#001122',
+        speaker: null,
+        lines: [
+          '赤城の闇が...晴れていく...'
+        ],
+        sfx: 'victory'
+      },
+      {
+        bg: '#112244',
+        speaker: null,
+        lines: [
+          '暗鞍の支配が終わった。',
+          'タムラ村に平和が戻る...'
+        ],
+        effect: 'fade'
+      }
+    ],
+
+    // === Chapter 1 Ending → Chapter 2 Transition ===
+    ch1_ending: [
       {
         bg: '#001122',
         speaker: null,
@@ -152,11 +173,149 @@ Game.Event = (function() {
         ]
       },
       {
-        bg: '#223344',
+        bg: '#0a0a0a',
         speaker: null,
         lines: [
           '...しかし',
-          '一歩踏み出した先に広がっていたのは...'
+          '一歩踏み出した先に広がっていたのは...',
+          '更に深い...群馬の森だった。'
+        ],
+        effect: 'shake'
+      },
+      {
+        bg: '#0a1a0a',
+        speaker: null,
+        lines: [
+          '「第一章  群馬脱出編  ー 完 ー」'
+        ],
+        effect: 'fade'
+      }
+    ],
+
+    // === Chapter 2 Opening ===
+    ch2_opening: [
+      {
+        bg: '#050510',
+        speaker: null,
+        lines: [
+          '「第二章  赤城の闇編」'
+        ]
+      },
+      {
+        bg: '#0a0a0a',
+        speaker: null,
+        lines: [
+          '気がつくと、暗い森の中に立っていた。',
+          '県境を越えたはずなのに...',
+          'ここはまだ群馬県の奥地のようだ。'
+        ]
+      },
+      {
+        bg: '#0a1a0a',
+        speaker: '謎の声',
+        speakerColor: '#cc4444',
+        lines: [
+          'おい、お前...生きてるな？',
+          'こっちだ。村まで案内してやる。',
+          'ここは赤城山の麓...タムラ村の近くだ。',
+          '最近この辺りは「暗鞍（アングラ）」って',
+          '連中が暴れまわってるんだ。',
+          'サイコロの力...お前なら使えるかもな。'
+        ]
+      },
+      {
+        bg: '#0a1a0a',
+        speaker: null,
+        lines: [
+          '新たな冒険が始まる...',
+          '特殊なサイコロの力を手に入れろ！'
+        ],
+        effect: 'fade'
+      }
+    ],
+
+    // Pre-Chuji boss event
+    preChuji: [
+      {
+        bg: '#1a1a0a',
+        speaker: null,
+        lines: [
+          '牧場の廃墟に、威圧的な男が立っていた。'
+        ]
+      },
+      {
+        bg: '#1a1a0a',
+        speaker: '国定忠治',
+        speakerColor: '#ffcc44',
+        lines: [
+          'よう、若いの。',
+          '博打の道に足を踏み入れたようだな。',
+          'お前のサイコロ...見せてもらおうか。',
+          '真の博打とはなにか、教えてやろう！'
+        ]
+      }
+    ],
+
+    // Pre-Angura Boss event
+    preAnguraBoss: [
+      {
+        bg: '#1a0a0a',
+        speaker: null,
+        lines: [
+          '赤城神社の前に、巨大な影が立ちはだかった。'
+        ]
+      },
+      {
+        bg: '#220a0a',
+        speaker: 'ナンバー12-グンマ',
+        speakerColor: '#ff4444',
+        lines: [
+          '止まれ...これ以上、',
+          '俺たちの道を踏み荒らすな...ッ',
+          'ここは...俺たち"運び屋の墓場"なんだよォ！！'
+        ],
+        effect: 'shake'
+      }
+    ],
+
+    // Ch2 Ending
+    ch2_ending: [
+      {
+        bg: '#112244',
+        speaker: null,
+        lines: [
+          '暗鞍のボスを倒した。',
+          'タムラ村に平和が戻り始めた。'
+        ]
+      },
+      {
+        bg: '#223355',
+        speaker: '花（はな）',
+        speakerColor: '#ff88aa',
+        lines: [
+          'ありがとう...あなたのおかげで...',
+          '村は救われました。',
+          'あなたのサイコロの力...本当にすごかった。'
+        ]
+      },
+      {
+        bg: '#0a1a3a',
+        speaker: '龝櫻（シュウオウ）',
+        speakerColor: '#cc88ff',
+        lines: [
+          'お前のリスペクト...確かに見せてもらったぞ。',
+          '群馬から出る方法は...ないのかもしれん。',
+          'じゃが、ここで生きることに',
+          '意味がないわけではなかろう。',
+          '...これからも、よろしく頼むぞ。'
+        ]
+      },
+      {
+        bg: '#001122',
+        speaker: null,
+        lines: [
+          'こうして、赤城の闇は晴れた。',
+          'だが、群馬の物語はまだ続く...'
         ],
         effect: 'fade'
       }

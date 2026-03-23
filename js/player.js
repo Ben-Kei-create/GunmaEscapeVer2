@@ -11,6 +11,7 @@ Game.Player = (function() {
     attack: 12,
     defense: 5,
     gold: 100,
+    chapter: 1,                  // current chapter (1 or 2)
     diceSlots: 1,                // max dice slots (1-5)
     equippedDice: ['normalDice'], // array of dice item IDs
     armor: null,    // equipped armor item ID

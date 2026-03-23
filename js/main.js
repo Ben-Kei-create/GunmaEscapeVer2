@@ -41,6 +41,10 @@ Game.Main = (function() {
   }
 
   function update(dt) {
+    if (Game.Weather) {
+      Game.Weather.update();
+    }
+
     switch (state) {
       case Game.Config.STATE.TITLE:
         if (Game.Input.isPressed('confirm')) {
@@ -458,6 +462,9 @@ Game.Main = (function() {
     Game.Renderer.setCamera(pd.x + 8, pd.y + 8);
     Game.Map.draw();
     Game.Player.draw();
+    if (Game.Weather) {
+      Game.Weather.draw();
+    }
     Game.UI.drawHUD();
   }
 

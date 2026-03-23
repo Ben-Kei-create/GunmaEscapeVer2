@@ -32,6 +32,14 @@ Game.Battle = (function() {
   var bossEnraged = false;
   var enrageTimer = 0;
 
+  // Boss gimmick runtime state
+  var currentGimmick = null;   // reference to bossGimmicks[enemyId]
+  var turnCount = 0;
+  var phaseChanged = false;    // tracks if phase_change already fired
+  var sealedCommand = -1;      // index of sealed menu item (-1 = none)
+  var gimmickMessage = '';     // queued gimmick message to show
+  var gimmickMessageTimer = 0;
+
   var enemies = {
     onsenMonkey: {
       name: '温泉猿',
@@ -177,6 +185,130 @@ Game.Battle = (function() {
         [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
       ],
       palette: { 1:'#333', 2:'#888', 3:'#f00', 4:'#c88', 5:'#2a2a3a', 6:'#333', 7:'#222' }
+    },
+
+    // ── ch7 boss ──
+    haruna_lake_beast: {
+      name: '榛名の湖獣',
+      hp: 120, maxHp: 120,
+      attack: 18, defense: 10, goldReward: 150,
+      sprite: [
+        [0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0],
+        [0,0,0,0,1,2,1,1,1,1,2,1,0,0,0,0],
+        [0,0,0,1,2,2,1,1,1,1,2,2,1,0,0,0],
+        [0,0,1,1,1,1,1,3,3,1,1,1,1,1,0,0],
+        [0,1,1,1,4,1,1,3,3,1,1,4,1,1,0,0],
+        [0,1,1,1,5,1,1,1,1,1,1,5,1,1,0,0],
+        [0,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0],
+        [0,0,1,1,1,1,2,2,2,2,1,1,1,1,0,0],
+        [0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0],
+        [0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0],
+        [0,0,2,1,1,1,1,1,1,1,1,1,1,2,0,0],
+        [0,2,1,1,1,1,0,0,0,0,1,1,1,1,2,0],
+        [0,2,1,1,0,0,0,0,0,0,0,0,1,1,2,0],
+        [0,0,2,2,0,0,0,0,0,0,0,0,2,2,0,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+      ],
+      palette: { 1:'#1E90FF', 2:'#00008B', 3:'#00FFFF', 4:'#FFFFFF', 5:'#FF0000' }
+    },
+
+    // ── ch8 boss ──
+    oze_mud_wraith: {
+      name: '尾瀬の泥異形',
+      hp: 150, maxHp: 150,
+      attack: 22, defense: 15, goldReward: 200,
+      sprite: [
+        [0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0],
+        [0,0,0,0,0,1,2,2,2,2,1,0,0,0,0,0],
+        [0,0,0,0,1,2,2,2,2,2,2,1,0,0,0,0],
+        [0,0,0,1,2,2,3,2,2,3,2,2,1,0,0,0],
+        [0,0,1,2,2,2,3,2,2,3,2,2,2,1,0,0],
+        [0,1,2,2,2,2,2,2,2,2,2,2,2,2,1,0],
+        [0,1,2,2,2,2,2,2,2,2,2,2,2,2,1,0],
+        [1,2,2,2,3,3,3,3,3,3,3,3,2,2,2,1],
+        [1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1],
+        [1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1],
+        [0,1,2,2,2,2,2,2,2,2,2,2,2,2,1,0],
+        [0,0,1,2,2,2,2,2,2,2,2,2,2,1,0,0],
+        [0,0,0,1,1,2,2,2,2,2,2,1,1,0,0,0],
+        [0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+      ],
+      palette: { 1:'#654321', 2:'#8B4513', 3:'#000000' }
+    },
+
+    // ── ch9 boss ──
+    juke_minakami: {
+      name: 'ジューク（水上）',
+      hp: 180, maxHp: 180,
+      attack: 28, defense: 18, goldReward: 300,
+      sprite: [
+        [0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0],
+        [0,0,0,0,0,1,2,2,2,2,1,0,0,0,0,0],
+        [0,0,0,0,1,2,2,2,2,2,2,1,0,0,0,0],
+        [0,0,0,1,2,3,2,2,3,2,2,1,0,0,0,0],
+        [0,0,0,1,2,4,2,2,4,2,2,1,0,0,0,0],
+        [0,0,0,1,2,2,2,2,2,2,2,1,0,0,0,0],
+        [0,0,0,1,2,2,2,2,2,2,2,1,0,0,0,0],
+        [0,0,0,1,2,5,5,5,5,2,2,1,0,0,0,0],
+        [0,0,1,1,2,2,2,2,2,2,1,1,0,0,0,0],
+        [0,1,2,1,2,2,2,2,2,2,1,2,1,0,0,0],
+        [0,1,2,2,1,2,2,2,2,1,2,2,1,0,0,0],
+        [0,0,1,2,2,1,1,1,1,2,2,1,0,0,0,0],
+        [0,0,0,1,1,0,2,2,2,2,0,1,1,0,0,0],
+        [0,0,0,0,0,0,1,2,2,1,0,0,0,0,0,0],
+        [0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+      ],
+      palette: { 1:'#4B0082', 2:'#8A2BE2', 3:'#FFFFFF', 4:'#FF0000', 5:'#000000' }
+    },
+
+    // ── ch10 final boss ──
+    juke_final: {
+      name: '真・ジューク',
+      hp: 280, maxHp: 280,
+      attack: 38, defense: 22, goldReward: 0,
+      sprite: [
+        [0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0],
+        [0,0,0,0,1,2,2,2,2,2,2,1,0,0,0,0],
+        [0,0,0,1,2,3,3,2,2,3,3,2,1,0,0,0],
+        [0,0,1,2,2,3,3,2,2,3,3,2,2,1,0,0],
+        [0,1,2,2,2,2,2,2,2,2,2,2,2,2,1,0],
+        [1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1],
+        [1,2,2,2,2,2,3,3,3,2,2,2,2,2,2,1],
+        [1,2,2,2,2,3,3,3,3,3,2,2,2,2,2,1],
+        [1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1],
+        [0,1,2,2,2,2,2,2,2,2,2,2,2,2,1,0],
+        [0,0,1,2,2,2,2,2,2,2,2,2,2,1,0,0],
+        [0,0,0,1,1,2,2,2,2,2,2,1,1,0,0,0],
+        [0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+      ],
+      palette: { 1:'#000000', 2:'#111111', 3:'#FF0000' },
+      // Phase 2 sprite (white/gold) — swapped in by phase_change gimmick
+      spritePhase2: [
+        [0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0],
+        [0,0,0,0,1,2,2,2,2,2,2,1,0,0,0,0],
+        [0,0,0,1,2,3,3,2,2,3,3,2,1,0,0,0],
+        [0,0,1,2,2,3,3,2,2,3,3,2,2,1,0,0],
+        [0,1,2,2,2,2,2,2,2,2,2,2,2,2,1,0],
+        [1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1],
+        [1,2,2,2,2,2,3,3,3,2,2,2,2,2,2,1],
+        [1,2,2,2,2,3,3,3,3,3,2,2,2,2,2,1],
+        [1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1],
+        [0,1,2,2,2,2,2,2,2,2,2,2,2,2,1,0],
+        [0,0,1,2,2,2,2,2,2,2,2,2,2,1,0,0],
+        [0,0,0,1,1,2,2,2,2,2,2,1,1,0,0,0],
+        [0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+      ],
+      palettePhase2: { 1:'#FFFFFF', 2:'#F5F5F5', 3:'#FFD700' }
     }
   };
 
@@ -430,6 +562,156 @@ Game.Battle = (function() {
         message: '返声の番「お前の名前、しばらく借りるぞ…」'
       },
       victory_flag: 'echo_guardian_defeated'
+    },
+
+    // ── 第7章 ──────────────────────────────
+
+    // 榛名の湖獣 ― 霧で命中率ダウン
+    haruna_lake_beast: {
+      boss_id: 'haruna_lake_beast',
+      passive: {
+        id: 'fog_blind',
+        description: '3ターンごとに霧を纏い、プレイヤーの攻撃ダイスの出目を1減らす',
+        apply: function(enemy, turnCount, playerEffects) {
+          if (turnCount > 0 && turnCount % 3 === 0) {
+            addEffect(playerEffects, 'dice_penalty', 2, 1);
+            return '榛名の湖獣が霧を纏った！出目が鈍る！';
+          }
+          return null;
+        }
+      },
+      phase_change: {
+        condition: function(enemy) { return enemy.hp <= enemy.maxHp * 0.4; },
+        action: function(enemy) {
+          enemy.attack += 5;
+          enemy.defense -= 3;
+          return '湖獣が水面から全身を現した！攻撃が激しくなった！';
+        }
+      },
+      special_move: {
+        id: 'fog_roar',
+        name: '霧の咆哮',
+        description: '全体攻撃＋命中率ダウン',
+        trigger: function(turnCount) { return turnCount === 5 || turnCount === 10; },
+        damage: function(enemy) { return Math.floor(enemy.attack * 1.2); },
+        self_stun: 1,
+        message: '湖獣が霧の咆哮を放った！'
+      }
+    },
+
+    // ── 第8章 ──────────────────────────────
+
+    // 尾瀬の泥異形 ― 毎ターン素早さ低下（slow蓄積）
+    oze_mud_wraith: {
+      boss_id: 'oze_mud_wraith',
+      passive: {
+        id: 'mud_sink',
+        description: '毎ターン泥が足を引き、slowを付与',
+        apply: function(enemy, turnCount, playerEffects) {
+          addEffect(playerEffects, 'slow', 2, 2);
+          if (turnCount % 2 === 0) {
+            return '泥が足に絡みつく...動きが鈍る！';
+          }
+          return null;
+        }
+      },
+      phase_change: {
+        condition: function(enemy) { return enemy.hp <= enemy.maxHp * 0.3; },
+        action: function(enemy) {
+          enemy.attack += 8;
+          return '泥異形が地中から巨体を引きずり出した！';
+        }
+      },
+      special_move: {
+        id: 'bottomless_mud',
+        name: '底なしの泥',
+        description: '大ダメージ＋1ターンスタン',
+        trigger: function(turnCount) { return turnCount === 4 || turnCount === 8; },
+        damage: function(enemy) { return Math.floor(enemy.attack * 1.4); },
+        message: '泥の底に引きずり込まれる！'
+      }
+    },
+
+    // ── 第9章 ──────────────────────────────
+
+    // ジューク（水上） ― ダイス出目操作
+    juke_minakami: {
+      boss_id: 'juke_minakami',
+      passive: {
+        id: 'dice_rewrite',
+        description: '偶数ターンにプレイヤーのダイスボーナスを封印',
+        apply: function(enemy, turnCount, playerEffects) {
+          if (turnCount > 0 && turnCount % 2 === 0) {
+            // Remove any dice_bonus effects
+            for (var i = playerEffects.length - 1; i >= 0; i--) {
+              if (playerEffects[i].type === 'dice_bonus') {
+                playerEffects.splice(i, 1);
+              }
+            }
+            return 'ジュークが掟のダイスを振った！出目ボーナス封印！';
+          }
+          return null;
+        }
+      },
+      phase_change: {
+        condition: function(enemy) { return enemy.hp <= enemy.maxHp * 0.35; },
+        action: function(enemy) {
+          enemy.attack += 6;
+          enemy.defense += 4;
+          return 'ジューク「本気を出す…掟の力、見せてやる！」';
+        }
+      },
+      special_move: {
+        id: 'rule_dice',
+        name: '掟のダイス',
+        description: '固定ダメージ＋ダイスロック',
+        trigger: function(turnCount) { return turnCount === 3 || turnCount === 7; },
+        damage: function(enemy) { return 35; },
+        self_stun: 0,
+        message: 'ジュークの掟のダイスが炸裂した！'
+      }
+    },
+
+    // ── 第10章 ──────────────────────────────
+
+    // 真・ジューク ― 2フェーズ最終ボス
+    juke_final: {
+      boss_id: 'juke_final',
+      passive: {
+        id: 'border_erosion',
+        description: '毎ターン侵食ダメージ（2〜5）をプレイヤーに与える',
+        apply: function(enemy, turnCount, playerEffects) {
+          var erosionDmg = 2 + Math.floor(Math.random() * 4);
+          var pd = Game.Player.getData();
+          pd.hp -= erosionDmg;
+          if (pd.hp < 1) pd.hp = 1;
+          return '結界の侵食が体を蝕む！ ' + erosionDmg + 'ダメージ！';
+        }
+      },
+      phase_change: {
+        condition: function(enemy) { return enemy.hp <= enemy.maxHp * 0.5; },
+        action: function(enemy) {
+          // Swap to phase 2 sprite
+          var e = enemies.juke_final;
+          if (e.spritePhase2) {
+            enemy.sprite = e.spritePhase2;
+            enemy.palette = e.palettePhase2;
+          }
+          enemy.attack += 10;
+          enemy.defense -= 5;
+          enemy.name = '真・ジューク（覚醒）';
+          return '境界線が反転した！真・ジュークが真の姿を現す！';
+        }
+      },
+      special_move: {
+        id: 'border_inversion',
+        name: '侵食の境界線',
+        description: '超大ダメージ＋回復封印',
+        trigger: function(turnCount) { return turnCount === 5 || turnCount === 10 || turnCount === 15; },
+        damage: function(enemy) { return Math.floor(enemy.attack * 1.5); },
+        self_stun: 2,
+        message: '真・ジューク「これが最後の掟だ…！」'
+      }
     }
   };
 
@@ -530,6 +812,13 @@ Game.Battle = (function() {
     comboMultiplier = 1;
     bossEnraged = false;
     enrageTimer = 0;
+    // Initialize boss gimmick
+    currentGimmick = bossGimmicks[enemyId] || null;
+    turnCount = 0;
+    phaseChanged = false;
+    sealedCommand = -1;
+    gimmickMessage = '';
+    gimmickMessageTimer = 0;
     Game.Audio.stopBgm();
     Game.Audio.playBgm('battle');
   }
@@ -690,10 +979,37 @@ Game.Battle = (function() {
             }
 
             // Apply healing (including onsen_heal effect)
+            // ── Boss gimmick: heal inversion (kumako_steam) ──
+            var healInverted = false;
+            if (currentGimmick && currentGimmick.passive && currentGimmick.passive.id === 'heal_inversion') {
+              healInverted = true;
+            }
+            if (hasEffect(playerEffects, 'heal_seal')) {
+              healInverted = true;
+            }
+
             var onsenHeal = getEffectBonus(playerEffects, 'onsen_heal');
             if (healTotal > 0 || onsenHeal > 0) {
-              Game.Player.heal(healTotal + onsenHeal);
-              if (Game.Particles) Game.Particles.emit('heal', 100, 210, { count: 5 });
+              if (healInverted) {
+                // Healing becomes self-damage
+                var invertDmg = healTotal + onsenHeal;
+                var playerDataHI = Game.Player.getData();
+                playerDataHI.hp -= invertDmg;
+                message += ' 回復反転！' + invertDmg + 'ダメージ！';
+                Game.Audio.playSfx('damage');
+                if (Game.Particles) Game.Particles.emit('damage', 100, 220, { count: 6 });
+                if (playerDataHI.hp <= 0) {
+                  playerDataHI.hp = 0;
+                  phase = 'defeat';
+                  message = '力尽きた...';
+                  messageTimer = 90;
+                  Game.Audio.stopBgm();
+                  Game.Audio.playSfx('gameover');
+                }
+              } else {
+                Game.Player.heal(healTotal + onsenHeal);
+                if (Game.Particles) Game.Particles.emit('heal', 100, 210, { count: 5 });
+              }
             }
 
             // Trigger status effects from dice types
@@ -749,6 +1065,26 @@ Game.Battle = (function() {
               enrageTimer = 60;
               enemy.attack = Math.floor(enemy.attack * 1.2);
               message += ' 怒り状態！';
+            }
+
+            // ── Boss gimmick: phase change ──
+            if (currentGimmick && currentGimmick.phase_change && !phaseChanged && enemy.hp > 0) {
+              if (currentGimmick.phase_change.condition(enemy)) {
+                phaseChanged = true;
+                var pcMsg = currentGimmick.phase_change.action(enemy);
+                if (pcMsg) {
+                  message += ' ' + pcMsg;
+                }
+                shakeX = 10;
+                if (Game.Particles) Game.Particles.emit('damage', 280, 60, { count: 15 });
+              }
+            }
+
+            // ── Boss gimmick: satoTest mercy (HP won't drop below 1) ──
+            if (currentGimmick && currentGimmick.passive && currentGimmick.passive.id === 'mentor_mercy') {
+              if (enemy.hp <= 0) {
+                enemy.hp = 1;
+              }
             }
 
             if (enemy.hp <= 0) {
@@ -813,6 +1149,58 @@ Game.Battle = (function() {
         // Tick status effects at end of round
         tickEffects(playerEffects);
         tickEffects(enemyEffects);
+        turnCount++;
+
+        // ── Boss gimmick: passive effect at turn end ──
+        if (currentGimmick && currentGimmick.passive && currentGimmick.passive.apply) {
+          var passiveResult = currentGimmick.passive.apply(enemy, turnCount, playerEffects, enemyEffects);
+          if (passiveResult && typeof passiveResult === 'string') {
+            gimmickMessage = passiveResult;
+            gimmickMessageTimer = 50;
+          }
+        }
+
+        // ── Boss gimmick: special move trigger ──
+        if (currentGimmick && currentGimmick.special_move && enemy.hp > 0) {
+          var sm = currentGimmick.special_move;
+          if (sm.trigger && sm.trigger(turnCount, enemy)) {
+            var spDmg = sm.damage ? sm.damage(enemy) : 0;
+            if (spDmg > 0) {
+              var playerData3 = Game.Player.getData();
+              var defBonus3 = getEffectBonus(playerEffects, 'defense_up');
+              var finalSpDmg = Math.max(1, spDmg - (Game.Player.getDefense() + defBonus3));
+              playerData3.hp -= finalSpDmg;
+              Game.Audio.playSfx('damage');
+              shakeX = 8;
+              if (Game.Particles) Game.Particles.emit('damage', 100, 220, { count: 10 });
+              gimmickMessage = (sm.name || '必殺技') + '！ ' + finalSpDmg + 'ダメージ！';
+              gimmickMessageTimer = 55;
+              if (playerData3.hp <= 0) {
+                playerData3.hp = 0;
+                phase = 'defeat';
+                message = '力尽きた...';
+                messageTimer = 90;
+                Game.Audio.stopBgm();
+                Game.Audio.playSfx('gameover');
+                break;
+              }
+            }
+            // Self stun after special
+            if (sm.self_stun) {
+              addEffect(enemyEffects, 'stun', sm.self_stun, 0);
+            }
+            // Seal a command for next turn
+            if (sm.id === 'forgotten_route' || sm.id === 'lone_hack') {
+              sealedCommand = 1; // seal 'アイテム'
+            }
+          }
+        } else {
+          // No special fired this turn: clear any previous seal
+          if (sealedCommand >= 0) {
+            sealedCommand = -1;
+          }
+        }
+
         phase = 'menu';
         break;
 
@@ -855,6 +1243,14 @@ Game.Battle = (function() {
   }
 
   function executeAction(index) {
+    // ── Boss gimmick: sealed command ──
+    if (sealedCommand >= 0 && index === sealedCommand) {
+      message = 'その行動は封じられている！';
+      messageTimer = 45;
+      Game.Audio.playSfx('cancel');
+      return;
+    }
+
     var playerData = Game.Player.getData();
     switch (index) {
       case 0:
@@ -1082,6 +1478,9 @@ Game.Battle = (function() {
         case 'attack_up': pLabel = '攻↑'; pCol = '#ff6644'; break;
         case 'defense_up': pLabel = '防↑'; pCol = '#4488ff'; break;
         case 'onsen_heal': pLabel = '湯'; pCol = '#44dd44'; break;
+        case 'heal_seal': pLabel = '封'; pCol = '#aa44aa'; break;
+        case 'slow': pLabel = '遅'; pCol = '#8888aa'; break;
+        case 'dice_bonus': pLabel = '賽'; pCol = '#44aaff'; break;
       }
       if (pLabel) {
         R.drawRectAbsolute(psx, 242, 20, 14, 'rgba(0,0,0,0.6)');
@@ -1116,13 +1515,22 @@ Game.Battle = (function() {
       }
     }
 
+    // Boss gimmick description (shown briefly)
+    if (gimmickMessageTimer > 0) {
+      gimmickMessageTimer--;
+      R.drawRectAbsolute(40, 165, 400, 20, 'rgba(80,20,20,0.85)');
+      R.drawTextJP(gimmickMessage, 50, 168, '#ff8866', 12);
+    }
+
     // Menu
     if (phase === 'menu' && messageTimer <= 0) {
       R.drawDialogBox(300, 200, 160, 80);
       for (var i = 0; i < menuItems.length; i++) {
-        var color = (i === menuIndex) ? C.COLORS.GOLD : '#fff';
+        var sealed = (sealedCommand >= 0 && i === sealedCommand);
+        var color = sealed ? '#555' : (i === menuIndex) ? C.COLORS.GOLD : '#fff';
         var prefix = (i === menuIndex) ? '▶ ' : '  ';
-        R.drawTextJP(prefix + menuItems[i], 315, 212 + i * 22, color, 14);
+        var label = sealed ? menuItems[i] + '×' : menuItems[i];
+        R.drawTextJP(prefix + label, 315, 212 + i * 22, color, 14);
       }
     }
 

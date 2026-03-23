@@ -149,35 +149,50 @@ Game.UI = (function() {
     R.drawTextJP('メニュー', 200, 40, C.COLORS.GOLD, 16, 'center');
 
     // Stats
-    R.drawTextJP('HP: ' + pd.hp + '/' + pd.maxHp, 120, 65, '#fff', 13);
-    R.drawTextJP('攻撃力: ' + Game.Player.getAttack(), 120, 83, '#fff', 13);
-    R.drawTextJP('防御力: ' + Game.Player.getDefense(), 120, 101, '#fff', 13);
-    R.drawTextJP('所持金: ' + pd.gold + 'G', 120, 119, '#ffdd44', 13);
-
-    // Equipment
-    var wName = pd.weapon ? Game.Items.get(pd.weapon).name : 'なし';
+    R.drawTextJP('HP: ' + pd.hp + '/' + pd.maxHp, 120, 60, '#fff', 13);
+    R.drawTextJP('防御力: ' + Game.Player.getDefense(), 120, 78, '#fff', 13);
+    R.drawTextJP('所持金: ' + pd.gold + 'G', 120, 96, '#ffdd44', 13);
     var aName = pd.armor ? Game.Items.get(pd.armor).name : 'なし';
-    R.drawTextJP('武器: ' + wName, 260, 83, '#aaa', 11);
-    R.drawTextJP('防具: ' + aName, 260, 101, '#aaa', 11);
+    R.drawTextJP('防具: ' + aName, 260, 78, '#aaa', 11);
+
+    // Dice loadout
+    R.drawRectAbsolute(120, 114, 240, 1, '#446');
+    R.drawTextJP('サイコロ装備:', 120, 119, C.COLORS.GOLD, 12);
+    var equipped = Game.Player.getEquippedDice();
+    var ctx = R.getContext();
+    for (var d = 0; d < equipped.length; d++) {
+      var di = Game.Items.get(equipped[d]);
+      if (!di) continue;
+      var dy = 136 + d * 16;
+      // Color swatch
+      R.drawRectAbsolute(130, dy + 1, 10, 10, di.color || '#fff');
+      ctx.strokeStyle = '#555';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(130, dy + 1, 10, 10);
+      R.drawTextJP(di.name, 145, dy, '#ccc', 10);
+      // Show faces
+      R.drawTextJP('[' + di.faces.join('-') + ']', 260, dy, '#888', 9);
+    }
 
     // Line separator
-    R.drawRectAbsolute(120, 132, 240, 1, '#446');
+    var invY = 136 + Math.max(equipped.length, 1) * 16 + 4;
+    R.drawRectAbsolute(120, invY, 240, 1, '#446');
 
     // Inventory
-    R.drawTextJP('持ち物:', 120, 140, C.COLORS.GOLD, 13);
+    R.drawTextJP('持ち物:', 120, invY + 5, C.COLORS.GOLD, 12);
     if (pd.inventory.length === 0) {
-      R.drawTextJP('（なし）', 140, 162, '#888', 12);
+      R.drawTextJP('（なし）', 140, invY + 22, '#888', 11);
     } else {
       for (var i = 0; i < pd.inventory.length; i++) {
         var item = Game.Items.get(pd.inventory[i]);
         var name = item ? item.name : pd.inventory[i];
-        var y = 162 + i * 18;
-        if (y > 260) break;
-        R.drawTextJP('・' + name, 130, y, '#fff', 12);
+        var iy = invY + 22 + i * 16;
+        if (iy > 264) break;
+        R.drawTextJP('・' + name, 130, iy, '#fff', 11);
       }
     }
 
-    R.drawTextJP('Xキーで閉じる', 185, 270, '#888', 10);
+    R.drawTextJP('Xキーで閉じる', 185, 272, '#888', 10);
   }
 
   function drawGameOver() {

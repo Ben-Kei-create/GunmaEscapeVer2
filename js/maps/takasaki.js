@@ -73,7 +73,7 @@ Game.Maps.takasaki = (function() {
       'ここは高崎の鍛冶屋だ！',
       '良い武器と防具が揃ってるぜ！'
     ],
-    afterDialog: 'shop_高崎鍛冶屋_ironSword,ironArmor,darumaBat,extraDice',
+    afterDialog: 'shop_高崎鍛冶屋_gamblerDice,darumaDice,healDice,ironArmor,diceSlot',
     sprite: [
       [0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0],
       [0,0,1,2,2,2,2,1,0,0,0,0,0,0,0,0],

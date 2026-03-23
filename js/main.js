@@ -318,7 +318,8 @@ Game.Main = (function() {
     pd.hp = 100;
     pd.maxHp = 100;
     pd.gold = 100;
-    pd.weapon = null;
+    pd.diceSlots = 1;
+    pd.equippedDice = ['normalDice'];
     pd.armor = null;
     pd.inventory = [];
   }

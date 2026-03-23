@@ -11,7 +11,8 @@ Game.Player = (function() {
     attack: 12,
     defense: 5,
     gold: 100,
-    weapon: null,   // equipped weapon item ID
+    diceSlots: 1,                // max dice slots (1-5)
+    equippedDice: ['normalDice'], // array of dice item IDs
     armor: null,    // equipped armor item ID
     inventory: [],
     moving: false,
@@ -194,12 +195,7 @@ Game.Player = (function() {
   }
 
   function getAttack() {
-    var base = data.attack;
-    if (data.weapon) {
-      var w = Game.Items.get(data.weapon);
-      if (w && w.attackBonus) base += w.attackBonus;
-    }
-    return base;
+    return data.attack;
   }
 
   function getDefense() {
@@ -211,22 +207,37 @@ Game.Player = (function() {
     return base;
   }
 
-  function equip(itemId) {
+  function equipDice(diceId, slot) {
+    var item = Game.Items.get(diceId);
+    if (!item || item.type !== 'dice') return false;
+    if (slot < 0 || slot >= data.diceSlots) return false;
+    // Put old die back to inventory (if not normalDice)
+    if (data.equippedDice[slot] && data.equippedDice[slot] !== 'normalDice') {
+      addItem(data.equippedDice[slot]);
+    }
+    data.equippedDice[slot] = diceId;
+    removeItem(diceId);
+    return true;
+  }
+
+  function addDiceSlot() {
+    if (data.diceSlots >= 5) return false;
+    data.diceSlots++;
+    data.equippedDice.push('normalDice');
+    return true;
+  }
+
+  function getEquippedDice() {
+    return data.equippedDice.slice(0, data.diceSlots);
+  }
+
+  function equipArmor(itemId) {
     var item = Game.Items.get(itemId);
-    if (!item) return false;
-    if (item.type === 'weapon') {
-      if (data.weapon) addItem(data.weapon); // unequip old
-      data.weapon = itemId;
-      removeItem(itemId);
-      return true;
-    }
-    if (item.type === 'armor') {
-      if (data.armor) addItem(data.armor);
-      data.armor = itemId;
-      removeItem(itemId);
-      return true;
-    }
-    return false;
+    if (!item || item.type !== 'armor') return false;
+    if (data.armor) addItem(data.armor);
+    data.armor = itemId;
+    removeItem(itemId);
+    return true;
   }
 
   function addGold(amount) {
@@ -247,7 +258,10 @@ Game.Player = (function() {
     hasAllKeys: hasAllKeys,
     getAttack: getAttack,
     getDefense: getDefense,
-    equip: equip,
+    equipDice: equipDice,
+    addDiceSlot: addDiceSlot,
+    getEquippedDice: getEquippedDice,
+    equipArmor: equipArmor,
     addGold: addGold,
     getData: getData
   };

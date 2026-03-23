@@ -70,7 +70,7 @@ Game.Maps.maebashi = (function() {
         'いらっしゃい！前橋の道具屋だよ。',
         '旅に必要なものは揃ってるよ！'
       ],
-      afterDialog: 'shop_前橋道具屋_healHerb,yakimanju,woodenSword,leatherArmor',
+      afterDialog: 'shop_前橋道具屋_healHerb,yakimanju,powerDice,steadyDice,leatherArmor,diceSlot',
       sprite: [
         [0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0],
         [0,0,1,2,2,2,2,1,0,0,0,0,0,0,0,0],

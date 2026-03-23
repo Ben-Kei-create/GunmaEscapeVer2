@@ -1,34 +1,25 @@
-// Battle system
+// Battle system with special dice
 Game.Battle = (function() {
   var active = false;
   var enemy = null;
   var npcRef = null;
   var menuIndex = 0;
-  var phase = 'menu'; // menu, diceRoll, diceResult, playerAttack, enemyAttack, victory, defeat
+  var phase = 'menu';
   var message = '';
   var messageTimer = 0;
   var animTimer = 0;
   var shakeX = 0;
 
   // Dice system
-  var diceCount = 1;       // Number of dice to roll (max 5)
-  var diceValues = [];     // Current displayed value for each die
-  var diceStopped = [];    // Whether each die has been stopped
-  var diceResults = [];    // Final results for each die
-  var diceTimer = 0;       // Timer for cycling animation
-  var diceSpeed = 3;       // Frames between value changes (lower = faster)
-  var currentDice = 0;     // Which die is currently being stopped next
-  var diceFlashTimer = 0;  // Flash effect when stopping
-
-  // Dice face patterns (7x7 grid, positions of dots)
-  var diceDots = {
-    1: [[3,3]],
-    2: [[1,1],[5,5]],
-    3: [[1,1],[3,3],[5,5]],
-    4: [[1,1],[1,5],[5,1],[5,5]],
-    5: [[1,1],[1,5],[3,3],[5,1],[5,5]],
-    6: [[1,1],[1,3],[1,5],[5,1],[5,3],[5,5]]
-  };
+  var battleDice = [];     // array of dice definitions for this battle
+  var diceValues = [];     // current displayed face index for each die
+  var diceStopped = [];
+  var diceResults = [];    // final face values (number or 'H3' etc)
+  var diceTimer = 0;
+  var diceSpeed = 3;
+  var currentDice = 0;
+  var diceFlashTimer = 0;
+  var healTotal = 0;       // total healing from heal dice
 
   var enemies = {
     onsenMonkey: {
@@ -91,23 +82,53 @@ Game.Battle = (function() {
     phase = 'menu';
     message = enemy.name + 'が現れた！';
     messageTimer = 60;
-    diceCount = 1;
     Game.Audio.stopBgm();
     Game.Audio.playBgm('battle');
   }
 
+  // Parse a face value: number or 'H3' (heal 3)
+  function parseFace(face) {
+    if (typeof face === 'number') return { type: 'damage', value: face };
+    if (typeof face === 'string' && face.charAt(0) === 'H') {
+      return { type: 'heal', value: parseInt(face.substring(1)) || 0 };
+    }
+    return { type: 'damage', value: 0 };
+  }
+
+  // Get display text for a face value
+  function faceText(face) {
+    if (typeof face === 'number') return '' + face;
+    if (typeof face === 'string' && face.charAt(0) === 'H') return 'H' + face.substring(1);
+    return '0';
+  }
+
+  // Get display number for cycling animation
+  function faceDisplayNum(face) {
+    var p = parseFace(face);
+    return p.value;
+  }
+
   function startDiceRoll() {
     phase = 'diceRoll';
+    var equipped = Game.Player.getEquippedDice();
+    battleDice = [];
     diceValues = [];
     diceStopped = [];
     diceResults = [];
     currentDice = 0;
     diceTimer = 0;
     diceFlashTimer = 0;
-    for (var i = 0; i < diceCount; i++) {
-      diceValues.push(Math.floor(Math.random() * 6) + 1);
+    healTotal = 0;
+
+    for (var i = 0; i < equipped.length; i++) {
+      var diceItem = Game.Items.get(equipped[i]);
+      if (!diceItem || !diceItem.faces) {
+        diceItem = Game.Items.get('normalDice');
+      }
+      battleDice.push(diceItem);
+      diceValues.push(0); // face index
       diceStopped.push(false);
-      diceResults.push(0);
+      diceResults.push(null);
     }
     message = 'スペース/エンターで止めろ！';
   }
@@ -144,52 +165,74 @@ Game.Battle = (function() {
         break;
 
       case 'diceRoll':
-        // Cycle dice values for unstopped dice
         diceTimer++;
         if (diceTimer >= diceSpeed) {
           diceTimer = 0;
-          for (var i = 0; i < diceCount; i++) {
+          for (var i = 0; i < battleDice.length; i++) {
             if (!diceStopped[i]) {
-              diceValues[i] = (diceValues[i] % 6) + 1;
+              diceValues[i] = (diceValues[i] + 1) % 6;
             }
           }
         }
 
-        // Stop current die on confirm
-        if (Game.Input.isPressed('confirm') && currentDice < diceCount) {
+        if (Game.Input.isPressed('confirm') && currentDice < battleDice.length) {
+          var die = battleDice[currentDice];
+          var faceIdx = diceValues[currentDice];
+          var face = die.faces[faceIdx];
           diceStopped[currentDice] = true;
-          diceResults[currentDice] = diceValues[currentDice];
+          diceResults[currentDice] = face;
           diceFlashTimer = 8;
           Game.Audio.playSfx('confirm');
           currentDice++;
 
-          // All dice stopped?
-          if (currentDice >= diceCount) {
-            // Calculate total damage
-            var total = 0;
+          if (currentDice >= battleDice.length) {
+            // All dice stopped — calculate results
+            var damageTotal = 0;
+            healTotal = 0;
             for (var j = 0; j < diceResults.length; j++) {
-              total += diceResults[j];
+              var parsed = parseFace(diceResults[j]);
+              if (parsed.type === 'damage') {
+                damageTotal += parsed.value;
+              } else if (parsed.type === 'heal') {
+                healTotal += parsed.value;
+              }
             }
+
             phase = 'diceResult';
             animTimer = 30;
 
             // Apply damage
-            var playerData = Game.Player.getData();
-            var dmg = Math.max(1, total + Game.Player.getAttack() - enemy.defense);
-            enemy.hp -= dmg;
-            shakeX = 4 + diceCount;
-            Game.Audio.playSfx('hit');
+            var dmg = Math.max(0, damageTotal + Game.Player.getAttack() - enemy.defense);
+            if (damageTotal > 0 && dmg < 1) dmg = 1;
+            if (dmg > 0) {
+              enemy.hp -= dmg;
+              shakeX = 4 + battleDice.length;
+              Game.Audio.playSfx('hit');
+            }
 
-            if (diceCount > 1) {
-              message = 'サイコロ合計 ' + total + '！ ' + dmg + 'ダメージ！';
+            // Apply healing
+            if (healTotal > 0) {
+              Game.Player.heal(healTotal);
+            }
+
+            // Build message
+            var msgParts = [];
+            if (damageTotal > 0) {
+              msgParts.push(dmg + 'ダメージ');
+            }
+            if (healTotal > 0) {
+              msgParts.push('HP' + healTotal + '回復');
+            }
+            if (msgParts.length === 0) {
+              message = 'ミス！何も起きなかった...';
             } else {
-              message = 'サイコロ ' + total + '！ ' + dmg + 'ダメージ！';
+              message = msgParts.join('！ ') + '！';
             }
 
             if (enemy.hp <= 0) {
               enemy.hp = 0;
               phase = 'victory';
-              message = dmg + 'ダメージ！ ' + enemy.name + 'を倒した！ ' + (enemy.goldReward || 50) + 'G獲得！';
+              message = message + ' ' + enemy.name + 'を倒した！ ' + (enemy.goldReward || 50) + 'G獲得！';
               messageTimer = 60;
             }
           } else {
@@ -278,11 +321,10 @@ Game.Battle = (function() {
   function executeAction(index) {
     var playerData = Game.Player.getData();
     switch (index) {
-      case 0: // Attack - start dice roll
+      case 0:
         startDiceRoll();
         break;
-
-      case 1: // Item
+      case 1:
         var inv = playerData.inventory;
         var healItem = null;
         for (var i = 0; i < inv.length; i++) {
@@ -304,8 +346,7 @@ Game.Battle = (function() {
           messageTimer = 30;
         }
         break;
-
-      case 2: // Flee
+      case 2:
         if (Math.random() < 0.5) {
           message = '逃げ出した！';
           messageTimer = 30;
@@ -320,26 +361,23 @@ Game.Battle = (function() {
     }
   }
 
-  // Draw a single die at position (x, y) with given value and size
-  function drawDie(R, ctx, x, y, value, size, stopped, flash) {
+  // Draw a single die with custom color and face value
+  function drawDie(R, ctx, x, y, diceItem, faceIdx, size, stopped, flash) {
     var s = size || 48;
-
-    // Die background with slight 3D effect
-    if (flash) {
-      // Flash white when just stopped
-      ctx.fillStyle = '#ffffcc';
-    } else if (stopped) {
-      ctx.fillStyle = '#f5f0e0';
-    } else {
-      ctx.fillStyle = '#ffffff';
-    }
+    var face = diceItem.faces[faceIdx % diceItem.faces.length];
+    var parsed = parseFace(face);
+    var dieColor = diceItem.color || '#ffffff';
+    var dotCol = diceItem.dotColor || '#111111';
 
     // Shadow
-    ctx.fillStyle === '#ffffff' || stopped;
     R.drawRectAbsolute(x + 2, y + 2, s, s, '#222233');
 
-    // Die face
-    var faceColor = flash ? '#ffffcc' : (stopped ? '#f5f0e0' : '#ffffff');
+    // Die face color
+    var faceColor = flash ? '#ffffee' : dieColor;
+    if (stopped && !flash) {
+      // Slightly darken when stopped
+      faceColor = dieColor;
+    }
     R.drawRectAbsolute(x, y, s, s, faceColor);
 
     // Border
@@ -347,23 +385,52 @@ Game.Battle = (function() {
     ctx.lineWidth = 2;
     ctx.strokeRect(x, y, s, s);
 
-    // Rounded corner effect (small dark pixels in corners)
+    // Corners
     var cc = '#888888';
     R.drawRectAbsolute(x, y, 2, 2, cc);
     R.drawRectAbsolute(x + s - 2, y, 2, 2, cc);
     R.drawRectAbsolute(x, y + s - 2, 2, 2, cc);
     R.drawRectAbsolute(x + s - 2, y + s - 2, 2, 2, cc);
 
-    // Draw dots
-    var dots = diceDots[value];
-    if (!dots) return;
-    var dotSize = Math.floor(s / 7);
-    var dotColor = stopped ? '#882200' : '#111111';
+    // Draw the value as a number in the center (for custom faces)
+    var displayVal = parsed.value;
+    var displayStr = '' + displayVal;
+    var textColor = dotCol;
 
-    for (var i = 0; i < dots.length; i++) {
-      var dx = x + Math.floor(dots[i][0] * s / 7) + Math.floor(dotSize / 4);
-      var dy = y + Math.floor(dots[i][1] * s / 7) + Math.floor(dotSize / 4);
-      R.drawRectAbsolute(dx, dy, dotSize, dotSize, dotColor);
+    if (parsed.type === 'heal') {
+      // Heal faces: show green with + sign
+      textColor = '#22aa22';
+      displayStr = '+' + displayVal;
+    }
+
+    // For values 1-6, draw traditional dot pattern too
+    if (parsed.type === 'damage' && displayVal >= 1 && displayVal <= 6) {
+      var dotPositions = {
+        1: [[3,3]],
+        2: [[1,1],[5,5]],
+        3: [[1,1],[3,3],[5,5]],
+        4: [[1,1],[1,5],[5,1],[5,5]],
+        5: [[1,1],[1,5],[3,3],[5,1],[5,5]],
+        6: [[1,1],[1,3],[1,5],[5,1],[5,3],[5,5]]
+      };
+      var dots = dotPositions[displayVal];
+      var dotSize = Math.floor(s / 7);
+      for (var i = 0; i < dots.length; i++) {
+        var dx = x + Math.floor(dots[i][0] * s / 7) + Math.floor(dotSize / 4);
+        var dy = y + Math.floor(dots[i][1] * s / 7) + Math.floor(dotSize / 4);
+        R.drawRectAbsolute(dx, dy, dotSize, dotSize, dotCol);
+      }
+    } else {
+      // For large numbers or heal, draw the number text
+      var fontSize = s > 34 ? 18 : 14;
+      R.drawTextJP(displayStr, x + Math.floor(s / 2) - (displayStr.length * fontSize / 4),
+        y + Math.floor(s / 2) - Math.floor(fontSize / 2), textColor, fontSize);
+    }
+
+    // Die name label (tiny, below die)
+    if (stopped && diceItem.id !== 'normalDice') {
+      var shortName = diceItem.name.substring(0, 4);
+      R.drawTextJP(shortName, x, y + s + 1, '#888', 7);
     }
   }
 
@@ -377,29 +444,21 @@ Game.Battle = (function() {
     // Background
     R.drawRectAbsolute(0, 0, C.CANVAS_WIDTH, C.CANVAS_HEIGHT, '#111122');
 
-    // Draw grid lines for atmosphere
+    // Grid
     ctx.strokeStyle = '#222244';
     ctx.lineWidth = 1;
     for (var i = 0; i < C.CANVAS_WIDTH; i += 32) {
-      ctx.beginPath();
-      ctx.moveTo(i, 0);
-      ctx.lineTo(i, C.CANVAS_HEIGHT);
-      ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, C.CANVAS_HEIGHT); ctx.stroke();
     }
     for (var i = 0; i < C.CANVAS_HEIGHT; i += 32) {
-      ctx.beginPath();
-      ctx.moveTo(0, i);
-      ctx.lineTo(C.CANVAS_WIDTH, i);
-      ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(C.CANVAS_WIDTH, i); ctx.stroke();
     }
 
-    // Enemy sprite (scaled up)
+    // Enemy
     if (enemy) {
       var ex = 200 + (shakeX > 0 ? (Math.random() - 0.5) * shakeX : 0);
-      R.drawSpriteAbsolute(enemy.sprite || enemies.onsenMonkey.sprite,
-        ex, 30, enemy.palette || enemies.onsenMonkey.palette, 5);
+      R.drawSpriteAbsolute(enemy.sprite, ex, 30, enemy.palette, 5);
 
-      // Enemy HP bar
       R.drawRectAbsolute(160, 120, 160, 12, '#333');
       var hpRatio = enemy.hp / enemy.maxHp;
       R.drawRectAbsolute(161, 121, 158 * hpRatio, 10,
@@ -412,41 +471,34 @@ Game.Battle = (function() {
     R.drawDialogBox(10, 200, 200, 60);
     R.drawTextJP('HP: ' + pd.hp + '/' + pd.maxHp, 25, 210, '#fff', 14);
 
-    // HP bar
     R.drawRectAbsolute(25, 230, 170, 10, '#333');
     var playerHpRatio = pd.hp / pd.maxHp;
     R.drawRectAbsolute(26, 231, 168 * playerHpRatio, 8,
       playerHpRatio > 0.3 ? C.COLORS.HP_GREEN : C.COLORS.HP_RED);
 
-    // Dice display during diceRoll or diceResult phase
+    // Dice display
     if (phase === 'diceRoll' || phase === 'diceResult') {
-      // Dice area background
-      R.drawDialogBox(220, 155, 250, 70);
+      var diceCount = battleDice.length;
+      R.drawDialogBox(220, 150, 250, 80);
 
-      var dieSize = 40;
+      var dieSize = 44;
+      if (diceCount > 2) dieSize = 38;
       if (diceCount > 3) dieSize = 34;
-      if (diceCount > 4) dieSize = 30;
+      if (diceCount > 4) dieSize = 28;
 
       var totalWidth = diceCount * dieSize + (diceCount - 1) * 6;
       var startX = 220 + Math.floor((250 - totalWidth) / 2);
-      var dieY = 155 + Math.floor((70 - dieSize) / 2);
+      var dieY = 150 + Math.floor((80 - dieSize) / 2) - 3;
 
       for (var i = 0; i < diceCount; i++) {
         var dx = startX + i * (dieSize + 6);
         var isFlashing = (diceFlashTimer > 0 && i === currentDice - 1);
-        drawDie(R, ctx, dx, dieY, diceValues[i], dieSize, diceStopped[i], isFlashing);
+        drawDie(R, ctx, dx, dieY, battleDice[i], diceValues[i], dieSize, diceStopped[i], isFlashing);
 
-        // Highlight arrow under the active die
+        // Active indicator
         if (!diceStopped[i] && i === currentDice && phase === 'diceRoll') {
-          R.drawTextJP('▲', dx + Math.floor(dieSize / 2) - 5, dieY + dieSize + 2, C.COLORS.GOLD, 10);
+          R.drawTextJP('▲', dx + Math.floor(dieSize / 2) - 5, dieY + dieSize + 8, C.COLORS.GOLD, 10);
         }
-      }
-
-      // Show total if all dice stopped and more than 1 die
-      if (phase === 'diceResult' && diceCount > 1) {
-        var total = 0;
-        for (var j = 0; j < diceResults.length; j++) total += diceResults[j];
-        R.drawTextJP('合計: ' + total, 220 + 100, 155 + 58, C.COLORS.GOLD, 12, 'center');
       }
     }
 
@@ -460,35 +512,34 @@ Game.Battle = (function() {
       }
     }
 
-    // Dice count indicator (show how many dice the player has)
-    if (diceCount > 1) {
-      R.drawTextJP('🎲×' + diceCount, 420, 200, C.COLORS.GOLD, 11);
+    // Dice loadout indicator
+    var equipped = Game.Player.getEquippedDice();
+    if (equipped.length > 0) {
+      for (var i = 0; i < equipped.length; i++) {
+        var di = Game.Items.get(equipped[i]);
+        if (di) {
+          var boxX = 10 + i * 14;
+          R.drawRectAbsolute(boxX, 268, 12, 12, di.color || '#fff');
+          ctx.strokeStyle = '#555';
+          ctx.lineWidth = 1;
+          ctx.strokeRect(boxX, 268, 12, 12);
+        }
+      }
     }
 
     // Message
     if (message) {
-      R.drawDialogBox(10, 280, 460, 35);
-      R.drawTextJP(message, 20, 288, '#fff', 14);
+      R.drawDialogBox(10, 282, 460, 35);
+      R.drawTextJP(message, 20, 290, '#fff', 14);
     }
   }
 
   function isActive() { return active; }
 
-  // Public method to set dice count (for future upgrades)
-  function setDiceCount(count) {
-    diceCount = Math.max(1, Math.min(5, count));
-  }
-
-  function getDiceCount() {
-    return diceCount;
-  }
-
   return {
     start: start,
     update: update,
     draw: draw,
-    isActive: isActive,
-    setDiceCount: setDiceCount,
-    getDiceCount: getDiceCount
+    isActive: isActive
   };
 })();

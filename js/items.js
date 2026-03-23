@@ -69,6 +69,8 @@ Game.Items = (function() {
       ],
       palette: { 1: '#2d8a2d', 2: '#44bb44', 3: '#66dd66' }
     },
+
+    // === Heal Items ===
     healHerb: {
       id: 'healHerb',
       name: '薬草',
@@ -94,41 +96,7 @@ Game.Items = (function() {
       price: 80
     },
 
-    // Weapons
-    woodenSword: {
-      id: 'woodenSword',
-      name: '木の剣',
-      desc: '攻撃力+3',
-      type: 'weapon',
-      attackBonus: 3,
-      price: 50
-    },
-    ironSword: {
-      id: 'ironSword',
-      name: '鉄の剣',
-      desc: '攻撃力+7',
-      type: 'weapon',
-      attackBonus: 7,
-      price: 120
-    },
-    darumaBat: {
-      id: 'darumaBat',
-      name: 'だるまバット',
-      desc: '攻撃力+10 だるまの力が宿る',
-      type: 'weapon',
-      attackBonus: 10,
-      price: 200
-    },
-    gunmaSword: {
-      id: 'gunmaSword',
-      name: '上州の剣',
-      desc: '攻撃力+15 群馬最強の剣',
-      type: 'weapon',
-      attackBonus: 15,
-      price: 350
-    },
-
-    // Armor
+    // === Armor ===
     leatherArmor: {
       id: 'leatherArmor',
       name: '皮の鎧',
@@ -162,13 +130,148 @@ Game.Items = (function() {
       price: 300
     },
 
-    // Dice upgrade item
-    extraDice: {
-      id: 'extraDice',
-      name: 'サイコロ追加',
-      desc: '戦闘で振れるサイコロが1個増える',
+    // === DICE (Weapons!) ===
+    // Normal dice: standard 1-6
+    normalDice: {
+      id: 'normalDice',
+      name: 'ふつうのサイコロ',
+      desc: '出目: 1-2-3-4-5-6',
       type: 'dice',
+      faces: [1, 2, 3, 4, 5, 6],
+      color: '#ffffff',
+      dotColor: '#111111',
+      price: 0
+    },
+
+    // Power dice: higher minimum
+    powerDice: {
+      id: 'powerDice',
+      name: 'パワーサイコロ',
+      desc: '出目: 2-3-4-5-6-7 最低2保証',
+      type: 'dice',
+      faces: [2, 3, 4, 5, 6, 7],
+      color: '#ffdddd',
+      dotColor: '#cc2222',
+      price: 60
+    },
+
+    // Gambler dice: high risk high reward
+    gamblerDice: {
+      id: 'gamblerDice',
+      name: 'ギャンブルサイコロ',
+      desc: '出目: 1-1-1-8-8-12 一か八か！',
+      type: 'dice',
+      faces: [1, 1, 1, 8, 8, 12],
+      color: '#ffffcc',
+      dotColor: '#cc8800',
+      price: 80
+    },
+
+    // Steady dice: consistent damage
+    steadyDice: {
+      id: 'steadyDice',
+      name: '安定サイコロ',
+      desc: '出目: 3-3-4-4-5-5 安定したダメージ',
+      type: 'dice',
+      faces: [3, 3, 4, 4, 5, 5],
+      color: '#ddddff',
+      dotColor: '#2222cc',
+      price: 70
+    },
+
+    // Heal dice: some faces heal instead of damage
+    healDice: {
+      id: 'healDice',
+      name: '回復サイコロ',
+      desc: '出目: 0-0-0-H3-H5-H8 Hは回復',
+      type: 'dice',
+      faces: [0, 0, 0, 'H3', 'H5', 'H8'],
+      color: '#ddffdd',
+      dotColor: '#22aa22',
+      effect: 'heal',
+      price: 90
+    },
+
+    // Fire dice: damage + burn bonus
+    fireDice: {
+      id: 'fireDice',
+      name: '炎のサイコロ',
+      desc: '出目: 3-4-5-6-7-8 炎の追加ダメージ',
+      type: 'dice',
+      faces: [3, 4, 5, 6, 7, 8],
+      color: '#ffccaa',
+      dotColor: '#ff4400',
       price: 150
+    },
+
+    // Daruma dice: lucky, tends high
+    darumaDice: {
+      id: 'darumaDice',
+      name: 'だるまサイコロ',
+      desc: '出目: 3-5-5-7-7-7 七転び八起き',
+      type: 'dice',
+      faces: [3, 5, 5, 7, 7, 7],
+      color: '#ffcccc',
+      dotColor: '#882222',
+      price: 120
+    },
+
+    // Onsen dice: heals a bit on each roll
+    onsenDice: {
+      id: 'onsenDice',
+      name: '温泉サイコロ',
+      desc: '出目: 2-3-4-5-6-H5 必ずHP少し回復',
+      type: 'dice',
+      faces: [2, 3, 4, 5, 6, 'H5'],
+      color: '#cceeFF',
+      dotColor: '#2266aa',
+      effect: 'onsen',
+      price: 130
+    },
+
+    // Konnyaku dice: bouncy, can reroll
+    konnyakuDice: {
+      id: 'konnyakuDice',
+      name: 'こんにゃくサイコロ',
+      desc: '出目: 1-4-4-6-6-10 弾力で跳ねる',
+      type: 'dice',
+      faces: [1, 4, 4, 6, 6, 10],
+      color: '#ddddcc',
+      dotColor: '#555544',
+      price: 110
+    },
+
+    // Cabbage dice: massive but rare
+    cabbageDice: {
+      id: 'cabbageDice',
+      name: 'キャベツサイコロ',
+      desc: '出目: 0-0-5-5-10-15 大葉の一撃',
+      type: 'dice',
+      faces: [0, 0, 5, 5, 10, 15],
+      color: '#ccffcc',
+      dotColor: '#228822',
+      price: 200
+    },
+
+    // Gunma ultimate dice
+    gunmaDice: {
+      id: 'gunmaDice',
+      name: '上州カミナリサイコロ',
+      desc: '出目: 5-6-7-8-9-10 群馬最強',
+      type: 'dice',
+      faces: [5, 6, 7, 8, 9, 10],
+      color: '#ffeedd',
+      dotColor: '#cc6600',
+      price: 350
+    },
+
+    // Slot expander
+    diceSlot: {
+      id: 'diceSlot',
+      name: 'サイコロポーチ',
+      desc: 'サイコロ装備枠を1つ増やす（最大5）',
+      type: 'diceSlot',
+      price: 100
     }
   };
 

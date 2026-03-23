@@ -74,7 +74,7 @@ Game.Maps.kusatsu = (function() {
       'ようこそ草津温泉へ！',
       '温泉パワーの装備はいかがですか？'
     ],
-    afterDialog: 'shop_温泉土産屋_yakimanju,superYakimanju,konnyakuArmor,onsenArmor,extraDice',
+    afterDialog: 'shop_温泉土産屋_yakimanju,superYakimanju,onsenDice,fireDice,konnyakuArmor,diceSlot',
     sprite: [
       [0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0],
       [0,0,1,2,2,2,2,1,0,0,0,0,0,0,0,0],

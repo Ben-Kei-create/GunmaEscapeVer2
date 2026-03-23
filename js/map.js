@@ -8,6 +8,9 @@ Game.Map = (function() {
     currentMap = Game.Maps[mapId];
     if (!currentMap) return;
     Game.Player.init(spawnX, spawnY);
+    if (Game.Weather) {
+      Game.Weather.setMapWeather(currentMap.name || currentMapId);
+    }
   }
 
   function getCurrentMap() {

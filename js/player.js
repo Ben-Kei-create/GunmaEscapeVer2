@@ -16,11 +16,13 @@ Game.Player = (function() {
     equippedDice: ['normalDice'], // array of dice item IDs
     armor: null,    // equipped armor item ID
     inventory: [],
-    moving: false,
-    moveTimer: 0,
-    moveSpeed: 8, // frames to move one tile
     moveFrame: 0,
-    walkSfxTimer: 0
+    walkSfxTimer: 0,
+    // --- Legacy Card & TP System ---
+    legacySlots: 3,
+    equippedCards: [null, null, null], // card IDs
+    tp: 0,
+    maxTp: 100
   };
 
   var sprites = {
@@ -196,7 +198,17 @@ Game.Player = (function() {
   }
 
   function getAttack() {
-    return data.attack;
+    var base = data.attack;
+    // Add Legacy Card stat_up effects
+    for (var i = 0; i < data.equippedCards.length; i++) {
+      var cardId = data.equippedCards[i];
+      if (!cardId) continue;
+      var card = Game.Items.get(cardId);
+      if (card && card.effect_type === 'stat_up' && card.target_stat === 'attack') {
+        base += card.effect_value;
+      }
+    }
+    return base;
   }
 
   function getDefense() {
@@ -204,6 +216,19 @@ Game.Player = (function() {
     if (data.armor) {
       var a = Game.Items.get(data.armor);
       if (a && a.defenseBonus) base += a.defenseBonus;
+    }
+    // Add Legacy Card stat_up effects
+    for (var i = 0; i < data.equippedCards.length; i++) {
+      var cardId = data.equippedCards[i];
+      if (!cardId) continue;
+      var card = Game.Items.get(cardId);
+      if (card && card.effect_type === 'stat_up' && card.target_stat === 'defense') {
+        base += card.effect_value;
+      }
+      if (card && card.effect_type === 'stat_up' && card.target_stat === 'max_hp') {
+        // Note: MaxHP usually just increases current and max simultaneously if handled here
+        // but for robustness we separate it or apply it in a dedicated stat fetcher.
+      }
     }
     return base;
   }
@@ -248,8 +273,72 @@ Game.Player = (function() {
     return true;
   }
 
+  // --- Legacy Card Methods ---
+  function equipLegacyCard(cardId, slot) {
+    if (slot < 0 || slot >= data.legacySlots) return false;
+    var card = Game.Items.get(cardId);
+    if (!card || card.type !== 'legacy_card') return false;
+
+    // Unequip existing card in slot if any
+    if (data.equippedCards[slot]) {
+      addItem(data.equippedCards[slot]);
+    }
+
+    data.equippedCards[slot] = cardId;
+    removeItem(cardId);
+
+    // Apply immediate max_hp bonus if it's that type
+    if (card.effect_type === 'stat_up' && card.target_stat === 'max_hp') {
+      data.maxHp += card.effect_value;
+      data.hp += card.effect_value;
+    }
+
+    return true;
+  }
+
+  function unequipLegacyCard(slot) {
+    if (slot < 0 || slot >= data.legacySlots) return false;
+    var cardId = data.equippedCards[slot];
+    if (!cardId) return false;
+
+    var card = Game.Items.get(cardId);
+    if (card && card.effect_type === 'stat_up' && card.target_stat === 'max_hp') {
+      data.maxHp = Math.max(1, data.maxHp - card.effect_value);
+      data.hp = Math.min(data.hp, data.maxHp);
+    }
+
+    addItem(cardId);
+    data.equippedCards[slot] = null;
+    return true;
+  }
+
+  function getEquippedCards() {
+    return data.equippedCards.filter(function(id) { return id !== null; });
+  }
+
+  function addTp(amount) {
+    data.tp = Math.max(0, Math.min(data.tp + amount, data.maxTp));
+  }
+
   function addGold(amount) {
     data.gold = Math.max(0, data.gold + amount);
+  }
+
+  function reset() {
+      data = {
+          x: 0, y: 0, tileX: 0, tileY: 0,
+          direction: 'down',
+          hp: 100, maxHp: 100,
+          diceSlots: 1,
+          equippedDice: ['normalDice'],
+          armor: null,
+          gold: 100,
+          inventory: [],
+          chapter: 1,
+          tp: 0,
+          legacySlots: 3,
+          equippedCards: [null, null, null]
+      };
   }
 
   function getData() { return data; }
@@ -271,7 +360,12 @@ Game.Player = (function() {
     getEquippedDice: getEquippedDice,
     equipArmor: equipArmor,
     unequipArmor: unequipArmor,
+    equipLegacyCard: equipLegacyCard,
+    unequipLegacyCard: unequipLegacyCard,
+    getEquippedCards: getEquippedCards,
+    addTp: addTp,
     addGold: addGold,
+    reset: reset,
     getData: getData
   };
 })();

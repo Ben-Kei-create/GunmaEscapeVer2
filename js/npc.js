@@ -60,15 +60,18 @@ Game.NPC = (function() {
     currentNpc = npc;
     dialogIndex = 0;
 
-    if (npc.defeated) {
+    var gs = window.Game && window.Game.Story ? window.Game.Story.getFlags() : (window.gameState ? window.gameState.flags : {});
+    var isDefeated = npc.defeated || (npc.defeat_flag && gs[npc.defeat_flag]);
+
+    if (isDefeated) {
       // Shop NPCs always reopen
       if (npc.afterDialog && npc.afterDialog.indexOf('shop_') === 0) {
         dialogLines = npc.dialog;
         onDialogEnd = npc.afterDialog;
         return dialogLines[0];
       }
-      if (npc.defeatedDialog) {
-        dialogLines = npc.defeatedDialog;
+      if (npc.defeatedDialog || npc.lines_after_boss) {
+        dialogLines = npc.defeatedDialog || npc.lines_after_boss;
       } else {
         dialogLines = ['...'];
       }

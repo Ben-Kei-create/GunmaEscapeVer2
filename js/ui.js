@@ -14,10 +14,11 @@ Game.UI = (function() {
     itemIndex: 0,
     commandIndex: 0,
     commandActive: false,
-    diceSlotIndex: 0,
-    diceEquipIndex: 0,
     diceEquipActive: false,
     armorIndex: 0,
+    legacySlotIndex: 0,
+    legacyCardIndex: 0,
+    legacyEquipActive: false,
     message: '',
     messageTimer: 0
   };
@@ -128,12 +129,19 @@ Game.UI = (function() {
     // Gold display
     R.drawText(pd.gold + 'G', Game.Config.CANVAS_WIDTH - 45, 8, '#ffdd44', 10);
 
+    // TP bar
+    R.drawRectAbsolute(Game.Config.CANVAS_WIDTH - 105, 23, 100, 8, 'rgba(0,0,0,0.7)');
+    R.drawRectAbsolute(Game.Config.CANVAS_WIDTH - 104, 24, 98, 6, '#222');
+    var tpRatio = pd.tp / pd.maxTp;
+    R.drawRectAbsolute(Game.Config.CANVAS_WIDTH - 103, 25, 96 * tpRatio, 4, '#ffaa00');
+    R.drawText('TP ' + Math.floor(pd.tp), Game.Config.CANVAS_WIDTH - 130, 23, '#ffaa00', 8);
+
     // Key items indicator
     var keyItems = ['onsenKey', 'darumaEye', 'konnyakuPass', 'cabbageCrest'];
     var keyColors = ['#88ccee', '#cc2222', '#888888', '#44bb44'];
     for (var i = 0; i < keyItems.length; i++) {
       var hasKey = pd.inventory.indexOf(keyItems[i]) >= 0;
-      R.drawRectAbsolute(Game.Config.CANVAS_WIDTH - 105 + i * 25, 26, 20, 8,
+      R.drawRectAbsolute(Game.Config.CANVAS_WIDTH - 105 + i * 25, 33, 20, 8,
         hasKey ? keyColors[i] : '#333');
     }
   }
@@ -192,13 +200,13 @@ Game.UI = (function() {
     R.drawTextJP('防具: ' + aName, 260, 78, '#aaa', 11);
 
     // Tabs
-    var tabs = ['もちもの', 'サイコロ', 'ぼうぐ'];
-    var tabX = 120;
+    var tabs = ['もちもの', 'サイコロ', 'ぼうぐ', 'レガシー'];
+    var tabX = 105;
     for (var t = 0; t < tabs.length; t++) {
-      var tx = tabX + t * 76;
+      var tx = tabX + t * 68;
       var activeTab = (fieldMenuState.section === t);
-      R.drawRectAbsolute(tx, 112, 68, 18, activeTab ? 'rgba(255,204,0,0.16)' : 'rgba(255,255,255,0.06)');
-      R.drawTextJP(tabs[t], tx + 8, 116, activeTab ? C.COLORS.GOLD : '#aaa', 11);
+      R.drawRectAbsolute(tx, 112, 64, 18, activeTab ? 'rgba(255,204,0,0.16)' : 'rgba(255,255,255,0.06)');
+      R.drawTextJP(tabs[t], tx + 4, 116, activeTab ? C.COLORS.GOLD : '#aaa', 10);
     }
     R.drawRectAbsolute(120, 134, 240, 1, '#446');
 
@@ -211,6 +219,9 @@ Game.UI = (function() {
         break;
       case 2:
         drawArmorMenuSection(R, C, pd);
+        break;
+      case 3:
+        drawLegacyMenuSection(R, C, pd);
         break;
     }
 
@@ -338,6 +349,45 @@ Game.UI = (function() {
     }
   }
 
+  function drawLegacyMenuSection(R, C, pd) {
+    var cards = getOwnedLegacyCards();
+    var visibleCards = 5;
+    var equipped = pd.equippedCards;
+
+    R.drawTextJP('レガシースロット:', 120, 140, C.COLORS.GOLD, 11);
+    for (var s = 0; s < pd.legacySlots; s++) {
+      var slotY = 154 + s * 16;
+      var selectedSlot = (s === fieldMenuState.legacySlotIndex);
+      var cardId = equipped[s];
+      var card = cardId ? Game.Items.get(cardId) : null;
+      var prefix = selectedSlot ? '▶' : ' ';
+      R.drawTextJP(prefix + (s + 1) + ':' + (card ? card.name : '----'), 124, slotY, selectedSlot ? C.COLORS.GOLD : '#ccc', 10);
+    }
+
+    var currentSlotCard = equipped[fieldMenuState.legacySlotIndex] ? Game.Items.get(equipped[fieldMenuState.legacySlotIndex]) : null;
+    if (currentSlotCard) {
+      R.drawRectAbsolute(120, 210, 240, 1, '#446');
+      R.drawTextJP(currentSlotCard.desc, 122, 214, '#fff', 9);
+    }
+
+    if (!fieldMenuState.legacyEquipActive) {
+      R.drawTextJP('決定でカード選択', 240, 190, '#888', 9);
+      return;
+    }
+
+    // Sub-menu for card selection
+    R.drawDialogBox(240, 145, 130, 112);
+    var maxOffset = Math.max(0, cards.length - visibleCards);
+    var scrollOffset = Math.min(maxOffset, Math.max(0, fieldMenuState.legacyCardIndex - visibleCards + 1));
+    for (var i = scrollOffset; i < cards.length && i < scrollOffset + visibleCards; i++) {
+      var c = cards[i];
+      var selected = (i === fieldMenuState.legacyCardIndex);
+      var prefix2 = selected ? '▶ ' : '  ';
+      var label = c.item ? c.item.name : 'はずす';
+      R.drawTextJP(prefix2 + label, 246, 152 + (i - scrollOffset) * 16, selected ? C.COLORS.GOLD : '#fff', 10);
+    }
+  }
+
   function clampFieldMenuSelection() {
     var pd = Game.Player.getData();
     var inventory = pd.inventory;
@@ -350,10 +400,14 @@ Game.UI = (function() {
       if (fieldMenuState.itemIndex >= inventory.length) fieldMenuState.itemIndex = inventory.length - 1;
       if (fieldMenuState.itemIndex < 0) fieldMenuState.itemIndex = 0;
     }
-    if (fieldMenuState.diceSlotIndex >= pd.diceSlots) fieldMenuState.diceSlotIndex = pd.diceSlots - 1;
-    if (fieldMenuState.diceSlotIndex < 0) fieldMenuState.diceSlotIndex = 0;
     if (fieldMenuState.armorIndex >= armorOptions.length) fieldMenuState.armorIndex = armorOptions.length - 1;
     if (fieldMenuState.armorIndex < 0) fieldMenuState.armorIndex = 0;
+
+    var legacyOptions = getOwnedLegacyCards();
+    if (fieldMenuState.legacySlotIndex >= pd.legacySlots) fieldMenuState.legacySlotIndex = pd.legacySlots - 1;
+    if (fieldMenuState.legacySlotIndex < 0) fieldMenuState.legacySlotIndex = 0;
+    if (fieldMenuState.legacyCardIndex >= legacyOptions.length) fieldMenuState.legacyCardIndex = legacyOptions.length - 1;
+    if (fieldMenuState.legacyCardIndex < 0) fieldMenuState.legacyCardIndex = 0;
   }
 
   function getFieldMenuCommands(item) {
@@ -392,12 +446,26 @@ Game.UI = (function() {
     return options;
   }
 
+  function getOwnedLegacyCards() {
+    var inventory = Game.Player.getData().inventory;
+    var options = [{ id: null, item: null }];
+    for (var i = 0; i < inventory.length; i++) {
+      var item = Game.Items.get(inventory[i]);
+      if (item && item.type === 'legacy_card') {
+        options.push({ id: inventory[i], item: item });
+      }
+    }
+    return options;
+  }
+
   function changeFieldMenuSection(dir) {
-    fieldMenuState.section = (fieldMenuState.section + dir + 3) % 3;
+    fieldMenuState.section = (fieldMenuState.section + dir + 4) % 4;
     fieldMenuState.commandActive = false;
     fieldMenuState.commandIndex = 0;
     fieldMenuState.diceEquipActive = false;
     fieldMenuState.diceEquipIndex = 0;
+    fieldMenuState.legacyEquipActive = false;
+    fieldMenuState.legacyCardIndex = 0;
     clampFieldMenuSelection();
     Game.Audio.playSfx('confirm');
   }
@@ -442,6 +510,9 @@ Game.UI = (function() {
     }
     if (fieldMenuState.section === 2) {
       return updateArmorMenu();
+    }
+    if (fieldMenuState.section === 3) {
+      return updateLegacyMenu(pd);
     }
 
     if (!fieldMenuState.commandActive) {
@@ -607,6 +678,59 @@ Game.UI = (function() {
     return null;
   }
 
+  function updateLegacyMenu(pd) {
+    var cards = getOwnedLegacyCards();
+    if (!fieldMenuState.legacyEquipActive) {
+      if (Game.Input.isPressed('up')) {
+        fieldMenuState.legacySlotIndex = (fieldMenuState.legacySlotIndex - 1 + pd.legacySlots) % pd.legacySlots;
+        Game.Audio.playSfx('confirm');
+      }
+      if (Game.Input.isPressed('down')) {
+        fieldMenuState.legacySlotIndex = (fieldMenuState.legacySlotIndex + 1) % pd.legacySlots;
+        Game.Audio.playSfx('confirm');
+      }
+      if (Game.Input.isPressed('confirm')) {
+        fieldMenuState.legacyEquipActive = true;
+        fieldMenuState.legacyCardIndex = 0;
+        Game.Audio.playSfx('confirm');
+      }
+      if (Game.Input.isPressed('cancel')) {
+        return { close: true };
+      }
+      return null;
+    }
+
+    if (Game.Input.isPressed('up')) {
+      fieldMenuState.legacyCardIndex = (fieldMenuState.legacyCardIndex - 1 + cards.length) % cards.length;
+      Game.Audio.playSfx('confirm');
+    }
+    if (Game.Input.isPressed('down')) {
+      fieldMenuState.legacyCardIndex = (fieldMenuState.legacyCardIndex + 1) % cards.length;
+      Game.Audio.playSfx('confirm');
+    }
+    if (Game.Input.isPressed('cancel')) {
+      fieldMenuState.legacyEquipActive = false;
+      Game.Audio.playSfx('cancel');
+      return null;
+    }
+    if (!Game.Input.isPressed('confirm')) return null;
+
+    var selected = cards[fieldMenuState.legacyCardIndex];
+    if (!selected || !selected.item) {
+      if (Game.Player.unequipLegacyCard(fieldMenuState.legacySlotIndex)) {
+        setFieldMenuMessage('スロット' + (fieldMenuState.legacySlotIndex + 1) + 'を外した。', 45);
+        Game.Audio.playSfx('item');
+      }
+    } else {
+      if (Game.Player.equipLegacyCard(selected.id, fieldMenuState.legacySlotIndex)) {
+        setFieldMenuMessage(selected.item.name + 'を装備！', 50);
+        Game.Audio.playSfx('item');
+      }
+    }
+    fieldMenuState.legacyEquipActive = false;
+    return null;
+  }
+
   function drawGameOver() {
     var R = Game.Renderer;
     R.clear('#0a0000');
@@ -641,16 +765,27 @@ Game.UI = (function() {
       R.drawTextJP('〜 Complete 〜', 185, 230, Game.Config.COLORS.GOLD, 16);
       R.drawTextJP('全二章クリア おめでとう！', 145, 260, '#fff', 12);
     } else {
-      R.drawTextJP('脱出成功！', 170, 40 + yOff, Game.Config.COLORS.GOLD, 28);
-      R.drawTextJP('群馬県からの脱出に成功した！', 115, 90, '#fff', 14);
+      var eTitle = (Game.Event && Game.Event.getEndingTitle) ? Game.Event.getEndingTitle() : '脱出成功！';
+      if (!eTitle) eTitle = '脱出成功！';
+      
+      R.drawTextJP(eTitle, 170, 40 + yOff, Game.Config.COLORS.GOLD, 24);
+      R.drawTextJP('群馬県からの脱出に成功した！', 115, 90, '#fff', 13);
 
-      R.drawTextJP('...しかし、本当に', 165, 130, '#aaa', 12);
-      R.drawTextJP('脱出できたのだろうか？', 150, 150, '#aaa', 12);
+      if (eTitle.indexOf('エンディングC') >= 0) {
+          R.drawTextJP('仲間と共に、現実へと帰還した。', 120, 130, '#fff', 12);
+          R.drawTextJP('上毛かるたが繋いだ、奇跡の絆。', 125, 150, '#fff', 12);
+          R.drawTextJP('名も記憶も、もう奪われることはない。', 110, 175, '#cc8844', 12);
+      } else if (eTitle.indexOf('エンディングB') >= 0) {
+          R.drawTextJP('一人の力で、光の中へ飛び込んだ。', 120, 130, '#fff', 12);
+          R.drawTextJP('だが、失ったものはあまりに多く……', 125, 150, '#fff', 12);
+          R.drawTextJP('境界の向こうに、懐かしい誰かがいた気がした。', 90, 175, '#aaa', 11);
+      } else {
+          R.drawTextJP('...しかし、本当に', 165, 130, '#aaa', 12);
+          R.drawTextJP('脱出できたのだろうか？', 150, 150, '#aaa', 12);
+          R.drawTextJP('そこにはまた群馬県が広がっていた。', 100, 175, '#cc8844', 13);
+      }
 
-      R.drawTextJP('周りを見渡すと...', 170, 185, '#888', 12);
-      R.drawTextJP('そこにはまた群馬県が広がっていた。', 100, 210, '#cc8844', 13);
-
-      R.drawTextJP('〜 Fin 〜', 210, 250, Game.Config.COLORS.GOLD, 14);
+      R.drawTextJP('〜 Fin 〜', 210, 240, Game.Config.COLORS.GOLD, 14);
     }
 
     R.drawText('Credits:', 200, 280, '#555', 10);

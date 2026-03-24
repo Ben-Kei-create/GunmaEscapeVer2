@@ -479,6 +479,14 @@ Game.Event = (function() {
         charTimer = 0;
         textComplete = false;
 
+        // --- System Action Handling ---
+        var curScene = scenes[sceneIndex];
+        if (curScene && curScene.type === 'system') {
+            if (curScene.action === 'show_title') {
+                currentEndingTitle = curScene.value;
+            }
+        }
+
         if (sceneIndex >= scenes.length) {
           // End of event
           if (scene.effect === 'fade') {
@@ -599,9 +607,35 @@ Game.Event = (function() {
     events[id] = sceneData;
   }
 
+  function registerEndingEvents(endingData) {
+    for (var i = 0; i < endingData.length; i++) {
+        var event = endingData[i];
+        var eventScenes = [];
+        for (var j = 0; j < event.scenes.length; j++) {
+            var s = event.scenes[j];
+            if (s.type === 'narration') {
+                eventScenes.push({ bg: '#000018', speaker: null, lines: [s.text] });
+            } else if (s.type === 'dialog') {
+                var col = Game.Config.COLORS.GOLD;
+                if (s.speaker === 'アカギ') col = '#44aaff';
+                if (s.speaker === 'ヤマカワ') col = '#ff88aa';
+                if (s.speaker === 'フルヤ') col = '#aaff88';
+                if (s.speaker === 'ジューク') col = '#ff4444';
+                eventScenes.push({ bg: '#0a1020', speaker: s.speaker, speakerColor: col, lines: [s.text] });
+            } else if (s.type === 'system') {
+                eventScenes.push({ bg: '#000', type: 'system', action: s.action, value: s.value, lines: [' '] });
+            }
+        }
+        events[event.event_id] = eventScenes;
+    }
+  }
+
   function hasEvent(id) {
     return !!events[id];
   }
+
+  var currentEndingTitle = '';
+  function getEndingTitle() { return currentEndingTitle; }
 
   return {
     start: start,
@@ -609,6 +643,8 @@ Game.Event = (function() {
     draw: draw,
     isActive: isActive,
     addEvent: addEvent,
-    hasEvent: hasEvent
+    hasEvent: hasEvent,
+    registerEndingEvents: registerEndingEvents,
+    getEndingTitle: getEndingTitle
   };
 })();

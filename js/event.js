@@ -144,7 +144,7 @@ Game.Event = (function() {
         speaker: null,
         lines: [
           '赤城を覆っていた闇が薄れ、',
-          'タムラ村には久しぶりの静かな風が戻ってきた。',
+          'タムラ村には久しぶりの静かな風が戻ってくる。',
           '村人たちは空を見上げ、失われかけた平穏の気配を確かめている。'
         ],
         sfx: 'victory',
@@ -387,8 +387,15 @@ Game.Event = (function() {
       if (callback) callback();
       return;
     }
+
+    // Check if the event has flag conditions
+    if (eventData.condition && !checkFlag(eventData.condition)) {
+      if (callback) callback();
+      return;
+    }
+
     active = true;
-    scenes = eventData;
+    scenes = eventData.scenes || [];
     sceneIndex = 0;
     lineIndex = 0;
     charIndex = 0;

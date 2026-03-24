@@ -96,10 +96,7 @@ Game.Save = (function() {
   }
 
   function getStoryFlags() {
-    if (Game.Story && Game.Story.exportFlags) {
-      return Game.Story.exportFlags();
-    }
-    return {};
+    return { ...flags };
   }
 
   function buildSaveData() {
@@ -181,13 +178,7 @@ Game.Save = (function() {
   }
 
   function applyStoryFlags(storyFlags) {
-    if (Game.Story && Game.Story.importFlags) {
-      Game.Story.importFlags(storyFlags || {});
-      return;
-    }
-    if (Game.Story && Game.Story.saveFlags) {
-      Game.Story.saveFlags();
-    }
+    flags = { ...storyFlags };
   }
 
   function applyPlayerData(savedPlayer) {
@@ -658,3 +649,21 @@ Game.Save = (function() {
     deleteSave: deleteSave
   };
 })();
+
+// Add a global flags object to manage game flags
+var flags = {};
+
+// Function to set a flag
+function setFlag(name) {
+  flags[name] = true;
+}
+
+// Function to clear a flag
+function clearFlag(name) {
+  delete flags[name];
+}
+
+// Function to check if a flag is set
+function checkFlag(name) {
+  return !!flags[name];
+}

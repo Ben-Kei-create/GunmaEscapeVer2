@@ -40,6 +40,12 @@ Game.Battle = (function() {
   var gimmickMessage = '';     // queued gimmick message to show
   var gimmickMessageTimer = 0;
 
+  // Boss dialogue system: queued multi-line dialogue for phase_change/special/victory
+  var dialogueQueue = [];      // array of { speaker, text }
+  var dialogueTimer = 0;       // frames until next line auto-advances
+  var dialogueSpeaker = '';     // current displayed speaker
+  var dialogueText = '';        // current displayed text
+
   var enemies = {
     onsenMonkey: {
       name: '温泉猿',
@@ -470,7 +476,24 @@ Game.Battle = (function() {
         debuff: { type: 'heal_seal', turns: 2 },
         message: '熊子「温めてあげるわ♪ 全部、溶かしてあげる」'
       },
-      victory_flag: 'kumako_steam_defeated'
+      victory_flag: 'kumako_steam_defeated',
+      bgm: 'ch4_kumako_battle',
+      victory_bgm: 'ch4_victory',
+      sfx: { phase_change: 'steam_hiss' },
+      dialogue: {
+        phase_change: [
+          { speaker: '熊子', text: 'まだまだ…もっと温めてあげる。' },
+          { speaker: '主人公', text: '回復が毒になる…気をつけろ！' }
+        ],
+        special_move: [
+          { speaker: '熊子', text: 'ぜーんぶ、ドロドロに溶けなさい♪' },
+          { speaker: 'アカギ', text: '結界に同化させられるぞ！' }
+        ],
+        victory: [
+          { speaker: '熊子', text: '…冷めちゃったわね。' },
+          { speaker: '主人公', text: '浄化の石…これでアカギを。' }
+        ]
+      }
     },
 
     // ── 第5章 ──────────────────────────────
@@ -506,7 +529,24 @@ Game.Battle = (function() {
         },
         message: 'ジューク「その選択肢、俺が預かっておく」'
       },
-      victory_flag: 'juke_gakuen_defeated'
+      victory_flag: 'juke_gakuen_defeated',
+      bgm: 'ch5_juke_battle',
+      victory_bgm: 'ch5_victory',
+      sfx: { special_move: 'dice_roll_heavy' },
+      dialogue: {
+        phase_change: [
+          { speaker: 'ジューク', text: '遊びは終わりだ、よそ者。' },
+          { speaker: 'ジューク', text: '土地の掟、刻み込んでやるよ。' }
+        ],
+        special_move: [
+          { speaker: 'ジューク', text: '出目なんて飾りだ。俺がルールだ！' },
+          { speaker: '山川', text: 'ダイスの目が固定された！？' }
+        ],
+        victory: [
+          { speaker: 'ジューク', text: 'チッ…今日はこの辺にしとくぜ。' },
+          { speaker: '古谷', text: '逃げ足だけは速いヤツだ。' }
+        ]
+      }
     },
 
     // ── 第6章 ──────────────────────────────
@@ -539,7 +579,25 @@ Game.Battle = (function() {
         debuff: { type: 'slow', turns: 2 },
         message: '佐藤「お前らの現実は、俺が絶対に守る…！」'
       },
-      victory_flag: 'sato_kumako_tunnel_cleared'
+      victory_flag: 'sato_kumako_tunnel_cleared',
+      bgm: 'ch6_sato_battle',
+      victory_bgm: 'ch6_victory',
+      sfx: { phase_change: 'train_echo' },
+      dialogue: {
+        phase_change: [
+          { speaker: '佐藤', text: '俺のHPを削りきってくれ！' },
+          { speaker: '熊子', text: 'お邪魔虫！記憶の核はもらうわ！' }
+        ],
+        special_move: [
+          { speaker: '熊子', text: '次は終点〜！現実行きでーす♪' },
+          { speaker: '主人公', text: '車窓の景色が…反転する！' }
+        ],
+        victory: [
+          { speaker: '熊子', text: 'あーあ、路線が閉じちゃった。' },
+          { speaker: '主人公', text: '佐藤！しっかりしろ！' },
+          { speaker: '佐藤', text: '…俺はまだ、やれるさ。' }
+        ]
+      }
     },
 
     // 返声の番（6章中ボス）
@@ -561,7 +619,23 @@ Game.Battle = (function() {
         trigger: function(turnCount) { return turnCount % 5 === 0; },
         message: '返声の番「お前の名前、しばらく借りるぞ…」'
       },
-      victory_flag: 'echo_guardian_defeated'
+      victory_flag: 'echo_guardian_defeated',
+      bgm: 'ch6_sato_battle',
+      sfx: {},
+      dialogue: {
+        phase_change: [
+          { speaker: '返声の番', text: '同ジ名前デ、二度越エルナ…' },
+          { speaker: 'アカギ', text: '同じ奴が動くと反響するぞ！' }
+        ],
+        special_move: [
+          { speaker: '返声の番', text: '過去ノ残響ニ、呑マレロ！' },
+          { speaker: '主人公', text: '音が…記憶を揺さぶってくる！' }
+        ],
+        victory: [
+          { speaker: '返声の番', text: '下ガル場所ナド…モウ…' },
+          { speaker: '主人公', text: '進むしかないんだ。奥へ！' }
+        ]
+      }
     },
 
     // ── 第7章 ──────────────────────────────
@@ -596,6 +670,23 @@ Game.Battle = (function() {
         damage: function(enemy) { return Math.floor(enemy.attack * 1.2); },
         self_stun: 1,
         message: '湖獣が霧の咆哮を放った！'
+      },
+      bgm: 'ch7_beast_battle',
+      victory_bgm: 'ch7_victory',
+      sfx: { special_move: 'water_splash' },
+      dialogue: {
+        phase_change: [
+          { speaker: '山川', text: '霧が濃くなる！視界が！' },
+          { speaker: '湖獣', text: 'グルルォォォォ！' }
+        ],
+        special_move: [
+          { speaker: '湖獣', text: '（湖面が大きく波立つ！）' },
+          { speaker: 'アカギ', text: '来るぞ、踏ん張れ！' }
+        ],
+        victory: [
+          { speaker: '湖獣', text: 'グルゥ……。' },
+          { speaker: '山川', text: '霧が晴れていくわね。' }
+        ]
       }
     },
 
@@ -629,6 +720,23 @@ Game.Battle = (function() {
         trigger: function(turnCount) { return turnCount === 4 || turnCount === 8; },
         damage: function(enemy) { return Math.floor(enemy.attack * 1.4); },
         message: '泥の底に引きずり込まれる！'
+      },
+      bgm: 'ch8_mud_battle',
+      victory_bgm: 'ch8_victory',
+      sfx: { phase_change: 'mud_sink', special_move: 'mud_sink' },
+      dialogue: {
+        phase_change: [
+          { speaker: '泥異形', text: '沈メ…記憶モロトモ…' },
+          { speaker: '古谷', text: '足場が泥に！動きづらいぞ！' }
+        ],
+        special_move: [
+          { speaker: '泥異形', text: '底無シノ泥ニ、抱カレヨ！' },
+          { speaker: '主人公', text: '体が…泥に引きずり込まれる！' }
+        ],
+        victory: [
+          { speaker: '泥異形', text: 'ポコッ…ブクブク…' },
+          { speaker: '主人公', text: 'なんとか沈まずに済んだな。' }
+        ]
       }
     },
 
@@ -669,6 +777,23 @@ Game.Battle = (function() {
         damage: function(enemy) { return 35; },
         self_stun: 0,
         message: 'ジュークの掟のダイスが炸裂した！'
+      },
+      bgm: 'ch9_juke_battle',
+      victory_bgm: 'ch9_victory',
+      sfx: { special_move: 'dice_shatter' },
+      dialogue: {
+        phase_change: [
+          { speaker: 'ジューク', text: 'お前らの運命、書き換えてやる。' },
+          { speaker: '古谷', text: '出目が偶数に固定されてる！？' }
+        ],
+        special_move: [
+          { speaker: 'ジューク', text: '掟のダイス！全部書き換われ！' },
+          { speaker: 'アカギ', text: '俺たちの意志まで奪う気か！' }
+        ],
+        victory: [
+          { speaker: 'ジューク', text: 'また俺は…忘れられるのか。' },
+          { speaker: '主人公', text: 'ジューク…お前は一体…' }
+        ]
       }
     },
 
@@ -711,6 +836,25 @@ Game.Battle = (function() {
         damage: function(enemy) { return Math.floor(enemy.attack * 1.5); },
         self_stun: 2,
         message: '真・ジューク「これが最後の掟だ…！」'
+      },
+      bgm: 'ch10_final_battle',
+      victory_bgm: 'ch10_ending',
+      sfx: { phase_change: 'reality_glitch', special_move: 'dice_shatter' },
+      dialogue: {
+        phase_change: [
+          { speaker: 'ジューク', text: '俺の残響…全部乗せてやる！' },
+          { speaker: '主人公', text: '結界が…現実と混ざっていく！' },
+          { speaker: 'ジューク', text: '境界線ごと消え去れ、プレイヤー！' }
+        ],
+        special_move: [
+          { speaker: 'ジューク', text: '侵食の境界線！全てを反転しろ！' },
+          { speaker: '山川', text: '全ステータスがマイナスに！？' }
+        ],
+        victory: [
+          { speaker: 'ジューク', text: '…終わったな。クソゲーが。' },
+          { speaker: '主人公', text: 'お前のこと、忘れないよ。' },
+          { speaker: 'ジューク', text: 'フッ…せいぜい生きろよ。' }
+        ]
       }
     }
   };
@@ -819,8 +963,56 @@ Game.Battle = (function() {
     sealedCommand = -1;
     gimmickMessage = '';
     gimmickMessageTimer = 0;
+    // Boss dialogue queue for multi-line display
+    dialogueQueue = [];
+    dialogueTimer = 0;
+    dialogueSpeaker = '';
+    dialogueText = '';
+
     Game.Audio.stopBgm();
-    Game.Audio.playBgm('battle');
+    // Use boss-specific BGM if defined, otherwise generic 'battle'
+    var bossBgm = (currentGimmick && currentGimmick.bgm) ? currentGimmick.bgm : 'battle';
+    Game.Audio.playBgm(bossBgm);
+  }
+
+  // ── Boss Dialogue Queue System ──
+  function queueDialogue(lines) {
+    if (!lines || lines.length === 0) return;
+    dialogueQueue = lines.slice();
+    advanceDialogue();
+  }
+
+  function advanceDialogue() {
+    if (dialogueQueue.length === 0) {
+      dialogueSpeaker = '';
+      dialogueText = '';
+      dialogueTimer = 0;
+      return;
+    }
+    var line = dialogueQueue.shift();
+    dialogueSpeaker = line.speaker || '';
+    dialogueText = line.text || '';
+    dialogueTimer = 70; // ~1.2 seconds per line
+  }
+
+  function updateDialogue() {
+    if (dialogueTimer > 0) {
+      dialogueTimer--;
+      if (dialogueTimer <= 0) {
+        advanceDialogue();
+      }
+    }
+  }
+
+  function isDialogueActive() {
+    return dialogueTimer > 0 || dialogueQueue.length > 0;
+  }
+
+  // Play boss-specific SFX for a trigger type (phase_change / special_move)
+  function playBossSfx(triggerType) {
+    if (currentGimmick && currentGimmick.sfx && currentGimmick.sfx[triggerType]) {
+      Game.Audio.playSfx(currentGimmick.sfx[triggerType]);
+    }
   }
 
   // Parse a face value: number or 'H3' (heal 3)
@@ -872,6 +1064,9 @@ Game.Battle = (function() {
 
   function update() {
     if (!active) return;
+
+    // Advance boss dialogue queue
+    updateDialogue();
 
     if (shakeX > 0.5) {
       shakeX *= 0.85;
@@ -1075,6 +1270,11 @@ Game.Battle = (function() {
                 if (pcMsg) {
                   message += ' ' + pcMsg;
                 }
+                // Play phase_change SFX and queue dialogue
+                playBossSfx('phase_change');
+                if (currentGimmick.dialogue && currentGimmick.dialogue.phase_change) {
+                  queueDialogue(currentGimmick.dialogue.phase_change);
+                }
                 shakeX = 10;
                 if (Game.Particles) Game.Particles.emit('damage', 280, 60, { count: 15 });
               }
@@ -1193,6 +1393,11 @@ Game.Battle = (function() {
             if (sm.id === 'forgotten_route' || sm.id === 'lone_hack') {
               sealedCommand = 1; // seal 'アイテム'
             }
+            // Play special_move SFX and queue dialogue
+            playBossSfx('special_move');
+            if (currentGimmick.dialogue && currentGimmick.dialogue.special_move) {
+              queueDialogue(currentGimmick.dialogue.special_move);
+            }
           }
         } else {
           // No special fired this turn: clear any previous seal
@@ -1205,9 +1410,26 @@ Game.Battle = (function() {
         break;
 
       case 'victory':
+        // Queue victory dialogue if present
+        if (currentGimmick && currentGimmick.dialogue && currentGimmick.dialogue.victory) {
+          if (!isDialogueActive() && dialogueSpeaker === '') {
+            queueDialogue(currentGimmick.dialogue.victory);
+          }
+          // Wait for dialogue to finish before ending battle
+          if (isDialogueActive()) {
+            updateDialogue();
+            break;
+          }
+        }
         active = false;
         Game.Audio.stopBgm();
-        Game.Audio.playSfx('victory');
+        // Use boss-specific victory BGM if defined
+        var victoryBgm = (currentGimmick && currentGimmick.victory_bgm) ? currentGimmick.victory_bgm : null;
+        if (victoryBgm) {
+          Game.Audio.playBgm(victoryBgm);
+        } else {
+          Game.Audio.playSfx('victory');
+        }
         return { result: 'victory', npc: npcRef, goldReward: enemy.goldReward || 50 };
 
       case 'defeat':
@@ -1520,6 +1742,15 @@ Game.Battle = (function() {
       gimmickMessageTimer--;
       R.drawRectAbsolute(40, 165, 400, 20, 'rgba(80,20,20,0.85)');
       R.drawTextJP(gimmickMessage, 50, 168, '#ff8866', 12);
+    }
+
+    // Boss dialogue overlay (phase change / special move / victory lines)
+    if (dialogueTimer > 0 && dialogueText) {
+      R.drawRectAbsolute(20, 125, 440, 36, 'rgba(10,10,30,0.92)');
+      if (dialogueSpeaker) {
+        R.drawTextJP(dialogueSpeaker, 30, 128, '#ffcc44', 11);
+      }
+      R.drawTextJP(dialogueText, 30, 143, '#ffffff', 13);
     }
 
     // Menu

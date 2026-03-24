@@ -8,6 +8,20 @@ Game.Story = (function() {
   var storyFlags = {};
   var chapter = 1;
   var phase = ''; // current story phase tracking
+
+  // Chapter → field BGM mapping (uses audio.js melody IDs)
+  var chapterFieldBgm = {
+    1: 'field',          // ch1-3: 汎用フィールド曲
+    2: 'field',
+    3: 'dungeon',        // ch3: 赤城山ダンジョン
+    4: 'ch4_shirane',    // 白根山の硫黄環境音
+    5: 'ch5_gakuen',     // 歪んだチャイムと郷愁ピアノ
+    6: 'ch6_tunnel',     // 凍える風と地下反響
+    7: 'ch7_haruna',     // 濃霧と湖面
+    8: 'ch8_oze',        // 泥の泡立ち重低音
+    9: 'ch9_minakami',   // 川のせせらぎと張り詰めた空気
+    10: 'ch10_border'    // 現実ノイズ終末アンビエント
+  };
   var eventQueue = [];
   var onEventEnd = null;
   var choiceIndex = 0;
@@ -1281,6 +1295,12 @@ Game.Story = (function() {
 
       case 'end_chapter':
         chapter = step.next || chapter + 1;
+        // Play chapter-specific field BGM if available
+        var chFieldBgm = chapterFieldBgm[chapter];
+        if (chFieldBgm) {
+          Game.Audio.stopBgm();
+          Game.Audio.playBgm(chFieldBgm);
+        }
         stepIndex++;
         processStep();
         break;

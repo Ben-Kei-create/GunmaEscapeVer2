@@ -15,15 +15,10 @@ Game.Main = (function() {
     Game.Audio.init();
     setState(Game.Config.STATE.TITLE);
 
-    // Load extra enemies
-    fetch('docs/enemies_regular.json')
-      .then(function(res) { return res.json(); })
-      .then(function(data) {
-          if (Game.Battle && Game.Battle.addEnemies) {
-              Game.Battle.addEnemies(data);
-          }
-      })
-      .catch(function(e) { console.error('Enemies load failed', e); });
+    // Load extra enemies directly from globals
+    if (window.GameData_Enemies && Game.Battle && Game.Battle.addEnemies) {
+        Game.Battle.addEnemies(window.GameData_Enemies);
+    }
     window.advanceTime = advanceTime;
     window.render_game_to_text = renderGameToText;
     window.warpToChapter = warpToChapter;
@@ -83,15 +78,10 @@ Game.Main = (function() {
       });
     }
 
-    // Load Chapter 10 endings from JSON
-    fetch('docs/ch10_endings.json')
-      .then(response => response.json())
-      .then(data => {
-        if (Game.Event && Game.Event.registerEndingEvents) {
-          Game.Event.registerEndingEvents(data);
-        }
-      })
-      .catch(err => console.warn('Ending JSON load failed:', err));
+    // Load Chapter 10 endings from JS global
+    if (window.GameData_Endings && Game.Event && Game.Event.registerEndingEvents) {
+      Game.Event.registerEndingEvents(window.GameData_Endings);
+    }
 
     // Mute key
     window.addEventListener('keydown', function(e) {

@@ -1918,6 +1918,7 @@ Game.Story = (function() {
     getChapterEvents: function() { return chapterEvents; },
     saveFlags: saveFlags,
     loadFlags: loadFlags,
+    getFlags: exportFlags,
     exportFlags: exportFlags,
     importFlags: importFlags,
     resolveEnding: resolveEnding

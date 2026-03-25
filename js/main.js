@@ -14,6 +14,16 @@ Game.Main = (function() {
     Game.Input.init();
     Game.Audio.init();
     setState(Game.Config.STATE.TITLE);
+
+    // Load extra enemies
+    fetch('docs/enemies_regular.json')
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+          if (Game.Battle && Game.Battle.addEnemies) {
+              Game.Battle.addEnemies(data);
+          }
+      })
+      .catch(function(e) { console.error('Enemies load failed', e); });
     window.advanceTime = advanceTime;
     window.render_game_to_text = renderGameToText;
     window.warpToChapter = warpToChapter;
@@ -144,7 +154,22 @@ Game.Main = (function() {
         var pd = Game.Player.getData();
         var exit = Game.Map.checkExit(pd.tileX, pd.tileY);
         if (exit) {
-          startTransition(exit.target, exit.spawnX, exit.spawnY);
+          var targetMap = exit.target;
+          var sx = exit.spawnX;
+          var sy = exit.spawnY;
+          var currentId = Game.Map.getCurrentMapId();
+          
+          if (currentId === 'gunma_world' && targetMap !== 'gunma_world') {
+              pd.worldX = pd.tileX;
+              pd.worldY = pd.tileY;
+          }
+          if (targetMap === 'gunma_world') {
+              sx = pd.worldX || 25;
+              sy = pd.worldY || 25;
+              // Spawn right next to the town entrance so we don't trigger the entrance again immediately
+              sy += 1;
+          }
+          startTransition(targetMap, sx, sy);
           break;
         }
 
@@ -221,7 +246,7 @@ Game.Main = (function() {
           if (battleResult.result === 'victory') {
             // Give gold reward
             Game.Player.addGold(battleResult.goldReward || 50);
-
+            
             // SPECIAL: Final Boss Check
             if (battleResult.npc && battleResult.npc.id === 'juke_final') {
                 var endingId = determineEnding();
@@ -232,9 +257,25 @@ Game.Main = (function() {
                 return;
             }
 
+            // Apply EXP & Drops
+            var expRes = Game.Player.addExp(battleResult.expReward || 0);
+            if (battleResult.dropItem) {
+                Game.Player.addItem(battleResult.dropItem);
+            }
+            
+            var rewardMsg = (battleResult.expReward || 0) + 'EXP 獲得！\n';
+            if (battleResult.dropItem) {
+                var dItem = Game.Items.get(battleResult.dropItem);
+                rewardMsg += '「' + (dItem ? dItem.name : battleResult.dropItem) + '」を手に入れた！\n';
+            }
+            if (expRes && expRes.leveledUp) {
+                rewardMsg += 'レベルが ' + expRes.level + ' に上がった！\n' +
+                             'HP+' + expRes.hpGained + ' ATK+' + expRes.atkGained + ' DEF+' + expRes.defGained + ' SPD+' + expRes.spdGained + '\n';
+            }
+
             // Show defeated dialog
             Game.NPC.showDefeatedDialog(battleResult.npc);
-            dialogText = Game.NPC.getCurrentDialog();
+            dialogText = rewardMsg + '\n' + Game.NPC.getCurrentDialog();
             setState(Game.Config.STATE.DIALOG);
             Game.Audio.playBgm('field');
           } else if (battleResult.result === 'defeat') {
@@ -953,12 +994,32 @@ Game.Main = (function() {
     return 'ch10_ending_A'; // BAD
   }
 
+  function triggerRandomEncounter() {
+      if (!Game.Battle || !Game.Battle.getEnemies) return;
+      var all = Game.Battle.getEnemies();
+      var chapter = Game.Player.getData().chapter || 1;
+      var possible = [];
+      for (var key in all) {
+          if (all[key].chapter === chapter || (chapter >= 5 && all[key].chapter >= 4)) {
+              if (key.indexOf('mob_') === 0) {
+                 possible.push(key);
+              }
+          }
+      }
+      if (possible.length > 0) {
+          var eId = possible[Math.floor(Math.random() * possible.length)];
+          setState(Game.Config.STATE.BATTLE);
+          Game.Battle.start(eId, null);
+      }
+  }
+
   // Start when page loads
   window.addEventListener('load', init);
 
   return {
     init: init,
     setState: setState,
-    determineEnding: determineEnding
+    determineEnding: determineEnding,
+    triggerRandomEncounter: triggerRandomEncounter
   };
 })();

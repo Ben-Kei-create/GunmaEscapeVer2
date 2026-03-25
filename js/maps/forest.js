@@ -98,7 +98,7 @@ Game.Maps.forest = (function() {
 
   var exits = [
     // South exit to tamura village
-    { x: 10, y: 19, target: 'tamura', spawnX: 14, spawnY: 1, dir: 'down' }
+    { x: 10, y: 19, target: 'gunma_world', spawnX: 14, spawnY: 1, dir: 'down' }
   ];
 
   return {
@@ -106,6 +106,7 @@ Game.Maps.forest = (function() {
     tiles: tiles,
     npcs: npcs,
     items: items,
-    exits: exits
+    exits: exits,
+    mapType: 'dungeon'
   };
 })();

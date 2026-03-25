@@ -27,8 +27,13 @@ Game.Renderer = (function() {
     var ts = Game.Config.TILE_SIZE;
     var cw = Game.Config.CANVAS_WIDTH;
     var ch = Game.Config.CANVAS_HEIGHT;
-    var mw = Game.Config.MAP_COLS * ts;
-    var mh = Game.Config.MAP_ROWS * ts;
+    
+    var currentMap = (Game.Map && Game.Map.getCurrentMap) ? Game.Map.getCurrentMap() : null;
+    var mapCols = currentMap ? currentMap.tiles[0].length : Game.Config.MAP_COLS;
+    var mapRows = currentMap ? currentMap.tiles.length : Game.Config.MAP_ROWS;
+    
+    var mw = mapCols * ts;
+    var mh = mapRows * ts;
 
     cameraX = Math.max(0, Math.min(x - cw / 2, mw - cw));
     cameraY = Math.max(0, Math.min(y - ch / 2, mh - ch));

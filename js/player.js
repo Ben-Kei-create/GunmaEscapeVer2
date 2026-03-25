@@ -10,7 +10,11 @@ Game.Player = (function() {
     maxHp: 100,
     attack: 12,
     defense: 5,
+    speed: 10,
     gold: 100,
+    level: 1,
+    exp: 0,
+    maxExp: 50,
     chapter: 1,                  // current chapter (1 or 2)
     diceSlots: 1,                // max dice slots (1-5)
     equippedDice: ['normalDice'], // array of dice item IDs
@@ -112,6 +116,14 @@ Game.Player = (function() {
         data.y = data.tileY * ts;
         data.moving = false;
         data.moveFrame = 0;
+
+        // Random Encounter Logic
+        data.stepsTaken = (data.stepsTaken || 0) + 1;
+        var currentMap = Game.Map.getCurrentMap();
+        var isSafe = !currentMap || currentMap.mapType === 'town';
+        if (!isSafe && Math.random() < 0.05 && Game.Main && Game.Main.triggerRandomEncounter) {
+            Game.Main.triggerRandomEncounter();
+        }
       } else {
         var targetX = data.tileX * ts;
         var targetY = data.tileY * ts;
@@ -233,6 +245,20 @@ Game.Player = (function() {
     return base;
   }
 
+  function getSpeed() {
+    var base = data.speed;
+    // Potentially add stat_up effects for speed
+    for (var i = 0; i < data.equippedCards.length; i++) {
+      var cardId = data.equippedCards[i];
+      if (!cardId) continue;
+      var card = Game.Items.get(cardId);
+      if (card && card.effect_type === 'stat_up' && card.target_stat === 'speed') {
+        base += card.effect_value;
+      }
+    }
+    return base;
+  }
+
   function equipDice(diceId, slot) {
     var item = Game.Items.get(diceId);
     if (!item || item.type !== 'dice') return false;
@@ -324,11 +350,47 @@ Game.Player = (function() {
     data.gold = Math.max(0, data.gold + amount);
   }
 
+  function addExp(amount) {
+    if (amount <= 0) return { leveledUp: false };
+    data.exp += amount;
+    var leveledUp = false;
+    var oldStats = { hp: data.maxHp, atk: data.attack, def: data.defense, spd: data.speed };
+
+    while (data.exp >= data.maxExp && data.level < 99) {
+        data.level++;
+        data.maxExp = Math.floor(50 * Math.pow(data.level, 1.5));
+        
+        // Stat increases (Wangdo RPG style)
+        data.maxHp += Math.floor(Math.random() * 6) + 10; // +10~15
+        data.attack += Math.floor(Math.random() * 2) + 2; // +2~3
+        data.defense += Math.floor(Math.random() * 2) + 2; // +2~3
+        data.speed += Math.floor(Math.random() * 2) + 1; // +1~2
+        
+        data.hp = data.maxHp;
+        leveledUp = true;
+    }
+    
+    if (data.level >= 99) {
+        data.exp = data.maxExp;
+    }
+    
+    return {
+        leveledUp: leveledUp,
+        level: data.level,
+        hpGained: data.maxHp - oldStats.hp,
+        atkGained: data.attack - oldStats.atk,
+        defGained: data.defense - oldStats.def,
+        spdGained: data.speed - oldStats.spd
+    };
+  }
+
   function reset() {
       data = {
           x: 0, y: 0, tileX: 0, tileY: 0,
           direction: 'down',
           hp: 100, maxHp: 100,
+          attack: 12, defense: 5, speed: 10,
+          level: 1, exp: 0, maxExp: 50,
           diceSlots: 1,
           equippedDice: ['normalDice'],
           armor: null,
@@ -337,7 +399,9 @@ Game.Player = (function() {
           chapter: 1,
           tp: 0,
           legacySlots: 3,
-          equippedCards: [null, null, null]
+          equippedCards: [null, null, null],
+          stepsTaken: 0,
+          worldX: 0, worldY: 0
       };
   }
 
@@ -355,6 +419,7 @@ Game.Player = (function() {
     hasAllKeys: hasAllKeys,
     getAttack: getAttack,
     getDefense: getDefense,
+    getSpeed: getSpeed,
     equipDice: equipDice,
     addDiceSlot: addDiceSlot,
     getEquippedDice: getEquippedDice,
@@ -365,6 +430,10 @@ Game.Player = (function() {
     getEquippedCards: getEquippedCards,
     addTp: addTp,
     addGold: addGold,
+    addExp: addExp,
+    getLevel: function() { return data.level; },
+    getExp: function() { return data.exp; },
+    getMaxExp: function() { return data.maxExp; },
     reset: reset,
     getData: getData
   };

@@ -107,8 +107,8 @@ Game.Maps.akagi_shrine = (function() {
 
   var exits = [
     // North back to akagi_ranch
-    { x: 13, y: 0, target: 'akagi_ranch', spawnX: 13, spawnY: 18, dir: 'up' },
-    { x: 14, y: 0, target: 'akagi_ranch', spawnX: 13, spawnY: 18, dir: 'up' }
+    { x: 13, y: 0, target: 'gunma_world', spawnX: 13, spawnY: 18, dir: 'up' },
+    { x: 14, y: 0, target: 'gunma_world', spawnX: 13, spawnY: 18, dir: 'up' }
   ];
 
   return {
@@ -116,6 +116,7 @@ Game.Maps.akagi_shrine = (function() {
     tiles: tiles,
     npcs: npcs,
     items: items,
-    exits: exits
+    exits: exits,
+    mapType: 'dungeon'
   };
 })();

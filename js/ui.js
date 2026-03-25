@@ -114,8 +114,9 @@ Game.UI = (function() {
     // Area name with chapter
     if (map) {
       var chLabel = pd.chapter === 2 ? '二章' : '一章';
-      R.drawDialogBox(5, 5, 100, 22);
+      R.drawDialogBox(5, 5, 110, 36);
       R.drawTextJP(chLabel + ' ' + map.name, 12, 9, '#fff', 11);
+      R.drawTextJP('Lv ' + pd.level + '  EXP ' + pd.exp + '/' + pd.maxExp, 12, 23, '#aaa', 10);
     }
 
     // HP bar (mini)
@@ -193,11 +194,12 @@ Game.UI = (function() {
     R.drawTextJP(chTitle, 200, 38, C.COLORS.GOLD, 12, 'center');
 
     // Stats
-    R.drawTextJP('HP: ' + pd.hp + '/' + pd.maxHp, 120, 60, '#fff', 13);
-    R.drawTextJP('防御力: ' + Game.Player.getDefense(), 120, 78, '#fff', 13);
+    R.drawTextJP('Lv ' + pd.level + '  HP: ' + pd.hp + '/' + pd.maxHp, 120, 60, '#fff', 13);
+    R.drawTextJP('EXP: ' + pd.exp + ' / ' + pd.maxExp, 230, 60, '#aaa', 11);
+    R.drawTextJP('攻: ' + Game.Player.getAttack() + '  防: ' + Game.Player.getDefense() + '  速: ' + Game.Player.getSpeed(), 120, 78, '#fff', 12);
     R.drawTextJP('所持金: ' + pd.gold + 'G', 120, 96, '#ffdd44', 13);
     var aName = pd.armor ? Game.Items.get(pd.armor).name : 'なし';
-    R.drawTextJP('防具: ' + aName, 260, 78, '#aaa', 11);
+    R.drawTextJP('防具: ' + aName, 230, 96, '#aaa', 11);
 
     // Tabs
     var tabs = ['もちもの', 'サイコロ', 'ぼうぐ', 'レガシー'];

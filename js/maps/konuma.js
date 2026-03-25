@@ -104,13 +104,13 @@ Game.Maps.konuma = (function() {
 
   var exits = [
     // North to tamura
-    { x: 13, y: 0, target: 'tamura', spawnX: 14, spawnY: 18, dir: 'up' },
-    { x: 14, y: 0, target: 'tamura', spawnX: 14, spawnY: 18, dir: 'up' },
-    { x: 15, y: 0, target: 'tamura', spawnX: 15, spawnY: 18, dir: 'up' },
-    { x: 16, y: 0, target: 'tamura', spawnX: 15, spawnY: 18, dir: 'up' },
+    { x: 13, y: 0, target: 'gunma_world', spawnX: 14, spawnY: 18, dir: 'up' },
+    { x: 14, y: 0, target: 'gunma_world', spawnX: 14, spawnY: 18, dir: 'up' },
+    { x: 15, y: 0, target: 'gunma_world', spawnX: 15, spawnY: 18, dir: 'up' },
+    { x: 16, y: 0, target: 'gunma_world', spawnX: 15, spawnY: 18, dir: 'up' },
     // South to onuma
-    { x: 14, y: 19, target: 'onuma', spawnX: 14, spawnY: 1, dir: 'down' },
-    { x: 15, y: 19, target: 'onuma', spawnX: 15, spawnY: 1, dir: 'down' }
+    { x: 14, y: 19, target: 'gunma_world', spawnX: 14, spawnY: 1, dir: 'down' },
+    { x: 15, y: 19, target: 'gunma_world', spawnX: 15, spawnY: 1, dir: 'down' }
   ];
 
   return {
@@ -118,6 +118,7 @@ Game.Maps.konuma = (function() {
     tiles: tiles,
     npcs: npcs,
     items: items,
-    exits: exits
+    exits: exits,
+    mapType: 'dungeon'
   };
 })();

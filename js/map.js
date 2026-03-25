@@ -23,7 +23,9 @@ Game.Map = (function() {
 
   function getTile(x, y) {
     if (!currentMap) return -1;
-    if (x < 0 || x >= Game.Config.MAP_COLS || y < 0 || y >= Game.Config.MAP_ROWS) return -1;
+    var mapRows = currentMap.tiles.length;
+    var mapCols = currentMap.tiles[0].length;
+    if (x < 0 || x >= mapCols || y < 0 || y >= mapRows) return -1;
     return currentMap.tiles[y][x];
   }
 
@@ -79,8 +81,10 @@ Game.Map = (function() {
 
   function draw() {
     if (!currentMap) return;
-    for (var y = 0; y < Game.Config.MAP_ROWS; y++) {
-      for (var x = 0; x < Game.Config.MAP_COLS; x++) {
+    var mapRows = currentMap.tiles.length;
+    var mapCols = currentMap.tiles[0].length;
+    for (var y = 0; y < mapRows; y++) {
+      for (var x = 0; x < mapCols; x++) {
         Game.Renderer.drawTile(currentMap.tiles[y][x], x, y);
       }
     }

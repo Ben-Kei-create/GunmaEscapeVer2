@@ -168,8 +168,8 @@ Game.Maps.ikaho = (function() {
   ];
 
   var exits = [
-    { x: 14, y: 19, target: 'kusatsu', spawnX: 14, spawnY: 1, dir: 'down' },
-    { x: 15, y: 19, target: 'kusatsu', spawnX: 15, spawnY: 1, dir: 'down' }
+    { x: 14, y: 19, target: 'gunma_world', spawnX: 14, spawnY: 1, dir: 'down' },
+    { x: 15, y: 19, target: 'gunma_world', spawnX: 15, spawnY: 1, dir: 'down' }
   ];
 
   return {
@@ -177,6 +177,7 @@ Game.Maps.ikaho = (function() {
     tiles: tiles,
     npcs: npcs,
     items: items,
-    exits: exits
+    exits: exits,
+    mapType: 'town'
   };
 })();

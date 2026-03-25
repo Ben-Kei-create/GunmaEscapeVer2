@@ -138,8 +138,8 @@ Game.Maps.shimonita = (function() {
   ];
 
   var exits = [
-    { x: 29, y: 10, target: 'maebashi', spawnX: 1, spawnY: 10, dir: 'right' },
-    { x: 29, y: 11, target: 'maebashi', spawnX: 1, spawnY: 11, dir: 'right' }
+    { x: 29, y: 10, target: 'gunma_world', spawnX: 1, spawnY: 10, dir: 'right' },
+    { x: 29, y: 11, target: 'gunma_world', spawnX: 1, spawnY: 11, dir: 'right' }
   ];
 
   return {
@@ -147,6 +147,7 @@ Game.Maps.shimonita = (function() {
     tiles: tiles,
     npcs: npcs,
     items: items,
-    exits: exits
+    exits: exits,
+    mapType: 'town'
   };
 })();

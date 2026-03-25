@@ -5,6 +5,7 @@ Game.Battle = (function() {
   var npcRef = null;
   var menuIndex = 0;
   var phase = 'menu';
+  var escapeFailures = 0;
   var message = '';
   var messageTimer = 0;
   var animTimer = 0;
@@ -971,6 +972,7 @@ Game.Battle = (function() {
     turnCount = 0;
     phaseChanged = false;
     sealedCommand = -1;
+    escapeFailures = 0;
     gimmickMessage = '';
     gimmickMessageTimer = 0;
     // Boss dialogue queue for multi-line display
@@ -1208,8 +1210,20 @@ Game.Battle = (function() {
             phase = 'diceResult';
             animTimer = 30;
 
-            // Apply damage with combo multiplier
-            var baseDmg = damageTotal + Game.Player.getAttack() + atkBonus - (enemy.defense - enemyDefReduction);
+            // Apply damage with classic RPG formula
+            var pAtk = Game.Player.getAttack() + atkBonus;
+            var eDef = Math.max(0, enemy.defense - enemyDefReduction);
+            var baseDmg = 0;
+            if (damageTotal > 0) {
+              // Critical hit handling: if damageTotal includes critical multiplier (usually combo scaling), 
+              // or just use 1.2x. Here we apply standard: (atk/2) - (def/4) + rand(1, 3) + dicePower
+              var critBonus = getEffectBonus(playerEffects, 'critical_rate') > 0 ? (Math.random() < 0.2) : false;
+              if (critBonus) {
+                  baseDmg = Math.floor(pAtk * 1.2) + damageTotal;
+              } else {
+                  baseDmg = Math.max(1, Math.floor(pAtk / 2) - Math.floor(eDef / 4) + Math.floor(Math.random() * 3) + 1) + damageTotal;
+              }
+            }
             
             // --- Passive Card Effect: Critical Rate ---
             var critRate = 0.05; // 5% base
@@ -1388,7 +1402,8 @@ Game.Battle = (function() {
             phase = 'enemyAttack';
             var playerData = Game.Player.getData();
             var defBonus = getEffectBonus(playerEffects, 'defense_up');
-            var dmg = Math.max(1, enemy.attack - (Game.Player.getDefense() + defBonus) + Math.floor(Math.random() * 5));
+            // Classic RPG formula
+            var dmg = Math.max(1, Math.floor((enemy.attack||10)/2) - Math.floor((Game.Player.getDefense() + defBonus)/4) + Math.floor(Math.random() * 3) + 1);
             playerData.hp -= dmg;
             message = enemy.name + 'の攻撃！ ' + dmg + 'ダメージ！';
             messageTimer = 45;
@@ -1541,7 +1556,20 @@ Game.Battle = (function() {
         } else {
           Game.Audio.playSfx('victory');
         }
-        return { result: 'victory', npc: npcRef, goldReward: enemy.goldReward || 50 };
+        
+        var dropItem = null;
+        if (enemy.dropItem && Math.random() < enemy.dropItem.rate) {
+           dropItem = enemy.dropItem.id;
+        }
+        var expReward = enemy.expReward || Math.floor((enemy.goldReward || 50) + 10);
+        
+        return { 
+          result: 'victory', 
+          npc: npcRef, 
+          goldReward: enemy.goldReward || 50,
+          expReward: expReward,
+          dropItem: dropItem
+        };
 
       case 'defeat':
         active = false;
@@ -1551,7 +1579,8 @@ Game.Battle = (function() {
       case 'useItem':
         phase = 'enemyAttack';
         var playerData2 = Game.Player.getData();
-        var dmg2 = Math.max(1, enemy.attack - Game.Player.getDefense() + Math.floor(Math.random() * 5));
+        // Classic RPG formula
+        var dmg2 = Math.max(1, Math.floor((enemy.attack||10)/2) - Math.floor(Game.Player.getDefense()/4) + Math.floor(Math.random() * 3) + 1);
         playerData2.hp -= dmg2;
         message = enemy.name + 'の攻撃！ ' + dmg2 + 'ダメージ！';
         messageTimer = 45;
@@ -1641,11 +1670,15 @@ Game.Battle = (function() {
         }
         break;
       case 3:
-        if (Math.random() < 0.5) {
+        var pSpd = Game.Player.getSpeed ? Game.Player.getSpeed() : 10;
+        var eSpd = enemy.speed || 10;
+        var fleeChance = (pSpd / eSpd) * 0.5 + (escapeFailures * 0.1);
+        if (Math.random() < fleeChance) {
           message = '逃げ出した！';
           messageTimer = 30;
           phase = 'flee';
         } else {
+          escapeFailures++;
           message = '逃げられなかった！';
           messageTimer = 30;
           phase = 'playerAttack';
@@ -2049,6 +2082,18 @@ Game.Battle = (function() {
     draw: draw,
     isActive: isActive,
     getBossGimmick: function(bossId) { return bossGimmicks[bossId] || null; },
-    getAllBossGimmicks: function() { return bossGimmicks; }
+    getAllBossGimmicks: function() { return bossGimmicks; },
+    getEnemies: function() { return enemies; },
+    addEnemies: function(newEnemies) {
+      if (Array.isArray(newEnemies)) {
+        for (var i = 0; i < newEnemies.length; i++) {
+          enemies[newEnemies[i].id] = newEnemies[i];
+        }
+      } else {
+        for (var k in newEnemies) {
+          enemies[k] = newEnemies[k];
+        }
+      }
+    }
   };
 })();

@@ -108,11 +108,11 @@ Game.Maps.akagi_ranch = (function() {
 
   var exits = [
     // North to onuma
-    { x: 13, y: 0, target: 'onuma', spawnX: 14, spawnY: 18, dir: 'up' },
-    { x: 14, y: 0, target: 'onuma', spawnX: 14, spawnY: 18, dir: 'up' },
-    { x: 15, y: 0, target: 'onuma', spawnX: 15, spawnY: 18, dir: 'up' },
+    { x: 13, y: 0, target: 'gunma_world', spawnX: 14, spawnY: 18, dir: 'up' },
+    { x: 14, y: 0, target: 'gunma_world', spawnX: 14, spawnY: 18, dir: 'up' },
+    { x: 15, y: 0, target: 'gunma_world', spawnX: 15, spawnY: 18, dir: 'up' },
     // South to akagi_shrine (through gate)
-    { x: 13, y: 19, target: 'akagi_shrine', spawnX: 14, spawnY: 1, dir: 'down' }
+    { x: 13, y: 19, target: 'gunma_world', spawnX: 14, spawnY: 1, dir: 'down' }
   ];
 
   return {
@@ -120,6 +120,7 @@ Game.Maps.akagi_ranch = (function() {
     tiles: tiles,
     npcs: npcs,
     items: items,
-    exits: exits
+    exits: exits,
+    mapType: 'dungeon'
   };
 })();

@@ -111,8 +111,8 @@ Game.Maps.tsumagoi = (function() {
   ];
 
   var exits = [
-    { x: 14, y: 0, target: 'maebashi', spawnX: 14, spawnY: 18, dir: 'up' },
-    { x: 15, y: 0, target: 'maebashi', spawnX: 15, spawnY: 18, dir: 'up' }
+    { x: 14, y: 0, target: 'gunma_world', spawnX: 14, spawnY: 18, dir: 'up' },
+    { x: 15, y: 0, target: 'gunma_world', spawnX: 15, spawnY: 18, dir: 'up' }
   ];
 
   return {
@@ -120,6 +120,7 @@ Game.Maps.tsumagoi = (function() {
     tiles: tiles,
     npcs: npcs,
     items: items,
-    exits: exits
+    exits: exits,
+    mapType: 'town'
   };
 })();

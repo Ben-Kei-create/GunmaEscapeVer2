@@ -197,14 +197,14 @@ Game.Maps.maebashi = (function() {
   ];
 
   var exits = [
-    { x: 29, y: 10, target: 'takasaki', spawnX: 1, spawnY: 10, dir: 'right' },
-    { x: 29, y: 11, target: 'takasaki', spawnX: 1, spawnY: 11, dir: 'right' },
-    { x: 0,  y: 10, target: 'shimonita', spawnX: 28, spawnY: 10, dir: 'left' },
-    { x: 0,  y: 11, target: 'shimonita', spawnX: 28, spawnY: 11, dir: 'left' },
-    { x: 14, y: 1,  target: 'kusatsu', spawnX: 14, spawnY: 18, dir: 'up' },
-    { x: 15, y: 1,  target: 'kusatsu', spawnX: 15, spawnY: 18, dir: 'up' },
-    { x: 14, y: 19, target: 'tsumagoi', spawnX: 14, spawnY: 1, dir: 'down' },
-    { x: 15, y: 19, target: 'tsumagoi', spawnX: 15, spawnY: 1, dir: 'down' }
+    { x: 29, y: 10, target: 'gunma_world', spawnX: 1, spawnY: 10, dir: 'right' },
+    { x: 29, y: 11, target: 'gunma_world', spawnX: 1, spawnY: 11, dir: 'right' },
+    { x: 0,  y: 10, target: 'gunma_world', spawnX: 28, spawnY: 10, dir: 'left' },
+    { x: 0,  y: 11, target: 'gunma_world', spawnX: 28, spawnY: 11, dir: 'left' },
+    { x: 14, y: 1,  target: 'gunma_world', spawnX: 14, spawnY: 18, dir: 'up' },
+    { x: 15, y: 1,  target: 'gunma_world', spawnX: 15, spawnY: 18, dir: 'up' },
+    { x: 14, y: 19, target: 'gunma_world', spawnX: 14, spawnY: 1, dir: 'down' },
+    { x: 15, y: 19, target: 'gunma_world', spawnX: 15, spawnY: 1, dir: 'down' }
   ];
 
   return {
@@ -212,6 +212,7 @@ Game.Maps.maebashi = (function() {
     tiles: tiles,
     npcs: npcs,
     items: items,
-    exits: exits
+    exits: exits,
+    mapType: 'town'
   };
 })();

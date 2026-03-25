@@ -137,8 +137,8 @@ Game.Maps.takasaki = (function() {
   ];
 
   var exits = [
-    { x: 0, y: 10, target: 'maebashi', spawnX: 28, spawnY: 10, dir: 'left' },
-    { x: 0, y: 11, target: 'maebashi', spawnX: 28, spawnY: 11, dir: 'left' }
+    { x: 0, y: 10, target: 'gunma_world', spawnX: 28, spawnY: 10, dir: 'left' },
+    { x: 0, y: 11, target: 'gunma_world', spawnX: 28, spawnY: 11, dir: 'left' }
   ];
 
   return {
@@ -146,6 +146,7 @@ Game.Maps.takasaki = (function() {
     tiles: tiles,
     npcs: npcs,
     items: items,
-    exits: exits
+    exits: exits,
+    mapType: 'town'
   };
 })();

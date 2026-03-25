@@ -18,6 +18,8 @@ Game.Player = (function() {
     chapter: 1,                  // current chapter (1 or 2)
     diceSlots: 1,                // max dice slots (1-5)
     equippedDice: ['normalDice'], // array of dice item IDs
+    worldX: 25,                  // Default world map x coordinate
+    worldY: 26,                  // Default world map y coordinate
     armor: null,    // equipped armor item ID
     inventory: [],
     moveFrame: 0,
@@ -401,7 +403,7 @@ Game.Player = (function() {
           legacySlots: 3,
           equippedCards: [null, null, null],
           stepsTaken: 0,
-          worldX: 0, worldY: 0
+          worldX: 25, worldY: 26
       };
   }
 

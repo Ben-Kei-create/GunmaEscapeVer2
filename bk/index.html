@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>群馬県からの脱出</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #111;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      overflow: hidden;
+    }
+    canvas {
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+      width: 960px;
+      height: 640px;
+    }
+    @media (max-width: 960px) {
+      canvas { width: 100vw; height: auto; }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="game" width="480" height="320"></canvas>
+  <script src="js/config.js"></script>
+  <script src="js/input.js"></script>
+  <script src="js/renderer.js"></script>
+  <script src="js/weather.js"></script>
+  <script src="js/particles.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/items.js"></script>
+  <script src="js/player.js"></script>
+  <script src="js/save.js"></script>
+  <script src="js/maps/gunma_world.js"></script>
+  <script src="js/maps/maebashi.js"></script>
+  <script src="js/maps/takasaki.js"></script>
+  <script src="js/maps/kusatsu.js"></script>
+  <script src="js/maps/ikaho.js"></script>
+  <script src="js/maps/shimonita.js"></script>
+  <script src="js/maps/tomioka.js"></script>
+  <script src="js/maps/tsumagoi.js"></script>
+  <script src="js/maps/tamura.js"></script>
+  <script src="js/maps/forest.js"></script>
+  <script src="js/maps/konuma.js"></script>
+  <script src="js/maps/onuma.js"></script>
+  <script src="js/maps/akagi_ranch.js"></script>
+  <script src="js/maps/akagi_shrine.js"></script>
+  <script src="js/maps/gakuen.js"></script>
+  <script src="js/maps/haruna.js"></script>
+  <script src="js/maps/minakami.js"></script>
+  <script src="js/maps/kentyou.js"></script>
+  <script src="js/map.js"></script>
+  <script src="js/npc.js"></script>
+  <script src="js/battle.js"></script>
+  <script src="js/puzzle.js"></script>
+  <script src="js/shop.js"></script>
+  <script src="js/event.js"></script>
+  <script src="js/story.js"></script>
+  <script src="js/achievements.js"></script>
+  <script src="js/legacy.js"></script>
+  <script src="js/quests.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/save_menu.js"></script>
+  <script src="js/enemies_regular.js"></script>
+  <script src="js/ch10_endings.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

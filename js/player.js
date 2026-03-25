@@ -23,6 +23,7 @@ Game.Player = (function() {
     armor: null,    // equipped armor item ID
     inventory: [],
     moveFrame: 0,
+    moveSpeed: 8,
     walkSfxTimer: 0,
     // --- Legacy Card & TP System ---
     legacySlots: 3,
@@ -399,6 +400,8 @@ Game.Player = (function() {
           gold: 100,
           inventory: [],
           chapter: 1,
+          moveFrame: 0,
+          moveSpeed: 8,
           tp: 0,
           legacySlots: 3,
           equippedCards: [null, null, null],

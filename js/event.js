@@ -474,6 +474,30 @@ Game.Event = (function() {
         ],
         effect: 'fade'
       }
+    ],
+
+    ev_fail_ch1_pushback: [
+      {
+        bg: '#18080f',
+        speaker: null,
+        lines: [
+          '暴力では、空っぽの器を満たせなかった。',
+          '目の前が赤く揺らぎ、工場の入り口まで押し返される。'
+        ],
+        effect: 'fade'
+      }
+    ],
+
+    ev_fail_ch2_rewind: [
+      {
+        bg: '#0f0a18',
+        speaker: null,
+        lines: [
+          '強引に引いた糸が切れ、記憶が絡まり直していく。',
+          '気づくと、路地の入口へ静かに巻き戻されていた。'
+        ],
+        effect: 'fade'
+      }
     ]
   };
 

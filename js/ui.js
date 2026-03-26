@@ -237,6 +237,7 @@ Game.UI = (function() {
     var R = Game.Renderer;
     var npc = Game.NPC.getCurrentNpc();
     var speakerName = npc ? npc.name : '';
+    text = typeof text === 'string' ? text : '';
 
     R.drawDialogBox(10, Game.Config.CANVAS_HEIGHT - 80, Game.Config.CANVAS_WIDTH - 20, 70);
 

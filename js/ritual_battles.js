@@ -129,8 +129,10 @@ Game.RitualBattles = (function() {
       },
 
       onActionResolved: function(runtime, enemy, player, action, result) {
-        if (!runtime.ritualState.hpZeroReached && enemy.hp <= 0) {
-          enemy.hp = 0;
+        var projectedEnemyHp = result && typeof result.projectedEnemyHp === 'number'
+          ? result.projectedEnemyHp
+          : enemy.hp;
+        if (!runtime.ritualState.hpZeroReached && projectedEnemyHp <= 0) {
           runtime.ritualState.hpZeroReached = true;
           runtime.ritualHintState = 1;
           runtime.ritualInputUnlocks.dragItem = true;

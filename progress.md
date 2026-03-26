@@ -68,4 +68,11 @@ Original prompt: そうだね。セーブできる村役場みたいなところ
   - `js/ritual_battles.js` を新設し、`repair_eye / untangle / temperature` の定義、ランタイム生成、Story連携ヘルパを実装。
   - `index.html` で読み込みを追加。
   - `js/battle.js` はまだ既存ループを保ったまま、儀式ランタイム初期化と getter 公開だけを先行実装。
-- TODO: `battle.js` の `diceResult / executeAction / draw` に `ritualRuntime` フックを差し込み、第1章 `repair_eye` を最初の実戦投入対象にする。
+- 2026-03-26: 儀式戦の最初の実戦投入として、第1系統 `repair_eye` を既存戦闘ループへ接続。
+  - `js/battle.js` に動的メニュー、儀式判定、`ritual_fail` 分岐、`repair_eye / untangle / temperature` 用UI描画を追加。
+  - `js/main.js` に `startStoryBattle` とストーリー戦復帰処理を追加。
+  - `js/story.js` の `ch2_daruma_master_pre` に儀式用の `darumaEye` 支給を追加し、欠けていた `darumaMaster` 敵定義も実装。
+  - 併せて `konnyakuKing` / `cabbageGuardian` の不足敵定義も補完し、Story戦での未定義クラッシュを解消。
+  - `js/event.js` に `ev_fail_ch1_pushback` / `ev_fail_ch2_rewind` を追加。
+  - `js/ui.js` のダイアログ描画を null-safe にして、戦闘デバッグ時の描画落ちを回避。
+- TODO: `battle.js` に第2章 `untangle` と第3章 `temperature` の実敵データを割り当て、フィールド/ストーリー導線へつなぐ。

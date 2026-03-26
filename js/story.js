@@ -232,6 +232,8 @@ Game.Story = (function() {
       { type: 'dialog', speaker: 'だるま師匠', text: 'お前の記憶が欠けているのは、結界の侵食のせいだ。' },
       { type: 'dialog', speaker: 'だるま師匠', text: 'だが心配するな。心に刻まれた記憶は消えない。' },
       { type: 'dialog', speaker: 'だるま師匠', text: '...まずはお前の覚悟を見せてもらおう。' },
+      { type: 'dialog', speaker: 'だるま師匠', text: 'この目を預ける。空白を埋められるか、そこで見せてみろ。' },
+      { type: 'give_item', item: 'darumaEye' },
       { type: 'start_battle', enemy: 'darumaMaster' },
       { type: 'dialog', speaker: 'だるま師匠', text: 'よし、合格だ。これを持っていけ。' },
       { type: 'give_item', item: 'darumaDice' },

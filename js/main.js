@@ -8,6 +8,7 @@ Game.Main = (function() {
   var transitionSpawnY = 0;
   var dialogText = '';
   var pendingAction = null;
+  var storyBattleContext = null;
 
   function init() {
     Game.Renderer.init();
@@ -154,16 +155,45 @@ Game.Main = (function() {
         var battleResult = Game.Battle.update();
         if (battleResult) {
           if (battleResult.result === 'victory') {
-            // Give gold reward
-            Game.Player.addGold(battleResult.goldReward || 50);
-            // Show defeated dialog
-            Game.NPC.showDefeatedDialog(battleResult.npc);
-            dialogText = Game.NPC.getCurrentDialog();
-            setState(Game.Config.STATE.DIALOG);
-            Game.Audio.playBgm('field');
+            if (battleResult.goldReward) {
+              Game.Player.addGold(battleResult.goldReward);
+            }
+            if (storyBattleContext) {
+              var resume = storyBattleContext;
+              storyBattleContext = null;
+              if (resume.afterBattle && resume.afterBattle.length) {
+                setState(Game.Config.STATE.EVENT);
+                Game.Story.startEvent(resume.afterBattle, resume.afterCallback || null);
+              } else if (resume.afterCallback) {
+                resume.afterCallback();
+              } else {
+                setState(Game.Config.STATE.EXPLORING);
+                Game.Audio.playBgm('field');
+              }
+            } else {
+              // Show defeated dialog
+              Game.NPC.showDefeatedDialog(battleResult.npc);
+              dialogText = Game.NPC.getCurrentDialog();
+              setState(Game.Config.STATE.DIALOG);
+              Game.Audio.playBgm('field');
+            }
           } else if (battleResult.result === 'defeat') {
+            storyBattleContext = null;
             setState(Game.Config.STATE.GAMEOVER);
+          } else if (battleResult.result === 'ritual_fail') {
+            storyBattleContext = null;
+            if (battleResult.returnEventId && Game.Event && Game.Event.hasEvent && Game.Event.hasEvent(battleResult.returnEventId)) {
+              setState(Game.Config.STATE.EVENT);
+              Game.Event.start(battleResult.returnEventId, function() {
+                setState(Game.Config.STATE.EXPLORING);
+                Game.Audio.playBgm('field');
+              });
+            } else {
+              setState(Game.Config.STATE.EXPLORING);
+              Game.Audio.playBgm('field');
+            }
           } else if (battleResult.result === 'flee') {
+            storyBattleContext = null;
             setState(Game.Config.STATE.EXPLORING);
           }
         }
@@ -857,8 +887,18 @@ Game.Main = (function() {
   // Start when page loads
   window.addEventListener('load', init);
 
+  function startStoryBattle(enemyId, afterBattle, afterCallback) {
+    storyBattleContext = {
+      afterBattle: afterBattle || null,
+      afterCallback: afterCallback || null
+    };
+    setState(Game.Config.STATE.BATTLE);
+    Game.Battle.start(enemyId, null);
+  }
+
   return {
     init: init,
-    setState: setState
+    setState: setState,
+    startStoryBattle: startStoryBattle
   };
 })();

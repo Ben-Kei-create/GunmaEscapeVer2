@@ -1164,6 +1164,22 @@ Game.Battle = (function() {
     palette: { 1:'#7a0f18', 2:'#d33942', 3:'#111111', 4:'#f4e2b3' }
   };
 
+  enemies.konnyakuKing = {
+    name: 'こんにゃく大王',
+    hp: 72, maxHp: 72,
+    attack: 14, defense: 6, goldReward: 90,
+    sprite: enemies.ishidanGuard.sprite,
+    palette: { 1:'#5a5a5a', 2:'#b0b0b0', 3:'#111111', 4:'#d8d8d8', 5:'#6d6d6d', 6:'#484848', 7:'#303030' }
+  };
+
+  enemies.cabbageGuardian = {
+    name: 'キャベツ番人',
+    hp: 90, maxHp: 90,
+    attack: 17, defense: 6, goldReward: 110,
+    sprite: enemies.cabbage.sprite,
+    palette: enemies.cabbage.palette
+  };
+
   var menuItems = ['たたかう', 'アイテム', 'にげる'];
 
   function getRitualDefinition() {
@@ -1525,6 +1541,8 @@ Game.Battle = (function() {
         if (Game.Input.isPressed('cancel')) {
           phase = 'menu';
           message = '';
+          itemMenuMode = 'heal';
+          ritualMenuActionId = null;
           Game.Audio.playSfx('cancel');
         }
         if (Game.Input.isPressed('confirm')) {
@@ -1993,7 +2011,8 @@ Game.Battle = (function() {
         );
       }
 
-      if (evaluateRitualOutcome() !== 'victory') {
+      var ritualItemOutcome = evaluateRitualOutcome();
+      if (!ritualItemOutcome) {
         message = ritualRuntime && ritualRuntime.ritualState.eyeRepaired
           ? selected.item.name + 'をそっと重ねた。'
           : 'その記憶は、まだ噛み合わない。';
@@ -2093,6 +2112,48 @@ Game.Battle = (function() {
     }
   }
 
+  function drawTensionGauge(R, runtime) {
+    var gaugeMax = enemy && enemy.ritualParams ? (enemy.ritualParams.maxTangle || 12) : 12;
+    var ratio = gaugeMax > 0 ? Math.max(0, Math.min(1, runtime.ritualGauge / gaugeMax)) : 0;
+    var green = Math.floor(180 * (1 - ratio) + 40);
+    var red = Math.floor(180 * ratio + 40);
+    var color = 'rgb(' + red + ',' + green + ',90)';
+    R.drawRectAbsolute(160, 120, 160, 12, '#333');
+    R.drawRectAbsolute(161, 121, 158 * ratio, 10, color);
+    R.drawTextJP('絡まり ' + runtime.ritualGauge + '/' + gaugeMax, 160, 135, '#fff', 12);
+  }
+
+  function drawTemperatureGauge(R, runtime) {
+    var gaugeValue = Math.max(0, runtime.ritualGauge || 0);
+    var maxTemp = enemy && enemy.ritualParams ? Math.max(120, enemy.ritualParams.startTemperature || 110) : 120;
+    var ratio = Math.max(0, Math.min(1, gaugeValue / maxTemp));
+    var gaugeX = 340;
+    var gaugeY = 22;
+    var gaugeH = 96;
+    var fillH = Math.floor(gaugeH * ratio);
+    R.drawRectAbsolute(gaugeX, gaugeY, 20, gaugeH, '#2a2a33');
+    R.drawRectAbsolute(gaugeX + 2, gaugeY + gaugeH - fillH - 2, 16, fillH, '#f0a020');
+    if (runtime.ritualState.targetZoneRevealed && runtime.ritualTargetZone) {
+      var zoneTop = gaugeY + gaugeH - Math.floor(gaugeH * (runtime.ritualTargetZone.max / maxTemp));
+      var zoneHeight = Math.max(4, Math.floor(gaugeH * ((runtime.ritualTargetZone.max - runtime.ritualTargetZone.min) / maxTemp)));
+      R.drawRectAbsolute(gaugeX - 2, zoneTop, 24, zoneHeight, 'rgba(120,220,255,0.45)');
+    }
+    R.drawTextJP('温度', gaugeX - 2, gaugeY - 12, '#d8f4ff', 10);
+    R.drawTextJP('' + gaugeValue, gaugeX - 2, gaugeY + gaugeH + 6, '#fff', 10);
+  }
+
+  function drawRitualEyeSlot(R, runtime, enemyX) {
+    if (!runtime || !runtime.ritualSlots || !runtime.ritualSlots.length) return;
+    var slot = runtime.ritualSlots[0];
+    if (!slot || !slot.visible) return;
+    var slotX = enemyX + 54;
+    var slotY = 58;
+    R.drawRectAbsolute(slotX, slotY, 18, 18, 'rgba(255,255,255,0.12)');
+    R.drawRectAbsolute(slotX + 1, slotY + 1, 16, 16, slot.filled ? '#f2e2b0' : '#1b1b25');
+    R.drawTextJP(slot.filled ? '目' : '空', slotX + 3, slotY + 4, slot.filled ? '#7a0f18' : '#c8ccd8', 10);
+    R.drawTextJP('目を入れる', enemyX + 36, 82, '#d8c68a', 10);
+  }
+
   function draw() {
     if (!active) return;
 
@@ -2134,11 +2195,24 @@ Game.Battle = (function() {
         R.drawTextJP('怒り状態！', 220, 20, '#ff4444', 14);
       }
 
-      R.drawRectAbsolute(160, 120, 160, 12, '#333');
-      var hpRatio = enemy.hp / enemy.maxHp;
-      R.drawRectAbsolute(161, 121, 158 * hpRatio, 10,
-        hpRatio > 0.3 ? C.COLORS.HP_GREEN : C.COLORS.HP_RED);
-      R.drawTextJP(enemy.name + ' HP:' + enemy.hp + '/' + enemy.maxHp, 160, 135, '#fff', 12);
+      if (ritualRuntime && ritualRuntime.ritualMode === 'untangle') {
+        drawTensionGauge(R, ritualRuntime);
+      } else {
+        R.drawRectAbsolute(160, 120, 160, 12, '#333');
+        var hpRatio = enemy.hp / enemy.maxHp;
+        if (ritualRuntime && ritualRuntime.ritualMode === 'repair_eye' && ritualRuntime.ritualState.hpZeroReached) {
+          hpRatio = 0;
+        }
+        R.drawRectAbsolute(161, 121, 158 * hpRatio, 10,
+          hpRatio > 0.3 ? C.COLORS.HP_GREEN : C.COLORS.HP_RED);
+        R.drawTextJP(enemy.name + ' HP:' + enemy.hp + '/' + enemy.maxHp, 160, 135, '#fff', 12);
+      }
+      if (ritualRuntime && ritualRuntime.ritualMode === 'temperature') {
+        drawTemperatureGauge(R, ritualRuntime);
+      }
+      if (ritualRuntime && ritualRuntime.ritualMode === 'repair_eye') {
+        drawRitualEyeSlot(R, ritualRuntime, ex);
+      }
 
       // Enemy status effect icons
       var esx = 160;
@@ -2238,12 +2312,15 @@ Game.Battle = (function() {
 
     // Menu
     if (phase === 'menu' && messageTimer <= 0) {
-      R.drawDialogBox(300, 200, 160, 80);
-      for (var i = 0; i < menuItems.length; i++) {
+      var currentMenuEntries = getMenuEntries();
+      var menuHeight = Math.max(80, 18 + currentMenuEntries.length * 22);
+      R.drawDialogBox(300, 200, 160, menuHeight);
+      for (var i = 0; i < currentMenuEntries.length; i++) {
         var sealed = (sealedCommand >= 0 && i === sealedCommand);
         var color = sealed ? '#555' : (i === menuIndex) ? C.COLORS.GOLD : '#fff';
         var prefix = (i === menuIndex) ? '▶ ' : '  ';
-        var label = sealed ? menuItems[i] + '×' : menuItems[i];
+        var baseLabel = currentMenuEntries[i].label;
+        var label = sealed ? baseLabel + '×' : baseLabel;
         R.drawTextJP(prefix + label, 315, 212 + i * 22, color, 14);
       }
     }
@@ -2283,6 +2360,14 @@ Game.Battle = (function() {
       R.drawDialogBox(10, 282, 460, 35);
       R.drawTextJP(message, 20, 290, '#fff', 14);
     }
+
+    if (ritualRuntime && ritualRuntime.uiFlags && ritualRuntime.uiFlags.failureOverlay) {
+      R.drawRectAbsolute(0, 0, C.CANVAS_WIDTH, C.CANVAS_HEIGHT, 'rgba(20, 10, 18, 0.38)');
+      R.drawTextJP(
+        (ritualRuntime.ritualFailStyle && ritualRuntime.ritualFailStyle.text) || '理解が届かなかった…',
+        120, 92, '#f2d8d8', 14
+      );
+    }
   }
 
   function isActive() { return active; }
@@ -2292,6 +2377,8 @@ Game.Battle = (function() {
     update: update,
     draw: draw,
     isActive: isActive,
+    getAllEnemies: function() { return enemies; },
+    getMenuEntries: getMenuEntries,
     getRitualRuntime: function() { return ritualRuntime; },
     getRitualDefinition: function(mode) {
       return Game.RitualBattles && Game.RitualBattles.getDefinition ? Game.RitualBattles.getDefinition(mode) : null;

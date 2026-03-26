@@ -194,6 +194,136 @@ Game.Battle = (function() {
       palette: { 1:'#333', 2:'#888', 3:'#f00', 4:'#c88', 5:'#2a2a3a', 6:'#333', 7:'#222' }
     },
 
+    // ── ch3 boss ──
+    kumako_steam: {
+      name: '熊子・湯煙形態',
+      hp: 110, maxHp: 110,
+      attack: 18, defense: 8, goldReward: 150,
+      sprite: [
+        [0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0],
+        [0,0,0,0,1,1,2,2,1,1,0,0,0,0,0,0],
+        [0,0,0,1,1,2,1,1,2,1,1,0,0,0,0,0],
+        [0,0,1,1,2,1,1,1,1,2,1,1,0,0,0,0],
+        [0,1,1,2,1,1,3,3,1,1,2,1,1,0,0,0],
+        [0,1,1,2,1,1,1,1,1,1,2,1,1,0,0,0],
+        [0,1,2,2,3,3,3,3,3,3,2,2,1,0,0,0],
+        [0,1,2,3,3,2,2,2,2,3,3,2,1,1,0,0],
+        [1,1,2,3,2,2,2,2,2,2,3,2,1,1,1,0],
+        [1,2,2,3,2,2,1,1,2,2,3,2,2,1,1,0],
+        [1,2,2,3,2,1,1,1,1,2,3,2,2,2,1,0],
+        [1,2,2,3,3,1,1,1,1,3,3,2,2,2,1,0],
+        [1,2,2,2,3,3,3,3,3,3,2,2,2,2,1,0],
+        [0,1,2,2,2,2,2,2,2,2,2,2,2,1,1,0],
+        [0,1,1,1,2,2,2,2,2,2,2,1,1,1,0,0],
+        [0,0,0,1,1,1,1,1,1,1,1,1,0,0,0,0]
+      ],
+      palette: { 1:'#ffffff', 2:'#aaddff', 3:'#ccccff' }
+    },
+
+    // ── ch4 boss ──
+    yubatake_guardian: {
+      name: '湯畑の守護者',
+      hp: 140, maxHp: 140,
+      attack: 22, defense: 12, goldReward: 200,
+      sprite: [
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,0,1,0,0,0,0,0,0,0,0,0,0,1,0,0],
+        [0,0,1,2,0,0,0,1,1,0,0,0,2,1,0,0],
+        [0,2,2,3,0,0,1,2,2,1,0,0,3,2,2,0],
+        [0,2,3,3,0,1,2,3,3,2,1,0,3,3,2,0],
+        [0,3,3,2,1,2,3,4,4,3,2,1,2,3,3,0],
+        [0,0,3,2,1,2,3,3,3,3,2,1,2,3,0,0],
+        [0,0,2,2,2,3,3,3,3,3,3,2,2,2,0,0],
+        [0,0,1,2,3,3,3,3,3,3,3,3,2,1,0,0],
+        [0,0,1,3,3,4,4,3,3,4,4,3,3,1,0,0],
+        [0,0,2,3,3,4,4,3,3,4,4,3,3,2,0,0],
+        [0,0,2,3,3,3,3,3,3,3,3,3,3,2,0,0],
+        [0,0,3,3,3,2,2,3,3,2,2,3,3,3,0,0],
+        [0,3,3,3,2,2,2,2,2,2,2,2,3,3,3,0],
+        [3,3,3,2,2,2,2,2,2,2,2,2,2,3,3,3],
+        [3,3,0,0,0,0,0,0,0,0,0,0,0,0,3,3]
+      ],
+      palette: { 1:'#ffffff', 2:'#aaddff', 3:'#228866', 4:'#88ccaa' }
+    },
+
+    // ── ch5 boss ──
+    juke_gakuen: {
+      name: 'ジューク（学園）',
+      hp: 160, maxHp: 160,
+      attack: 25, defense: 14, goldReward: 250,
+      sprite: [
+        [0,0,0,0,0,0,2,2,2,2,0,0,0,0,0,0],
+        [0,0,0,0,0,2,2,2,2,2,2,0,0,0,0,0],
+        [0,0,0,0,0,2,1,1,1,1,2,0,0,0,0,0],
+        [0,0,0,0,0,1,4,1,1,4,1,0,0,0,0,0],
+        [0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0],
+        [0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0],
+        [0,0,0,0,2,2,3,3,3,3,2,2,0,0,0,0],
+        [0,0,0,2,2,2,3,3,3,3,2,2,2,0,0,0],
+        [0,0,0,2,1,2,2,2,2,2,2,1,2,0,0,0],
+        [0,0,0,1,1,2,2,2,2,2,2,1,1,0,0,0],
+        [0,0,0,0,0,2,2,2,2,2,2,0,0,0,0,0],
+        [0,0,0,0,0,2,2,2,2,2,2,0,0,0,0,0],
+        [0,0,0,0,0,2,2,0,0,2,2,0,0,0,0,0],
+        [0,0,0,0,0,2,2,0,0,2,2,0,0,0,0,0],
+        [0,0,0,0,0,2,2,0,0,2,2,0,0,0,0,0],
+        [0,0,0,0,2,2,2,0,0,2,2,2,0,0,0,0]
+      ],
+      palette: { 1:'#ffddcc', 2:'#111111', 3:'#ffffff', 4:'#ff0000' }
+    },
+
+    // ── ch6 mid-boss ──
+    echo_guardian: {
+      name: '返声の番',
+      hp: 130, maxHp: 130,
+      attack: 20, defense: 10, goldReward: 180,
+      sprite: [
+        [0,0,0,0,0,0,0,2,2,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,2,1,1,2,0,0,0,0,0,0],
+        [0,0,0,0,0,2,1,1,1,1,2,0,0,0,0,0],
+        [0,0,0,0,2,1,1,1,1,1,1,2,0,0,0,0],
+        [0,0,0,2,1,1,1,1,1,1,1,1,2,0,0,0],
+        [0,0,2,1,1,3,3,1,1,3,3,1,1,2,0,0],
+        [0,0,2,1,1,3,3,1,1,3,3,1,1,2,0,0],
+        [0,2,1,1,1,1,1,1,1,1,1,1,1,1,2,0],
+        [0,2,1,1,1,1,3,3,3,3,1,1,1,1,2,0],
+        [0,0,2,1,1,1,1,1,1,1,1,1,1,2,0,0],
+        [0,0,0,2,2,1,1,1,1,1,1,2,2,0,0,0],
+        [0,0,0,0,2,2,1,1,1,1,2,2,0,0,0,0],
+        [0,0,0,2,1,1,2,2,2,2,1,1,2,0,0,0],
+        [0,0,2,1,1,2,0,0,0,0,2,1,1,2,0,0],
+        [0,2,1,1,2,0,0,0,0,0,0,2,1,1,2,0],
+        [0,0,2,2,0,0,0,0,0,0,0,0,2,2,0,0]
+      ],
+      palette: { 1:'#ffffff', 2:'#cccccc', 3:'#ddaaff' }
+    },
+
+    // ── ch6 boss ──
+    sato_kumako_tunnel: {
+      name: '佐藤＆熊子',
+      hp: 200, maxHp: 200,
+      attack: 28, defense: 15, goldReward: 300,
+      sprite: [
+        [0,0,0,0,4,4,4,0,0,4,4,4,0,0,0,0],
+        [0,0,0,4,4,4,4,4,4,4,4,4,4,0,0,0],
+        [0,0,0,4,1,1,1,4,4,1,1,1,4,0,0,0],
+        [0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0],
+        [0,0,0,0,1,1,1,0,0,1,1,1,0,0,0,0],
+        [0,0,0,2,2,2,2,0,0,3,3,3,3,0,0,0],
+        [0,0,2,2,2,2,2,0,0,3,3,3,3,3,0,0],
+        [0,2,2,1,2,2,2,0,0,3,3,3,1,3,3,0],
+        [0,1,1,1,2,2,2,0,0,3,3,3,1,1,1,0],
+        [0,0,0,2,2,2,2,0,0,3,3,3,3,0,0,0],
+        [0,0,0,2,2,2,2,0,0,3,3,3,3,0,0,0],
+        [0,0,0,2,2,2,2,0,0,3,3,3,3,0,0,0],
+        [0,0,0,4,4,4,4,0,0,4,4,4,4,0,0,0],
+        [0,0,0,4,4,0,0,0,0,0,0,4,4,0,0,0],
+        [0,0,0,4,4,0,0,0,0,0,0,4,4,0,0,0],
+        [0,0,4,4,4,0,0,0,0,0,0,4,4,4,0,0]
+      ],
+      palette: { 1:'#ffccaa', 2:'#2244cc', 3:'#22aa44', 4:'#111111' }
+    },
+
     // ── ch7 boss ──
     haruna_lake_beast: {
       name: '榛名の湖獣',
@@ -451,14 +581,77 @@ Game.Battle = (function() {
 
     // ── 第4章 ──────────────────────────────
 
-    // 白井熊子・湯煙形態（優先実装）
+    // 湯畑の守護者
+    yubatake_guardian: {
+      boss_id: 'yubatake_guardian',
+      passive: {
+        id: 'burning_spring',
+        description: '毎ターン終了時、プレイヤーにやけどを付与する。やけど状態のプレイヤーは次ターン開始時に5ダメージを受ける。',
+        apply: function(enemy, player) {
+          if (!player) return;
+          player.statusEffects = player.statusEffects || {};
+          player.statusEffects.burn = {
+            damage: 5,
+            duration: 1
+          };
+        }
+      },
+      phase_change: {
+        condition: function(enemy) {
+          return enemy.hp <= enemy.maxHp * 0.5 && !enemy._boilingForm;
+        },
+        action: function(enemy) {
+          enemy._boilingForm = true;
+          enemy.attack += 8;
+          if (enemy.gimmick && enemy.gimmick.special_move) {
+            enemy.gimmick.special_move.id = 'boiling_spray';
+            enemy.gimmick.special_move.name = '熱湯噴射';
+            enemy.gimmick.special_move.description = '沸騰形態の熱湯を噴き出し、大ダメージを与える';
+            enemy.gimmick.special_move.message = '湯畑の守護者は沸騰した熱湯を噴き上げた！';
+          }
+          return '湯畑の守護者は沸騰形態へ変化した！ 攻撃力が大きく上がった！';
+        }
+      },
+      special_move: {
+        id: 'yunohana_burst',
+        name: '湯の花爆発',
+        description: '4ターンごとに湯の花を爆発させ、強烈なダメージを与える',
+        trigger: function(turnCount, enemy) {
+          return turnCount % 4 === 0;
+        },
+        damage: function(enemy) {
+          return Math.floor(enemy.attack * 2);
+        },
+        message: '湯畑の守護者の湯の花爆発！ 灼熱の飛沫が襲いかかる！'
+      },
+      victory_flag: 'yubatake_defeated',
+      bgm: 'ch4_kumako_battle',
+      victory_bgm: 'ch4_victory',
+      sfx: { phase_change: 'steam_hiss' },
+      dialogue: {
+        phase_change: [
+          { speaker: '守護者', text: '湯畑の怒り…思い知れ…！' },
+          { speaker: '主人公', text: '温度が急上昇してる…気をつけろ！' }
+        ],
+        special_move: [
+          { speaker: '守護者', text: '全てを沸騰させよ…！' },
+          { speaker: 'アカギ', text: '結界に同化させられるぞ！' }
+        ],
+        victory: [
+          { speaker: '守護者', text: '…源泉が…静まる…' },
+          { speaker: '主人公', text: '浄化の石…これでアカギを。' }
+        ]
+      }
+    },
+
+    // 熊子・湯煙形態（回復反転ギミック）
     kumako_steam: {
       boss_id: 'kumako_steam',
       passive: {
         id: 'heal_inversion',
         description: '回復反転結界。回復ダイス(H系)のHP回復がダメージに変わる',
         apply: function(healAmount) {
-          return -healAmount; // 回復がダメージに
+          return -healAmount;
         }
       },
       phase_change: {
@@ -499,36 +692,51 @@ Game.Battle = (function() {
 
     // ── 第5章 ──────────────────────────────
 
-    // ジューク（妙義団トップ）
+    // ジューク（学園）― ダイス封印＋減点ギミック
     juke_gakuen: {
       boss_id: 'juke_gakuen',
       passive: {
-        id: 'rule_overwrite',
-        description: '掟の書き換え。ランダムでダイス1個の出目を強制変更',
-        apply: function(diceResults) {
-          var idx = Math.floor(Math.random() * diceResults.length);
-          var original = diceResults[idx];
-          diceResults[idx] = 1;
-          return { index: idx, before: original, after: 1 };
+        id: 'rule_rewrite',
+        description: '3ターンごとにプレイヤーの使えるダイスを1つ封印する。ただし最低1つは残る。',
+        apply: function(enemy, player, turnCount) {
+          if (!player || !turnCount || turnCount % 3 !== 0) return;
+          player.sealedDice = player.sealedDice || [];
+          var totalDice = player.diceCount || player.maxDice || 3;
+          var usableDice = totalDice - player.sealedDice.length;
+          if (usableDice <= 1) return;
+          var candidates = [];
+          for (var i = 0; i < totalDice; i++) {
+            if (player.sealedDice.indexOf(i) === -1) {
+              candidates.push(i);
+            }
+          }
+          if (candidates.length === 0) return;
+          var target = candidates[Math.floor(Math.random() * candidates.length)];
+          player.sealedDice.push(target);
         }
       },
       phase_change: {
-        condition: function(enemy) { return enemy.hp <= enemy.maxHp * 0.35; },
+        condition: function(enemy) {
+          return enemy.hp <= enemy.maxHp * 0.4 && !enemy._finalRule;
+        },
         action: function(enemy) {
-          enemy.attack += 6;
-          return 'ジューク「お前が踏み越えていく掟の痛み…知れ」';
+          enemy._finalRule = true;
+          enemy.defense = (enemy.defense || 0) + 10;
+          if (typeof Game !== 'undefined' && Game.Battle && Game.Battle.player) {
+            Game.Battle.player.sealedDice = [];
+          }
+          return 'ジューク学園は「最終ルール」を発動した！ すべての封印は解かれたが、防御力が上昇した！';
         }
       },
       special_move: {
-        id: 'forgotten_route',
-        name: '忘れられた経路',
-        description: 'プレイヤーのコマンドを1つランダムで封印（1ターン）',
-        trigger: function(turnCount) { return turnCount === 2 || turnCount === 6; },
-        effect: function(menuItems) {
-          var idx = Math.floor(Math.random() * menuItems.length);
-          return { sealed: idx, sealedName: menuItems[idx] };
+        id: 'deduction_time',
+        name: '減点タイム',
+        description: '次のターン、プレイヤーのダイス出目がすべて半減する',
+        trigger: function(turnCount, enemy) {
+          return turnCount % 5 === 0;
         },
-        message: 'ジューク「その選択肢、俺が預かっておく」'
+        damage: function(enemy) { return 0; },
+        message: 'ジューク学園の減点タイム！ 次のターン、あらゆる出目が鈍る！'
       },
       victory_flag: 'juke_gakuen_defeated',
       bgm: 'ch5_juke_battle',
@@ -552,35 +760,49 @@ Game.Battle = (function() {
 
     // ── 第6章 ──────────────────────────────
 
-    // 佐藤＆熊子・車窓形態（優先実装）
+    // 佐藤＆熊子・洗脳形態（二人羽織＋覚醒ギミック）
     sato_kumako_tunnel: {
       boss_id: 'sato_kumako_tunnel',
       passive: {
-        id: 'dual_phase',
-        description: '二重戦闘。佐藤と熊子が交互に行動する',
-        apply: function(turnCount) {
-          return turnCount % 2 === 0 ? 'sato' : 'kumako';
+        id: 'two_person_act',
+        description: 'HPが高いうちは二人で攻撃し攻撃力が1.5倍になる。弱ると佐藤が正気を取り戻し、攻撃力が元に戻る。',
+        apply: function(enemy) {
+          if (enemy.hp > enemy.maxHp * 0.6) {
+            if (!enemy._duetBoostApplied) {
+              enemy._baseAttack = enemy._baseAttack || enemy.attack;
+              enemy.attack = Math.floor(enemy._baseAttack * 1.5);
+              enemy._duetBoostApplied = true;
+              enemy._returnedToNormal = false;
+            }
+          } else if (!enemy._returnedToNormal) {
+            enemy._baseAttack = enemy._baseAttack || enemy.attack;
+            enemy.attack = enemy._baseAttack;
+            enemy._returnedToNormal = true;
+          }
         }
       },
       phase_change: {
-        condition: function(enemy) { return enemy.hp <= enemy.maxHp * 0.3; },
+        condition: function(enemy) {
+          return enemy.hp <= enemy.maxHp * 0.35 && !enemy._satoAwakened;
+        },
         action: function(enemy) {
-          return '佐藤「もうやめろ…！俺を殴り続けて何になる！」\n' +
-                 '熊子の姿が薄れ、佐藤だけが残った。';
+          enemy._satoAwakened = true;
+          enemy.defense = (enemy.defense || 0) + 15;
+          enemy.selfDamagePerTurn = 5;
+          return '佐藤が完全覚醒した！ 熊子をかばい、防御力が上昇した！ しかし毎ターン自滅していく！';
         }
       },
       special_move: {
-        id: 'memory_weight',
-        name: '記憶の重し',
-        description: '佐藤が自らのHPを削り、プレイヤーに2ターン行動遅延',
+        id: 'duet_of_despair',
+        name: '絶望のデュエット',
+        description: '5ターンごとに2回連続攻撃を行う。1回目は通常、2回目はattack×0.8。',
         trigger: function(turnCount, enemy) {
-          return turnCount === 4 && enemy.hp > enemy.maxHp * 0.3;
+          return turnCount % 5 === 0;
         },
-        self_damage: function(enemy) { return Math.floor(enemy.maxHp * 0.1); },
-        debuff: { type: 'slow', turns: 2 },
-        message: '佐藤「お前らの現実は、俺が絶対に守る…！」'
+        damage: function(enemy) { return Math.floor(enemy.attack); },
+        message: '佐藤＆熊子の絶望のデュエット！ 連続攻撃が襲いかかる！'
       },
-      victory_flag: 'sato_kumako_tunnel_cleared',
+      victory_flag: 'sato_kumako_defeated',
       bgm: 'ch6_sato_battle',
       victory_bgm: 'ch6_victory',
       sfx: { phase_change: 'train_echo' },
@@ -601,24 +823,36 @@ Game.Battle = (function() {
       }
     },
 
-    // 返声の番（6章中ボス）
+    // 返声の番（6章中ボス）― 反響＋名前喰いギミック
     echo_guardian: {
       boss_id: 'echo_guardian',
       passive: {
-        id: 'echo_copy',
-        description: '反響コピー。プレイヤーの前ターンの攻撃を模倣して返す',
-        lastPlayerDamage: 0,
-        apply: function(gimmick) {
-          return Math.floor(gimmick.lastPlayerDamage * 0.6);
+        id: 'echo_reflect',
+        description: 'プレイヤーが与えたダメージの20%を記録し、次ターンに跳ね返す。',
+        apply: function(enemy, player, damageDealt) {
+          if (typeof damageDealt !== 'number' || damageDealt <= 0) return;
+          enemy._echoStoredDamage = Math.floor(damageDealt * 0.2);
         }
       },
-      phase_change: null,
+      phase_change: {
+        condition: function(enemy) {
+          return enemy.hp <= enemy.maxHp * 0.5 && !enemy._silentForm;
+        },
+        action: function(enemy) {
+          enemy._silentForm = true;
+          enemy._suppressMessages = true;
+          return '返声の番は無言形態へ移行した……音が消えた。';
+        }
+      },
       special_move: {
-        id: 'name_steal',
-        name: '名前の略奪',
-        description: 'パーティメンバー1人の名前を奪い、1ターン操作不能にする',
-        trigger: function(turnCount) { return turnCount % 5 === 0; },
-        message: '返声の番「お前の名前、しばらく借りるぞ…」'
+        id: 'name_eater',
+        name: '名前喰い',
+        description: 'プレイヤーのダイス1つをランダムに選び、次ターンの出目を0にする',
+        trigger: function(turnCount, enemy) {
+          return turnCount % 3 === 0;
+        },
+        damage: function(enemy) { return 0; },
+        message: '返声の番の名前喰い！ ひとつのダイスが沈黙した！'
       },
       victory_flag: 'echo_guardian_defeated',
       bgm: 'ch6_sato_battle',
@@ -641,43 +875,51 @@ Game.Battle = (function() {
 
     // ── 第7章 ──────────────────────────────
 
-    // 榛名の湖獣 ― 霧で命中率ダウン
+    // 榛名の湖獣 ― 霧の加護＋湖底の咆哮ギミック
     haruna_lake_beast: {
       boss_id: 'haruna_lake_beast',
       passive: {
-        id: 'fog_blind',
-        description: '3ターンごとに霧を纏い、プレイヤーの攻撃ダイスの出目を1減らす',
-        apply: function(enemy, turnCount, playerEffects) {
-          if (turnCount > 0 && turnCount % 3 === 0) {
-            addEffect(playerEffects, 'dice_penalty', 2, 1);
-            return '榛名の湖獣が霧を纏った！出目が鈍る！';
-          }
-          return null;
+        id: 'mist_guard',
+        description: '霧の加護により、ターン開始時5%の確率でプレイヤーの攻撃がミスになる。',
+        apply: function(enemy, player) {
+          if (enemy._mistDispersed) return;
+          if (!player) return;
+          player.statusEffects = player.statusEffects || {};
+          player.statusEffects.mistBlind = {
+            chance: 0.05,
+            duration: 1
+          };
         }
       },
       phase_change: {
-        condition: function(enemy) { return enemy.hp <= enemy.maxHp * 0.4; },
+        condition: function(enemy) {
+          return enemy.hp <= enemy.maxHp * 0.45 && !enemy._mistDispersed;
+        },
         action: function(enemy) {
-          enemy.attack += 5;
-          enemy.defense -= 3;
-          return '湖獣が水面から全身を現した！攻撃が激しくなった！';
+          enemy._mistDispersed = true;
+          enemy._waterForm = true;
+          enemy.attackElement = 'water';
+          enemy._applyWetEachTurn = true;
+          return '榛名の湖獣の霧が晴れた！ 霧の加護は消えたが、水の力がむき出しになった！';
         }
       },
       special_move: {
-        id: 'fog_roar',
-        name: '霧の咆哮',
-        description: '全体攻撃＋命中率ダウン',
-        trigger: function(turnCount) { return turnCount === 5 || turnCount === 10; },
-        damage: function(enemy) { return Math.floor(enemy.attack * 1.2); },
-        self_stun: 1,
-        message: '湖獣が霧の咆哮を放った！'
+        id: 'lakebed_howl',
+        name: '湖底の咆哮',
+        description: '次のターン、プレイヤーのダイスがすべて再度スピンし、出目が変わる',
+        trigger: function(turnCount, enemy) {
+          return turnCount % 4 === 0;
+        },
+        damage: function(enemy) { return 0; },
+        message: '榛名の湖獣の湖底の咆哮！ ダイスの運命が揺らぎ始める！'
       },
+      victory_flag: 'haruna_beast_defeated',
       bgm: 'ch7_beast_battle',
       victory_bgm: 'ch7_victory',
       sfx: { special_move: 'water_splash' },
       dialogue: {
         phase_change: [
-          { speaker: '山川', text: '霧が濃くなる！視界が！' },
+          { speaker: '山川', text: '霧が晴れた…でも水圧が！' },
           { speaker: '湖獣', text: 'グルルォォォォ！' }
         ],
         special_move: [

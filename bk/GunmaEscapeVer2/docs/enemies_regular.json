@@ -1,0 +1,93 @@
+[
+  {
+    "chapter": 4,
+    "id": "mob_yubana_slime",
+    "name": "湯花スライム",
+    "hp": 45,
+    "attack": 12,
+    "defense": 8,
+    "speed": 5,
+    "exp": 15,
+    "gold": 10,
+    "skills": [
+      { "name": "強酸のしぶき", "power": 15, "type": "water", "effect": "defense_down" }
+    ],
+    "dropItem": { "id": "item_onsen_manju", "rate": 0.1 }
+  },
+  {
+    "chapter": 5,
+    "id": "mob_exam_paper",
+    "name": "彷徨う赤点答案",
+    "hp": 60,
+    "attack": 15,
+    "defense": 5,
+    "speed": 12,
+    "exp": 25,
+    "gold": 15,
+    "skills": [
+      { "name": "追試の宣告", "power": 0, "type": "dark", "effect": "action_delay" }
+    ],
+    "dropItem": { "id": "item_yakimanju_pan", "rate": 0.15 }
+  },
+  {
+    "chapter": 6,
+    "id": "mob_echo_bat",
+    "name": "残響コウモリ",
+    "hp": 55,
+    "attack": 18,
+    "defense": 10,
+    "speed": 18,
+    "exp": 30,
+    "gold": 20,
+    "skills": [
+      { "name": "超音波", "power": 10, "type": "neutral", "effect": "confusion" }
+    ],
+    "dropItem": { "id": "item_konnyaku_jelly", "rate": 0.1 }
+  },
+  {
+    "chapter": 7,
+    "id": "mob_rust_gear",
+    "name": "錆びた歯車",
+    "hp": 80,
+    "attack": 22,
+    "defense": 20,
+    "speed": 8,
+    "exp": 45,
+    "gold": 30,
+    "skills": [
+      { "name": "軋む回転", "power": 25, "type": "earth", "effect": "none" }
+    ],
+    "dropItem": { "id": "item_blank_ticket", "rate": 0.05 }
+  },
+  {
+    "chapter": 8,
+    "id": "mob_mud_hand",
+    "name": "尾瀬の泥手",
+    "hp": 95,
+    "attack": 25,
+    "defense": 15,
+    "speed": 6,
+    "exp": 60,
+    "gold": 40,
+    "skills": [
+      { "name": "足首を掴む", "power": 20, "type": "earth", "effect": "speed_down" }
+    ],
+    "dropItem": { "id": "item_shimonita_negi", "rate": 0.08 }
+  },
+  {
+    "chapter": 9,
+    "id": "mob_painted_daruma",
+    "name": "片目のダルマ",
+    "hp": 120,
+    "attack": 30,
+    "defense": 25,
+    "speed": 10,
+    "exp": 80,
+    "gold": 50,
+    "skills": [
+      { "name": "にらみつける", "power": 0, "type": "neutral", "effect": "attack_down" },
+      { "name": "転がる", "power": 35, "type": "neutral", "effect": "none" }
+    ],
+    "dropItem": { "id": "item_daruma_bento", "rate": 0.1 }
+  }
+]

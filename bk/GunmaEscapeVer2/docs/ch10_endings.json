@@ -1,0 +1,45 @@
+[
+  {
+    "event_id": "ch10_ending_A",
+    "title": "エンディングA：【同化】終わらない補習",
+    "description": "仲間を集めず、結界の真実に気づかなかった場合のバッドエンド",
+    "scenes": [
+      { "type": "narration", "text": "県庁タワーの最上階。強大な敵を打ち倒したはずだった。" },
+      { "type": "narration", "text": "しかし、目の前の景色は歪み、気づけば見慣れた「学園」の教室に座っていた。" },
+      { "type": "dialog", "speaker": "ジューク", "text": "「おや、目が覚めましたか？ 補習の時間はまだまだ続きますよ。」" },
+      { "type": "narration", "text": "手元のノートには、びっしりと『上毛かるた』の句が書き込まれている。" },
+      { "type": "narration", "text": "自分が誰だったのか。なぜここにいるのか。その疑問すら、あたたかい温泉の湯気のように消えていく……。" },
+      { "type": "narration", "text": "―― おまえは グンマーから にげられない ――" },
+      { "type": "system", "action": "show_title", "value": "BAD END" }
+    ]
+  },
+  {
+    "event_id": "ch10_ending_B",
+    "title": "エンディングB：【忘却】境界線の外へ",
+    "description": "一人で脱出に成功したが、記憶を失うノーマルエンド",
+    "scenes": [
+      { "type": "narration", "text": "県庁タワーの最上階から、光の裂け目へと飛び込んだ。" },
+      { "type": "narration", "text": "強烈な光に包まれ、次に目を開けると、そこは新宿駅のホームだった。" },
+      { "type": "dialog", "speaker": "駅員", "text": "「お客さん、終点ですよ。……きっぷ、拝見します。」" },
+      { "type": "narration", "text": "ポケットから取り出したのは、ボロボロになった『白紙の切符』。" },
+      { "type": "narration", "text": "私は一体、どこへ行っていたのだろう？ 何か大切なものを置いてきてしまったような気がする。" },
+      { "type": "narration", "text": "振り返っても、改札の向こうには見慣れた日常の風景が広がっているだけだった。" },
+      { "type": "system", "action": "show_title", "value": "NORMAL END" }
+    ]
+  },
+  {
+    "event_id": "ch10_ending_C",
+    "title": "エンディングC：【真実】三山と共に",
+    "description": "仲間全員を救出し、フラグを完全回収した際のトゥルーエンド",
+    "scenes": [
+      { "type": "narration", "text": "県庁タワーの最上階。光の裂け目が、現実世界への道を示している。" },
+      { "type": "dialog", "speaker": "アカギ", "text": "「おい、もたもたするな！ 結界が閉じるぞ！」" },
+      { "type": "dialog", "speaker": "ヤマカワ", "text": "「ふふっ、最後まで世話の焼ける人たちね。さあ、行きましょう！」" },
+      { "type": "dialog", "speaker": "フルヤ", "text": "「俺たちのダイスは、未来の目を出したってことさ。……先に行け！」" },
+      { "type": "narration", "text": "仲間たちの声に背中を押され、光の中へ踏み出す。" },
+      { "type": "narration", "text": "―― 数日後、東京の空の下。私たちは確かに『あそこ』にいた記憶を共有している。" },
+      { "type": "narration", "text": "机の上には、色褪せない『上毛かるた』が1枚、そっと置かれていた。" },
+      { "type": "system", "action": "show_title", "value": "TRUE END" }
+    ]
+  }
+]

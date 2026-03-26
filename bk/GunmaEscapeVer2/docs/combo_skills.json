@@ -1,0 +1,90 @@
+[
+  {
+    "id": "combo_akagi_shield",
+    "name": "赤城の絶対防壁",
+    "required_members": ["hero", "akagi"],
+    "tp_cost": 30,
+    "type": "buff",
+    "power": 0,
+    "effect": "party_invincible_1turn",
+    "description": "1ターンの間、味方全体へのあらゆるダメージを無効化する。",
+    "unlock_flag": "flg_akagi_join"
+  },
+  {
+    "id": "combo_akagi_smash",
+    "name": "からっ風ストライク",
+    "required_members": ["hero", "akagi"],
+    "tp_cost": 25,
+    "type": "attack",
+    "power": 150,
+    "effect": "defense_down",
+    "description": "赤城おろしを纏った強烈な一撃。敵の防御力を下げる。",
+    "unlock_flag": "flg_akagi_join"
+  },
+  {
+    "id": "combo_yamakawa_heal",
+    "name": "草津の癒やし波",
+    "required_members": ["hero", "yamakawa"],
+    "tp_cost": 20,
+    "type": "heal",
+    "power": 100,
+    "effect": "clear_status_ailment",
+    "description": "味方全体のHPを大回復し、状態異常をすべて解除する。",
+    "unlock_flag": "flg_yamakawa_join"
+  },
+  {
+    "id": "combo_yamakawa_mist",
+    "name": "榛名の濃霧",
+    "required_members": ["hero", "yamakawa"],
+    "tp_cost": 15,
+    "type": "debuff",
+    "power": 0,
+    "effect": "enemy_acc_down_large",
+    "description": "敵全体を深い霧で包み、命中率を大幅に下げる。",
+    "unlock_flag": "flg_haruna_cleared"
+  },
+  {
+    "id": "combo_furuya_dice",
+    "name": "掟破りのダイス",
+    "required_members": ["hero", "furuya"],
+    "tp_cost": 35,
+    "type": "special",
+    "power": 0,
+    "effect": "force_max_dice_roll",
+    "description": "次ターンの味方のダイス出目をすべて「最大値」に固定する。",
+    "unlock_flag": "flg_furuya_join"
+  },
+  {
+    "id": "combo_furuya_snipe",
+    "name": "上毛かるたスナイプ",
+    "required_members": ["hero", "furuya"],
+    "tp_cost": 25,
+    "type": "attack",
+    "power": 200,
+    "effect": "critical_up",
+    "description": "急所を撃ち抜く。クイズ正解直後に使うと威力が跳ね上がる。",
+    "unlock_flag": "flg_furuya_join"
+  },
+  {
+    "id": "combo_trio_gunma",
+    "name": "三山の誓い",
+    "required_members": ["akagi", "yamakawa", "furuya"],
+    "tp_cost": 50,
+    "type": "buff",
+    "power": 0,
+    "effect": "all_stats_up_large",
+    "description": "赤城・榛名・妙義の力を結集。味方全体の全能力が大幅上昇。",
+    "unlock_flag": "flg_three_mountains_gathered"
+  },
+  {
+    "id": "combo_hero_awaken",
+    "name": "境界線ブレイカー",
+    "required_members": ["hero"],
+    "tp_cost": 100,
+    "type": "attack",
+    "power": 999,
+    "effect": "ignore_defense",
+    "description": "現実と結界の境界を砕く究極の一撃。防御力を無視する。",
+    "unlock_flag": "flg_final_battle_phase2"
+  }
+]

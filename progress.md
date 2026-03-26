@@ -97,6 +97,30 @@ Original prompt: そうだね。セーブできる村役場みたいなところ
   - Playwright client で `はじめから` 押下後のオープニングを確認し、`mode: event` のままミニムービーへ入ることを確認。
   - スクリーンショットで道路演出と車内回想シーンの表示を目視確認。
   - 最終カットも `autoAdvance` 化し、最後の主人公台詞のあとに手動入力なしで探索へ着地するよう微調整。
+- 2026-03-26: 仲間枠と通常エンカウントの基盤を実装。
+  - `js/player.js` に最大3人の同行枠を追加。`アカギ / 山川 / 古谷` を正式な仲間データとして管理し、攻撃/防御へ支援ボーナスを反映。
+  - `js/story.js` の `party_join` が実際に同行枠へ反映されるよう更新。`party_akagi_lost` では一時離脱も反映。
+  - `js/save.js` を version 4 に更新し、通常セーブ / あいことばの両方へ `partyMembers` を保存するよう拡張。
+  - `js/ui.js` のHUDとフィールドメニューに `同行` 表示を追加。探索中もメニュー中も現在の仲間数と名前が見える。
+  - `js/battle.js` に通常戦闘用の雑魚敵レイヤを追加。
+    - `strayDaruma`
+    - `roadsideBandit`
+    - `steamMonkey`
+    - `konnyakuCrawler`
+    - `silkShade`
+    - `cabbageWisp`
+    - `echoShard`
+    - `mistBeastling`
+    - `mudWisp`
+  - `js/encounters.js` を新設し、マップ別・地形別の歩数式通常エンカウントを追加。
+  - `js/map.js` でマップ切替時にエンカウント状態をリセット。
+  - `js/main.js` で歩行完了後に通常エンカウントを判定し、NPCのいない戦闘勝利時はそのまま探索へ戻る流れを実装。
+- 2026-03-26: 仲間枠 / 通常エンカウントの検証結果
+  - `node --check js/player.js js/save.js js/encounters.js js/map.js js/main.js js/story.js js/ui.js js/battle.js index.html` 通過。
+  - Playwright で `forest` マップ上に `アカギ / 山川` を同行状態でロードし、HUD右下の同行表示とメニュー内の同行表示を目視確認。
+  - 同マップで10歩ぶん移動させ、`境界の追いはぎが現れた！` と通常戦闘へ入ることを確認。
+  - そのまま通常戦闘に勝利させ、NPCなしの通常戦闘でも `exploring` に自然復帰することを確認。
 - TODO: `temperature` 勝利時の専用余韻メッセージと、`untangle` の成功/失敗時に環境音や画面色が変わる演出を追加する。
 - TODO: 富岡側の報酬を暫定 `yakimanju` から、物語/触媒設計に沿った固有アイテムへ差し替える。
 - TODO: オープニングの再視聴負荷を下げるため、一定条件でのスキップ導線や既読演出短縮を検討する。
+- TODO: 仲間は今のところ `支援ボーナス + 表示` まで。必要なら次段で `同行アニメ`, `仲間固有コマンド`, `戦闘中の支援発動演出` を追加する。

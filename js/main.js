@@ -76,6 +76,7 @@ Game.Main = (function() {
 
       case Game.Config.STATE.EXPLORING:
         Game.Player.update();
+        var stepInfo = Game.Player.consumeCompletedStep ? Game.Player.consumeCompletedStep() : null;
 
         // Check exits
         var pd = Game.Player.getData();
@@ -114,6 +115,15 @@ Game.Main = (function() {
             Game.Audio.playSfx('victory');
           }
           break;
+        }
+
+        if (stepInfo && Game.Encounters && Game.Encounters.consumeStep) {
+          var encounterEnemy = Game.Encounters.consumeStep(Game.Map.getCurrentMapId(), tile);
+          if (encounterEnemy) {
+            setState(Game.Config.STATE.BATTLE);
+            Game.Battle.start(encounterEnemy, null);
+            break;
+          }
         }
 
         // Interact with NPC
@@ -172,10 +182,13 @@ Game.Main = (function() {
                 Game.Audio.playBgm('field');
               }
             } else {
-              // Show defeated dialog
-              Game.NPC.showDefeatedDialog(battleResult.npc);
-              dialogText = Game.NPC.getCurrentDialog();
-              setState(Game.Config.STATE.DIALOG);
+              if (battleResult.npc) {
+                Game.NPC.showDefeatedDialog(battleResult.npc);
+                dialogText = Game.NPC.getCurrentDialog();
+                setState(Game.Config.STATE.DIALOG);
+              } else {
+                setState(Game.Config.STATE.EXPLORING);
+              }
               Game.Audio.playBgm('field');
             }
           } else if (battleResult.result === 'defeat') {
@@ -516,6 +529,7 @@ Game.Main = (function() {
     pd.diceSlots = 1;
     pd.equippedDice = ['normalDice'];
     pd.armor = null;
+    pd.partyMembers = [];
     pd.inventory = [];
 
     if (Game.Story && Game.Story.reset) {
@@ -892,9 +906,13 @@ Game.Main = (function() {
       objective: Game.Chapters && Game.Chapters.getObjective ? Game.Chapters.getObjective(pd.chapter, mapId) : '',
       respectGauge: journeyState.respectGauge || 0,
       catalystCount: journeyState.catalysts ? journeyState.catalysts.length : 0,
+      party: Game.Player.getPartyMemberIds ? Game.Player.getPartyMemberIds() : [],
       hasAnySave: Game.Save && Game.Save.hasAnySave ? Game.Save.hasAnySave() : false,
       saveMenuContext: Game.SaveMenu && Game.SaveMenu.getContext ? Game.SaveMenu.getContext() : null
     };
+    if (Game.Encounters && Game.Encounters.getState) {
+      payload.encounters = Game.Encounters.getState();
+    }
     if (state === Game.Config.STATE.BATTLE && Game.Battle && Game.Battle.getStateSnapshot) {
       payload.battle = Game.Battle.getStateSnapshot();
     }

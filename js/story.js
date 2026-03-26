@@ -1204,6 +1204,9 @@ Game.Story = (function() {
 
       case 'set_flag':
         setFlag(step.flag);
+        if (step.flag === 'party_akagi_lost' && Game.Player && Game.Player.removePartyMember) {
+          Game.Player.removePartyMember('akagi');
+        }
         stepIndex++;
         processStep();
         break;
@@ -1359,6 +1362,9 @@ Game.Story = (function() {
         typewriterIndex = 0;
         typewriterTimer = 0;
         waitingForInput = false;
+        if (Game.Player && Game.Player.addPartyMember) {
+          Game.Player.addPartyMember(step.id);
+        }
         setFlag('party_' + step.id);
         Game.Audio.playSfx('victory');
         break;

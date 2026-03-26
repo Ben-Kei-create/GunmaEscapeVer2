@@ -2,6 +2,8 @@
 Game.Battle = (function() {
   var active = false;
   var enemy = null;
+  var enemyParty = [];
+  var currentTargetIndex = 0;
   var npcRef = null;
   var menuIndex = 0;
   var phase = 'menu';
@@ -1228,6 +1230,78 @@ Game.Battle = (function() {
     palette: { 1:'#2f2d3a', 2:'#d8d3c8', 3:'#1b1b22', 4:'#c96f7a', 5:'#f2f1ee', 6:'#8b7f6f' }
   };
 
+  enemies.strayDaruma = {
+    name: 'さまようだるま',
+    hp: 28, maxHp: 28,
+    attack: 9, defense: 2, goldReward: 24,
+    sprite: enemies.darumaMaster.sprite,
+    palette: { 1:'#5e1018', 2:'#c93039', 3:'#111111', 4:'#e7d2a6' }
+  };
+
+  enemies.roadsideBandit = {
+    name: '境界の追いはぎ',
+    hp: 36, maxHp: 36,
+    attack: 11, defense: 4, goldReward: 32,
+    sprite: enemies.anguraGuard.sprite,
+    palette: { 1:'#35363f', 3:'#ff6666', 4:'#2b2d36', 5:'#1f2028', 6:'#13141a' }
+  };
+
+  enemies.steamMonkey = {
+    name: '湯煙ざる',
+    hp: 34, maxHp: 34,
+    attack: 10, defense: 3, goldReward: 28,
+    sprite: enemies.onsenMonkey.sprite,
+    palette: { 1:'#553322', 2:'#b17a49', 3:'#111111', 4:'#d8907a' }
+  };
+
+  enemies.konnyakuCrawler = {
+    name: '蒟蒻うごめき',
+    hp: 42, maxHp: 42,
+    attack: 10, defense: 5, goldReward: 30,
+    sprite: enemies.konnyakuKing.sprite,
+    palette: enemies.konnyakuKing.palette
+  };
+
+  enemies.silkShade = {
+    name: '白糸の影',
+    hp: 40, maxHp: 40,
+    attack: 12, defense: 4, goldReward: 34,
+    sprite: enemies.threadMaiden.sprite,
+    palette: { 1:'#312f3b', 2:'#d8d2c8', 3:'#1e1d24', 4:'#c48690', 5:'#e8e6e0', 6:'#857a6d' }
+  };
+
+  enemies.cabbageWisp = {
+    name: '葉影のざわめき',
+    hp: 38, maxHp: 38,
+    attack: 11, defense: 4, goldReward: 30,
+    sprite: enemies.cabbageGuardian.sprite,
+    palette: enemies.cabbageGuardian.palette
+  };
+
+  enemies.echoShard = {
+    name: '返り声の欠片',
+    hp: 44, maxHp: 44,
+    attack: 13, defense: 5, goldReward: 38,
+    sprite: enemies.echo_guardian.sprite,
+    palette: enemies.echo_guardian.palette
+  };
+
+  enemies.mistBeastling = {
+    name: '霧獣の幼影',
+    hp: 48, maxHp: 48,
+    attack: 14, defense: 5, goldReward: 42,
+    sprite: enemies.haruna_lake_beast.sprite,
+    palette: enemies.haruna_lake_beast.palette
+  };
+
+  enemies.mudWisp = {
+    name: '泥の囁き',
+    hp: 46, maxHp: 46,
+    attack: 14, defense: 5, goldReward: 40,
+    sprite: enemies.oze_mud_wraith.sprite,
+    palette: enemies.oze_mud_wraith.palette
+  };
+
   var menuItems = ['たたかう', 'アイテム', 'にげる'];
 
   function getRitualDefinition() {
@@ -1405,27 +1479,188 @@ Game.Battle = (function() {
     return { mult: 1.0, text: '' };
   }
 
+  function cloneEnemy(enemyId) {
+    var baseEnemy = enemies[enemyId];
+    if (!baseEnemy) return null;
+    var cloned = JSON.parse(JSON.stringify(baseEnemy));
+    cloned._enemyId = enemyId;
+    cloned._effects = [];
+    return cloned;
+  }
+
+  function isGroupBattle() {
+    return enemyParty && enemyParty.length > 1;
+  }
+
+  function getLivingEnemies() {
+    var living = [];
+    for (var i = 0; i < enemyParty.length; i++) {
+      if (enemyParty[i] && enemyParty[i].hp > 0) {
+        living.push(enemyParty[i]);
+      }
+    }
+    return living;
+  }
+
+  function getTotalEnemyGoldReward() {
+    var total = 0;
+    for (var i = 0; i < enemyParty.length; i++) {
+      total += enemyParty[i] && enemyParty[i].goldReward ? enemyParty[i].goldReward : 0;
+    }
+    return total;
+  }
+
+  function syncCurrentEnemy() {
+    if (!enemyParty.length) {
+      enemy = null;
+      enemyEffects = [];
+      return;
+    }
+    if (currentTargetIndex < 0) currentTargetIndex = 0;
+    if (currentTargetIndex >= enemyParty.length) currentTargetIndex = enemyParty.length - 1;
+    enemy = enemyParty[currentTargetIndex];
+    if (!enemy._effects) enemy._effects = [];
+    enemyEffects = enemy._effects;
+  }
+
+  function findNextLivingEnemyIndex(startIndex, dir) {
+    if (!enemyParty.length) return -1;
+    var step = dir || 1;
+    for (var offset = 1; offset <= enemyParty.length; offset++) {
+      var index = (startIndex + offset * step + enemyParty.length) % enemyParty.length;
+      if (enemyParty[index] && enemyParty[index].hp > 0) return index;
+    }
+    return -1;
+  }
+
+  function selectTarget(index) {
+    if (index < 0 || index >= enemyParty.length) return false;
+    if (!enemyParty[index] || enemyParty[index].hp <= 0) return false;
+    currentTargetIndex = index;
+    syncCurrentEnemy();
+    return true;
+  }
+
+  function cycleTarget(dir) {
+    if (!isGroupBattle()) return false;
+    var nextIndex = findNextLivingEnemyIndex(currentTargetIndex, dir || 1);
+    if (nextIndex < 0 || nextIndex === currentTargetIndex) return false;
+    currentTargetIndex = nextIndex;
+    syncCurrentEnemy();
+    message = '対象を ' + enemy.name + ' に切り替えた。';
+    messageTimer = 20;
+    Game.Audio.playSfx('confirm');
+    return true;
+  }
+
+  function handleEnemyPartyDefeat() {
+    if (getLivingEnemies().length > 0) {
+      var nextIndex = findNextLivingEnemyIndex(currentTargetIndex, 1);
+      if (nextIndex >= 0) {
+        currentTargetIndex = nextIndex;
+        syncCurrentEnemy();
+      }
+      return false;
+    }
+    return true;
+  }
+
+  function tickEnemyPartyEffects() {
+    for (var i = 0; i < enemyParty.length; i++) {
+      if (!enemyParty[i]) continue;
+      if (!enemyParty[i]._effects) enemyParty[i]._effects = [];
+      tickEffects(enemyParty[i]._effects);
+    }
+    syncCurrentEnemy();
+  }
+
+  function applyEnemyPartyAttack() {
+    var playerData = Game.Player.getData();
+    var defBonus = getEffectBonus(playerEffects, 'defense_up');
+    var activeAttackers = [];
+    var stunnedNames = [];
+    var totalDamage = 0;
+
+    for (var i = 0; i < enemyParty.length; i++) {
+      var foe = enemyParty[i];
+      if (!foe || foe.hp <= 0) continue;
+      var foeEffects = foe._effects || [];
+      if (hasEffect(foeEffects, 'stun')) {
+        stunnedNames.push(foe.name);
+        continue;
+      }
+      var damage = Math.max(1, foe.attack - (Game.Player.getDefense() + defBonus) + Math.floor(Math.random() * 5));
+      totalDamage += damage;
+      activeAttackers.push(foe.name);
+    }
+
+    if (!activeAttackers.length) {
+      message = stunnedNames.length ? (stunnedNames.join(' / ') + 'は痺れて動けない！') : '敵の群れは様子をうかがっている。';
+      messageTimer = 45;
+      return false;
+    }
+
+    playerData.hp -= totalDamage;
+    message = activeAttackers.join(' / ') + 'の攻撃！ ' + totalDamage + 'ダメージ！';
+    if (stunnedNames.length) {
+      message += ' ' + stunnedNames.join(' / ') + 'は動けない。';
+    }
+    messageTimer = 45;
+    Game.Audio.playSfx('damage');
+    shakeX = 5 + activeAttackers.length;
+    if (Game.Particles) Game.Particles.emit('damage', 100, 220, { count: 6 + activeAttackers.length });
+
+    if (playerData.hp <= 0) {
+      playerData.hp = 0;
+      phase = 'defeat';
+      message = '力尽きた...';
+      messageTimer = 90;
+      Game.Audio.stopBgm();
+      Game.Audio.playSfx('gameover');
+      return true;
+    }
+    return false;
+  }
+
+  function getEncounterIntroText() {
+    if (!enemyParty.length) return '敵が現れた！';
+    if (enemyParty.length === 1) return enemyParty[0].name + 'が現れた！';
+    var names = [];
+    for (var i = 0; i < enemyParty.length && i < 3; i++) {
+      names.push(enemyParty[i].name);
+    }
+    return names.join(' / ') + ' が現れた！';
+  }
+
   function start(enemyId, npc) {
     active = true;
     npcRef = npc;
-    enemy = JSON.parse(JSON.stringify(enemies[enemyId]));
+    var enemyIds = Array.isArray(enemyId) ? enemyId.slice() : [enemyId];
+    enemyParty = [];
+    for (var ei = 0; ei < enemyIds.length; ei++) {
+      var enemyClone = cloneEnemy(enemyIds[ei]);
+      if (enemyClone) enemyParty.push(enemyClone);
+    }
+    if (!enemyParty.length) return;
+    currentTargetIndex = 0;
+    enemy = enemyParty[0];
     menuIndex = 0;
     itemMenuIndex = 0;
     itemMenuItems = [];
     itemMenuMode = 'heal';
     ritualMenuActionId = null;
     phase = 'menu';
-    message = enemy.name + 'が現れた！';
+    message = getEncounterIntroText();
     messageTimer = 60;
     playerEffects = [];
-    enemyEffects = [];
+    enemyEffects = enemy._effects || [];
     comboText = '';
     comboTimer = 0;
     comboMultiplier = 1;
     bossEnraged = false;
     enrageTimer = 0;
     // Initialize boss gimmick
-    currentGimmick = enemy && enemy.ritualMode ? null : (bossGimmicks[enemyId] || null);
+    currentGimmick = isGroupBattle() ? null : (enemy && enemy.ritualMode ? null : (bossGimmicks[enemy._enemyId] || null));
     turnCount = 0;
     phaseChanged = false;
     sealedCommand = -1;
@@ -1437,7 +1672,7 @@ Game.Battle = (function() {
     dialogueSpeaker = '';
     dialogueText = '';
     ritualRuntime = Game.RitualBattles && Game.RitualBattles.createRuntime
-      ? Game.RitualBattles.createRuntime(enemyId, enemy)
+      ? (isGroupBattle() ? null : Game.RitualBattles.createRuntime(enemy._enemyId, enemy))
       : null;
     if (ritualRuntime) {
       var ritualDefinition = Game.RitualBattles.getDefinition(ritualRuntime.ritualMode);
@@ -1563,6 +1798,14 @@ Game.Battle = (function() {
         var menuEntries = getMenuEntries();
         if (menuIndex >= menuEntries.length) {
           menuIndex = Math.max(0, menuEntries.length - 1);
+        }
+        if (isGroupBattle() && Game.Input.isPressed('left')) {
+          cycleTarget(-1);
+          break;
+        }
+        if (isGroupBattle() && Game.Input.isPressed('right')) {
+          cycleTarget(1);
+          break;
         }
         if (Game.Input.isPressed('up')) {
           menuIndex = (menuIndex - 1 + menuEntries.length) % menuEntries.length;
@@ -1804,10 +2047,17 @@ Game.Battle = (function() {
               ritualDefinition.checkVictory(ritualRuntime, enemy, Game.Player.getData());
             if (enemy.hp <= 0 && (!ritualRuntime || ritualVictory)) {
               enemy.hp = 0;
-              phase = 'victory';
-              message = message + ' ' + enemy.name + 'を倒した！ ' + (enemy.goldReward || 50) + 'G獲得！';
-              messageTimer = 60;
-              if (Game.Particles) Game.Particles.emit('victory', 240, 100, { count: 30 });
+              enemy._effects = [];
+              enemyEffects = enemy._effects;
+              var defeatedName = enemy.name;
+              if (handleEnemyPartyDefeat()) {
+                phase = 'victory';
+                message = message + ' ' + defeatedName + 'を倒した！ ' + getTotalEnemyGoldReward() + 'G獲得！';
+                messageTimer = 60;
+                if (Game.Particles) Game.Particles.emit('victory', 240, 100, { count: 30 });
+              } else {
+                message = message + ' ' + defeatedName + 'を倒した！ 次は' + enemy.name + 'だ。';
+              }
             }
           } else {
             message = '次のサイコロ！ 止めろ！';
@@ -1826,7 +2076,7 @@ Game.Battle = (function() {
             phase = 'menu';
             message = '暴力では、まだ満たせない。';
             messageTimer = 45;
-          } else if (enemy.hp <= 0) {
+          } else if (enemy.hp <= 0 && getLivingEnemies().length <= 0) {
             phase = 'victory';
           } else {
             phase = 'playerAttack';
@@ -1846,23 +2096,8 @@ Game.Battle = (function() {
             messageTimer = 45;
           } else {
             phase = 'enemyAttack';
-            var playerData = Game.Player.getData();
-            var defBonus = getEffectBonus(playerEffects, 'defense_up');
-            var dmg = Math.max(1, enemy.attack - (Game.Player.getDefense() + defBonus) + Math.floor(Math.random() * 5));
-            playerData.hp -= dmg;
-            message = enemy.name + 'の攻撃！ ' + dmg + 'ダメージ！';
-            messageTimer = 45;
-            Game.Audio.playSfx('damage');
-            shakeX = 5;
-            if (Game.Particles) Game.Particles.emit('damage', 100, 220, { count: 6 });
-
-            if (playerData.hp <= 0) {
-              playerData.hp = 0;
-              phase = 'defeat';
-              message = '力尽きた...';
-              messageTimer = 90;
-              Game.Audio.stopBgm();
-              Game.Audio.playSfx('gameover');
+            if (!applyEnemyPartyAttack()) {
+              syncCurrentEnemy();
             }
           }
         }
@@ -1871,7 +2106,7 @@ Game.Battle = (function() {
       case 'enemyAttack':
         // Tick status effects at end of round
         tickEffects(playerEffects);
-        tickEffects(enemyEffects);
+        tickEnemyPartyEffects();
         turnCount++;
 
         // ── Boss gimmick: passive effect at turn end ──
@@ -1947,6 +2182,7 @@ Game.Battle = (function() {
         active = false;
         Game.Audio.stopBgm();
         ritualRuntime = null;
+        enemyParty = [];
         // Use boss-specific victory BGM if defined
         var victoryBgm = (currentGimmick && currentGimmick.victory_bgm) ? currentGimmick.victory_bgm : null;
         if (victoryBgm) {
@@ -1954,12 +2190,13 @@ Game.Battle = (function() {
         } else {
           Game.Audio.playSfx('victory');
         }
-        return { result: 'victory', npc: npcRef, goldReward: enemy.goldReward || 50 };
+        return { result: 'victory', npc: npcRef, goldReward: getTotalEnemyGoldReward() || 50 };
 
       case 'defeat':
         active = false;
         Game.Audio.stopBgm();
         ritualRuntime = null;
+        enemyParty = [];
         return { result: 'defeat' };
 
       case 'ritualFail':
@@ -1967,6 +2204,7 @@ Game.Battle = (function() {
         Game.Audio.stopBgm();
         var failStyle = ritualRuntime ? ritualRuntime.ritualFailStyle : null;
         ritualRuntime = null;
+        enemyParty = [];
         return {
           result: 'ritual_fail',
           returnEventId: failStyle ? failStyle.returnEventId : null,
@@ -1975,20 +2213,7 @@ Game.Battle = (function() {
 
       case 'useItem':
         phase = 'enemyAttack';
-        var playerData2 = Game.Player.getData();
-        var dmg2 = Math.max(1, enemy.attack - Game.Player.getDefense() + Math.floor(Math.random() * 5));
-        playerData2.hp -= dmg2;
-        message = enemy.name + 'の攻撃！ ' + dmg2 + 'ダメージ！';
-        messageTimer = 45;
-        Game.Audio.playSfx('damage');
-        if (playerData2.hp <= 0) {
-          playerData2.hp = 0;
-          phase = 'defeat';
-          message = '力尽きた...';
-          messageTimer = 90;
-          Game.Audio.stopBgm();
-          Game.Audio.playSfx('gameover');
-        }
+        applyEnemyPartyAttack();
         break;
 
       case 'flee':
@@ -1996,6 +2221,7 @@ Game.Battle = (function() {
         Game.Audio.stopBgm();
         Game.Audio.playBgm('field');
         ritualRuntime = null;
+        enemyParty = [];
         return { result: 'flee' };
     }
     return null;
@@ -2202,16 +2428,62 @@ Game.Battle = (function() {
     R.drawTextJP('目を入れる', enemyX + 36, 82, '#d8c68a', 10);
   }
 
+  function drawEnemyPartyGroup(R, ctx, C) {
+    var count = enemyParty.length;
+    var scale = count >= 3 ? 3 : 4;
+    var spriteW = 16 * scale;
+    var spriteH = 16 * scale;
+    var gap = count >= 3 ? 18 : 28;
+    var totalWidth = count * spriteW + (count - 1) * gap;
+    var startX = Math.floor((C.CANVAS_WIDTH - totalWidth) / 2);
+    var baseY = count >= 3 ? 42 : 48;
+
+    for (var i = 0; i < count; i++) {
+      var foe = enemyParty[i];
+      if (!foe) continue;
+      var ex = startX + i * (spriteW + gap);
+      var pal = foe.palette;
+      if (foe.hp <= 0) {
+        pal = {};
+        for (var pk in foe.palette) pal[pk] = foe.palette[pk];
+        pal[1] = '#4a4a4a';
+      }
+      R.drawSpriteAbsolute(foe.sprite, ex, baseY, pal, scale);
+      if (i === currentTargetIndex && foe.hp > 0) {
+        R.drawTextJP('▼', ex + Math.floor(spriteW / 2) - 4, baseY - 12, '#ffd66b', 10);
+      }
+
+      R.drawRectAbsolute(ex, baseY + spriteH + 8, spriteW, 8, '#333');
+      var hpRatio = foe.maxHp > 0 ? Math.max(0, foe.hp / foe.maxHp) : 0;
+      R.drawRectAbsolute(ex + 1, baseY + spriteH + 9, Math.max(0, Math.floor((spriteW - 2) * hpRatio)), 6,
+        hpRatio > 0.3 ? C.COLORS.HP_GREEN : C.COLORS.HP_RED);
+      R.drawTextJP(foe.name, ex, baseY + spriteH + 18, foe.hp > 0 ? '#ffffff' : '#777777', 9);
+      R.drawText(foe.hp + '/' + foe.maxHp, ex + spriteW, baseY + spriteH + 18, '#b8c4e0', 8, 'right');
+    }
+
+    R.drawTextJP('←→: 対象切替', 318, 136, '#8b96b6', 9);
+  }
+
   function getStateSnapshot() {
     if (!active || !enemy) return null;
     return {
       phase: phase,
       message: message,
+      targetIndex: currentTargetIndex,
       enemy: {
         name: enemy.name,
         hp: enemy.hp,
         maxHp: enemy.maxHp
       },
+      enemies: enemyParty.map(function(foe, index) {
+        return {
+          index: index,
+          name: foe.name,
+          hp: foe.hp,
+          maxHp: foe.maxHp,
+          active: index === currentTargetIndex
+        };
+      }),
       menuEntries: getMenuEntries().map(function(entry) { return entry.label; }),
       ritual: ritualRuntime ? {
         mode: ritualRuntime.ritualMode,
@@ -2246,6 +2518,9 @@ Game.Battle = (function() {
 
     // Enemy
     if (enemy) {
+      if (isGroupBattle()) {
+        drawEnemyPartyGroup(R, ctx, C);
+      } else {
       var ex = 200 + (shakeX > 0 ? (Math.random() - 0.5) * shakeX : 0);
       // Boss enrage: tint palette red
       var pal = enemy.palette;
@@ -2299,6 +2574,7 @@ Game.Battle = (function() {
           esx += 18;
         }
       }
+      }
     }
 
     // Combo text display
@@ -2335,6 +2611,16 @@ Game.Battle = (function() {
         R.drawRectAbsolute(psx, 242, 20, 14, 'rgba(0,0,0,0.6)');
         R.drawTextJP(pLabel, psx + 1, 243, pCol, 9);
         psx += 22;
+      }
+    }
+
+    var partyMembers = Game.Player.getPartyMembers ? Game.Player.getPartyMembers() : [];
+    if (partyMembers.length > 0) {
+      R.drawDialogBox(10, 150, 138, 44);
+      R.drawTextJP('同行支援', 20, 158, '#8fe0ff', 10);
+      for (var pmi = 0; pmi < Math.min(3, partyMembers.length); pmi++) {
+        var member = partyMembers[pmi];
+        R.drawTextJP(member.name, 20 + pmi * 42, 172, member.color || '#dce6ff', 9);
       }
     }
 

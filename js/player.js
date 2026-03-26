@@ -1,5 +1,33 @@
 // Player entity
 Game.Player = (function() {
+  var MAX_PARTY_MEMBERS = 3;
+  var companionDefs = {
+    akagi: {
+      id: 'akagi',
+      name: 'アカギ',
+      role: '境界案内',
+      attackBonus: 3,
+      defenseBonus: 2,
+      color: '#5db8ff'
+    },
+    yamakawa: {
+      id: 'yamakawa',
+      name: '山川',
+      role: '地形解析',
+      attackBonus: 2,
+      defenseBonus: 3,
+      color: '#8fe0a2'
+    },
+    furuya: {
+      id: 'furuya',
+      name: '古谷',
+      role: '突破支援',
+      attackBonus: 4,
+      defenseBonus: 1,
+      color: '#ffb36b'
+    }
+  };
+
   var data = {
     tileX: 14,
     tileY: 10,
@@ -15,6 +43,7 @@ Game.Player = (function() {
     diceSlots: 1,                // max dice slots (1-5)
     equippedDice: ['normalDice'], // array of dice item IDs
     armor: null,    // equipped armor item ID
+    partyMembers: [],
     inventory: [],
     moving: false,
     moveTimer: 0,
@@ -22,6 +51,7 @@ Game.Player = (function() {
     moveFrame: 0,
     walkSfxTimer: 0
   };
+  var lastCompletedStep = null;
 
   var sprites = {
     down: [
@@ -97,6 +127,19 @@ Game.Player = (function() {
     data.x = data.tileX * Game.Config.TILE_SIZE;
     data.y = data.tileY * Game.Config.TILE_SIZE;
     data.moving = false;
+    lastCompletedStep = null;
+  }
+
+  function normalizePartyMembers(ids) {
+    var result = [];
+    for (var i = 0; i < (ids || []).length; i++) {
+      var id = ids[i];
+      if (!companionDefs[id]) continue;
+      if (result.indexOf(id) >= 0) continue;
+      result.push(id);
+      if (result.length >= MAX_PARTY_MEMBERS) break;
+    }
+    return result;
   }
 
   function update() {
@@ -110,6 +153,11 @@ Game.Player = (function() {
         data.y = data.tileY * ts;
         data.moving = false;
         data.moveFrame = 0;
+        lastCompletedStep = {
+          tileX: data.tileX,
+          tileY: data.tileY,
+          direction: data.direction
+        };
       } else {
         var targetX = data.tileX * ts;
         var targetY = data.tileY * ts;
@@ -204,7 +252,12 @@ Game.Player = (function() {
   }
 
   function getAttack() {
-    return data.attack;
+    var total = data.attack;
+    var partyMembers = getPartyMembers();
+    for (var i = 0; i < partyMembers.length; i++) {
+      total += partyMembers[i].attackBonus || 0;
+    }
+    return total;
   }
 
   function getDefense() {
@@ -213,7 +266,66 @@ Game.Player = (function() {
       var a = Game.Items.get(data.armor);
       if (a && a.defenseBonus) base += a.defenseBonus;
     }
+    var partyMembers = getPartyMembers();
+    for (var i = 0; i < partyMembers.length; i++) {
+      base += partyMembers[i].defenseBonus || 0;
+    }
     return base;
+  }
+
+  function addPartyMember(id) {
+    if (!companionDefs[id]) return false;
+    data.partyMembers = normalizePartyMembers(data.partyMembers);
+    if (data.partyMembers.indexOf(id) >= 0) return false;
+    if (data.partyMembers.length >= MAX_PARTY_MEMBERS) return false;
+    data.partyMembers.push(id);
+    return true;
+  }
+
+  function removePartyMember(id) {
+    if (!id || !data.partyMembers) return false;
+    var idx = data.partyMembers.indexOf(id);
+    if (idx < 0) return false;
+    data.partyMembers.splice(idx, 1);
+    return true;
+  }
+
+  function setPartyMembers(ids) {
+    data.partyMembers = normalizePartyMembers(ids);
+    return data.partyMembers.slice();
+  }
+
+  function getPartyMembers() {
+    var ids = normalizePartyMembers(data.partyMembers);
+    data.partyMembers = ids;
+    var result = [];
+    for (var i = 0; i < ids.length; i++) {
+      result.push(companionDefs[ids[i]]);
+    }
+    return result;
+  }
+
+  function getPartyMemberIds() {
+    data.partyMembers = normalizePartyMembers(data.partyMembers);
+    return data.partyMembers.slice();
+  }
+
+  function hasPartyMember(id) {
+    return getPartyMemberIds().indexOf(id) >= 0;
+  }
+
+  function getCompanionCatalog() {
+    return Object.keys(companionDefs);
+  }
+
+  function getMaxPartyMembers() {
+    return MAX_PARTY_MEMBERS;
+  }
+
+  function consumeCompletedStep() {
+    var step = lastCompletedStep;
+    lastCompletedStep = null;
+    return step;
   }
 
   function equipDice(diceId, slot) {
@@ -286,6 +398,15 @@ Game.Player = (function() {
     equipArmor: equipArmor,
     unequipArmor: unequipArmor,
     addGold: addGold,
+    addPartyMember: addPartyMember,
+    removePartyMember: removePartyMember,
+    setPartyMembers: setPartyMembers,
+    getPartyMembers: getPartyMembers,
+    getPartyMemberIds: getPartyMemberIds,
+    hasPartyMember: hasPartyMember,
+    getCompanionCatalog: getCompanionCatalog,
+    getMaxPartyMembers: getMaxPartyMembers,
+    consumeCompletedStep: consumeCompletedStep,
     syncCatalystsFromInventory: syncCatalystsFromInventory,
     getData: getData
   };

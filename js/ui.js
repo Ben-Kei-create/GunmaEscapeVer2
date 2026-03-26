@@ -86,6 +86,13 @@ Game.UI = (function() {
     return { respectGauge: 0, catalysts: [] };
   }
 
+  function getPartyMembers() {
+    if (Game.Player && Game.Player.getPartyMembers) {
+      return Game.Player.getPartyMembers();
+    }
+    return [];
+  }
+
   function clampText(text, maxChars) {
     if (!text || text.length <= maxChars) return text || '';
     return text.substring(0, Math.max(0, maxChars - 1)) + '…';
@@ -231,6 +238,19 @@ Game.UI = (function() {
     R.drawTextJP('目的', 12, Game.Config.CANVAS_HEIGHT - 36, accent, 10);
     R.drawTextJP(objective, 44, Game.Config.CANVAS_HEIGHT - 36, '#fff', 10);
     R.drawTextJP(hint, 12, Game.Config.CANVAS_HEIGHT - 22, '#9fb0d6', 9);
+
+    var partyMembers = getPartyMembers();
+    var maxPartyMembers = Game.Player && Game.Player.getMaxPartyMembers ? Game.Player.getMaxPartyMembers() : 3;
+    R.drawDialogBox(307, Game.Config.CANVAS_HEIGHT - 41, 168, 36);
+    R.drawTextJP('同行 ' + partyMembers.length + '/' + maxPartyMembers, 314, Game.Config.CANVAS_HEIGHT - 36, '#8fe0ff', 10);
+    if (!partyMembers.length) {
+      R.drawTextJP('ひとり旅', 314, Game.Config.CANVAS_HEIGHT - 22, '#7f8aa8', 9);
+    } else {
+      for (var pi = 0; pi < Math.min(3, partyMembers.length); pi++) {
+        var member = partyMembers[pi];
+        R.drawTextJP(member.name, 314 + pi * 52, Game.Config.CANVAS_HEIGHT - 22, member.color || '#d7e6ff', 9);
+      }
+    }
   }
 
   function drawDialog(text) {
@@ -294,7 +314,10 @@ Game.UI = (function() {
     R.drawTextJP('敬意: ' + (journeyState.respectGauge || 0), 258, 100, '#ffe08f', 11);
     R.drawTextJP('触媒: ' + ((journeyState.catalysts && journeyState.catalysts.length) || 0), 258, 112, '#9ed7ff', 11);
     R.drawTextJP('現在地: ' + ((mapInfo && mapInfo.label) || (map && map.name) || '不明'), 120, 116, '#8fb8ff', 10);
-    R.drawTextJP('目標: ' + clampText(getCurrentObjective(), 22), 120, 128, '#dce6ff', 10);
+    var partyMembers = getPartyMembers();
+    var partyText = partyMembers.length ? partyMembers.map(function(member) { return member.name; }).join(' / ') : 'なし';
+    R.drawTextJP('同行: ' + clampText(partyText, 18), 120, 128, '#8fe0ff', 10);
+    R.drawTextJP('目標: ' + clampText(getCurrentObjective(), 22), 120, 140, '#dce6ff', 10);
 
     // Tabs
     var tabs = ['もちもの', 'サイコロ', 'ぼうぐ'];
@@ -302,10 +325,10 @@ Game.UI = (function() {
     for (var t = 0; t < tabs.length; t++) {
       var tx = tabX + t * 76;
       var activeTab = (fieldMenuState.section === t);
-      R.drawRectAbsolute(tx, 144, 68, 18, activeTab ? 'rgba(255,204,0,0.16)' : 'rgba(255,255,255,0.06)');
-      R.drawTextJP(tabs[t], tx + 8, 148, activeTab ? C.COLORS.GOLD : '#aaa', 11);
+      R.drawRectAbsolute(tx, 154, 68, 18, activeTab ? 'rgba(255,204,0,0.16)' : 'rgba(255,255,255,0.06)');
+      R.drawTextJP(tabs[t], tx + 8, 158, activeTab ? C.COLORS.GOLD : '#aaa', 11);
     }
-    R.drawRectAbsolute(120, 166, 240, 1, '#446');
+    R.drawRectAbsolute(120, 176, 240, 1, '#446');
 
     switch (fieldMenuState.section) {
       case 0:
@@ -329,7 +352,7 @@ Game.UI = (function() {
 
   function drawItemMenuSection(R, C, pd) {
     var visibleItems = 6;
-    var areaY = 172;
+    var areaY = 182;
     R.drawTextJP('持ち物:', 120, areaY, C.COLORS.GOLD, 12);
 
     if (pd.inventory.length === 0) {
@@ -357,11 +380,11 @@ Game.UI = (function() {
 
     if (fieldMenuState.commandActive && selectedItem) {
       var commands = getFieldMenuCommands(selectedItem);
-      R.drawDialogBox(272, 176, 88, commands.length * 18 + 12);
+      R.drawDialogBox(272, 186, 88, commands.length * 18 + 12);
       for (var ci = 0; ci < commands.length; ci++) {
         var cSelected = (ci === fieldMenuState.commandIndex);
         var cPrefix = cSelected ? '▶ ' : '  ';
-        R.drawTextJP(cPrefix + commands[ci], 282, 184 + ci * 18, cSelected ? C.COLORS.GOLD : '#fff', 11);
+        R.drawTextJP(cPrefix + commands[ci], 282, 194 + ci * 18, cSelected ? C.COLORS.GOLD : '#fff', 11);
       }
     }
   }
@@ -370,10 +393,10 @@ Game.UI = (function() {
     var ctx = R.getContext();
     var ownedDice = getOwnedDiceOptions();
     var visibleDice = 5;
-    R.drawTextJP('装備スロット:', 120, 172, C.COLORS.GOLD, 12);
+    R.drawTextJP('装備スロット:', 120, 182, C.COLORS.GOLD, 12);
 
     for (var s = 0; s < pd.diceSlots; s++) {
-      var slotY = 190 + s * 18;
+      var slotY = 200 + s * 18;
       var selectedSlot = (s === fieldMenuState.diceSlotIndex);
       var di = Game.Items.get(equipped[s] || 'normalDice');
       var prefix = selectedSlot ? '▶ ' : '  ';
@@ -395,11 +418,11 @@ Game.UI = (function() {
     }
 
     if (!fieldMenuState.diceEquipActive) {
-      R.drawTextJP('決定で入れ替え', 238, 228, '#888', 10);
+      R.drawTextJP('決定で入れ替え', 238, 238, '#888', 10);
       return;
     }
 
-    R.drawDialogBox(250, 182, 110, 84);
+    R.drawDialogBox(250, 192, 110, 84);
     var maxOffset = Math.max(0, ownedDice.length - visibleDice);
     var scrollOffset = Math.min(maxOffset, Math.max(0, fieldMenuState.diceEquipIndex - visibleDice + 1));
     for (var i = scrollOffset; i < ownedDice.length && i < scrollOffset + visibleDice; i++) {
@@ -407,7 +430,7 @@ Game.UI = (function() {
       var selected = (i === fieldMenuState.diceEquipIndex);
       var prefix2 = selected ? '▶ ' : '  ';
       var label = option.item ? option.item.name : option.name;
-      R.drawTextJP(prefix2 + label, 258, 192 + (i - scrollOffset) * 14, selected ? C.COLORS.GOLD : '#fff', 10);
+      R.drawTextJP(prefix2 + label, 258, 202 + (i - scrollOffset) * 14, selected ? C.COLORS.GOLD : '#fff', 10);
     }
     if (ownedDice[fieldMenuState.diceEquipIndex] && ownedDice[fieldMenuState.diceEquipIndex].item) {
       R.drawTextJP(ownedDice[fieldMenuState.diceEquipIndex].item.faces.join('-'), 258, 252, '#88dd88', 9);
@@ -418,12 +441,12 @@ Game.UI = (function() {
     var armorOptions = getOwnedArmorOptions();
     var visibleArmor = 4;
     var currentArmor = pd.armor ? Game.Items.get(pd.armor) : null;
-    R.drawTextJP('現在の防具:', 120, 172, C.COLORS.GOLD, 12);
-    R.drawTextJP(currentArmor ? currentArmor.name : 'なし', 200, 172, '#fff', 12);
-    R.drawTextJP(currentArmor ? currentArmor.desc : '装備していない', 120, 190, '#aaa', 10);
+    R.drawTextJP('現在の防具:', 120, 182, C.COLORS.GOLD, 12);
+    R.drawTextJP(currentArmor ? currentArmor.name : 'なし', 200, 182, '#fff', 12);
+    R.drawTextJP(currentArmor ? currentArmor.desc : '装備していない', 120, 200, '#aaa', 10);
 
-    R.drawRectAbsolute(120, 208, 240, 1, '#446');
-    R.drawTextJP('装備候補:', 120, 214, C.COLORS.GOLD, 12);
+    R.drawRectAbsolute(120, 218, 240, 1, '#446');
+    R.drawTextJP('装備候補:', 120, 224, C.COLORS.GOLD, 12);
 
     var maxOffset = Math.max(0, armorOptions.length - visibleArmor);
     var scrollOffset = Math.min(maxOffset, Math.max(0, fieldMenuState.armorIndex - visibleArmor + 1));
@@ -432,7 +455,7 @@ Game.UI = (function() {
       var selected = (i === fieldMenuState.armorIndex);
       var prefix = selected ? '▶ ' : '  ';
       var label = option.item ? option.item.name : 'はずす';
-      R.drawTextJP(prefix + label, 130, 232 + (i - scrollOffset) * 14, selected ? C.COLORS.GOLD : '#fff', 11);
+      R.drawTextJP(prefix + label, 130, 242 + (i - scrollOffset) * 14, selected ? C.COLORS.GOLD : '#fff', 11);
     }
 
     var selectedArmor = armorOptions[fieldMenuState.armorIndex];

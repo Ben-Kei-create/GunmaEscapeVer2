@@ -1,7 +1,7 @@
 // Save system using localStorage + passphrase export
 Game.Save = (function() {
   var MAX_SLOTS = 3;
-  var VERSION = 3;
+  var VERSION = 4;
   var PASSPHRASE_PREFIX = 'GM2';
   var BASE32_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
   var runtime = window.__gunmaSaveRuntime || {
@@ -60,7 +60,8 @@ Game.Save = (function() {
       keyItems: clone(playerData.keyItems || getKeyItemsFromInventory(playerData.inventory || [])),
       armor: playerData.armor,
       diceSlots: playerData.diceSlots,
-      chapter: playerData.chapter
+      chapter: playerData.chapter,
+      partyMembers: clone(playerData.partyMembers || [])
     };
   }
 
@@ -224,6 +225,7 @@ Game.Save = (function() {
     playerData.armor = savedPlayer.armor || null;
     playerData.diceSlots = savedPlayer.diceSlots || 1;
     playerData.chapter = savedPlayer.chapter || 1;
+    playerData.partyMembers = clone(savedPlayer.partyMembers || []);
     playerData.moving = false;
     playerData.moveFrame = 0;
     playerData.moveTimer = 0;
@@ -257,6 +259,13 @@ Game.Save = (function() {
 
   function getItemCatalog() {
     return Object.keys(Game.Items.getAll ? Game.Items.getAll() : {}).sort();
+  }
+
+  function getPartyCatalog() {
+    if (Game.Player && Game.Player.getCompanionCatalog) {
+      return Game.Player.getCompanionCatalog().sort();
+    }
+    return [];
   }
 
   function getDirectionCatalog() {
@@ -428,6 +437,7 @@ Game.Save = (function() {
   function minifySaveData(data) {
     var mapCatalog = getMapCatalog();
     var itemCatalog = getItemCatalog();
+    var partyCatalog = getPartyCatalog();
     var directions = getDirectionCatalog();
     var player = data.player || {};
     var activeStoryFlags = [];
@@ -458,7 +468,8 @@ Game.Save = (function() {
         player.chapter || 1,
         indexOfOr(itemCatalog, player.armor, -1),
         encodeIdList(player.equippedDice || [], itemCatalog),
-        encodeIdList(player.inventory || [], itemCatalog)
+        encodeIdList(player.inventory || [], itemCatalog),
+        encodeIdList(player.partyMembers || [], partyCatalog)
       ],
       n: encodeNpcStatesCompact(data.npcStates || {}),
       i: encodeItemStatesCompact(data.itemStates || {}),
@@ -475,6 +486,7 @@ Game.Save = (function() {
 
     var mapCatalog = getMapCatalog();
     var itemCatalog = getItemCatalog();
+    var partyCatalog = getPartyCatalog();
     var directions = getDirectionCatalog();
     var mapName = mapCatalog[compact.m];
     if (!mapName) return null;
@@ -483,6 +495,7 @@ Game.Save = (function() {
     var equippedDice = decodeIdList(playerData[11] || [], itemCatalog);
     if (!equippedDice.length) equippedDice = ['normalDice'];
     var inventory = decodeIdList(playerData[12] || [], itemCatalog);
+    var partyMembers = decodeIdList(playerData[13] || [], partyCatalog);
     var journeyData = compact.j || [];
     var storyFlags = {};
     for (var i = 0; i < (compact.s || []).length; i++) {
@@ -514,7 +527,8 @@ Game.Save = (function() {
         armor: playerData[10] >= 0 ? itemCatalog[playerData[10]] : null,
         equippedDice: equippedDice,
         inventory: inventory,
-        keyItems: getKeyItemsFromInventory(inventory)
+        keyItems: getKeyItemsFromInventory(inventory),
+        partyMembers: partyMembers
       },
       npcStates: decodeNpcStatesCompact(compact.n || ''),
       itemStates: decodeItemStatesCompact(compact.i || ''),

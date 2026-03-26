@@ -8,22 +8,22 @@ Game.Encounters = (function() {
   };
 
   var tables = {
-    maebashi: { stepInterval: 10, cooldown: 4, tiles: [0, 6], enemies: ['strayDaruma', 'roadsideBandit'] },
-    takasaki: { stepInterval: 10, cooldown: 4, tiles: [0], enemies: ['strayDaruma', 'roadsideBandit'] },
-    kusatsu: { stepInterval: 10, cooldown: 4, tiles: [0, 5], enemies: ['steamMonkey', 'strayDaruma'] },
-    shimonita: { stepInterval: 10, cooldown: 4, tiles: [0, 6], enemies: ['konnyakuCrawler', 'roadsideBandit'] },
-    tomioka: { stepInterval: 9, cooldown: 4, tiles: [0, 1], enemies: ['silkShade', 'roadsideBandit'] },
-    tsumagoi: { stepInterval: 9, cooldown: 4, tiles: [0, 6], enemies: ['cabbageWisp', 'roadsideBandit'] },
-    forest: { stepInterval: 7, cooldown: 3, tiles: [0, 1], enemies: ['roadsideBandit', 'strayDaruma'] },
-    konuma: { stepInterval: 7, cooldown: 3, tiles: [0, 1, 6], enemies: ['roadsideBandit', 'mistBeastling'] },
-    onuma: { stepInterval: 7, cooldown: 3, tiles: [0, 1, 6], enemies: ['roadsideBandit', 'mistBeastling'] },
-    akagi_ranch: { stepInterval: 7, cooldown: 3, tiles: [0, 1, 6], enemies: ['roadsideBandit', 'strayDaruma'] },
-    shirane_trail: { stepInterval: 6, cooldown: 3, tiles: [1, 5], enemies: ['steamMonkey', 'silkShade'] },
-    kusatsu_deep: { stepInterval: 6, cooldown: 3, tiles: [0, 1, 5], enemies: ['steamMonkey', 'silkShade'] },
-    tanigawa_tunnel: { stepInterval: 6, cooldown: 3, tiles: [1, 9], enemies: ['echoShard', 'roadsideBandit'] },
-    haruna_lake: { stepInterval: 6, cooldown: 3, tiles: [0, 1], enemies: ['mistBeastling', 'echoShard'] },
-    oze_marsh: { stepInterval: 6, cooldown: 3, tiles: [0, 1, 6], enemies: ['mudWisp', 'echoShard'] },
-    minakami_valley: { stepInterval: 6, cooldown: 3, tiles: [0, 1], enemies: ['mudWisp', 'mistBeastling'] }
+    maebashi: { stepInterval: 10, cooldown: 4, tiles: [0, 6], formations: ['strayDaruma', ['strayDaruma', 'roadsideBandit'], 'roadsideBandit'] },
+    takasaki: { stepInterval: 10, cooldown: 4, tiles: [0], formations: ['strayDaruma', ['roadsideBandit', 'strayDaruma'], 'roadsideBandit'] },
+    kusatsu: { stepInterval: 10, cooldown: 4, tiles: [0, 5], formations: ['steamMonkey', ['steamMonkey', 'strayDaruma'], 'strayDaruma'] },
+    shimonita: { stepInterval: 10, cooldown: 4, tiles: [0, 6], formations: ['konnyakuCrawler', ['konnyakuCrawler', 'roadsideBandit'], 'roadsideBandit'] },
+    tomioka: { stepInterval: 9, cooldown: 4, tiles: [0, 1], formations: ['silkShade', ['silkShade', 'roadsideBandit'], ['silkShade', 'silkShade']] },
+    tsumagoi: { stepInterval: 9, cooldown: 4, tiles: [0, 6], formations: ['cabbageWisp', ['cabbageWisp', 'roadsideBandit'], ['cabbageWisp', 'cabbageWisp']] },
+    forest: { stepInterval: 7, cooldown: 3, tiles: [0, 1], formations: ['roadsideBandit', ['roadsideBandit', 'strayDaruma'], 'strayDaruma'] },
+    konuma: { stepInterval: 7, cooldown: 3, tiles: [0, 1, 6], formations: ['mistBeastling', ['roadsideBandit', 'mistBeastling'], ['mistBeastling', 'mistBeastling']] },
+    onuma: { stepInterval: 7, cooldown: 3, tiles: [0, 1, 6], formations: ['mistBeastling', ['roadsideBandit', 'mistBeastling'], ['roadsideBandit', 'mistBeastling', 'strayDaruma']] },
+    akagi_ranch: { stepInterval: 7, cooldown: 3, tiles: [0, 1, 6], formations: ['roadsideBandit', ['roadsideBandit', 'strayDaruma'], ['roadsideBandit', 'roadsideBandit']] },
+    shirane_trail: { stepInterval: 6, cooldown: 3, tiles: [1, 5], formations: ['steamMonkey', ['steamMonkey', 'silkShade'], ['steamMonkey', 'steamMonkey']] },
+    kusatsu_deep: { stepInterval: 6, cooldown: 3, tiles: [0, 1, 5], formations: ['steamMonkey', ['steamMonkey', 'silkShade'], ['steamMonkey', 'silkShade', 'silkShade']] },
+    tanigawa_tunnel: { stepInterval: 6, cooldown: 3, tiles: [1, 9], formations: ['echoShard', ['echoShard', 'roadsideBandit'], ['echoShard', 'echoShard', 'roadsideBandit']] },
+    haruna_lake: { stepInterval: 6, cooldown: 3, tiles: [0, 1], formations: ['mistBeastling', ['mistBeastling', 'echoShard'], ['mistBeastling', 'echoShard', 'echoShard']] },
+    oze_marsh: { stepInterval: 6, cooldown: 3, tiles: [0, 1, 6], formations: ['mudWisp', ['mudWisp', 'echoShard'], ['mudWisp', 'mudWisp', 'echoShard']] },
+    minakami_valley: { stepInterval: 6, cooldown: 3, tiles: [0, 1], formations: ['mudWisp', ['mudWisp', 'mistBeastling'], ['mudWisp', 'mistBeastling', 'mistBeastling']] }
   };
 
   function clone(value) {
@@ -46,10 +46,11 @@ Game.Encounters = (function() {
   }
 
   function takeNextEnemy(table) {
-    if (!table || !table.enemies || !table.enemies.length) return null;
-    var enemyId = table.enemies[state.cycleIndex % table.enemies.length];
+    var pool = (table && table.formations && table.formations.length) ? table.formations : (table ? table.enemies : null);
+    if (!pool || !pool.length) return null;
+    var enemyId = pool[state.cycleIndex % pool.length];
     state.cycleIndex++;
-    return enemyId;
+    return clone(enemyId);
   }
 
   function consumeStep(mapId, tileType) {

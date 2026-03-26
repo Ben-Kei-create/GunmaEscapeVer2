@@ -44,6 +44,7 @@ Game.Battle = (function() {
   var gimmickMessage = '';     // queued gimmick message to show
   var gimmickMessageTimer = 0;
   var ritualRuntime = null;
+  var victoryGoldReward = 0;
 
   // Boss dialogue system: queued multi-line dialogue for phase_change/special/victory
   var dialogueQueue = [];      // array of { speaker, text }
@@ -1671,6 +1672,7 @@ Game.Battle = (function() {
     dialogueTimer = 0;
     dialogueSpeaker = '';
     dialogueText = '';
+    victoryGoldReward = 0;
     ritualRuntime = Game.RitualBattles && Game.RitualBattles.createRuntime
       ? (isGroupBattle() ? null : Game.RitualBattles.createRuntime(enemy._enemyId, enemy))
       : null;
@@ -2181,6 +2183,7 @@ Game.Battle = (function() {
         }
         active = false;
         Game.Audio.stopBgm();
+        victoryGoldReward = getTotalEnemyGoldReward() || 50;
         ritualRuntime = null;
         enemyParty = [];
         // Use boss-specific victory BGM if defined
@@ -2190,7 +2193,7 @@ Game.Battle = (function() {
         } else {
           Game.Audio.playSfx('victory');
         }
-        return { result: 'victory', npc: npcRef, goldReward: getTotalEnemyGoldReward() || 50 };
+        return { result: 'victory', npc: npcRef, goldReward: victoryGoldReward };
 
       case 'defeat':
         active = false;

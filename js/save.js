@@ -1,7 +1,7 @@
 // Save system using localStorage + passphrase export
 Game.Save = (function() {
   var MAX_SLOTS = 3;
-  var VERSION = 4;
+  var VERSION = 5;
   var PASSPHRASE_PREFIX = 'GM2';
   var BASE32_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
   var runtime = window.__gunmaSaveRuntime || {
@@ -49,6 +49,7 @@ Game.Save = (function() {
       maxHp: playerData.maxHp,
       attack: playerData.attack,
       defense: playerData.defense,
+      experience: playerData.experience || 0,
       gold: playerData.gold,
       x: playerData.x,
       y: playerData.y,
@@ -213,6 +214,7 @@ Game.Save = (function() {
     playerData.maxHp = savedPlayer.maxHp;
     playerData.attack = savedPlayer.attack;
     playerData.defense = savedPlayer.defense;
+    playerData.experience = savedPlayer.experience || 0;
     playerData.gold = savedPlayer.gold;
     playerData.tileX = savedPlayer.tileX;
     playerData.tileY = savedPlayer.tileY;
@@ -460,6 +462,7 @@ Game.Save = (function() {
         player.maxHp || 0,
         player.attack || 0,
         player.defense || 0,
+        player.experience || 0,
         player.gold || 0,
         player.tileX || 0,
         player.tileY || 0,
@@ -492,10 +495,11 @@ Game.Save = (function() {
     if (!mapName) return null;
 
     var playerData = compact.p;
-    var equippedDice = decodeIdList(playerData[11] || [], itemCatalog);
+    var legacyLayout = !compact.v || compact.v < 5;
+    var equippedDice = decodeIdList(playerData[legacyLayout ? 11 : 12] || [], itemCatalog);
     if (!equippedDice.length) equippedDice = ['normalDice'];
-    var inventory = decodeIdList(playerData[12] || [], itemCatalog);
-    var partyMembers = decodeIdList(playerData[13] || [], partyCatalog);
+    var inventory = decodeIdList(playerData[legacyLayout ? 12 : 13] || [], itemCatalog);
+    var partyMembers = decodeIdList(playerData[legacyLayout ? 13 : 14] || [], partyCatalog);
     var journeyData = compact.j || [];
     var storyFlags = {};
     for (var i = 0; i < (compact.s || []).length; i++) {
@@ -508,7 +512,7 @@ Game.Save = (function() {
       version: compact.v || VERSION,
       savedAt: Date.now(),
       playTime: compact.t || 0,
-      chapter: playerData[9] || 1,
+      chapter: legacyLayout ? (playerData[9] || 1) : (playerData[10] || 1),
       mapName: mapName,
       mapLabel: Game.Maps[mapName] ? Game.Maps[mapName].name : mapName,
       player: {
@@ -516,15 +520,16 @@ Game.Save = (function() {
         maxHp: playerData[1] || 100,
         attack: playerData[2] || 12,
         defense: playerData[3] || 5,
-        gold: playerData[4] || 0,
-        tileX: playerData[5] || 0,
-        tileY: playerData[6] || 0,
-        x: (playerData[5] || 0) * Game.Config.TILE_SIZE,
-        y: (playerData[6] || 0) * Game.Config.TILE_SIZE,
-        direction: directions[playerData[7]] || 'down',
-        diceSlots: playerData[8] || 1,
-        chapter: playerData[9] || 1,
-        armor: playerData[10] >= 0 ? itemCatalog[playerData[10]] : null,
+        experience: legacyLayout ? 0 : (playerData[4] || 0),
+        gold: playerData[legacyLayout ? 4 : 5] || 0,
+        tileX: playerData[legacyLayout ? 5 : 6] || 0,
+        tileY: playerData[legacyLayout ? 6 : 7] || 0,
+        x: (playerData[legacyLayout ? 5 : 6] || 0) * Game.Config.TILE_SIZE,
+        y: (playerData[legacyLayout ? 6 : 7] || 0) * Game.Config.TILE_SIZE,
+        direction: directions[playerData[legacyLayout ? 7 : 8]] || 'down',
+        diceSlots: playerData[legacyLayout ? 8 : 9] || 1,
+        chapter: playerData[legacyLayout ? 9 : 10] || 1,
+        armor: playerData[legacyLayout ? 10 : 11] >= 0 ? itemCatalog[playerData[legacyLayout ? 10 : 11]] : null,
         equippedDice: equippedDice,
         inventory: inventory,
         keyItems: getKeyItemsFromInventory(inventory),

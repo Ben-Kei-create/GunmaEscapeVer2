@@ -169,6 +169,14 @@ Game.Main = (function() {
             if (battleResult.goldReward) {
               Game.Player.addGold(battleResult.goldReward);
             }
+            if (battleResult.expReward) {
+              Game.Player.addExperience(battleResult.expReward);
+            }
+            if (battleResult.itemRewards && battleResult.itemRewards.length) {
+              for (var rewardIndex = 0; rewardIndex < battleResult.itemRewards.length; rewardIndex++) {
+                Game.Player.addItem(battleResult.itemRewards[rewardIndex]);
+              }
+            }
             if (storyBattleContext) {
               var resume = storyBattleContext;
               storyBattleContext = null;
@@ -891,14 +899,21 @@ Game.Main = (function() {
       titleSelection: Game.UI.getTitleSelection ? Game.UI.getTitleSelection() : 0,
       map: mapId,
       mapLabel: mapInfo ? mapInfo.label : '',
+      audio: {
+        requestedBgm: Game.Audio && Game.Audio.getRequestedBgmName ? Game.Audio.getRequestedBgmName() : null,
+        currentBgm: Game.Audio && Game.Audio.getCurrentBgmName ? Game.Audio.getCurrentBgmName() : null
+      },
       player: {
         tileX: pd.tileX,
         tileY: pd.tileY,
         direction: pd.direction,
         hp: pd.hp,
         maxHp: pd.maxHp,
+        experience: pd.experience || 0,
+        journeyRank: Game.Player.getJourneyRank ? Game.Player.getJourneyRank() : 1,
         gold: pd.gold,
-        chapter: pd.chapter
+        chapter: pd.chapter,
+        inventory: (pd.inventory || []).slice()
       },
       journeyLabel: chapterInfo ? chapterInfo.displayLabel : '',
       journeyIndex: chapterInfo ? chapterInfo.journeyIndex : pd.chapter,
@@ -910,6 +925,12 @@ Game.Main = (function() {
       hasAnySave: Game.Save && Game.Save.hasAnySave ? Game.Save.hasAnySave() : false,
       saveMenuContext: Game.SaveMenu && Game.SaveMenu.getContext ? Game.SaveMenu.getContext() : null
     };
+    payload.ui = {
+      showJourneyBadge: Game.UI && Game.UI.isJourneyBadgeEnabled ? Game.UI.isJourneyBadgeEnabled() : true
+    };
+    if (state === Game.Config.STATE.MENU && Game.UI && Game.UI.getFieldMenuDebugState) {
+      payload.menu = Game.UI.getFieldMenuDebugState();
+    }
     if (Game.Encounters && Game.Encounters.getState) {
       payload.encounters = Game.Encounters.getState();
     }

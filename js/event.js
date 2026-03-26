@@ -559,6 +559,40 @@ Game.Event = (function() {
     if (firstScene.sfx) Game.Audio.playSfx(firstScene.sfx);
   }
 
+  function wrapEventText(text, maxChars) {
+    var source = '' + (text || '');
+    var segments = source.split('\n');
+    var lines = [];
+    var punctuation = '、。！？…）)] ';
+
+    for (var s = 0; s < segments.length; s++) {
+      var remaining = segments[s];
+      if (!remaining.length) {
+        lines.push('');
+        continue;
+      }
+      while (remaining.length > 0) {
+        if (remaining.length <= maxChars) {
+          lines.push(remaining);
+          break;
+        }
+        var slice = remaining.substring(0, maxChars);
+        var splitAt = -1;
+        for (var i = slice.length - 1; i >= Math.max(0, slice.length - 8); i--) {
+          if (punctuation.indexOf(slice.charAt(i)) >= 0) {
+            splitAt = i + 1;
+            break;
+          }
+        }
+        if (splitAt <= 0) splitAt = maxChars;
+        lines.push(remaining.substring(0, splitAt));
+        remaining = remaining.substring(splitAt);
+      }
+    }
+
+    return lines.length ? lines : [''];
+  }
+
   function update() {
     if (!active) return null;
 
@@ -675,22 +709,28 @@ Game.Event = (function() {
 
     // Text area - show all previous lines + current line with typewriter
     var textStartY = 80;
-    var lineHeight = 28;
-    var maxDisplayLines = 6;
-    var startLine = Math.max(0, lineIndex - maxDisplayLines + 1);
+    var lineHeight = 24;
+    var maxDisplayLines = 7;
+    var maxCharsPerLine = 22;
+    var visualLines = [];
 
-    for (var i = startLine; i <= lineIndex && i < scene.lines.length; i++) {
-      var y = textStartY + (i - startLine) * lineHeight + shakeOffsetY;
-      var x = 50 + shakeOffsetX;
-
-      if (i < lineIndex) {
-        // Previous lines: full text, slightly dimmed
-        R.drawTextJP(scene.lines[i], x, y, '#aaaacc', 15);
-      } else {
-        // Current line: typewriter effect
-        var displayText = scene.lines[i].substring(0, charIndex);
-        R.drawTextJP(displayText, x, y, '#ffffff', 15);
+    for (var i = 0; i <= lineIndex && i < scene.lines.length; i++) {
+      var lineText = i < lineIndex ? scene.lines[i] : scene.lines[i].substring(0, charIndex);
+      var wrapped = wrapEventText(lineText, maxCharsPerLine);
+      for (var j = 0; j < wrapped.length; j++) {
+        visualLines.push({
+          text: wrapped[j],
+          isCurrent: i === lineIndex
+        });
       }
+    }
+
+    var startVisualLine = Math.max(0, visualLines.length - maxDisplayLines);
+    for (var v = startVisualLine; v < visualLines.length; v++) {
+      var y = textStartY + (v - startVisualLine) * lineHeight + shakeOffsetY;
+      var x = 50 + shakeOffsetX;
+      var visual = visualLines[v];
+      R.drawTextJP(visual.text, x, y, visual.isCurrent ? '#ffffff' : '#aaaacc', 15);
     }
 
     // Bottom decorative line

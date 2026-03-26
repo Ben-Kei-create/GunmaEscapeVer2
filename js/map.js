@@ -17,6 +17,9 @@ Game.Map = (function() {
     if (Game.UI && Game.UI.showAreaBanner) {
       Game.UI.showAreaBanner(currentMapId);
     }
+    if (Game.Audio && Game.Audio.refreshFieldBgm) {
+      Game.Audio.refreshFieldBgm();
+    }
   }
 
   function getCurrentMap() {

@@ -9,6 +9,10 @@ Game.UI = (function() {
   var blinkTimer = 0;
   var minimapVisible = true;
   var titleSelection = 0;
+  var titleSelectionVisual = 0;
+  var titleHighlightFlash = 0;
+  var UI_SETTINGS_KEY = 'gunmaEscape_ui_settings_v1';
+  var uiSettings = loadUiSettings();
   var areaBanner = {
     active: false,
     timer: 0,
@@ -28,6 +32,7 @@ Game.UI = (function() {
     diceEquipIndex: 0,
     diceEquipActive: false,
     armorIndex: 0,
+    settingIndex: 0,
     message: '',
     messageTimer: 0
   };
@@ -35,16 +40,44 @@ Game.UI = (function() {
   // Damage number popups
   var damagePopups = [];
   var titleDescriptions = [
-    'ミニムービーから異界群馬への旅を始める。',
-    '同じ端末に残した記録から旅を再開する。',
-    'あいことばを入力して旅の続きへ戻る。',
-    '旅の到達点と解放状況を確認する。'
+    '県境の向こうへ、最初の一歩を踏み出す。',
+    '残した記録から旅を再開する。',
+    'あいことばで旅の続きへ戻る。',
+    '実績と解放状況を確認する。'
   ];
   var minimapColors = {
     0: '#2a5a1f', 1: '#8a7a4a', 2: '#2244aa', 3: '#444',
     4: '#1a3a0e', 5: '#6699aa', 6: '#4a7a3a', 7: '#882222',
     8: '#6a4a0a', 9: '#6a5a4a'
   };
+
+  function getDefaultUiSettings() {
+    return {
+      showJourneyBadge: true
+    };
+  }
+
+  function loadUiSettings() {
+    var defaults = getDefaultUiSettings();
+    try {
+      var raw = localStorage.getItem(UI_SETTINGS_KEY);
+      if (!raw) return defaults;
+      var parsed = JSON.parse(raw);
+      return {
+        showJourneyBadge: parsed.showJourneyBadge !== false
+      };
+    } catch (err) {
+      return defaults;
+    }
+  }
+
+  function saveUiSettings() {
+    try {
+      localStorage.setItem(UI_SETTINGS_KEY, JSON.stringify(uiSettings));
+    } catch (err) {
+      // Ignore storage errors and keep runtime state.
+    }
+  }
 
   function getChapterInfo() {
     var pd = Game.Player && Game.Player.getData ? Game.Player.getData() : null;
@@ -104,6 +137,14 @@ Game.UI = (function() {
     return text.substring(0, Math.max(0, maxChars - 1)) + '…';
   }
 
+  function getItemTypeLabel(type) {
+    if (type === 'heal') return '回復';
+    if (type === 'dice') return 'サイコロ';
+    if (type === 'armor') return '防具';
+    if (type === 'key') return 'だいじなもの';
+    return '持ち物';
+  }
+
   function drawMountainLayer(ctx, points, color) {
     ctx.fillStyle = color;
     ctx.beginPath();
@@ -128,130 +169,236 @@ Game.UI = (function() {
     ctx.fillRect(x + 6, y + h - 10, Math.max(8, w - 12), 2);
   }
 
-  function wrapTextSmart(text, maxChars, maxLines) {
+  function drawInsetPanel(x, y, w, h, title, accent, titleColor) {
+    var R = Game.Renderer;
+    var color = accent || '#7d8fb8';
+    R.drawRectAbsolute(x, y, w, h, 'rgba(255,255,255,0.035)');
+    R.drawRectAbsolute(x, y, w, 1, color);
+    R.drawRectAbsolute(x, y + h - 1, w, 1, 'rgba(255,255,255,0.08)');
+    R.drawRectAbsolute(x, y, 1, h, 'rgba(255,255,255,0.05)');
+    if (title) {
+      Game.Renderer.drawTextJP(title, x + 8, y + 5, titleColor || color, 10);
+    }
+  }
+
+  function drawWrappedLines(lines, x, y, lineHeight, color, size) {
+    var R = Game.Renderer;
+    for (var i = 0; i < lines.length; i++) {
+      R.drawTextJP(lines[i], x, y + i * lineHeight, color, size);
+    }
+  }
+
+  function drawWrappedTextBlock(text, x, y, maxChars, maxLines, lineHeight, color, size) {
+    drawWrappedLines(wrapTextSmart(text || '', maxChars, maxLines), x, y, lineHeight, color, size);
+  }
+
+  function splitWrappedLines(text, maxChars) {
+    var source = '' + (text || '');
+    var segments = source.split('\n');
     var lines = [];
-    var remaining = text || '';
     var punctuation = '、。！？…）)] ';
-    while (remaining.length > 0 && lines.length < maxLines) {
-      if (remaining.length <= maxChars) {
-        lines.push(remaining);
-        break;
+
+    for (var s = 0; s < segments.length; s++) {
+      var remaining = segments[s];
+      if (!remaining.length) {
+        lines.push('');
+        continue;
       }
-      var slice = remaining.substring(0, maxChars);
-      var splitAt = -1;
-      for (var i = slice.length - 1; i >= Math.max(0, slice.length - 8); i--) {
-        if (punctuation.indexOf(slice.charAt(i)) >= 0) {
-          splitAt = i + 1;
+      while (remaining.length > 0) {
+        if (remaining.length <= maxChars) {
+          lines.push(remaining);
           break;
         }
+        var slice = remaining.substring(0, maxChars);
+        var splitAt = -1;
+        for (var i = slice.length - 1; i >= Math.max(0, slice.length - 8); i--) {
+          if (punctuation.indexOf(slice.charAt(i)) >= 0) {
+            splitAt = i + 1;
+            break;
+          }
+        }
+        if (splitAt <= 0) splitAt = maxChars;
+        lines.push(remaining.substring(0, splitAt));
+        remaining = remaining.substring(splitAt);
       }
-      if (splitAt <= 0) splitAt = maxChars;
-      lines.push(remaining.substring(0, splitAt));
-      remaining = remaining.substring(splitAt);
     }
-    if (remaining.length > 0 && lines.length) {
+
+    return lines.length ? lines : [''];
+  }
+
+  function wrapTextSmart(text, maxChars, maxLines) {
+    var allLines = splitWrappedLines(text, maxChars);
+    if (allLines.length <= maxLines) return allLines;
+
+    var lines = allLines.slice(0, maxLines);
+    var remaining = allLines.slice(maxLines).join('');
+    if (lines.length) {
       lines[lines.length - 1] = clampText(lines[lines.length - 1] + remaining, maxChars);
     }
     return lines;
+  }
+
+  function paginateDialogText(text, maxChars, maxLines) {
+    var allLines = splitWrappedLines(text, maxChars);
+    var pages = [];
+    for (var i = 0; i < allLines.length; i += maxLines) {
+      pages.push(allLines.slice(i, i + maxLines).join('\n'));
+    }
+    return pages.length ? pages : [''];
   }
 
   function drawJourneyTracker(x, y, chapterInfo) {
     var R = Game.Renderer;
     var current = chapterInfo.journeyIndex || chapterInfo.number || 1;
     var total = chapterInfo.journeyCount || (Game.Chapters && Game.Chapters.getJourneyCount ? Game.Chapters.getJourneyCount() : 7);
-    R.drawDialogBox(x, y, 180, 18);
-    drawPanelAccent(x, y, 180, 18, chapterInfo.accent || Game.Config.COLORS.GOLD);
-    R.drawTextJP('旅路', x + 8, y + 4, '#aac6ff', 9);
-    var spacing = total <= 7 ? 18 : 13;
+    var width = 104;
+    var height = 16;
+    R.drawRectAbsolute(x, y, width, height, 'rgba(7, 11, 24, 0.82)');
+    R.drawRectAbsolute(x, y, width, 1, 'rgba(255,255,255,0.08)');
+    R.drawRectAbsolute(x, y + height - 1, width, 1, 'rgba(255,255,255,0.06)');
+    R.drawTextJP('進行', x + 6, y + 4, '#9eb7ea', 8);
+    var spacing = total <= 7 ? 8 : 6;
+    var startX = x + 26;
     for (var i = 0; i < total; i++) {
-      var px = x + 36 + i * spacing;
+      var px = startX + i * spacing;
       var color = '#273349';
       if (i + 1 < current) color = 'rgba(255,255,255,0.35)';
       if (i + 1 === current) color = chapterInfo.accent || Game.Config.COLORS.GOLD;
-      R.drawRectAbsolute(px, y + 5, 12, 7, color);
+      R.drawRectAbsolute(px, y + 6, 5, 4, color);
     }
-    R.drawTextJP(current + '/' + total, x + 150, y + 4, '#fff', 9);
+    R.drawTextJP(current + '/' + total, x + width - 7, y + 4, '#fff', 8, 'right');
   }
 
   function drawTitleScreen() {
     var R = Game.Renderer;
     var C = Game.Config;
     var ctx = R.getContext();
-    var journeyStops = Game.Chapters && Game.Chapters.getJourneyStops ? Game.Chapters.getJourneyStops() : [];
 
     R.clear('#060813');
     titleTimer++;
+    titleSelectionVisual += (titleSelection - titleSelectionVisual) * 0.24;
+    if (Math.abs(titleSelectionVisual - titleSelection) < 0.01) {
+      titleSelectionVisual = titleSelection;
+    }
+    if (titleHighlightFlash > 0) titleHighlightFlash--;
 
-    ctx.fillStyle = '#0b1226';
+    ctx.fillStyle = '#09101f';
     ctx.fillRect(0, 0, C.CANVAS_WIDTH, C.CANVAS_HEIGHT);
-    ctx.fillStyle = 'rgba(255, 196, 92, 0.035)';
-    ctx.fillRect(62, 0, 36, 150);
-    ctx.fillRect(388, 0, 24, 130);
-    ctx.fillStyle = 'rgba(255,255,255,0.06)';
-    for (var s = 0; s < 24; s++) {
-      var sx = (s * 37 + titleTimer * 0.2) % C.CANVAS_WIDTH;
-      var sy = 18 + (s * 29 % 110);
+    ctx.fillStyle = '#101a33';
+    ctx.fillRect(0, 0, C.CANVAS_WIDTH, 116);
+    ctx.fillStyle = 'rgba(255,255,255,0.05)';
+    for (var s = 0; s < 26; s++) {
+      var sx = (s * 31 + titleTimer * 0.22) % C.CANVAS_WIDTH;
+      var sy = 14 + (s * 23 % 96);
       ctx.fillRect(sx, sy, 2, 2);
     }
 
-    drawMountainLayer(ctx, [[0, 178], [46, 152], [102, 168], [165, 132], [236, 171], [314, 126], [392, 162], [480, 146]], '#0d1730');
-    drawMountainLayer(ctx, [[0, 214], [54, 184], [120, 202], [196, 168], [256, 212], [332, 174], [420, 198], [480, 180]], '#132146');
-    drawMountainLayer(ctx, [[0, 250], [74, 228], [138, 240], [224, 214], [302, 250], [366, 222], [430, 236], [480, 224]], '#18284f');
+    drawMountainLayer(ctx, [[0, 176], [46, 150], [102, 166], [165, 130], [236, 170], [314, 126], [392, 160], [480, 144]], '#0d1730');
+    drawMountainLayer(ctx, [[0, 206], [54, 180], [120, 198], [196, 164], [256, 208], [332, 172], [420, 194], [480, 178]], '#132146');
+    drawMountainLayer(ctx, [[0, 234], [74, 216], [138, 232], [224, 206], [302, 234], [366, 216], [430, 228], [480, 218]], '#18284f');
 
     ctx.strokeStyle = 'rgba(129,145,201,0.18)';
     ctx.lineWidth = 1;
-    for (var gy = 18; gy < 250; gy += 42) {
+    for (var gy = 18; gy < 224; gy += 42) {
       ctx.beginPath();
       ctx.moveTo(0, gy);
       ctx.lineTo(C.CANVAS_WIDTH, gy);
       ctx.stroke();
     }
 
-    var yOff = Math.sin(titleTimer / 30) * 3;
+    // Perspective road toward the border gate
+    ctx.fillStyle = '#111726';
+    ctx.beginPath();
+    ctx.moveTo(166, 320);
+    ctx.lineTo(314, 320);
+    ctx.lineTo(266, 166);
+    ctx.lineTo(214, 166);
+    ctx.closePath();
+    ctx.fill();
 
-    R.drawRectAbsolute(34, 34, 140, 1, 'rgba(255,204,51,0.38)');
-    R.drawRectAbsolute(306, 34, 140, 1, 'rgba(255,204,51,0.38)');
-    R.drawTextJP('異界ロードムービーRPG', 160, 28, '#8fb8ff', 10);
-    R.drawTextJP('群馬県からの脱出', 87, 48 + yOff, C.COLORS.GOLD, 28);
-    R.drawTextJP('Escape from Gunma', 154, 82 + yOff, '#c6d0ff', 13);
+    ctx.fillStyle = '#1a2338';
+    ctx.fillRect(0, 236, C.CANVAS_WIDTH, 84);
 
-    R.drawTextJP('群馬の深部へ進み、仲間と記憶を取り戻せ。', 85, 110, '#eef2ff', 11);
-    R.drawTextJP('シュールなご当地異界と、土地に残る誇りと悲哀を辿る濃密な6章+終章。', 34, 126, '#9aa6c8', 9);
-
-    R.drawDialogBox(42, 146, 396, 34);
-    drawPanelAccent(42, 146, 396, 34, '#8fb8ff');
-    R.drawTextJP('旅の節目', 56, 151, '#8fb8ff', 10);
-    for (var ci = 0; ci < journeyStops.length; ci++) {
-      var cx = 116 + ci * 42;
-      var pulse = (titleTimer + ci * 5) % 80;
-      var fill = pulse < 42 ? 'rgba(255,204,51,0.18)' : 'rgba(255,255,255,0.05)';
-      R.drawRectAbsolute(cx, 150, 28, 10, fill);
-      R.drawTextJP(journeyStops[ci].shortLabel, cx + 3, 164, ci < 4 ? '#ffe18b' : '#d1d8ff', 8);
+    ctx.fillStyle = '#f1c76d';
+    for (var mark = 0; mark < 6; mark++) {
+      var markY = 282 - mark * 24 + (titleTimer % 2);
+      var markW = 10 + mark * 5;
+      ctx.fillRect(240 - Math.floor(markW / 2), markY, markW, 6);
     }
+
+    // Border gate silhouette
+    ctx.fillStyle = '#0a1020';
+    ctx.fillRect(190, 140, 10, 42);
+    ctx.fillRect(280, 140, 10, 42);
+    ctx.fillRect(176, 138, 128, 8);
+    ctx.fillRect(202, 150, 76, 20);
+    ctx.fillStyle = '#4f1224';
+    ctx.fillRect(204, 152, 72, 16);
+    ctx.fillStyle = '#f04d64';
+    var gateBlink = (titleTimer % 50) < 24 ? '#ff6c7e' : '#8b263b';
+    ctx.fillStyle = gateBlink;
+    ctx.fillRect(214, 156, 8, 8);
+    ctx.fillRect(258, 156, 8, 8);
+    ctx.fillStyle = '#dcdfe9';
+    ctx.fillRect(190, 176, 100, 3);
+    ctx.fillStyle = '#b4364d';
+    ctx.fillRect(194, 176, 12, 3);
+    ctx.fillRect(214, 176, 12, 3);
+    ctx.fillRect(234, 176, 12, 3);
+    ctx.fillRect(254, 176, 12, 3);
+
+    // Small traveler silhouette
+    ctx.fillStyle = '#d5ddf0';
+    ctx.fillRect(237, 252, 6, 8);
+    ctx.fillRect(235, 260, 10, 8);
+    ctx.fillStyle = '#7f8fb6';
+    ctx.fillRect(236, 268, 3, 9);
+    ctx.fillRect(241, 268, 3, 9);
+
+    var yOff = Math.sin(titleTimer / 30) * 2;
+    R.drawRectAbsolute(74, 28, 96, 1, 'rgba(255,204,51,0.28)');
+    R.drawRectAbsolute(310, 28, 96, 1, 'rgba(255,204,51,0.28)');
+    R.drawTextJP('異界ロードムービーRPG', 240, 22, '#8fb8ff', 10, 'center');
+    R.drawTextJP('群馬県からの脱出', 240, 42 + yOff, C.COLORS.GOLD, 28, 'center');
+    R.drawTextJP('Escape from Gunma', 240, 78 + yOff, '#c6d0ff', 12, 'center');
+    R.drawTextJP('境界を越え、異界群馬から抜け出せ。', 240, 108, '#eef2ff', 11, 'center');
 
     // Menu selection
     blinkTimer++;
     var menuOptions = ['はじめから', 'つづきから', 'あいことば', '実績'];
     var hasSave = Game.Save && Game.Save.hasAnySave && Game.Save.hasAnySave();
-    R.drawDialogBox(148, 188, 184, 92);
-    drawPanelAccent(148, 188, 184, 92, Game.Config.COLORS.GOLD);
+    var menuX = 148;
+    var menuY = 176;
+    R.drawDialogBox(menuX, menuY, 184, 92);
+    drawPanelAccent(menuX, menuY, 184, 92, Game.Config.COLORS.GOLD);
+    var highlightY = menuY + 14 + titleSelectionVisual * 18;
+    var pulse = (Math.sin(titleTimer / 7) + 1) * 0.5;
+    var flash = titleHighlightFlash / 8;
+    var arrowOffset = Math.sin(titleTimer / 5) * 2;
+    ctx.fillStyle = 'rgba(255, 204, 0, ' + (0.1 + pulse * 0.07 + flash * 0.12).toFixed(3) + ')';
+    ctx.fillRect(menuX + 22, highlightY - 2, 136, 16);
+    ctx.fillStyle = 'rgba(255, 247, 200, ' + (0.08 + pulse * 0.06 + flash * 0.1).toFixed(3) + ')';
+    ctx.fillRect(menuX + 22 + ((titleTimer * 3) % 124), highlightY - 2, 12, 16);
+    R.drawRectAbsolute(menuX + 22, highlightY - 2, 136, 1, 'rgba(255,220,120,0.55)');
+    R.drawRectAbsolute(menuX + 22, highlightY + 13, 136, 1, 'rgba(255,255,255,0.1)');
+    R.drawRectAbsolute(menuX + 20, highlightY + 4, 6, 6, Game.Config.COLORS.GOLD);
+    R.drawRectAbsolute(menuX + 18 + Math.round(arrowOffset), highlightY + 6, 2, 2, '#fff4c6');
     for (var mi = 0; mi < menuOptions.length; mi++) {
-      var myy = 203 + mi * 18;
+      var myy = menuY + 15 + mi * 18;
       var selected = (mi === titleSelection);
       var col = '#fff';
       if (mi === 1 && !hasSave) col = '#555';
       if (selected) col = Game.Config.COLORS.GOLD;
       if (selected) {
-        R.drawRectAbsolute(172, myy - 1, 132, 15, 'rgba(255,204,0,0.12)');
+        R.drawTextJP(menuOptions[mi], 240, myy + 1, 'rgba(12,18,36,0.9)', 13, 'center');
       }
-      var pre = selected ? '▶ ' : '  ';
-      R.drawTextJP(pre + menuOptions[mi], 184, myy, col, 13);
+      R.drawTextJP(menuOptions[mi], 240, myy, col, selected ? 14 : 13, 'center');
     }
 
-    R.drawDialogBox(96, 286, 288, 22);
-    drawPanelAccent(96, 286, 288, 22, '#6e7ea7');
-    R.drawTextJP(titleDescriptions[titleSelection] || '', 108, 291, '#dbe5ff', 9);
-    R.drawTextJP('矢印/WASD: 移動  Z/Enter: 決定  X/Esc: メニュー  M: ミュート', 56, 312, '#616c8a', 9);
+    R.drawDialogBox(108, 278, 264, 18);
+    drawPanelAccent(108, 278, 264, 18, '#6e7ea7');
+    R.drawTextJP(titleDescriptions[titleSelection] || '', 240, 282, '#dbe5ff', 8, 'center');
+    R.drawTextJP('矢印/WASD: 移動  Z/Enter: 決定  X/Esc: メニュー', 240, 306, '#616c8a', 8, 'center');
 
     R.drawText('v2.1', 430, 318, '#444', 10);
   }
@@ -264,8 +411,6 @@ Game.UI = (function() {
     var mapInfo = getMapInfo();
     var journeyState = getJourneyState();
     var accent = chapterInfo.accent || Game.Config.COLORS.GOLD;
-    var objective = clampText(getCurrentObjective(), 30);
-    var hint = mapInfo && mapInfo.hint ? clampText(mapInfo.hint, 34) : clampText(chapterInfo.hint, 34);
 
     if (map) {
       R.drawDialogBox(5, 5, 176, 34);
@@ -277,7 +422,9 @@ Game.UI = (function() {
       }
     }
 
-    drawJourneyTracker(184, 5, chapterInfo);
+    if (uiSettings.showJourneyBadge) {
+      drawJourneyTracker(194, 7, chapterInfo);
+    }
 
     R.drawDialogBox(Game.Config.CANVAS_WIDTH - 110, 5, 105, 38);
     drawPanelAccent(Game.Config.CANVAS_WIDTH - 110, 5, 105, 38, '#8fb8ff');
@@ -294,29 +441,6 @@ Game.UI = (function() {
     R.drawRectAbsolute(Game.Config.CANVAS_WIDTH - 76, 23, 60, 6, '#243147');
     R.drawRectAbsolute(Game.Config.CANVAS_WIDTH - 76, 23, 60 * respectRatio, 6, '#ffd66b');
     R.drawText(Math.min(respectGauge, 999), Game.Config.CANVAS_WIDTH - 17, 30, '#ffe08f', 8, 'right');
-
-    R.drawDialogBox(5, Game.Config.CANVAS_HEIGHT - 41, 296, 36);
-    drawPanelAccent(5, Game.Config.CANVAS_HEIGHT - 41, 296, 36, accent);
-    R.drawTextJP('目的', 12, Game.Config.CANVAS_HEIGHT - 36, accent, 10);
-    R.drawTextJP(objective, 44, Game.Config.CANVAS_HEIGHT - 36, '#fff', 10);
-    R.drawTextJP(hint, 12, Game.Config.CANVAS_HEIGHT - 22, '#9fb0d6', 9);
-
-    var partyMembers = getPartyMembers();
-    var maxPartyMembers = Game.Player && Game.Player.getMaxPartyMembers ? Game.Player.getMaxPartyMembers() : 3;
-    R.drawDialogBox(307, Game.Config.CANVAS_HEIGHT - 41, 168, 36);
-    drawPanelAccent(307, Game.Config.CANVAS_HEIGHT - 41, 168, 36, '#8fe0ff');
-    var catalystCount = (journeyState.catalysts && journeyState.catalysts.length) || 0;
-    R.drawTextJP('同行 ' + partyMembers.length + '/' + maxPartyMembers, 314, Game.Config.CANVAS_HEIGHT - 36, '#8fe0ff', 10);
-    R.drawTextJP('触媒 ' + catalystCount, 420, Game.Config.CANVAS_HEIGHT - 36, '#9ed7ff', 8, 'right');
-    if (!partyMembers.length) {
-      R.drawTextJP('ひとり旅', 314, Game.Config.CANVAS_HEIGHT - 22, '#7f8aa8', 9);
-    } else {
-      for (var pi = 0; pi < Math.min(3, partyMembers.length); pi++) {
-        var member = partyMembers[pi];
-        R.drawRectAbsolute(314 + pi * 52, Game.Config.CANVAS_HEIGHT - 19, 4, 4, member.color || '#d7e6ff');
-        R.drawTextJP(member.name, 314 + pi * 52, Game.Config.CANVAS_HEIGHT - 22, member.color || '#d7e6ff', 9);
-      }
-    }
   }
 
   function drawDialog(text) {
@@ -359,45 +483,84 @@ Game.UI = (function() {
     var mapInfo = getMapInfo();
     var map = Game.Map.getCurrentMap();
     var journeyState = getJourneyState();
+    var accent = chapterInfo.accent || C.COLORS.GOLD;
+    var boxX = 50;
+    var boxY = 12;
+    var boxW = 380;
+    var boxH = 296;
+    var leftCardX = 70;
+    var rightCardX = 250;
+    var cardY = 60;
+    var cardW = 160;
+    var cardH = 70;
+    var infoX = 70;
+    var infoY = 138;
+    var infoW = 340;
+    var infoH = 56;
+    var tabX = 70;
+    var tabY = 194;
+    var tabW = 85;
+    var contentY = 222;
+    var listX = 70;
+    var listW = 142;
+    var detailX = 222;
+    var detailW = 186;
+    var contentH = 62;
+    var partyMembers = getPartyMembers();
+    var partyText = partyMembers.length ? partyMembers.map(function(member) { return member.name; }).join(' / ') : 'ひとり旅';
+    var currentMapLabel = (mapInfo && mapInfo.label) || (map && map.name) || '不明';
+    var aName = pd.armor ? Game.Items.get(pd.armor).name : 'なし';
+    var respectValue = journeyState.respectGauge || 0;
+    var respectRatio = Math.max(0, Math.min(1, respectValue / 100));
+    var currentJourney = chapterInfo.journeyIndex || chapterInfo.number || 1;
+    var totalJourney = chapterInfo.journeyCount || (Game.Chapters && Game.Chapters.getJourneyCount ? Game.Chapters.getJourneyCount() : 7);
 
     R.drawRectAbsolute(0, 0, C.CANVAS_WIDTH, C.CANVAS_HEIGHT, 'rgba(4, 6, 18, 0.5)');
-    R.drawDialogBox(100, 30, 280, 260);
-    drawPanelAccent(100, 30, 280, 260, chapterInfo.accent || C.COLORS.GOLD);
-    R.drawTextJP(chapterInfo.act + ' / ' + chapterInfo.displayLabel + ' ' + chapterInfo.title, 240, 38, chapterInfo.accent || C.COLORS.GOLD, 12, 'center');
-    R.drawTextJP(chapterInfo.subtitle, 240, 52, '#cfd7f2', 9, 'center');
+    R.drawDialogBox(boxX, boxY, boxW, boxH);
+    drawPanelAccent(boxX, boxY, boxW, boxH, accent);
+    R.drawTextJP(chapterInfo.act + ' / ' + chapterInfo.displayLabel + ' ' + chapterInfo.title, 240, 20, accent, 13, 'center');
+    R.drawTextJP(clampText(chapterInfo.subtitle || ((mapInfo && mapInfo.subtitle) || ''), 24), 240, 38, '#cfd7f2', 9, 'center');
+    R.drawRectAbsolute(68, 54, 344, 1, '#33415f');
 
-    // Stats
-    R.drawTextJP('HP: ' + pd.hp + '/' + pd.maxHp, 120, 68, '#fff', 13);
-    R.drawRectAbsolute(120, 78, 108, 8, '#273349');
-    R.drawRectAbsolute(121, 79, Math.max(0, Math.floor(106 * (pd.hp / pd.maxHp))), 6, pd.hp / pd.maxHp > 0.3 ? C.COLORS.HP_GREEN : C.COLORS.HP_RED);
-    R.drawTextJP('防御力: ' + Game.Player.getDefense(), 120, 90, '#fff', 13);
-    R.drawTextJP('所持金: ' + pd.gold + 'G', 120, 106, '#ffdd44', 13);
-    var aName = pd.armor ? Game.Items.get(pd.armor).name : 'なし';
-    R.drawTextJP('防具: ' + aName, 258, 90, '#aaa', 11);
-    R.drawTextJP('敬意: ' + (journeyState.respectGauge || 0), 258, 106, '#ffe08f', 11);
-    R.drawTextJP('触媒: ' + ((journeyState.catalysts && journeyState.catalysts.length) || 0), 258, 120, '#9ed7ff', 11);
-    R.drawRectAbsolute(258, 136, 92, 6, '#273349');
-    R.drawRectAbsolute(259, 137, Math.max(0, Math.floor(90 * Math.min(1, (journeyState.respectGauge || 0) / 100))), 4, '#ffd66b');
-    R.drawTextJP('現在地: ' + ((mapInfo && mapInfo.label) || (map && map.name) || '不明'), 120, 124, '#8fb8ff', 10);
-    var partyMembers = getPartyMembers();
-    var partyText = partyMembers.length ? partyMembers.map(function(member) { return member.name; }).join(' / ') : 'なし';
-    R.drawTextJP('同行: ' + clampText(partyText, 18), 120, 138, '#8fe0ff', 10);
-    R.drawTextJP('目標: ' + clampText(getCurrentObjective(), 22), 120, 152, '#dce6ff', 10);
-    R.drawRectAbsolute(120, 166, 240, 1, '#374767');
+    drawInsetPanel(leftCardX, cardY, cardW, cardH, '旅人の状態', accent, accent);
+    R.drawTextJP('HP', leftCardX + 10, cardY + 20, '#dfe8ff', 10);
+    R.drawTextJP(pd.hp + '/' + pd.maxHp, leftCardX + 42, cardY + 18, '#ffffff', 13);
+    R.drawRectAbsolute(leftCardX + 10, cardY + 36, 118, 8, '#273349');
+    R.drawRectAbsolute(leftCardX + 11, cardY + 37, Math.max(0, Math.floor(116 * (pd.hp / pd.maxHp))), 6, pd.hp / pd.maxHp > 0.3 ? C.COLORS.HP_GREEN : C.COLORS.HP_RED);
+    R.drawTextJP('防御', leftCardX + 10, cardY + 50, '#8fb8ff', 10);
+    R.drawTextJP('' + Game.Player.getDefense(), leftCardX + 46, cardY + 48, '#ffffff', 11);
+    R.drawTextJP('所持金', leftCardX + 88, cardY + 50, '#ffdd44', 10);
+    R.drawTextJP(pd.gold + 'G', leftCardX + 126, cardY + 48, '#ffdd44', 11, 'right');
+
+    drawInsetPanel(rightCardX, cardY, cardW, cardH, '補助情報', '#8fe0ff', '#8fe0ff');
+    R.drawTextJP('進行 ' + currentJourney + '/' + totalJourney, rightCardX + 148, cardY + 6, '#9ed7ff', 8, 'right');
+    R.drawTextJP('防具', rightCardX + 10, cardY + 20, '#9ed7ff', 10);
+    R.drawTextJP(clampText(aName, 10), rightCardX + 46, cardY + 18, '#ffffff', 11);
+    R.drawTextJP('触媒', rightCardX + 102, cardY + 20, '#9ed7ff', 10);
+    R.drawTextJP('' + (((journeyState.catalysts && journeyState.catalysts.length) || 0)), rightCardX + 144, cardY + 18, '#ffffff', 11, 'right');
+    R.drawTextJP('同行', rightCardX + 10, cardY + 36, '#8fe0ff', 10);
+    R.drawTextJP(clampText(partyText, 16), rightCardX + 46, cardY + 34, '#d7e6ff', 9);
+    R.drawTextJP('敬意', rightCardX + 10, cardY + 50, '#ffe08f', 10);
+    R.drawTextJP('' + respectValue, rightCardX + 144, cardY + 48, '#ffe08f', 11, 'right');
+
+    drawInsetPanel(infoX, infoY, infoW, infoH, '現在地 / 目標', '#7d8fb8', '#8fb8ff');
+    R.drawTextJP('現在地', infoX + 10, infoY + 17, '#8fb8ff', 10);
+    R.drawTextJP(clampText(currentMapLabel, 18), infoX + 52, infoY + 17, '#ffffff', 10);
+    R.drawTextJP('目標', infoX + 10, infoY + 29, '#8fb8ff', 10);
+    drawWrappedTextBlock(getCurrentObjective(), infoX + 52, infoY + 29, 18, 3, 9, '#dce6ff', 9);
 
     // Tabs
-    var tabs = ['もちもの', 'サイコロ', 'ぼうぐ'];
-    var tabX = 120;
+    var tabs = ['もちもの', 'サイコロ', 'ぼうぐ', 'せってい'];
     for (var t = 0; t < tabs.length; t++) {
-      var tx = tabX + t * 76;
       var activeTab = (fieldMenuState.section === t);
-      R.drawRectAbsolute(tx, 172, 68, 18, activeTab ? 'rgba(255,204,0,0.16)' : 'rgba(255,255,255,0.06)');
+      var tx = tabX + t * tabW;
+      R.drawRectAbsolute(tx, tabY, tabW - 8, 20, activeTab ? 'rgba(255,204,0,0.16)' : 'rgba(255,255,255,0.06)');
       if (activeTab) {
-        R.drawRectAbsolute(tx + 4, 174, 60, 1, chapterInfo.accent || C.COLORS.GOLD);
+        R.drawRectAbsolute(tx + 6, tabY + 3, tabW - 20, 1, accent);
       }
-      R.drawTextJP(tabs[t], tx + 8, 176, activeTab ? C.COLORS.GOLD : '#aaa', 11);
+      R.drawTextJP(tabs[t], tx + 12, tabY + 5, activeTab ? C.COLORS.GOLD : '#b5bfd8', 11);
     }
-    R.drawRectAbsolute(120, 194, 240, 1, '#446');
+    R.drawRectAbsolute(70, 218, 338, 1, '#446');
 
     switch (fieldMenuState.section) {
       case 0:
@@ -409,26 +572,34 @@ Game.UI = (function() {
       case 2:
         drawArmorMenuSection(R, C, pd);
         break;
+      case 3:
+        drawSettingsSection(R, C);
+        break;
     }
 
-    if (fieldMenuState.messageTimer > 0 && fieldMenuState.message) {
-      R.drawDialogBox(120, 252, 240, 18);
-      drawPanelAccent(120, 252, 240, 18, '#8fb8ff');
-      R.drawTextJP(fieldMenuState.message, 126, 255, '#fff', 10);
-    }
-
-    var sectionHints = ['使う・捨てるで持ち物を整理', '旅路に合わせてサイコロを組み替える', '防具で守りを整える'];
-    R.drawTextJP(sectionHints[fieldMenuState.section], 120, 272, '#9aa7c9', 9);
-    R.drawTextJP('←→: 切替  Z/Space: 決定  X: 戻る', 258, 272, '#888', 10, 'center');
+    var sectionHints = ['使う・捨てるで持ち物を整理', '役目に応じてサイコロを組み替える', '防具で守りを整える', '表示の見え方を切り替える'];
+    var footerText = fieldMenuState.messageTimer > 0 && fieldMenuState.message
+      ? clampText(fieldMenuState.message, 40)
+      : sectionHints[fieldMenuState.section];
+    R.drawTextJP(footerText, 72, 286, fieldMenuState.messageTimer > 0 ? '#ffffff' : '#9aa7c9', 9);
+    R.drawTextJP('←→ 切替  ↑↓ 選択  Z/Space 決定  X 戻る', 240, 296, '#6f7c9d', 8, 'center');
   }
 
   function drawItemMenuSection(R, C, pd) {
-    var visibleItems = 6;
-    var areaY = 200;
-    R.drawTextJP('持ち物:', 120, areaY, C.COLORS.GOLD, 12);
+    var listX = 70;
+    var detailX = 222;
+    var panelY = 222;
+    var listW = 142;
+    var detailW = 186;
+    var panelH = 62;
+    var visibleItems = 4;
+
+    drawInsetPanel(listX, panelY, listW, panelH, '持ち物 ' + pd.inventory.length, C.COLORS.GOLD, C.COLORS.GOLD);
+    drawInsetPanel(detailX, panelY, detailW, panelH, fieldMenuState.commandActive ? '操作' : '詳細', '#8fb8ff', '#8fb8ff');
 
     if (pd.inventory.length === 0) {
-      R.drawTextJP('（なし）', 140, areaY + 18, '#888', 11);
+      R.drawTextJP('（なし）', listX + 44, panelY + 26, '#888', 11);
+      R.drawTextJP('拾った品はここで整理する。', detailX + 10, panelY + 20, '#9aa7c9', 10);
       return;
     }
 
@@ -437,111 +608,161 @@ Game.UI = (function() {
     for (var i = scrollOffset; i < pd.inventory.length && i < scrollOffset + visibleItems; i++) {
       var item = Game.Items.get(pd.inventory[i]);
       var name = item ? item.name : pd.inventory[i];
-      var iy = areaY + 18 + (i - scrollOffset) * 16;
+      var iy = panelY + 18 + (i - scrollOffset) * 11;
       var selected = (i === fieldMenuState.itemIndex);
-      var prefix = selected ? '▶ ' : '・';
-      R.drawTextJP(prefix + name, 130, iy, selected ? C.COLORS.GOLD : '#fff', 11);
+      if (selected) {
+        R.drawRectAbsolute(listX + 6, iy - 1, listW - 12, 11, 'rgba(255,204,0,0.12)');
+      }
+      R.drawTextJP((selected ? '▶ ' : '  ') + clampText(name, 9), listX + 10, iy, selected ? C.COLORS.GOLD : '#fff', 10);
     }
 
     var selectedId = pd.inventory[fieldMenuState.itemIndex];
     var selectedItem = selectedId ? Game.Items.get(selectedId) : null;
-    if (selectedItem) {
-      R.drawRectAbsolute(120, 244, 240, 1, '#446');
-      R.drawTextJP(selectedItem.desc || '説明なし', 122, 248, '#aaa', 10);
+    if (!selectedItem) return;
+
+    if (fieldMenuState.commandActive) {
+      var commands = getFieldMenuCommands(selectedItem);
+      for (var ci = 0; ci < commands.length; ci++) {
+        var cy = panelY + 18 + ci * 12;
+        var cSelected = (ci === fieldMenuState.commandIndex);
+        if (cSelected) {
+          R.drawRectAbsolute(detailX + 8, cy - 1, detailW - 16, 11, 'rgba(143,224,255,0.1)');
+        }
+        R.drawTextJP((cSelected ? '▶ ' : '  ') + commands[ci], detailX + 12, cy, cSelected ? C.COLORS.GOLD : '#fff', 10);
+      }
+      return;
     }
 
-    if (fieldMenuState.commandActive && selectedItem) {
-      var commands = getFieldMenuCommands(selectedItem);
-      R.drawDialogBox(272, 204, 88, commands.length * 18 + 12);
-      for (var ci = 0; ci < commands.length; ci++) {
-        var cSelected = (ci === fieldMenuState.commandIndex);
-        var cPrefix = cSelected ? '▶ ' : '  ';
-        R.drawTextJP(cPrefix + commands[ci], 282, 212 + ci * 18, cSelected ? C.COLORS.GOLD : '#fff', 11);
-      }
-    }
+    R.drawTextJP(selectedItem.name, detailX + 10, panelY + 18, '#ffffff', 11);
+    R.drawTextJP('分類 ' + getItemTypeLabel(selectedItem.type), detailX + 10, panelY + 30, '#8fb8ff', 9);
+    drawWrappedTextBlock(selectedItem.desc || '説明なし', detailX + 10, panelY + 42, 19, 2, 10, '#b7c3e3', 9);
   }
 
   function drawDiceMenuSection(R, C, pd, equipped) {
-    var ctx = R.getContext();
     var ownedDice = getOwnedDiceOptions();
-    var visibleDice = 5;
-    R.drawTextJP('装備スロット:', 120, 200, C.COLORS.GOLD, 12);
+    var visibleDice = 4;
+    var listX = 70;
+    var detailX = 222;
+    var panelY = 222;
+    var listW = 142;
+    var detailW = 186;
+    var panelH = 62;
+
+    drawInsetPanel(listX, panelY, listW, panelH, '装備スロット', C.COLORS.GOLD, C.COLORS.GOLD);
+    drawInsetPanel(detailX, panelY, detailW, panelH, fieldMenuState.diceEquipActive ? '候補' : 'サイコロ詳細', '#8fb8ff', '#8fb8ff');
 
     for (var s = 0; s < pd.diceSlots; s++) {
-      var slotY = 218 + s * 18;
+      var slotY = panelY + 18 + s * 12;
       var selectedSlot = (s === fieldMenuState.diceSlotIndex);
       var di = Game.Items.get(equipped[s] || 'normalDice');
-      var prefix = selectedSlot ? '▶ ' : '  ';
-      R.drawTextJP(prefix + 'スロット' + (s + 1), 124, slotY, selectedSlot ? C.COLORS.GOLD : '#fff', 11);
+      if (selectedSlot) {
+        R.drawRectAbsolute(listX + 6, slotY - 1, listW - 12, 11, 'rgba(255,204,0,0.12)');
+      }
+      R.drawTextJP((selectedSlot ? '▶ ' : '  ') + '枠' + (s + 1), listX + 10, slotY, selectedSlot ? C.COLORS.GOLD : '#fff', 10);
       if (di) {
-        R.drawRectAbsolute(210, slotY + 2, 10, 10, di.color || '#fff');
-        ctx.strokeStyle = '#555';
-        ctx.lineWidth = 1;
-        ctx.strokeRect(210, slotY + 2, 10, 10);
-        R.drawTextJP(di.name, 226, slotY, '#ccc', 10);
+        R.drawRectAbsolute(listX + 62, slotY + 1, 8, 8, di.color || '#fff');
+        R.drawTextJP(clampText(di.name, 7), listX + 76, slotY, '#d4dcf6', 9);
       }
     }
 
     var selectedDie = Game.Items.get(equipped[fieldMenuState.diceSlotIndex] || 'normalDice');
-    if (selectedDie) {
-      R.drawRectAbsolute(120, 246, 240, 1, '#446');
-      R.drawTextJP('出目: ' + selectedDie.faces.join(' - '), 122, 252, '#fff', 11);
-      R.drawTextJP(selectedDie.desc || '説明なし', 122, 268, '#aaa', 10);
-    }
-
     if (!fieldMenuState.diceEquipActive) {
-      R.drawTextJP('決定で入れ替え', 238, 238, '#888', 10);
+      if (selectedDie) {
+        R.drawTextJP(selectedDie.name, detailX + 10, panelY + 18, '#ffffff', 11);
+        R.drawTextJP('出目 ' + selectedDie.faces.join(' / '), detailX + 10, panelY + 30, '#88dd88', 9);
+        drawWrappedTextBlock(selectedDie.desc || '説明なし', detailX + 10, panelY + 42, 19, 2, 10, '#b7c3e3', 9);
+      }
       return;
     }
 
-    R.drawDialogBox(250, 210, 110, 84);
     var maxOffset = Math.max(0, ownedDice.length - visibleDice);
     var scrollOffset = Math.min(maxOffset, Math.max(0, fieldMenuState.diceEquipIndex - visibleDice + 1));
     for (var i = scrollOffset; i < ownedDice.length && i < scrollOffset + visibleDice; i++) {
       var option = ownedDice[i];
       var selected = (i === fieldMenuState.diceEquipIndex);
-      var prefix2 = selected ? '▶ ' : '  ';
       var label = option.item ? option.item.name : option.name;
-      R.drawTextJP(prefix2 + label, 258, 220 + (i - scrollOffset) * 14, selected ? C.COLORS.GOLD : '#fff', 10);
+      var lineY = panelY + 18 + (i - scrollOffset) * 11;
+      if (selected) {
+        R.drawRectAbsolute(detailX + 8, lineY - 1, detailW - 16, 11, 'rgba(143,224,255,0.1)');
+      }
+      R.drawTextJP((selected ? '▶ ' : '  ') + clampText(label, 12), detailX + 10, lineY, selected ? C.COLORS.GOLD : '#fff', 10);
     }
     if (ownedDice[fieldMenuState.diceEquipIndex] && ownedDice[fieldMenuState.diceEquipIndex].item) {
-      R.drawTextJP(ownedDice[fieldMenuState.diceEquipIndex].item.faces.join('-'), 258, 270, '#88dd88', 9);
+      R.drawTextJP('出目 ' + ownedDice[fieldMenuState.diceEquipIndex].item.faces.join('-'), detailX + 10, panelY + 52, '#88dd88', 9);
     }
   }
 
   function drawArmorMenuSection(R, C, pd) {
     var armorOptions = getOwnedArmorOptions();
-    var visibleArmor = 3;
+    var visibleArmor = 4;
     var currentArmor = pd.armor ? Game.Items.get(pd.armor) : null;
-    R.drawTextJP('現在の防具:', 120, 200, C.COLORS.GOLD, 12);
-    R.drawTextJP(currentArmor ? currentArmor.name : 'なし', 200, 200, '#fff', 12);
-    R.drawTextJP(currentArmor ? currentArmor.desc : '装備していない', 120, 218, '#aaa', 10);
+    var listX = 70;
+    var detailX = 222;
+    var panelY = 222;
+    var listW = 142;
+    var detailW = 186;
+    var panelH = 62;
 
-    R.drawRectAbsolute(120, 236, 240, 1, '#446');
-    R.drawTextJP('装備候補:', 120, 242, C.COLORS.GOLD, 12);
+    drawInsetPanel(listX, panelY, listW, panelH, '装備候補', C.COLORS.GOLD, C.COLORS.GOLD);
+    drawInsetPanel(detailX, panelY, detailW, panelH, '防具詳細', '#8fb8ff', '#8fb8ff');
 
     var maxOffset = Math.max(0, armorOptions.length - visibleArmor);
     var scrollOffset = Math.min(maxOffset, Math.max(0, fieldMenuState.armorIndex - visibleArmor + 1));
     for (var i = scrollOffset; i < armorOptions.length && i < scrollOffset + visibleArmor; i++) {
       var option = armorOptions[i];
       var selected = (i === fieldMenuState.armorIndex);
-      var prefix = selected ? '▶ ' : '  ';
       var label = option.item ? option.item.name : 'はずす';
-      R.drawTextJP(prefix + label, 130, 252 + (i - scrollOffset) * 14, selected ? C.COLORS.GOLD : '#fff', 11);
+      var lineY = panelY + 18 + (i - scrollOffset) * 11;
+      if (selected) {
+        R.drawRectAbsolute(listX + 6, lineY - 1, listW - 12, 11, 'rgba(255,204,0,0.12)');
+      }
+      R.drawTextJP((selected ? '▶ ' : '  ') + clampText(label, 9), listX + 10, lineY, selected ? C.COLORS.GOLD : '#fff', 10);
     }
 
     var selectedArmor = armorOptions[fieldMenuState.armorIndex];
+    R.drawTextJP('現在 ' + clampText(currentArmor ? currentArmor.name : 'なし', 11), detailX + 10, panelY + 18, '#ffffff', 10);
     if (selectedArmor) {
       var desc = selectedArmor.item ? selectedArmor.item.desc : '現在の防具を外す';
-      R.drawRectAbsolute(120, 286, 240, 1, '#446');
-      R.drawTextJP(clampText(desc, 24), 122, 290, '#aaa', 10);
+      R.drawTextJP('選択 ' + clampText(selectedArmor.item ? selectedArmor.item.name : 'はずす', 11), detailX + 10, panelY + 30, '#8fb8ff', 9);
+      drawWrappedTextBlock(desc, detailX + 10, panelY + 42, 19, 2, 10, '#b7c3e3', 9);
     }
+  }
+
+  function drawSettingsSection(R, C) {
+    var listX = 70;
+    var detailX = 222;
+    var panelY = 222;
+    var listW = 142;
+    var detailW = 186;
+    var panelH = 62;
+    var settingsOptions = getSettingsOptions();
+
+    drawInsetPanel(listX, panelY, listW, panelH, '表示設定', C.COLORS.GOLD, C.COLORS.GOLD);
+    drawInsetPanel(detailX, panelY, detailW, panelH, '項目詳細', '#8fb8ff', '#8fb8ff');
+
+    for (var i = 0; i < settingsOptions.length; i++) {
+      var option = settingsOptions[i];
+      var selected = (i === fieldMenuState.settingIndex);
+      var lineY = panelY + 18 + i * 12;
+      if (selected) {
+        R.drawRectAbsolute(listX + 6, lineY - 1, listW - 12, 11, 'rgba(255,204,0,0.12)');
+      }
+      R.drawTextJP((selected ? '▶ ' : '  ') + clampText(option.label, 8), listX + 10, lineY, selected ? C.COLORS.GOLD : '#fff', 10);
+      R.drawTextJP(option.valueLabel, listX + listW - 10, lineY, option.valueColor, 9, 'right');
+    }
+
+    var current = settingsOptions[fieldMenuState.settingIndex];
+    if (!current) return;
+    R.drawTextJP(current.label, detailX + 10, panelY + 18, '#ffffff', 11);
+    R.drawTextJP(current.valueLabel, detailX + detailW - 10, panelY + 18, current.valueColor, 10, 'right');
+    drawWrappedTextBlock(current.description, detailX + 10, panelY + 32, 19, 2, 10, '#b7c3e3', 9);
   }
 
   function clampFieldMenuSelection() {
     var pd = Game.Player.getData();
     var inventory = pd.inventory;
     var armorOptions = getOwnedArmorOptions();
+    var settingsOptions = getSettingsOptions();
     if (inventory.length <= 0) {
       fieldMenuState.itemIndex = 0;
       fieldMenuState.commandIndex = 0;
@@ -554,6 +775,8 @@ Game.UI = (function() {
     if (fieldMenuState.diceSlotIndex < 0) fieldMenuState.diceSlotIndex = 0;
     if (fieldMenuState.armorIndex >= armorOptions.length) fieldMenuState.armorIndex = armorOptions.length - 1;
     if (fieldMenuState.armorIndex < 0) fieldMenuState.armorIndex = 0;
+    if (fieldMenuState.settingIndex >= settingsOptions.length) fieldMenuState.settingIndex = settingsOptions.length - 1;
+    if (fieldMenuState.settingIndex < 0) fieldMenuState.settingIndex = 0;
   }
 
   function getFieldMenuCommands(item) {
@@ -592,8 +815,21 @@ Game.UI = (function() {
     return options;
   }
 
+  function getSettingsOptions() {
+    return [
+      {
+        id: 'showJourneyBadge',
+        label: '進行バッジ',
+        value: !!uiSettings.showJourneyBadge,
+        valueLabel: uiSettings.showJourneyBadge ? 'ON' : 'OFF',
+        valueColor: uiSettings.showJourneyBadge ? '#8fe08f' : '#ff9b7d',
+        description: '探索HUDの上部にある進行バッジの表示を切り替える。'
+      }
+    ];
+  }
+
   function changeFieldMenuSection(dir) {
-    fieldMenuState.section = (fieldMenuState.section + dir + 3) % 3;
+    fieldMenuState.section = (fieldMenuState.section + dir + 4) % 4;
     fieldMenuState.commandActive = false;
     fieldMenuState.commandIndex = 0;
     fieldMenuState.diceEquipActive = false;
@@ -608,6 +844,7 @@ Game.UI = (function() {
     fieldMenuState.commandIndex = 0;
     fieldMenuState.diceEquipActive = false;
     fieldMenuState.diceEquipIndex = 0;
+    fieldMenuState.settingIndex = 0;
     fieldMenuState.message = '';
     fieldMenuState.messageTimer = 0;
     clampFieldMenuSelection();
@@ -642,6 +879,9 @@ Game.UI = (function() {
     }
     if (fieldMenuState.section === 2) {
       return updateArmorMenu();
+    }
+    if (fieldMenuState.section === 3) {
+      return updateSettingsMenu();
     }
 
     if (!fieldMenuState.commandActive) {
@@ -803,6 +1043,34 @@ Game.UI = (function() {
     if (Game.Player.equipArmor(selected.id)) {
       setFieldMenuMessage(selected.item.name + 'を装備した！', 50);
       Game.Audio.playSfx('item');
+    }
+    return null;
+  }
+
+  function updateSettingsMenu() {
+    var settingsOptions = getSettingsOptions();
+    if (Game.Input.isPressed('up')) {
+      fieldMenuState.settingIndex = (fieldMenuState.settingIndex - 1 + settingsOptions.length) % settingsOptions.length;
+      Game.Audio.playSfx('confirm');
+    }
+    if (Game.Input.isPressed('down')) {
+      fieldMenuState.settingIndex = (fieldMenuState.settingIndex + 1) % settingsOptions.length;
+      Game.Audio.playSfx('confirm');
+    }
+    if (Game.Input.isPressed('cancel')) {
+      return { close: true };
+    }
+
+    var current = settingsOptions[fieldMenuState.settingIndex];
+    if (!current) return null;
+    var shouldToggle = Game.Input.isPressed('confirm') || Game.Input.isPressed('left') || Game.Input.isPressed('right');
+    if (!shouldToggle) return null;
+
+    if (current.id === 'showJourneyBadge') {
+      uiSettings.showJourneyBadge = !uiSettings.showJourneyBadge;
+      saveUiSettings();
+      setFieldMenuMessage('進行バッジを' + (uiSettings.showJourneyBadge ? '表示' : '非表示') + 'にした。', 45);
+      Game.Audio.playSfx('confirm');
     }
     return null;
   }
@@ -981,16 +1249,39 @@ Game.UI = (function() {
   function updateTitleMenu() {
     if (Game.Input.isPressed('up')) {
       titleSelection = (titleSelection - 1 + 4) % 4;
+      titleHighlightFlash = 8;
       Game.Audio.playSfx('confirm');
     }
     if (Game.Input.isPressed('down')) {
       titleSelection = (titleSelection + 1) % 4;
+      titleHighlightFlash = 8;
       Game.Audio.playSfx('confirm');
     }
   }
 
   function toggleMinimap() {
     minimapVisible = !minimapVisible;
+  }
+
+  function isJourneyBadgeEnabled() {
+    return !!uiSettings.showJourneyBadge;
+  }
+
+  function setJourneyBadgeEnabled(enabled) {
+    uiSettings.showJourneyBadge = enabled !== false;
+    saveUiSettings();
+  }
+
+  function getFieldMenuDebugState() {
+    return {
+      section: fieldMenuState.section,
+      settingIndex: fieldMenuState.settingIndex
+    };
+  }
+
+  function setFieldMenuSectionForDebug(section) {
+    fieldMenuState.section = Math.max(0, Math.min(3, section | 0));
+    clampFieldMenuSelection();
   }
 
   return {
@@ -1012,6 +1303,11 @@ Game.UI = (function() {
     updateTitleMenu: updateTitleMenu,
     toggleMinimap: toggleMinimap,
     openFieldMenu: openFieldMenu,
-    updateFieldMenu: updateFieldMenu
+    updateFieldMenu: updateFieldMenu,
+    paginateDialogText: paginateDialogText,
+    isJourneyBadgeEnabled: isJourneyBadgeEnabled,
+    setJourneyBadgeEnabled: setJourneyBadgeEnabled,
+    getFieldMenuDebugState: getFieldMenuDebugState,
+    setFieldMenuSectionForDebug: setFieldMenuSectionForDebug
   };
 })();

@@ -3,6 +3,9 @@ Game.Audio = (function() {
   var audioCtx = null;
   var masterGain = null;
   var currentBgm = null;
+  var currentBgmNodes = [];
+  var currentBgmRequestedName = null;
+  var currentBgmResolvedName = null;
   var muted = false;
 
   function init() {
@@ -72,6 +75,33 @@ Game.Audio = (function() {
     osc.stop(startTime + duration);
   }
 
+  function trackBgmNode(osc, gainNode) {
+    var handle = { osc: osc, gain: gainNode };
+    currentBgmNodes.push(handle);
+    osc.onended = function() {
+      var idx = currentBgmNodes.indexOf(handle);
+      if (idx >= 0) currentBgmNodes.splice(idx, 1);
+      try { gainNode.disconnect(); } catch (e) {}
+    };
+  }
+
+  function playBgmNote(freq, duration, type, startTime, gain) {
+    if (!audioCtx || muted || freq <= 0) return;
+    ensureContext();
+    var osc = audioCtx.createOscillator();
+    var g = audioCtx.createGain();
+    osc.type = type || 'square';
+    osc.frequency.value = freq;
+    g.gain.value = gain || 0.15;
+    g.gain.setValueAtTime(gain || 0.15, startTime);
+    g.gain.exponentialRampToValueAtTime(0.001, startTime + duration - 0.01);
+    osc.connect(g);
+    g.connect(masterGain);
+    trackBgmNode(osc, g);
+    osc.start(startTime);
+    osc.stop(startTime + duration);
+  }
+
   // Simple melodies defined as [freq, duration] arrays
   var melodies = {
     title: [
@@ -91,6 +121,60 @@ Game.Audio = (function() {
       [330, 0.3], [330, 0.3], [330, 0.6],
       [294, 0.3], [294, 0.3], [294, 0.6],
       [330, 0.3], [392, 0.3], [392, 0.6]
+    ],
+    field_maebashi: [
+      [330, 0.25], [349, 0.25], [392, 0.35], [330, 0.25],
+      [294, 0.25], [262, 0.35], [294, 0.3], [330, 0.45],
+      [392, 0.25], [440, 0.25], [392, 0.35], [349, 0.25],
+      [330, 0.25], [294, 0.35], [262, 0.55]
+    ],
+    field_takasaki: [
+      [349, 0.22], [392, 0.22], [440, 0.3], [392, 0.22],
+      [349, 0.22], [330, 0.3], [349, 0.24], [392, 0.36],
+      [440, 0.22], [494, 0.22], [440, 0.3], [392, 0.22],
+      [349, 0.22], [330, 0.3], [294, 0.5]
+    ],
+    field_westroad: [
+      [294, 0.28], [330, 0.24], [349, 0.28], [392, 0.4],
+      [349, 0.24], [330, 0.24], [294, 0.3], [262, 0.4],
+      [294, 0.24], [330, 0.24], [349, 0.28], [392, 0.28],
+      [440, 0.3], [392, 0.28], [349, 0.5]
+    ],
+    field_tomioka: [
+      [262, 0.25], [330, 0.25], [392, 0.3], [440, 0.3],
+      [392, 0.25], [330, 0.25], [294, 0.3], [330, 0.35],
+      [349, 0.25], [392, 0.25], [440, 0.3], [392, 0.25],
+      [349, 0.25], [330, 0.3], [262, 0.55]
+    ],
+    field_highland: [
+      [392, 0.22], [440, 0.22], [494, 0.28], [523, 0.36],
+      [494, 0.22], [440, 0.22], [392, 0.28], [349, 0.32],
+      [392, 0.22], [440, 0.22], [494, 0.28], [587, 0.32],
+      [523, 0.24], [494, 0.24], [440, 0.48]
+    ],
+    field_kusatsu: [
+      [392, 0.2], [440, 0.2], [392, 0.2], [349, 0.2],
+      [294, 0.25], [262, 0.25], [294, 0.2], [349, 0.2],
+      [392, 0.28], [440, 0.18], [494, 0.18], [523, 0.3],
+      [494, 0.18], [440, 0.18], [392, 0.45]
+    ],
+    field_forest: [
+      [220, 0.35], [247, 0.22], [262, 0.28], [247, 0.35],
+      [220, 0.28], [196, 0.35], [220, 0.25], [247, 0.42],
+      [262, 0.25], [294, 0.25], [262, 0.28], [247, 0.3],
+      [220, 0.3], [196, 0.35], [174, 0.55]
+    ],
+    field_akagi: [
+      [247, 0.3], [262, 0.24], [294, 0.28], [330, 0.36],
+      [294, 0.22], [262, 0.24], [247, 0.28], [220, 0.38],
+      [247, 0.24], [262, 0.24], [294, 0.28], [349, 0.32],
+      [330, 0.24], [294, 0.26], [247, 0.55]
+    ],
+    field_haruna: [
+      [262, 0.4], [0, 0.16], [247, 0.28], [220, 0.4],
+      [0, 0.16], [196, 0.36], [220, 0.24], [247, 0.36],
+      [262, 0.3], [294, 0.24], [262, 0.3], [247, 0.3],
+      [220, 0.4], [196, 0.55]
     ],
     shop: [
       [392, 0.2], [440, 0.2], [494, 0.2], [523, 0.2],
@@ -258,37 +342,252 @@ Game.Audio = (function() {
     ch10_ending: true
   };
 
-  function playBgm(name) {
+  var bgmVariants = {
+    field_maebashi: [
+      melodies.field_maebashi,
+      [
+        [330, 0.22], [392, 0.22], [440, 0.3], [392, 0.22],
+        [349, 0.22], [330, 0.3], [294, 0.22], [330, 0.34],
+        [349, 0.22], [392, 0.22], [349, 0.28], [330, 0.22],
+        [294, 0.22], [262, 0.48]
+      ]
+    ],
+    field_takasaki: [
+      melodies.field_takasaki,
+      [
+        [392, 0.2], [440, 0.2], [494, 0.26], [440, 0.2],
+        [392, 0.2], [349, 0.26], [330, 0.2], [349, 0.3],
+        [392, 0.2], [440, 0.2], [392, 0.26], [349, 0.2],
+        [330, 0.2], [294, 0.46]
+      ]
+    ],
+    field_westroad: [
+      melodies.field_westroad,
+      [
+        [294, 0.24], [349, 0.24], [392, 0.3], [349, 0.24],
+        [330, 0.22], [294, 0.28], [262, 0.24], [294, 0.38],
+        [330, 0.24], [349, 0.24], [392, 0.32], [440, 0.28],
+        [392, 0.24], [349, 0.5]
+      ]
+    ],
+    field_tomioka: [
+      melodies.field_tomioka,
+      [
+        [262, 0.24], [294, 0.24], [330, 0.3], [392, 0.34],
+        [330, 0.22], [294, 0.24], [262, 0.3], [330, 0.36],
+        [392, 0.24], [440, 0.24], [392, 0.3], [349, 0.22],
+        [330, 0.24], [262, 0.52]
+      ]
+    ],
+    field_highland: [
+      melodies.field_highland,
+      [
+        [440, 0.22], [494, 0.22], [523, 0.28], [587, 0.34],
+        [523, 0.22], [494, 0.22], [440, 0.28], [392, 0.34],
+        [440, 0.22], [494, 0.22], [523, 0.3], [494, 0.22],
+        [440, 0.22], [392, 0.48]
+      ]
+    ],
+    field_kusatsu: [
+      melodies.field_kusatsu,
+      [
+        [349, 0.18], [392, 0.18], [440, 0.2], [392, 0.18],
+        [349, 0.18], [294, 0.22], [262, 0.24], [294, 0.2],
+        [349, 0.18], [392, 0.24], [440, 0.18], [494, 0.18],
+        [440, 0.18], [392, 0.4]
+      ]
+    ],
+    field_forest: [
+      melodies.field_forest,
+      [
+        [196, 0.32], [220, 0.22], [247, 0.26], [262, 0.32],
+        [247, 0.22], [220, 0.3], [196, 0.24], [220, 0.34],
+        [247, 0.22], [262, 0.22], [247, 0.28], [220, 0.24],
+        [196, 0.3], [174, 0.5]
+      ]
+    ],
+    field_akagi: [
+      melodies.field_akagi,
+      [
+        [262, 0.26], [294, 0.22], [330, 0.28], [349, 0.34],
+        [330, 0.22], [294, 0.24], [262, 0.28], [247, 0.38],
+        [262, 0.22], [294, 0.22], [330, 0.28], [392, 0.32],
+        [349, 0.24], [294, 0.5]
+      ]
+    ],
+    field_haruna: [
+      melodies.field_haruna,
+      [
+        [247, 0.36], [0, 0.14], [220, 0.28], [196, 0.38],
+        [0, 0.14], [220, 0.32], [247, 0.24], [262, 0.34],
+        [294, 0.24], [262, 0.28], [247, 0.28], [220, 0.42],
+        [196, 0.5]
+      ]
+    ],
+    ch4_shirane: [
+      melodies.ch4_shirane,
+      [
+        [139, 0.55], [0, 0.2], [147, 0.42], [0, 0.28],
+        [131, 0.6], [0, 0.22], [156, 0.35], [147, 0.42],
+        [0, 0.36], [139, 0.5], [0, 0.2], [131, 0.72]
+      ]
+    ],
+    ch5_gakuen: [
+      melodies.ch5_gakuen,
+      [
+        [494, 0.22], [440, 0.22], [392, 0.26], [440, 0.4],
+        [0, 0.24], [392, 0.28], [349, 0.28], [330, 0.42],
+        [0, 0.26], [294, 0.34], [262, 0.3], [330, 0.52]
+      ]
+    ],
+    ch6_tunnel: [
+      melodies.ch6_tunnel,
+      [
+        [98, 0.7], [0, 0.36], [110, 0.55], [0, 0.26],
+        [104, 0.65], [0, 0.42], [117, 0.5], [0, 0.25],
+        [98, 0.85], [0, 0.28], [123, 0.72]
+      ]
+    ],
+    ch8_oze: [
+      melodies.ch8_oze,
+      [
+        [73, 0.42], [0, 0.18], [82, 0.34], [0, 0.24],
+        [87, 0.46], [0, 0.24], [73, 0.38], [82, 0.24],
+        [0, 0.32], [87, 0.54], [0, 0.18], [73, 0.7]
+      ]
+    ],
+    ch9_minakami: [
+      melodies.ch9_minakami,
+      [
+        [349, 0.24], [330, 0.2], [294, 0.3], [262, 0.38],
+        [0, 0.18], [294, 0.24], [330, 0.24], [349, 0.42],
+        [0, 0.24], [330, 0.34], [294, 0.28], [262, 0.56]
+      ]
+    ],
+    ch10_border: [
+      melodies.ch10_border,
+      [
+        [185, 0.32], [196, 0.26], [185, 0.28], [0, 0.18],
+        [174, 0.42], [0, 0.26], [165, 0.52], [0, 0.18],
+        [196, 0.26], [208, 0.22], [196, 0.44], [0, 0.32]
+      ]
+    ]
+  };
+
+  var bgmStyles = {
+    field: { wave: 'triangle', gain: 0.09 },
+    field_maebashi: { wave: 'triangle', gain: 0.09 },
+    field_takasaki: { wave: 'square', gain: 0.09 },
+    field_westroad: { wave: 'triangle', gain: 0.085 },
+    field_tomioka: { wave: 'square', gain: 0.082 },
+    field_highland: { wave: 'triangle', gain: 0.082 },
+    field_kusatsu: { wave: 'square', gain: 0.086 },
+    field_forest: { wave: 'triangle', gain: 0.08 },
+    field_akagi: { wave: 'sawtooth', gain: 0.07 },
+    field_haruna: { wave: 'triangle', gain: 0.078 },
+    ch4_shirane: { wave: 'sawtooth', gain: 0.072 },
+    ch5_gakuen: { wave: 'square', gain: 0.076 },
+    ch6_tunnel: { wave: 'triangle', gain: 0.068 },
+    ch7_haruna: { wave: 'triangle', gain: 0.078 },
+    ch8_oze: { wave: 'sawtooth', gain: 0.068 },
+    ch9_minakami: { wave: 'triangle', gain: 0.076 },
+    ch10_border: { wave: 'square', gain: 0.07 }
+  };
+
+  var fieldBgmByMap = {
+    maebashi: 'field_maebashi',
+    takasaki: 'field_takasaki',
+    shimonita: 'field_westroad',
+    tomioka: 'field_tomioka',
+    tsumagoi: 'field_highland',
+    kusatsu: 'field_kusatsu',
+    tamura: 'field_forest',
+    forest: 'field_forest',
+    konuma: 'field_forest',
+    onuma: 'field_forest',
+    akagi_ranch: 'field_akagi',
+    akagi_shrine: 'field_akagi',
+    shirane_trail: 'ch4_shirane',
+    kusatsu_deep: 'ch4_shirane',
+    jomo_gakuen: 'ch5_gakuen',
+    tanigawa_tunnel: 'ch6_tunnel',
+    haruna_lake: 'field_haruna',
+    oze_marsh: 'ch8_oze',
+    minakami_valley: 'ch9_minakami',
+    border_tunnel: 'ch10_border'
+  };
+
+  function getCurrentMapId() {
+    return Game.Map && Game.Map.getCurrentMapId ? Game.Map.getCurrentMapId() : '';
+  }
+
+  function resolveFieldBgmName() {
+    var mapId = getCurrentMapId();
+    if (mapId && fieldBgmByMap[mapId]) return fieldBgmByMap[mapId];
+    return 'field';
+  }
+
+  function resolveBgmName(name) {
+    if (name === 'field') return resolveFieldBgmName();
+    return name;
+  }
+
+  function getBgmVariants(name) {
+    if (bgmVariants[name]) return bgmVariants[name];
+    return melodies[name] ? [melodies[name]] : null;
+  }
+
+  function getBgmStyle(name) {
+    return bgmStyles[name] || { wave: 'square', gain: 0.1 };
+  }
+
+  function getMelodyLength(melody) {
+    var length = 0;
+    for (var i = 0; i < melody.length; i++) length += melody[i][1];
+    return length;
+  }
+
+  function playBgm(name, options) {
     stopBgm();
     if (!audioCtx || muted) return;
     ensureContext();
-    var melody = melodies[name];
-    if (!melody) return;
+    options = options || {};
+    currentBgmRequestedName = name;
+    var resolvedName = resolveBgmName(name);
+    currentBgmResolvedName = resolvedName;
+    var variants = getBgmVariants(resolvedName);
+    if (!variants || !variants.length) return;
+    var style = getBgmStyle(resolvedName);
+    var variantIndex = 0;
+    var initialDelay = Math.max(0, Number(options.startDelay) || 0);
 
-    var loopLength = 0;
-    melody.forEach(function(n) { loopLength += n[1]; });
-
-    function scheduleSequence() {
-      var time = audioCtx.currentTime + 0.1;
+    function scheduleSequence(melody, delay) {
+      var time = audioCtx.currentTime + 0.1 + Math.max(0, delay || 0);
       melody.forEach(function(note) {
         if (note[0] > 0) {
-          playNote(note[0], note[1] * 0.9, 'square', time, 0.1);
+          playBgmNote(note[0], note[1] * 0.92, style.wave, time, style.gain);
         }
         time += note[1];
       });
     }
 
-    if (oneShotBgm[name]) {
-      scheduleSequence();
+    if (oneShotBgm[resolvedName]) {
+      var oneShotMelody = variants[0];
+      scheduleSequence(oneShotMelody, initialDelay);
       currentBgm = setTimeout(function() {
         currentBgm = null;
-      }, loopLength * 1000 + 150);
+        currentBgmRequestedName = null;
+        currentBgmResolvedName = null;
+      }, getMelodyLength(oneShotMelody) * 1000 + initialDelay * 1000 + 150);
       return;
     }
 
     function scheduleLoop() {
-      scheduleSequence();
-      currentBgm = setTimeout(scheduleLoop, loopLength * 1000);
+      var melody = variants[variantIndex % variants.length];
+      variantIndex++;
+      var delay = variantIndex === 1 ? initialDelay : 0;
+      scheduleSequence(melody, delay);
+      currentBgm = setTimeout(scheduleLoop, getMelodyLength(melody) * 1000 + delay * 1000);
     }
     scheduleLoop();
   }
@@ -297,6 +596,20 @@ Game.Audio = (function() {
     if (currentBgm) {
       clearTimeout(currentBgm);
       currentBgm = null;
+    }
+    currentBgmRequestedName = null;
+    currentBgmResolvedName = null;
+    while (currentBgmNodes.length) {
+      var node = currentBgmNodes.pop();
+      try {
+        if (node.gain && audioCtx) {
+          node.gain.gain.cancelScheduledValues(audioCtx.currentTime);
+          node.gain.gain.setValueAtTime(Math.max(0.0001, node.gain.gain.value || 0.0001), audioCtx.currentTime);
+          node.gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.04);
+        }
+      } catch (e) {}
+      try { node.osc.stop(audioCtx ? audioCtx.currentTime + 0.05 : undefined); } catch (e2) {}
+      try { node.gain.disconnect(); } catch (e3) {}
     }
   }
 
@@ -317,10 +630,30 @@ Game.Audio = (function() {
         playNote(150, 0.1, 'sawtooth', now, 0.2);
         playNote(100, 0.15, 'sawtooth', now + 0.05, 0.15);
         break;
+      case 'slash_hit':
+        playNote(220, 0.045, 'square', now, 0.1);
+        playSweep(540, 180, 0.12, 'sawtooth', now + 0.01, 0.15);
+        playNote(120, 0.08, 'triangle', now + 0.04, 0.08);
+        break;
+      case 'glancing_hit':
+        playNote(880, 0.04, 'triangle', now, 0.06);
+        playNote(622, 0.05, 'square', now + 0.025, 0.05);
+        break;
       case 'damage':
         playNote(200, 0.08, 'square', now, 0.2);
         playNote(150, 0.08, 'square', now + 0.06, 0.15);
         playNote(100, 0.1, 'square', now + 0.12, 0.1);
+        break;
+      case 'enemy_strike':
+        playNote(132, 0.05, 'square', now, 0.11);
+        playSweep(180, 72, 0.12, 'sawtooth', now + 0.01, 0.14);
+        playNote(84, 0.08, 'triangle', now + 0.05, 0.08);
+        break;
+      case 'enemy_strike_heavy':
+        playNote(110, 0.06, 'square', now, 0.12);
+        playSweep(160, 55, 0.18, 'sawtooth', now + 0.015, 0.16);
+        playNote(73, 0.12, 'triangle', now + 0.06, 0.09);
+        playNote(49, 0.16, 'triangle', now + 0.08, 0.06);
         break;
       case 'item':
         playNote(523, 0.1, 'square', now, 0.15);
@@ -343,10 +676,38 @@ Game.Audio = (function() {
         playNote(196, 0.6, 'square', now + 0.9, 0.15);
         break;
       case 'battle_intro':
+      case 'battle_intro_enemy':
         playSweep(180, 420, 0.12, 'square', now, 0.12);
         playNote(196, 0.06, 'square', now + 0.05, 0.1);
         playNote(262, 0.08, 'sawtooth', now + 0.11, 0.12);
         playSweep(520, 220, 0.18, 'triangle', now + 0.16, 0.09);
+        break;
+      case 'battle_intro_group':
+        playSweep(110, 260, 0.14, 'sawtooth', now, 0.11);
+        playNote(147, 0.05, 'square', now + 0.04, 0.09);
+        playNote(98, 0.06, 'square', now + 0.08, 0.08);
+        playSweep(360, 120, 0.2, 'triangle', now + 0.12, 0.09);
+        break;
+      case 'battle_intro_boss':
+        playSweep(90, 520, 0.18, 'sawtooth', now, 0.14);
+        playNote(110, 0.07, 'square', now + 0.05, 0.1);
+        playNote(196, 0.08, 'square', now + 0.11, 0.11);
+        playSweep(640, 150, 0.24, 'triangle', now + 0.14, 0.1);
+        break;
+      case 'battle_intro_ritual':
+        playNote(392, 0.07, 'triangle', now, 0.07);
+        playNote(523, 0.07, 'triangle', now + 0.06, 0.07);
+        playSweep(720, 240, 0.24, 'sawtooth', now + 0.11, 0.07);
+        playNote(294, 0.11, 'square', now + 0.18, 0.05);
+        break;
+      case 'dice_stop':
+        playNote(980, 0.025, 'square', now, 0.05);
+        playNote(740, 0.03, 'triangle', now + 0.02, 0.04);
+        break;
+      case 'ritual_chime':
+        playNote(494, 0.07, 'triangle', now, 0.06);
+        playNote(659, 0.08, 'triangle', now + 0.05, 0.06);
+        playNote(784, 0.1, 'triangle', now + 0.1, 0.05);
         break;
       case 'critical':
         playSweep(700, 1400, 0.18, 'square', now, 0.14);
@@ -434,12 +795,23 @@ Game.Audio = (function() {
     return currentBgm !== null;
   }
 
+  function refreshFieldBgm() {
+    if (currentBgmRequestedName !== 'field') return;
+    var resolvedName = resolveFieldBgmName();
+    if (resolvedName !== currentBgmResolvedName) {
+      playBgm('field');
+    }
+  }
+
   return {
     init: init,
     playBgm: playBgm,
     stopBgm: stopBgm,
     playSfx: playSfx,
     toggleMute: toggleMute,
-    isBgmPlaying: isBgmPlaying
+    isBgmPlaying: isBgmPlaying,
+    refreshFieldBgm: refreshFieldBgm,
+    getCurrentBgmName: function() { return currentBgmResolvedName; },
+    getRequestedBgmName: function() { return currentBgmRequestedName; }
   };
 })();

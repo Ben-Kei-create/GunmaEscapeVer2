@@ -3,9 +3,73 @@ Game.NPC = (function() {
   var currentNpc = null;
   var dialogIndex = 0;
   var dialogLines = [];
+  var dialogPages = [];
+  var dialogPageIndex = 0;
   var onDialogEnd = null;
   var npcMovement = {};
   var AUTO_DIALOG_KEY = '__gunmaNpcAutoDialogText';
+
+  function clampText(text, maxChars) {
+    if (!text || text.length <= maxChars) return text || '';
+    return text.substring(0, Math.max(0, maxChars - 1)) + '…';
+  }
+
+  function paginateDialogText(text, maxChars, maxLines) {
+    var pages = [];
+    var remaining = '' + (text || '');
+    var punctuation = '、。！？…）)] ';
+
+    if (!remaining.length) return [''];
+
+    while (remaining.length > 0) {
+      var lines = [];
+      while (remaining.length > 0 && lines.length < maxLines) {
+        if (remaining.length <= maxChars) {
+          lines.push(remaining);
+          remaining = '';
+          break;
+        }
+        var slice = remaining.substring(0, maxChars);
+        var splitAt = -1;
+        for (var i = slice.length - 1; i >= Math.max(0, slice.length - 8); i--) {
+          if (punctuation.indexOf(slice.charAt(i)) >= 0) {
+            splitAt = i + 1;
+            break;
+          }
+        }
+        if (splitAt <= 0) splitAt = maxChars;
+        lines.push(remaining.substring(0, splitAt));
+        remaining = remaining.substring(splitAt);
+      }
+
+      if (!lines.length) {
+        lines.push(clampText(remaining, maxChars));
+        remaining = '';
+      }
+
+      pages.push(lines.join('\n'));
+    }
+
+    return pages.length ? pages : [''];
+  }
+
+  function buildDialogPages(text) {
+    if (Game.UI && Game.UI.paginateDialogText) {
+      return Game.UI.paginateDialogText(text, 29, 3);
+    }
+    return paginateDialogText(text, 29, 3);
+  }
+
+  function resetDialogPagination() {
+    dialogPages = [];
+    dialogPageIndex = 0;
+  }
+
+  function setCurrentDialogPages() {
+    var line = dialogIndex < dialogLines.length ? dialogLines[dialogIndex] : '';
+    dialogPages = buildDialogPages(line);
+    dialogPageIndex = 0;
+  }
 
   function getMovementState(npc) {
     if (!npc || !npc.id) return null;
@@ -59,6 +123,7 @@ Game.NPC = (function() {
     faceNpcTowardPlayer(npc);
     currentNpc = npc;
     dialogIndex = 0;
+    resetDialogPagination();
 
     if (npc.defeated) {
       // Shop NPCs always reopen
@@ -89,22 +154,30 @@ Game.NPC = (function() {
       onDialogEnd = npc.afterDialog || null;
     }
 
-    return dialogLines[0];
+    setCurrentDialogPages();
+    return getCurrentDialog();
   }
 
   function advance() {
-    dialogIndex++;
     window[AUTO_DIALOG_KEY] = null;
+    if (dialogPageIndex < dialogPages.length - 1) {
+      dialogPageIndex++;
+      return { done: false, text: getCurrentDialog() };
+    }
+
+    dialogIndex++;
     if (dialogIndex >= dialogLines.length) {
       var action = onDialogEnd;
       var npc = currentNpc;
       currentNpc = null;
       dialogIndex = 0;
       dialogLines = [];
+      resetDialogPagination();
       onDialogEnd = null;
       return { done: true, action: action, npc: npc };
     }
-    return { done: false, text: dialogLines[dialogIndex] };
+    setCurrentDialogPages();
+    return { done: false, text: getCurrentDialog() };
   }
 
   function showDefeatedDialog(npc) {
@@ -112,6 +185,7 @@ Game.NPC = (function() {
     currentNpc = npc;
     dialogIndex = 0;
     dialogLines = npc.defeatedDialog;
+    setCurrentDialogPages();
     onDialogEnd = npc.afterDefeat || null;
     npc.defeated = true;
     if (npc.giveItem) {
@@ -120,8 +194,8 @@ Game.NPC = (function() {
   }
 
   function getCurrentDialog() {
-    if (dialogIndex < dialogLines.length) {
-      return dialogLines[dialogIndex];
+    if (dialogPageIndex < dialogPages.length) {
+      return dialogPages[dialogPageIndex];
     }
     return null;
   }

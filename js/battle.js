@@ -45,17 +45,22 @@ Game.Battle = (function() {
   var gimmickMessageTimer = 0;
   var ritualRuntime = null;
   var victoryGoldReward = 0;
+  var rewardSummary = null;
   var introTimer = 0;
   var introMaxTimer = 0;
   var introLabel = '';
   var introSubLabel = '';
   var introAccent = '#8fb8ff';
+  var introBgmStarted = false;
+  var introBgmTriggerFrame = 0;
+  var introBgmOptions = null;
 
   // Boss dialogue system: queued multi-line dialogue for phase_change/special/victory
   var dialogueQueue = [];      // array of { speaker, text }
   var dialogueTimer = 0;       // frames until next line auto-advances
   var dialogueSpeaker = '';     // current displayed speaker
   var dialogueText = '';        // current displayed text
+  var victoryDialogueQueued = false;
 
   var enemies = {
     onsenMonkey: {
@@ -1239,7 +1244,7 @@ Game.Battle = (function() {
   enemies.strayDaruma = {
     name: 'さまようだるま',
     hp: 28, maxHp: 28,
-    attack: 9, defense: 2, goldReward: 24,
+    attack: 9, defense: 2, goldReward: 24, expReward: 12, dropItem: 'yakimanju', dropRate: 0.18,
     sprite: enemies.darumaMaster.sprite,
     palette: { 1:'#5e1018', 2:'#c93039', 3:'#111111', 4:'#e7d2a6' }
   };
@@ -1247,7 +1252,7 @@ Game.Battle = (function() {
   enemies.roadsideBandit = {
     name: '境界の追いはぎ',
     hp: 36, maxHp: 36,
-    attack: 11, defense: 4, goldReward: 32,
+    attack: 11, defense: 4, goldReward: 32, expReward: 14, dropItem: 'healHerb', dropRate: 0.28,
     sprite: enemies.anguraGuard.sprite,
     palette: { 1:'#35363f', 3:'#ff6666', 4:'#2b2d36', 5:'#1f2028', 6:'#13141a' }
   };
@@ -1255,7 +1260,7 @@ Game.Battle = (function() {
   enemies.steamMonkey = {
     name: '湯煙ざる',
     hp: 34, maxHp: 34,
-    attack: 10, defense: 3, goldReward: 28,
+    attack: 10, defense: 3, goldReward: 28, expReward: 16, dropItem: 'yakimanju', dropRate: 0.22,
     sprite: enemies.onsenMonkey.sprite,
     palette: { 1:'#553322', 2:'#b17a49', 3:'#111111', 4:'#d8907a' }
   };
@@ -1263,7 +1268,7 @@ Game.Battle = (function() {
   enemies.konnyakuCrawler = {
     name: '蒟蒻うごめき',
     hp: 42, maxHp: 42,
-    attack: 10, defense: 5, goldReward: 30,
+    attack: 10, defense: 5, goldReward: 30, expReward: 15, dropItem: 'healHerb', dropRate: 0.2,
     sprite: enemies.konnyakuKing.sprite,
     palette: enemies.konnyakuKing.palette
   };
@@ -1271,7 +1276,7 @@ Game.Battle = (function() {
   enemies.silkShade = {
     name: '白糸の影',
     hp: 40, maxHp: 40,
-    attack: 12, defense: 4, goldReward: 34,
+    attack: 12, defense: 4, goldReward: 34, expReward: 17, dropItem: 'healHerb', dropRate: 0.2,
     sprite: enemies.threadMaiden.sprite,
     palette: { 1:'#312f3b', 2:'#d8d2c8', 3:'#1e1d24', 4:'#c48690', 5:'#e8e6e0', 6:'#857a6d' }
   };
@@ -1279,7 +1284,7 @@ Game.Battle = (function() {
   enemies.cabbageWisp = {
     name: '葉影のざわめき',
     hp: 38, maxHp: 38,
-    attack: 11, defense: 4, goldReward: 30,
+    attack: 11, defense: 4, goldReward: 30, expReward: 16, dropItem: 'healHerb', dropRate: 0.18,
     sprite: enemies.cabbageGuardian.sprite,
     palette: enemies.cabbageGuardian.palette
   };
@@ -1287,7 +1292,7 @@ Game.Battle = (function() {
   enemies.echoShard = {
     name: '返り声の欠片',
     hp: 44, maxHp: 44,
-    attack: 13, defense: 5, goldReward: 38,
+    attack: 13, defense: 5, goldReward: 38, expReward: 18,
     sprite: enemies.echo_guardian.sprite,
     palette: enemies.echo_guardian.palette
   };
@@ -1295,7 +1300,7 @@ Game.Battle = (function() {
   enemies.mistBeastling = {
     name: '霧獣の幼影',
     hp: 48, maxHp: 48,
-    attack: 14, defense: 5, goldReward: 42,
+    attack: 14, defense: 5, goldReward: 42, expReward: 20, dropItem: 'healHerb', dropRate: 0.15,
     sprite: enemies.haruna_lake_beast.sprite,
     palette: enemies.haruna_lake_beast.palette
   };
@@ -1303,7 +1308,7 @@ Game.Battle = (function() {
   enemies.mudWisp = {
     name: '泥の囁き',
     hp: 46, maxHp: 46,
-    attack: 14, defense: 5, goldReward: 40,
+    attack: 14, defense: 5, goldReward: 40, expReward: 22, dropItem: 'yakimanju', dropRate: 0.16,
     sprite: enemies.oze_mud_wraith.sprite,
     palette: enemies.oze_mud_wraith.palette
   };
@@ -1415,9 +1420,7 @@ Game.Battle = (function() {
 
     var playerData = Game.Player.getData();
     if (ritualDefinition.checkVictory && ritualDefinition.checkVictory(ritualRuntime, enemy, playerData)) {
-      phase = 'victory';
-      message = enemy.name + 'を鎮めた。';
-      messageTimer = 60;
+      enterVictoryPhase(enemy.name + 'を鎮めた。');
       if (Game.Particles) Game.Particles.emit('victory', 240, 100, { count: 20 });
       return 'victory';
     }
@@ -1516,6 +1519,160 @@ Game.Battle = (function() {
     return total;
   }
 
+  function getEnemyExperienceReward(foe) {
+    if (!foe) return 0;
+    if (typeof foe.expReward === 'number') return foe.expReward;
+    return Math.max(6, Math.floor((foe.maxHp || 12) * 0.45 + (foe.attack || 0) * 1.2));
+  }
+
+  function collectEnemyDropRewards(foe, rewards) {
+    if (!foe || !foe.dropItem) return;
+    var dropId = typeof foe.dropItem === 'string' ? foe.dropItem : foe.dropItem.id;
+    var dropRate = typeof foe.dropRate === 'number'
+      ? foe.dropRate
+      : (foe.dropItem && typeof foe.dropItem.rate === 'number' ? foe.dropItem.rate : 0);
+    if (!dropId) return;
+    if (dropRate >= 1 || Math.random() < dropRate) {
+      rewards.push(dropId);
+    }
+  }
+
+  function buildRewardSummary() {
+    var items = [];
+    var exp = 0;
+    for (var i = 0; i < enemyParty.length; i++) {
+      if (!enemyParty[i]) continue;
+      exp += getEnemyExperienceReward(enemyParty[i]);
+      collectEnemyDropRewards(enemyParty[i], items);
+    }
+    return {
+      gold: getTotalEnemyGoldReward(),
+      exp: exp,
+      items: items,
+      supportLogs: getPartySupportLogs(),
+      afterglowText: getRitualAfterglowText()
+    };
+  }
+
+  function getPartySupportLogs() {
+    var partyMembers = Game.Player.getPartyMembers ? Game.Player.getPartyMembers() : [];
+    var logs = [];
+    for (var i = 0; i < partyMembers.length; i++) {
+      var member = partyMembers[i];
+      if (!member) continue;
+      var text = member.name + ': ';
+      if (member.id === 'akagi') {
+        text += '境界を読み、攻め筋を整えた。';
+      } else if (member.id === 'yamakawa') {
+        text += '地形を見切り、守りを支えた。';
+      } else if (member.id === 'furuya') {
+        text += '突破口を示し、間合いを作った。';
+      } else {
+        text += (member.role || '同行支援') + 'で旅を支えた。';
+      }
+      logs.push({
+        text: text,
+        color: member.color || '#dce6ff'
+      });
+    }
+    return logs;
+  }
+
+  function getRitualAfterglowText() {
+    if (!ritualRuntime || !ritualRuntime.ritualMode || ritualRuntime.ritualMode === 'hp') return '';
+    switch (ritualRuntime.ritualMode) {
+      case 'repair_eye':
+        return '虚ろな器は満ち、震えが静かに止まった。';
+      case 'untangle':
+        return '張りつめた糸がほどけ、止まった空気に風が戻る。';
+      case 'temperature':
+        return '荒ぶる湯は鎮まり、土地の息がゆっくり整っていく。';
+      case 'offering':
+        return '空っぽの祈りは満たされ、風だけがやさしく残った。';
+      case 'resonance':
+        return '痛みは共鳴へ変わり、深い水底に静けさが降りた。';
+      case 'review_mix':
+        return '積み重ねた作法が結ばれ、境界の呼吸が整っていく。';
+      default:
+        return '理解は届き、場のざわめきがゆっくりと鎮まった。';
+    }
+  }
+
+  function clampEnemyPartyHp() {
+    for (var i = 0; i < enemyParty.length; i++) {
+      if (enemyParty[i] && enemyParty[i].hp < 0) {
+        enemyParty[i].hp = 0;
+      }
+    }
+    if (enemy && enemy.hp < 0) enemy.hp = 0;
+  }
+
+  function finalizeEnemyPartyVictoryState() {
+    for (var i = 0; i < enemyParty.length; i++) {
+      if (!enemyParty[i]) continue;
+      enemyParty[i].hp = 0;
+      enemyParty[i]._effects = [];
+    }
+    clampEnemyPartyHp();
+    syncCurrentEnemy();
+  }
+
+  function enterVictoryPhase(victoryMessage) {
+    finalizeEnemyPartyVictoryState();
+    phase = 'victory';
+    if (typeof victoryMessage === 'string') {
+      message = victoryMessage;
+      messageTimer = 60;
+    }
+  }
+
+  function getRewardItemLabels(items) {
+    var counts = {};
+    var order = [];
+    var labels = [];
+    for (var i = 0; i < items.length; i++) {
+      if (!counts[items[i]]) order.push(items[i]);
+      counts[items[i]] = (counts[items[i]] || 0) + 1;
+    }
+    for (var j = 0; j < order.length; j++) {
+      var itemId = order[j];
+      var itemDef = Game.Items.get(itemId);
+      var label = itemDef ? itemDef.name : itemId;
+      if (counts[itemId] > 1) label += ' x' + counts[itemId];
+      labels.push(label);
+    }
+    return labels;
+  }
+
+  function wrapBattleText(text, maxChars, maxLines) {
+    var source = '' + (text || '');
+    if (!source) return [''];
+    var punctuation = '、。！？…）)] ';
+    var lines = [];
+    while (source.length > 0 && lines.length < maxLines) {
+      if (source.length <= maxChars) {
+        lines.push(source);
+        source = '';
+        break;
+      }
+      var slice = source.substring(0, maxChars);
+      var splitAt = -1;
+      for (var i = slice.length - 1; i >= Math.max(0, slice.length - 8); i--) {
+        if (punctuation.indexOf(slice.charAt(i)) >= 0) {
+          splitAt = i + 1;
+          break;
+        }
+      }
+      if (splitAt <= 0) splitAt = maxChars;
+      lines.push(source.substring(0, splitAt));
+      source = source.substring(splitAt);
+    }
+    if (source.length > 0 && lines.length) {
+      lines[lines.length - 1] = lines[lines.length - 1].substring(0, Math.max(0, maxChars - 1)) + '…';
+    }
+    return lines;
+  }
+
   function syncCurrentEnemy() {
     if (!enemyParty.length) {
       enemy = null;
@@ -1612,7 +1769,7 @@ Game.Battle = (function() {
       message += ' ' + stunnedNames.join(' / ') + 'は動けない。';
     }
     messageTimer = 45;
-    Game.Audio.playSfx('damage');
+    Game.Audio.playSfx(activeAttackers.length >= 2 || totalDamage >= 20 ? 'enemy_strike_heavy' : 'enemy_strike');
     shakeX = 5 + activeAttackers.length;
     if (Game.Particles) Game.Particles.emit('damage', 100, 220, { count: 6 + activeAttackers.length });
 
@@ -1639,22 +1796,75 @@ Game.Battle = (function() {
   }
 
   function getBattleHeaderLabel() {
-    if (ritualRuntime) return '儀式開始';
+    if (isSpecialRitualBattle()) return '儀式開始';
     if (isGroupBattle()) return '群れ遭遇';
     if (currentGimmick) return '異形接触';
     return '敵影接近';
   }
 
   function getBattleAccentColor() {
-    if (ritualRuntime) return '#ffd66b';
+    if (isSpecialRitualBattle()) return '#ffd66b';
     if (isGroupBattle()) return '#8fe0ff';
     if (enemy && enemy.palette && enemy.palette[1]) return enemy.palette[1];
     return '#8fb8ff';
   }
 
+  function getBattleIntroSfxName() {
+    if (isSpecialRitualBattle()) return 'battle_intro_ritual';
+    if (isBossBattle()) return 'battle_intro_boss';
+    if (isGroupBattle()) return 'battle_intro_group';
+    return 'battle_intro_enemy';
+  }
+
+  function getRitualAudioSnapshot() {
+    if (!ritualRuntime || !ritualRuntime.ritualState) return null;
+    return {
+      gauge: ritualRuntime.ritualGauge,
+      hintState: ritualRuntime.ritualHintState,
+      eyeRepaired: !!ritualRuntime.ritualState.eyeRepaired,
+      hpZeroReached: !!ritualRuntime.ritualState.hpZeroReached
+    };
+  }
+
+  function didRitualStateAdvance(beforeSnapshot) {
+    if (!ritualRuntime || !ritualRuntime.ritualState || !beforeSnapshot) return false;
+    return beforeSnapshot.gauge !== ritualRuntime.ritualGauge ||
+      beforeSnapshot.hintState !== ritualRuntime.ritualHintState ||
+      beforeSnapshot.eyeRepaired !== !!ritualRuntime.ritualState.eyeRepaired ||
+      beforeSnapshot.hpZeroReached !== !!ritualRuntime.ritualState.hpZeroReached;
+  }
+
+  function playPlayerAttackSfx(dmg, rawDamageTotal, ritualAdvanced) {
+    if (dmg > 0) {
+      Game.Audio.playSfx('slash_hit');
+      return;
+    }
+    if (ritualAdvanced) {
+      Game.Audio.playSfx('ritual_chime');
+      return;
+    }
+    if (rawDamageTotal > 0) {
+      Game.Audio.playSfx('glancing_hit');
+    }
+  }
+
+  function getBattleIntroProfile() {
+    if (isSpecialRitualBattle()) {
+      return { duration: 58, bgmTriggerFrame: 8, bgmOptions: { startDelay: 0.08 } };
+    }
+    if (isBossBattle()) {
+      return { duration: 56, bgmTriggerFrame: 2, bgmOptions: { startDelay: 0 } };
+    }
+    if (isGroupBattle()) {
+      return { duration: 52, bgmTriggerFrame: 16, bgmOptions: { startDelay: 0.03 } };
+    }
+    return { duration: 40, bgmTriggerFrame: 14, bgmOptions: { startDelay: 0.02 } };
+  }
+
   function startBattleBgm() {
     var bossBgm = (currentGimmick && currentGimmick.bgm) ? currentGimmick.bgm : 'battle';
-    Game.Audio.playBgm(bossBgm);
+    Game.Audio.playBgm(bossBgm, introBgmOptions || undefined);
+    introBgmStarted = true;
   }
 
   function start(enemyId, npc) {
@@ -1696,7 +1906,9 @@ Game.Battle = (function() {
     dialogueTimer = 0;
     dialogueSpeaker = '';
     dialogueText = '';
+    victoryDialogueQueued = false;
     victoryGoldReward = 0;
+    rewardSummary = null;
     ritualRuntime = Game.RitualBattles && Game.RitualBattles.createRuntime
       ? (isGroupBattle() ? null : Game.RitualBattles.createRuntime(enemy._enemyId, enemy))
       : null;
@@ -1706,14 +1918,18 @@ Game.Battle = (function() {
         ritualDefinition.setup(ritualRuntime, enemy, Game.Player.getData());
       }
     }
-    introMaxTimer = isGroupBattle() ? 54 : 42;
+    var introProfile = getBattleIntroProfile();
+    introMaxTimer = introProfile.duration;
     introTimer = introMaxTimer;
     introLabel = getBattleHeaderLabel();
     introSubLabel = isGroupBattle() ? enemyParty.map(function(foe) { return foe.name; }).join(' / ') : enemy.name;
     introAccent = getBattleAccentColor();
+    introBgmStarted = false;
+    introBgmTriggerFrame = introProfile.bgmTriggerFrame;
+    introBgmOptions = introProfile.bgmOptions || null;
 
     Game.Audio.stopBgm();
-    Game.Audio.playSfx('battle_intro');
+    Game.Audio.playSfx(getBattleIntroSfxName());
   }
 
   // ── Boss Dialogue Queue System ──
@@ -1800,7 +2016,11 @@ Game.Battle = (function() {
       diceStopped.push(false);
       diceResults.push(null);
     }
-    message = 'スペース/エンターで止めろ！';
+    message = 'スペース/エンターで止めろ！ まだならX/Escで戻れる。';
+  }
+
+  function canCancelDiceRoll() {
+    return phase === 'diceRoll' && currentDice === 0;
   }
 
   function update() {
@@ -1825,10 +2045,13 @@ Game.Battle = (function() {
     switch (phase) {
       case 'intro':
         introTimer--;
+        if (!introBgmStarted && introTimer <= introBgmTriggerFrame) {
+          startBattleBgm();
+        }
         if (introTimer <= 0) {
           phase = 'menu';
           introTimer = 0;
-          startBattleBgm();
+          if (!introBgmStarted) startBattleBgm();
         }
         break;
 
@@ -1880,6 +2103,14 @@ Game.Battle = (function() {
         break;
 
       case 'diceRoll':
+        if (canCancelDiceRoll() && Game.Input.isPressed('cancel')) {
+          phase = 'menu';
+          message = '構えを解いた。';
+          messageTimer = 18;
+          Game.Audio.playSfx('cancel');
+          break;
+        }
+
         diceTimer++;
         if (diceTimer >= diceSpeed) {
           diceTimer = 0;
@@ -1897,8 +2128,11 @@ Game.Battle = (function() {
           diceStopped[currentDice] = true;
           diceResults[currentDice] = face;
           diceFlashTimer = 8;
-          Game.Audio.playSfx('confirm');
+          Game.Audio.playSfx('dice_stop');
           currentDice++;
+          if (currentDice === 1 && battleDice.length > 1) {
+            message = '振り始めた。もう戻れない。';
+          }
 
           if (currentDice >= battleDice.length) {
             // All dice stopped — calculate results
@@ -1921,6 +2155,7 @@ Game.Battle = (function() {
 
             var ritualDefinition = getRitualDefinition();
             var ritualDiceValues = getDiceResultValues();
+            var ritualAudioBefore = getRitualAudioSnapshot();
 
             // Apply status effect bonuses
             var atkBonus = getEffectBonus(playerEffects, 'attack_up');
@@ -1950,9 +2185,9 @@ Game.Battle = (function() {
             if (dmg > 0) {
               enemy.hp -= dmg;
               shakeX = 4 + battleDice.length;
-              Game.Audio.playSfx('hit');
               if (Game.Particles) Game.Particles.emit('damage', 280, 60, { count: 8 });
             }
+            playPlayerAttackSfx(dmg, damageTotal, didRitualStateAdvance(ritualAudioBefore));
 
             // Apply healing (including onsen_heal effect)
             // ── Boss gimmick: heal inversion (kumako_steam) ──
@@ -2089,16 +2324,16 @@ Game.Battle = (function() {
               enemyEffects = enemy._effects;
               var defeatedName = enemy.name;
               if (handleEnemyPartyDefeat()) {
-                phase = 'victory';
-                message = message + ' ' + defeatedName + 'を倒した！ ' + getTotalEnemyGoldReward() + 'G獲得！';
-                messageTimer = 60;
+                enterVictoryPhase(message + ' ' + defeatedName + 'を倒した！ ' + getTotalEnemyGoldReward() + 'G獲得！');
                 if (Game.Particles) Game.Particles.emit('victory', 240, 100, { count: 30 });
               } else {
                 message = message + ' ' + defeatedName + 'を倒した！ 次は' + enemy.name + 'だ。';
               }
             }
           } else {
-            message = '次のサイコロ！ 止めろ！';
+            message = battleDice.length > 1
+              ? '次のサイコロ！ もう戻れない。'
+              : '次のサイコロ！ 止めろ！';
           }
         }
         break;
@@ -2115,7 +2350,7 @@ Game.Battle = (function() {
             message = '暴力では、まだ満たせない。';
             messageTimer = 45;
           } else if (enemy.hp <= 0 && getLivingEnemies().length <= 0) {
-            phase = 'victory';
+            enterVictoryPhase(message);
           } else {
             phase = 'playerAttack';
             animTimer = 5;
@@ -2208,7 +2443,8 @@ Game.Battle = (function() {
       case 'victory':
         // Queue victory dialogue if present
         if (currentGimmick && currentGimmick.dialogue && currentGimmick.dialogue.victory) {
-          if (!isDialogueActive() && dialogueSpeaker === '') {
+          if (!victoryDialogueQueued) {
+            victoryDialogueQueued = true;
             queueDialogue(currentGimmick.dialogue.victory);
           }
           // Wait for dialogue to finish before ending battle
@@ -2217,25 +2453,47 @@ Game.Battle = (function() {
             break;
           }
         }
-        active = false;
-        Game.Audio.stopBgm();
-        victoryGoldReward = getTotalEnemyGoldReward() || 50;
-        ritualRuntime = null;
-        enemyParty = [];
-        // Use boss-specific victory BGM if defined
-        var victoryBgm = (currentGimmick && currentGimmick.victory_bgm) ? currentGimmick.victory_bgm : null;
-        if (victoryBgm) {
-          Game.Audio.playBgm(victoryBgm);
-        } else {
-          Game.Audio.playSfx('victory');
+        if (!rewardSummary) {
+          clampEnemyPartyHp();
+          rewardSummary = buildRewardSummary();
+          victoryGoldReward = rewardSummary.gold;
+          messageTimer = 0;
+          phase = 'reward';
+          Game.Audio.stopBgm();
+          var victoryBgm = (currentGimmick && currentGimmick.victory_bgm) ? currentGimmick.victory_bgm : null;
+          if (victoryBgm) {
+            Game.Audio.playBgm(victoryBgm);
+          } else {
+            Game.Audio.playSfx('victory');
+          }
         }
-        return { result: 'victory', npc: npcRef, goldReward: victoryGoldReward };
+        break;
+
+      case 'reward':
+        if (Game.Input.isPressed('confirm') || Game.Input.isPressed('cancel')) {
+          active = false;
+          Game.Audio.stopBgm();
+          ritualRuntime = null;
+          enemyParty = [];
+          Game.Audio.playSfx('confirm');
+          var victoryPayload = {
+            result: 'victory',
+            npc: npcRef,
+            goldReward: rewardSummary ? rewardSummary.gold : victoryGoldReward,
+            expReward: rewardSummary ? rewardSummary.exp : 0,
+            itemRewards: rewardSummary ? rewardSummary.items.slice() : []
+          };
+          rewardSummary = null;
+          return victoryPayload;
+        }
+        break;
 
       case 'defeat':
         active = false;
         Game.Audio.stopBgm();
         ritualRuntime = null;
         enemyParty = [];
+        rewardSummary = null;
         return { result: 'defeat' };
 
       case 'ritualFail':
@@ -2244,6 +2502,7 @@ Game.Battle = (function() {
         var failStyle = ritualRuntime ? ritualRuntime.ritualFailStyle : null;
         ritualRuntime = null;
         enemyParty = [];
+        rewardSummary = null;
         return {
           result: 'ritual_fail',
           returnEventId: failStyle ? failStyle.returnEventId : null,
@@ -2261,6 +2520,7 @@ Game.Battle = (function() {
         Game.Audio.playBgm('field');
         ritualRuntime = null;
         enemyParty = [];
+        rewardSummary = null;
         return { result: 'flee' };
     }
     return null;
@@ -2336,7 +2596,7 @@ Game.Battle = (function() {
       itemMenuIndex = 0;
       itemMenuMode = 'heal';
       ritualMenuActionId = null;
-      Game.Audio.playSfx('confirm');
+      Game.Audio.playSfx(ritualRuntime && ritualRuntime.ritualState && ritualRuntime.ritualState.eyeRepaired ? 'ritual_chime' : 'confirm');
       return;
     }
 
@@ -2468,7 +2728,15 @@ Game.Battle = (function() {
   }
 
   function drawEnemyPartyGroup(R, ctx, C) {
-    var count = enemyParty.length;
+    var visibleEnemies = [];
+    for (var vi = 0; vi < enemyParty.length; vi++) {
+      if (enemyParty[vi] && enemyParty[vi].hp > 0) {
+        visibleEnemies.push({ foe: enemyParty[vi], partyIndex: vi });
+      }
+    }
+    if (!visibleEnemies.length) return;
+
+    var count = visibleEnemies.length;
     var scale = count >= 3 ? 3 : 4;
     var spriteW = 16 * scale;
     var spriteH = 16 * scale;
@@ -2478,29 +2746,26 @@ Game.Battle = (function() {
     var baseY = count >= 3 ? 42 : 48;
 
     for (var i = 0; i < count; i++) {
-      var foe = enemyParty[i];
-      if (!foe) continue;
+      var entry = visibleEnemies[i];
+      var foe = entry.foe;
       var ex = startX + i * (spriteW + gap);
-      var pal = foe.palette;
-      if (foe.hp <= 0) {
-        pal = {};
-        for (var pk in foe.palette) pal[pk] = foe.palette[pk];
-        pal[1] = '#4a4a4a';
-      }
-      R.drawSpriteAbsolute(foe.sprite, ex, baseY, pal, scale);
-      if (i === currentTargetIndex && foe.hp > 0) {
+      R.drawSpriteAbsolute(foe.sprite, ex, baseY, foe.palette, scale);
+      if (entry.partyIndex === currentTargetIndex) {
         R.drawTextJP('▼', ex + Math.floor(spriteW / 2) - 4, baseY - 12, '#ffd66b', 10);
       }
 
       R.drawRectAbsolute(ex, baseY + spriteH + 8, spriteW, 8, '#333');
-      var hpRatio = foe.maxHp > 0 ? Math.max(0, foe.hp / foe.maxHp) : 0;
+      var foeDisplayHp = Math.max(0, foe.hp);
+      var hpRatio = foe.maxHp > 0 ? Math.max(0, foeDisplayHp / foe.maxHp) : 0;
       R.drawRectAbsolute(ex + 1, baseY + spriteH + 9, Math.max(0, Math.floor((spriteW - 2) * hpRatio)), 6,
         hpRatio > 0.3 ? C.COLORS.HP_GREEN : C.COLORS.HP_RED);
       R.drawTextJP(foe.name, ex, baseY + spriteH + 18, foe.hp > 0 ? '#ffffff' : '#777777', 9);
-      R.drawText(foe.hp + '/' + foe.maxHp, ex + spriteW, baseY + spriteH + 18, '#b8c4e0', 8, 'right');
+      R.drawText(foeDisplayHp + '/' + foe.maxHp, ex + spriteW, baseY + spriteH + 18, '#b8c4e0', 8, 'right');
     }
 
-    R.drawTextJP('←→: 対象切替', 318, 136, '#8b96b6', 9);
+    if (count > 1) {
+      R.drawTextJP('←→: 対象切替', 318, 136, '#8b96b6', 9);
+    }
   }
 
   function drawBattlePanelAccent(R, x, y, w, h, accent) {
@@ -2512,30 +2777,309 @@ Game.Battle = (function() {
     ctx.fillRect(x + 6, y + 8, Math.max(8, w - 12), 4);
   }
 
-  function drawBattleBackdrop(R, ctx, C) {
-    R.drawRectAbsolute(0, 0, C.CANVAS_WIDTH, C.CANVAS_HEIGHT, '#0c1020');
-    ctx.fillStyle = 'rgba(120,160,255,0.04)';
-    for (var s = 0; s < 18; s++) {
-      var sx = (s * 31 + turnCount * 3) % C.CANVAS_WIDTH;
-      var sy = 14 + (s * 23 % 90);
-      ctx.fillRect(sx, sy, 2, 2);
+  function isBackdropMap(mapId, list) {
+    return list.indexOf(mapId) !== -1;
+  }
+
+  function getBattleMapId() {
+    return Game.Map && Game.Map.getCurrentMapId ? Game.Map.getCurrentMapId() : '';
+  }
+
+  function getBattleJourneyIndex(mapId) {
+    if (!Game.Chapters || !Game.Chapters.getJourneyIndex || !Game.Player || !Game.Player.getData) return 0;
+    return Game.Chapters.getJourneyIndex(Game.Player.getData().chapter, mapId || getBattleMapId()) || 0;
+  }
+
+  function isBossBattle() {
+    return isSpecialRitualBattle() || !!currentGimmick || (!!npcRef && !isGroupBattle());
+  }
+
+  function isSpecialRitualBattle() {
+    return !!(ritualRuntime && ritualRuntime.ritualMode && ritualRuntime.ritualMode !== 'hp');
+  }
+
+  function getBattleBackdropId() {
+    var mapId = getBattleMapId();
+    if (isSpecialRitualBattle()) return 'boss_ritual';
+    if (isBossBattle()) return 'boss_omen';
+    if (isBackdropMap(mapId, ['maebashi', 'takasaki', 'shimonita', 'tomioka', 'tsumagoi', 'kusatsu'])) {
+      return 'field_roadside';
     }
-    ctx.fillStyle = '#111a36';
+    if (isBackdropMap(mapId, ['forest', 'tamura', 'konuma', 'onuma', 'akagi_ranch', 'akagi_shrine', 'shirane_trail'])) {
+      return 'field_woodland';
+    }
+    if (isBackdropMap(mapId, ['kusatsu_deep', 'jomo_gakuen', 'tanigawa_tunnel', 'haruna_lake', 'oze_marsh', 'minakami_valley', 'border_tunnel'])) {
+      return 'field_wetland';
+    }
+    return getBattleJourneyIndex(mapId) >= 5 ? 'field_wetland' : 'field_roadside';
+  }
+
+  function drawRoadsideBackdrop(R, ctx, C) {
+    ctx.fillStyle = '#110d1f';
+    ctx.fillRect(0, 0, C.CANVAS_WIDTH, C.CANVAS_HEIGHT);
+    ctx.fillStyle = '#302048';
+    ctx.fillRect(0, 0, C.CANVAS_WIDTH, 84);
+    ctx.fillStyle = '#6a3356';
+    ctx.fillRect(0, 84, C.CANVAS_WIDTH, 30);
+    ctx.fillStyle = '#d47b4e';
+    ctx.fillRect(0, 114, C.CANVAS_WIDTH, 12);
+
+    ctx.fillStyle = '#1a1731';
     ctx.beginPath();
-    ctx.moveTo(0, 126);
-    ctx.lineTo(52, 104);
-    ctx.lineTo(118, 118);
-    ctx.lineTo(196, 90);
-    ctx.lineTo(288, 124);
-    ctx.lineTo(364, 96);
-    ctx.lineTo(480, 118);
+    ctx.moveTo(0, 134);
+    ctx.lineTo(48, 110);
+    ctx.lineTo(120, 120);
+    ctx.lineTo(196, 94);
+    ctx.lineTo(276, 124);
+    ctx.lineTo(340, 102);
+    ctx.lineTo(420, 118);
+    ctx.lineTo(480, 112);
     ctx.lineTo(480, 320);
     ctx.lineTo(0, 320);
     ctx.closePath();
     ctx.fill();
-    ctx.fillStyle = '#172347';
-    ctx.fillRect(0, 186, C.CANVAS_WIDTH, 134);
+
+    ctx.fillStyle = '#21263a';
+    ctx.fillRect(0, 176, C.CANVAS_WIDTH, 144);
+    ctx.fillStyle = '#1a1d2b';
+    ctx.beginPath();
+    ctx.moveTo(92, 320);
+    ctx.lineTo(186, 182);
+    ctx.lineTo(294, 182);
+    ctx.lineTo(388, 320);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = '#e7c87a';
+    for (var mark = 0; mark < 5; mark++) {
+      var markY = 258 - mark * 26 + (turnCount % 2);
+      var markW = 6 + mark * 5;
+      ctx.fillRect(240 - Math.floor(markW / 2), markY, markW, 8);
+    }
+
+    ctx.fillStyle = '#12182b';
+    for (var b = 0; b < 7; b++) {
+      var bx = 20 + b * 64;
+      var bh = 18 + ((b * 11) % 34);
+      ctx.fillRect(bx, 132 - bh, 22, bh);
+      ctx.fillStyle = '#ffcf82';
+      ctx.fillRect(bx + 4, 136 - bh, 4, 4);
+      ctx.fillRect(bx + 12, 141 - bh, 4, 4);
+      ctx.fillStyle = '#12182b';
+    }
+
+    ctx.fillStyle = '#0e1220';
+    for (var pole = 0; pole < 4; pole++) {
+      var px = 48 + pole * 118;
+      ctx.fillRect(px, 126, 4, 58);
+      ctx.fillRect(px - 6, 132, 18, 3);
+      ctx.fillRect(px + 9, 136, 1, 18);
+    }
+
+    ctx.fillStyle = 'rgba(255,214,157,0.10)';
+    for (var s = 0; s < 12; s++) {
+      ctx.fillRect((s * 41 + turnCount * 2) % C.CANVAS_WIDTH, 20 + (s * 9 % 46), 2, 2);
+    }
+  }
+
+  function drawWoodlandBackdrop(R, ctx, C) {
+    ctx.fillStyle = '#081516';
+    ctx.fillRect(0, 0, C.CANVAS_WIDTH, C.CANVAS_HEIGHT);
+    ctx.fillStyle = '#133232';
+    ctx.fillRect(0, 0, C.CANVAS_WIDTH, 96);
+    ctx.fillStyle = '#2c5d4b';
+    ctx.fillRect(0, 96, C.CANVAS_WIDTH, 20);
+
+    ctx.fillStyle = '#0b201f';
+    ctx.beginPath();
+    ctx.moveTo(0, 126);
+    ctx.lineTo(62, 106);
+    ctx.lineTo(118, 112);
+    ctx.lineTo(184, 94);
+    ctx.lineTo(258, 118);
+    ctx.lineTo(318, 100);
+    ctx.lineTo(400, 120);
+    ctx.lineTo(480, 108);
+    ctx.lineTo(480, 320);
+    ctx.lineTo(0, 320);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = '#112625';
+    ctx.fillRect(0, 170, C.CANVAS_WIDTH, 150);
+    ctx.fillStyle = '#173533';
+    for (var trunk = 0; trunk < 10; trunk++) {
+      var tx = 14 + trunk * 48 + ((trunk % 2) * 10);
+      var th = 60 + (trunk * 7 % 24);
+      ctx.fillRect(tx, 122, 7, th);
+      ctx.fillRect(tx - 9, 128, 24, 12);
+      ctx.fillRect(tx - 14, 140, 34, 16);
+    }
+
+    ctx.fillStyle = 'rgba(205,255,240,0.07)';
+    for (var mist = 0; mist < 6; mist++) {
+      var mx = ((mist * 78) + turnCount * (mist % 2 === 0 ? 1 : -1)) % (C.CANVAS_WIDTH + 70);
+      if (mx < -70) mx += C.CANVAS_WIDTH + 70;
+      ctx.fillRect(mx - 35, 152 + mist * 16, 110, 8);
+    }
+
+    ctx.fillStyle = '#93d9b3';
+    for (var mote = 0; mote < 16; mote++) {
+      ctx.fillRect((mote * 29 + turnCount * 2) % C.CANVAS_WIDTH, 26 + (mote * 17 % 74), 2, 2);
+    }
+
+    ctx.fillStyle = '#5c7d65';
+    for (var grass = 0; grass < 20; grass++) {
+      var gx = grass * 24;
+      var gh = 8 + (grass * 5 % 10);
+      ctx.fillRect(gx, 188 - gh, 2, gh);
+      ctx.fillRect(gx + 3, 188 - Math.max(4, gh - 2), 2, Math.max(4, gh - 2));
+    }
+  }
+
+  function drawWetlandBackdrop(R, ctx, C) {
+    ctx.fillStyle = '#081425';
+    ctx.fillRect(0, 0, C.CANVAS_WIDTH, C.CANVAS_HEIGHT);
+    ctx.fillStyle = '#16314f';
+    ctx.fillRect(0, 0, C.CANVAS_WIDTH, 88);
+    ctx.fillStyle = '#335f73';
+    ctx.fillRect(0, 88, C.CANVAS_WIDTH, 22);
+
+    ctx.fillStyle = '#0d2034';
+    ctx.beginPath();
+    ctx.moveTo(0, 132);
+    ctx.lineTo(54, 110);
+    ctx.lineTo(120, 124);
+    ctx.lineTo(174, 102);
+    ctx.lineTo(250, 118);
+    ctx.lineTo(322, 96);
+    ctx.lineTo(390, 120);
+    ctx.lineTo(480, 108);
+    ctx.lineTo(480, 320);
+    ctx.lineTo(0, 320);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = '#132e40';
+    ctx.fillRect(0, 168, C.CANVAS_WIDTH, 152);
+    ctx.fillStyle = 'rgba(130,202,230,0.12)';
+    for (var ripple = 0; ripple < 5; ripple++) {
+      ctx.fillRect(0, 182 + ripple * 20 + (turnCount % 3), C.CANVAS_WIDTH, 3);
+    }
+
+    ctx.fillStyle = '#415c5f';
+    for (var reed = 0; reed < 22; reed++) {
+      var rx = 6 + reed * 21;
+      var rh = 16 + (reed * 9 % 22);
+      ctx.fillRect(rx, 188 - rh, 2, rh);
+      ctx.fillRect(rx + 4, 190 - Math.max(8, rh - 6), 2, Math.max(8, rh - 6));
+    }
+
+    ctx.fillStyle = '#96b8c9';
+    for (var glow = 0; glow < 14; glow++) {
+      ctx.fillRect((glow * 37 + turnCount) % C.CANVAS_WIDTH, 36 + (glow * 19 % 64), 2, 2);
+    }
+
+    ctx.fillStyle = 'rgba(240,250,255,0.06)';
+    for (var fog = 0; fog < 7; fog++) {
+      var fx = ((fog * 66) - turnCount * 2) % (C.CANVAS_WIDTH + 90);
+      if (fx < -90) fx += C.CANVAS_WIDTH + 90;
+      ctx.fillRect(fx - 28, 140 + fog * 13, 90, 7);
+    }
+  }
+
+  function drawBossRitualBackdrop(R, ctx, C) {
+    ctx.fillStyle = '#100f1e';
+    ctx.fillRect(0, 0, C.CANVAS_WIDTH, C.CANVAS_HEIGHT);
+    ctx.fillStyle = '#211838';
+    ctx.fillRect(0, 0, C.CANVAS_WIDTH, 90);
+    ctx.fillStyle = '#7f5a2f';
+    ctx.fillRect(0, 90, C.CANVAS_WIDTH, 12);
+
+    ctx.fillStyle = '#0c1224';
+    ctx.fillRect(0, 160, C.CANVAS_WIDTH, 160);
+    ctx.strokeStyle = 'rgba(255,214,107,0.26)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(240, 130, 56, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(240, 130, 34, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.strokeRect(196, 86, 88, 88);
+    ctx.strokeRect(212, 102, 56, 56);
+
+    ctx.fillStyle = '#1a1328';
+    ctx.fillRect(70, 84, 10, 98);
+    ctx.fillRect(400, 84, 10, 98);
+    ctx.fillRect(52, 98, 46, 6);
+    ctx.fillRect(382, 98, 46, 6);
+
+    ctx.fillStyle = 'rgba(255,214,107,0.08)';
+    for (var line = 0; line < 6; line++) {
+      ctx.fillRect(0, 154 + line * 18, C.CANVAS_WIDTH, 1);
+    }
+
+    ctx.fillStyle = '#ffd66b';
+    for (var mote = 0; mote < 18; mote++) {
+      var mx = (mote * 26 + turnCount * 2) % C.CANVAS_WIDTH;
+      var my = 30 + (mote * 17 % 108);
+      ctx.fillRect(mx, my, 2, 2);
+    }
+  }
+
+  function drawBossOmenBackdrop(R, ctx, C) {
+    ctx.fillStyle = '#060810';
+    ctx.fillRect(0, 0, C.CANVAS_WIDTH, C.CANVAS_HEIGHT);
+    ctx.fillStyle = '#10172b';
+    ctx.fillRect(0, 0, C.CANVAS_WIDTH, 86);
+    ctx.fillStyle = '#3c1222';
+    ctx.fillRect(0, 86, C.CANVAS_WIDTH, 10);
+
+    ctx.fillStyle = '#0b1020';
+    ctx.fillRect(0, 158, C.CANVAS_WIDTH, 162);
+    ctx.fillStyle = '#12192d';
+    for (var block = 0; block < 9; block++) {
+      var bx = 14 + block * 50;
+      var bh = 18 + ((block * 13) % 52);
+      ctx.fillRect(bx, 150 - bh, 28, bh);
+    }
+
+    ctx.fillStyle = '#ad3148';
+    ctx.fillRect(236, 34, 8, 174);
+    ctx.fillStyle = 'rgba(173,49,72,0.18)';
+    ctx.fillRect(224, 34, 32, 174);
+
     ctx.fillStyle = 'rgba(255,255,255,0.04)';
+    for (var glitch = 0; glitch < 12; glitch++) {
+      var gy = 48 + glitch * 18;
+      var gw = 24 + (glitch * 11 % 64);
+      ctx.fillRect((glitch * 39 + turnCount * 5) % C.CANVAS_WIDTH, gy, gw, 2);
+    }
+
+    ctx.fillStyle = '#5e7186';
+    for (var shard = 0; shard < 16; shard++) {
+      var sx = (shard * 31 + turnCount * 3) % C.CANVAS_WIDTH;
+      var sy = 18 + (shard * 13 % 92);
+      ctx.fillRect(sx, sy, 2, 6);
+      ctx.fillRect(sx - 2, sy + 6, 6, 2);
+    }
+  }
+
+  function drawBattleBackdrop(R, ctx, C) {
+    var backdropId = getBattleBackdropId();
+    if (backdropId === 'field_woodland') {
+      drawWoodlandBackdrop(R, ctx, C);
+    } else if (backdropId === 'field_wetland') {
+      drawWetlandBackdrop(R, ctx, C);
+    } else if (backdropId === 'boss_ritual') {
+      drawBossRitualBackdrop(R, ctx, C);
+    } else if (backdropId === 'boss_omen') {
+      drawBossOmenBackdrop(R, ctx, C);
+    } else {
+      drawRoadsideBackdrop(R, ctx, C);
+    }
+
+    ctx.fillStyle = 'rgba(255,255,255,0.03)';
     for (var gy = 60; gy < C.CANVAS_HEIGHT; gy += 32) {
       ctx.fillRect(0, gy, C.CANVAS_WIDTH, 1);
     }
@@ -2579,18 +3123,19 @@ Game.Battle = (function() {
     if (!active || !enemy) return null;
     return {
       phase: phase,
+      backdropId: getBattleBackdropId(),
       message: message,
       targetIndex: currentTargetIndex,
       enemy: {
         name: enemy.name,
-        hp: enemy.hp,
+        hp: Math.max(0, enemy.hp),
         maxHp: enemy.maxHp
       },
       enemies: enemyParty.map(function(foe, index) {
         return {
           index: index,
           name: foe.name,
-          hp: foe.hp,
+          hp: Math.max(0, foe.hp),
           maxHp: foe.maxHp,
           active: index === currentTargetIndex
         };
@@ -2603,7 +3148,8 @@ Game.Battle = (function() {
         hintState: ritualRuntime.ritualHintState,
         slots: ritualRuntime.ritualSlots,
         state: ritualRuntime.ritualState
-      } : null
+      } : null,
+      rewardSummary: rewardSummary
     };
   }
 
@@ -2617,8 +3163,8 @@ Game.Battle = (function() {
     drawBattleBackdrop(R, ctx, C);
 
     R.drawDialogBox(10, 8, 112, 18);
-    drawBattlePanelAccent(R, 10, 8, 112, 18, ritualRuntime ? '#ffd66b' : '#8fb8ff');
-    if (ritualRuntime) {
+    drawBattlePanelAccent(R, 10, 8, 112, 18, isSpecialRitualBattle() ? '#ffd66b' : '#8fb8ff');
+    if (isSpecialRitualBattle()) {
       R.drawTextJP('儀式戦', 20, 12, '#ffd66b', 10);
     } else if (isGroupBattle()) {
       R.drawTextJP('群れ遭遇 ' + getLivingEnemies().length + '体', 20, 12, '#8fe0ff', 10);
@@ -2654,13 +3200,14 @@ Game.Battle = (function() {
         drawTensionGauge(R, ritualRuntime);
       } else {
         R.drawRectAbsolute(160, 120, 160, 12, '#333');
-        var hpRatio = enemy.hp / enemy.maxHp;
+        var enemyDisplayHp = Math.max(0, enemy.hp);
+        var hpRatio = enemyDisplayHp / enemy.maxHp;
         if (ritualRuntime && ritualRuntime.ritualMode === 'repair_eye' && ritualRuntime.ritualState.hpZeroReached) {
           hpRatio = 0;
         }
         R.drawRectAbsolute(161, 121, 158 * hpRatio, 10,
           hpRatio > 0.3 ? C.COLORS.HP_GREEN : C.COLORS.HP_RED);
-        R.drawTextJP(enemy.name + ' HP:' + enemy.hp + '/' + enemy.maxHp, 160, 135, '#fff', 12);
+        R.drawTextJP(enemy.name + ' HP:' + enemyDisplayHp + '/' + enemy.maxHp, 160, 135, '#fff', 12);
       }
       if (ritualRuntime && ritualRuntime.ritualMode === 'temperature') {
         drawTemperatureGauge(R, ritualRuntime);
@@ -2764,6 +3311,13 @@ Game.Battle = (function() {
           R.drawTextJP('▲', dx + Math.floor(dieSize / 2) - 5, dieY + dieSize + 8, C.COLORS.GOLD, 10);
         }
       }
+      if (phase === 'diceRoll') {
+        if (canCancelDiceRoll()) {
+          R.drawTextJP('X / Escで戻る', 332, 216, '#8b96b6', 10);
+        } else if (battleDice.length > 1) {
+          R.drawTextJP('1個でも止めると戻れない', 292, 216, '#886d6d', 10);
+        }
+      }
     }
 
     // Boss gimmick description (shown briefly)
@@ -2822,6 +3376,57 @@ Game.Battle = (function() {
       }
     }
 
+    if (phase === 'reward' && rewardSummary) {
+      var currentExp = Game.Player.getData().experience || 0;
+      var nextExp = currentExp + (rewardSummary.exp || 0);
+      var currentRank = Game.Player.getJourneyRank ? Game.Player.getJourneyRank() : 1;
+      var nextRank = 1 + Math.floor(nextExp / 80);
+      var rewardItems = getRewardItemLabels(rewardSummary.items || []);
+      var supportLogs = rewardSummary.supportLogs || [];
+      var afterglowLines = rewardSummary.afterglowText ? wrapBattleText(rewardSummary.afterglowText, 24, 2) : [];
+      var rewardItemLines = wrapBattleText(rewardItems.length ? rewardItems.join(' / ') : 'なし', 22, 2);
+      var panelH = 140 + (afterglowLines.length ? 28 + afterglowLines.length * 12 : 0) + (supportLogs.length ? 18 + supportLogs.length * 12 : 0);
+
+      R.drawRectAbsolute(0, 0, C.CANVAS_WIDTH, C.CANVAS_HEIGHT, 'rgba(8, 10, 18, 0.56)');
+      R.drawDialogBox(92, 74, 296, panelH);
+      drawBattlePanelAccent(R, 92, 74, 296, panelH, '#ffd66b');
+      R.drawTextJP('戦果', 106, 90, '#ffd66b', 12);
+      R.drawTextJP('獲得金', 106, 110, '#8fe0ff', 11);
+      R.drawTextJP('+' + (rewardSummary.gold || 0) + 'G', 196, 110, '#ffffff', 12);
+      R.drawTextJP('旅の経験', 106, 128, '#8fe0ff', 11);
+      R.drawTextJP('+' + (rewardSummary.exp || 0), 196, 128, '#ffffff', 12);
+      R.drawTextJP('累計経験', 106, 146, '#8fe0ff', 11);
+      R.drawTextJP(currentExp + ' → ' + nextExp, 196, 146, '#ffffff', 12);
+      if (nextRank > currentRank) {
+        R.drawTextJP('旅路ランク ' + currentRank + ' → ' + nextRank, 106, 164, '#ffd66b', 11);
+      } else {
+        R.drawTextJP('旅路ランク ' + currentRank, 106, 164, '#d8dce8', 11);
+      }
+      R.drawTextJP('戦利品', 106, 182, '#8fe0ff', 11);
+      for (var ri = 0; ri < rewardItemLines.length; ri++) {
+        R.drawTextJP(rewardItemLines[ri], 170, 182 + ri * 12, '#ffffff', 11);
+      }
+
+      var rewardY = 182 + rewardItemLines.length * 12 + 8;
+      if (afterglowLines.length) {
+        R.drawTextJP('余韻', 106, rewardY, '#ffd66b', 11);
+        for (var ai = 0; ai < afterglowLines.length; ai++) {
+          R.drawTextJP(afterglowLines[ai], 142, rewardY + ai * 12, '#f4eed7', 10);
+        }
+        rewardY += afterglowLines.length * 12 + 18;
+      }
+
+      if (supportLogs.length) {
+        R.drawTextJP('同行支援', 106, rewardY, '#8fe0ff', 11);
+        for (var si = 0; si < Math.min(3, supportLogs.length); si++) {
+          R.drawTextJP(supportLogs[si].text, 106, rewardY + 12 + si * 12, supportLogs[si].color || '#dce6ff', 10);
+        }
+        rewardY += 18 + Math.min(3, supportLogs.length) * 12;
+      }
+
+      R.drawTextJP('Z / Enter で進む', 244, 74 + panelH - 18, '#b7bfd8', 10);
+    }
+
     // Dice loadout indicator
     var equipped = Game.Player.getEquippedDice();
     if (equipped.length > 0) {
@@ -2840,8 +3445,8 @@ Game.Battle = (function() {
     // Message
     if (message) {
       R.drawDialogBox(10, 278, 460, 39);
-      drawBattlePanelAccent(R, 10, 278, 460, 39, ritualRuntime ? '#ffd66b' : '#8fb8ff');
-      R.drawTextJP(ritualRuntime ? '儀式の声' : '戦況', 20, 286, ritualRuntime ? '#ffd66b' : '#8fb8ff', 10);
+      drawBattlePanelAccent(R, 10, 278, 460, 39, isSpecialRitualBattle() ? '#ffd66b' : '#8fb8ff');
+      R.drawTextJP(isSpecialRitualBattle() ? '儀式の声' : '戦況', 20, 286, isSpecialRitualBattle() ? '#ffd66b' : '#8fb8ff', 10);
       R.drawTextJP(message, 20, 295, '#fff', 13);
     }
 

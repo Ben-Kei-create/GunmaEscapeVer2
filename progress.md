@@ -172,3 +172,184 @@ Original prompt: そうだね。セーブできる村役場みたいなところ
   - Playwright で通常の複数敵戦を起動し、`battle.phase === 'intro'` から始まることを確認。
   - 同テストで時間経過後に `intro → menu` へ自然遷移することを確認。
   - デバッグ起動の儀式戦でも戦闘開始導線自体は正常。ブラウザの自動再生制限により、ユーザー操作前の `AudioContext` 警告は引き続き発生するが、既知で非致命。
+- 2026-03-26: 戦闘後の簡易リザルトを実装。
+  - `js/player.js` に `experience` を追加し、`旅路ランク` を `80EXP` ごとの段階で計算するよう更新。
+  - 回復アイテム (`type: heal`) は重複所持できるようにし、通常戦闘のドロップを自然に積めるよう調整。
+  - `js/save.js` を version 5 に更新し、通常セーブ / あいことばの両方へ `experience` を保存するよう拡張。旧 version 4 以下のあいことばは `experience = 0` で後方互換を維持。
+  - `js/battle.js` に `reward` フェーズを追加し、勝利後に `獲得金 / 旅の経験 / 累計経験 / ランク / 戦利品` を表示するパネルを追加。
+  - 通常敵へ `expReward` と一部 `dropItem` / `dropRate` を設定し、群れ戦でも合算の戦果が出るようにした。
+  - `js/main.js` は戦闘終了時に `gold / experience / itemRewards` をプレイヤーデータへ反映し、`render_game_to_text` にも経験値・ランク・所持品を出すよう更新。
+- 2026-03-26: 戦闘リザルトの検証結果
+  - `node --check js/player.js js/save.js js/main.js js/battle.js` 通過。
+  - `WEB_GAME_CLIENT` を `http://127.0.0.1:4173` で実行し、変更後のビルドを再確認。
+  - Playwright で単体戦 (`roadsideBandit`) を勝利させ、`rewardSummary = { gold: 32, exp: 14, items: [] }` の表示を確認。
+  - 同テストでリザルトを閉じたあと、`gold: 100 → 132`, `experience: 0 → 14` に更新され、探索へ自然復帰することを確認。
+  - 群れ戦 (`roadsideBandit + strayDaruma`) も確認し、`rewardSummary = { gold: 56, exp: 26, items: ['healHerb', 'yakimanju'] }` で合算表示されることを確認。
+  - 群れ戦終了後は `inventory` に `healHerb`, `yakimanju` が加わることを確認。
+  - さらに `maebashi` をロードした通常探索状態で `Game.Save.save(1) → 値改変 → Game.Save.load(1)` を実行し、`experience: 37`, `gold: 222`, `inventory: ['healHerb']` が復元されることを確認。
+- TODO: 次段でリザルトに `仲間支援ログ` や `儀式成功専用の余韻テキスト` を足すと、勝利後の感情がさらに強くなる。
+
+- 2026-03-26: Gemini に「敵の悲痛な一言」を量産させるための専用プロンプトを追加。
+  - `docs/gemini_enemy_lament_prompt.md` を新設。
+  - 戦闘リザルト直後に使う前提で、`enemyId -> resultLament` の JSON を返させる形式にした。
+  - 雑魚は短く、ボスは誇りと悲哀がにじむ、儀式ボスは「理解された」ニュアンスを含める条件を固定。
+- 2026-03-26: 戦闘突入時にフィールドBGMが残る不具合を修正。
+  - `js/audio.js` の `stopBgm()` を強化し、ループ予約の解除だけでなく、すでに先まで予約済みだったBGMノート自体も停止するよう更新。
+  - BGM用ノートを `currentBgmNodes` で追跡し、戦闘開始時に予約済みのフィールド曲が尾を引かないようにした。
+- 2026-03-26: BGM切替修正の検証結果
+  - `node --check js/audio.js` 通過。
+  - `WEB_GAME_CLIENT` で変更後のビルドを再確認。
+  - Playwright 上で `Game.Audio.playBgm('field') → Game.Battle.start('roadsideBandit')` を実行し、導入中は `bgmPlaying: false`、導入後は `bgmPlaying: true` になることを確認。
+
+- 2026-03-26: サイコロロール開始直後だけ `X / Esc` で行動メニューへ戻れるようにした。
+  - `js/battle.js` の `diceRoll` にキャンセル条件を追加し、`currentDice === 0` の間だけ戻れるよう更新。
+  - 1個でも止めた後はキャンセル不可のまま維持し、UI文言も `もう戻れない` に寄せた。
+  - Playwright で `戻れるケース` と `1個止めた後に戻れないケース` の両方を確認。
+
+- 2026-03-26: 戦闘背景を5種へ拡張。
+  - `js/battle.js` に背景テーマ判定を追加し、通常戦闘は `field_roadside / field_woodland / field_wetland`、ボス戦は `boss_ritual / boss_omen` の5種類で描き分けるよう更新。
+  - マップIDと戦闘種別から背景を選ぶようにし、`render_game_to_text` 用の battle snapshot に `backdropId` も追加。
+  - あわせて、`ritualMode: 'hp'` の通常敵を `儀式戦` 扱いしてしまう表示を整理し、特別な儀式戦だけが専用ラベル/配色になるよう修正。
+- 2026-03-26: 戦闘背景差分の検証結果
+  - `node --check js/battle.js` 通過。
+  - `WEB_GAME_CLIENT` を `http://127.0.0.1:4173` で再実行し、変更後ビルドを確認。
+  - Playwright で `maebashi + roadsideBandit`, `forest + strayDaruma`, `oze_marsh + mistBeastling`, `kusatsu_deep + yubatake_guardian`, `border_tunnel + juke_final` を順に起動し、`backdropId` が `field_roadside / field_woodland / field_wetland / boss_ritual / boss_omen` へ切り替わることを確認。
+  - 5パターンの戦闘画面を目視し、道路夕景、森林霧景、湿原水景、儀式陣、境界深淵の差分が出ていることを確認。
+- 2026-03-26: フィールドメニューと記録UIの読みやすさを改善。
+  - `js/ui.js` のフィールドメニューを大きめの1枚パネル + `状態カード / 旅路カード / 現在地と目的 / タブ / 左右ペイン` 構成へ再設計。
+  - `もちもの / サイコロ / ぼうぐ` をそれぞれ `一覧` と `詳細` に分け、文字が重ならないように行間・表示件数・説明欄を整理。
+  - フッター文言を整理し、メッセージと操作ヒントがボックス下端で潰れにくいよう位置とサイズを調整。
+  - `js/save_menu.js` にも同系統のレイアウトを入れ、背景を少し暗くして記録/説明テキストの視認性を上げた。
+- 2026-03-26: UI整理の検証結果
+  - `node --check js/ui.js js/save_menu.js` 通過。
+  - `WEB_GAME_CLIENT` を再実行して変更後ビルドを確認。
+  - Playwright で、持ち物・サイコロ・防具を含むフィールドメニューと、記録メニューのメイン画面を目視確認。
+  - 章見出し、HP/敬意、防具、現在地、同行、目標、各タブの一覧/詳細が、以前より明確に分離されて表示されることを確認。
+- 2026-03-26: フィールドBGMを長め＆マップ別テーマに更新。
+  - `js/audio.js` に `field_maebashi / field_takasaki / field_westroad / field_tomioka / field_highland / field_kusatsu / field_forest / field_akagi / field_haruna` を追加。
+  - 既存の `ch4_shirane / ch5_gakuen / ch6_tunnel / ch8_oze / ch9_minakami / ch10_border` にもループ変化用の別バリアントを足し、同じ曲が短く繰り返され続けにくい構成へ変更。
+  - `playBgm('field')` はマップIDを見て実際の曲名へ解決するようにし、`maebashi → takasaki` のような近い移動は近縁の曲、`town → forest` のような大きい移動は明確に別曲へ切り替わるようにした。
+  - `js/map.js` で map load 時に `refreshFieldBgm()` を呼び、探索中にマップ遷移してもフィールド曲がその場のテーマへ差し替わるよう更新。
+  - `js/main.js` の `render_game_to_text` に `audio.currentBgm` / `audio.requestedBgm` を追加し、検証しやすくした。
+- 2026-03-26: マップ別BGMの検証結果
+  - `node --check js/audio.js js/map.js js/main.js` 通過。
+  - `WEB_GAME_CLIENT` を再実行して変更後ビルドを確認。
+  - Playwright で `maebashi → takasaki → shimonita → tomioka → tsumagoi → kusatsu → forest → akagi_shrine → haruna_lake → oze_marsh → border_tunnel` を順にロードし、`currentBgm` が `field_maebashi / field_takasaki / field_westroad / field_tomioka / field_highland / field_kusatsu / field_forest / field_akagi / field_haruna / ch8_oze / ch10_border` に切り替わることを確認。
+- 2026-03-26: 雑魚敵量産用の設計資料を追加。
+  - `docs/enemy_sprite_production_guide.md` を追加し、現在の実装方式に沿った `16x16 sprite + palette` ルール、家系ベースの量産手順、battle.js / encounters.js への組み込み位置を整理。
+  - `docs/gemini_enemy_sprite_factory_prompt.md` を追加し、Gemini にそのまま渡せる「雑魚敵6体生成」用の実務プロンプトを作成。
+  - 方針として、毎回完全新規ではなく `家系流用 + 色替え + 差分3点` を基本にする運用を固定。
+- 2026-03-26: 戦闘勝利後に敵HPが途中のまま見える不整合を修正。
+  - `js/battle.js` に `finalizeEnemyPartyVictoryState()` と `enterVictoryPhase()` を追加し、勝利確定時に敵パーティ全体の HP 表示を 0 に揃えるよう更新。
+  - 通常勝利、儀式勝利、`diceResult` からの勝利遷移をすべて共通の勝利入口へ寄せた。
+  - `node --check js/battle.js` 通過。ユーザー要望に合わせ、この修正では重い戦闘再現テストは一旦省略。
+- 2026-03-26: 群れ戦で倒した敵が画面に居残る不整合を修正。
+  - `js/battle.js` の `drawEnemyPartyGroup()` を更新し、複数戦では `hp > 0` の敵だけを描画するよう変更。
+  - 生存敵だけで再レイアウトするため、撃破された敵はグレー残しではなく、その場から消える。
+  - `node --check js/battle.js` 通過。ユーザー要望に合わせ、この修正でも重い再現テストは一旦省略。
+- 2026-03-26: 「旅路」UIを補助情報まで縮小。
+  - `js/ui.js` の旅路トラッカーを大きい専用ボックスから、小さな `進行 1/7` バッジ + 小ドット列へ縮小。
+  - タイトル画面の `旅の節目` パネルを廃止し、短い補足ストリップへ変更。
+  - フィールドメニューの `旅路の記録` も `補助情報` に変更し、旅路を主役ではなく進行補助として扱う方向へ寄せた。
+  - `node --check js/ui.js` 通過。表示確認はタイトル画面のみ軽く実施し、広いUI再点検は一旦保留。
+- 2026-03-26: 探索HUDの常時表示をさらに整理。
+  - `js/ui.js` の探索HUDから、左下の `目的` と右下の `同行/触媒` 常時パネルを削除。
+  - 代わりにメニュー内の `現在地 / 目標` を再配置し、`目標` ラベルを分離したうえで本文を2行前提で折り返すよう更新。
+  - `補助情報` カードへ同行情報を移し、探索中は視界を優先、必要なときだけメニューで確認する構成にした。
+- 2026-03-26: HUD整理の検証結果
+  - `node --check js/ui.js` 通過。
+- 2026-03-26: オープニング / イベント字幕の長文折り返しを追加。
+  - `js/event.js` にイベント専用の折り返し処理を追加し、長い台詞やナレーションを画面内で自動改行するよう更新。
+  - 描画側は「論理行」をそのまま維持しつつ、表示時だけ複数の視覚行へ分割するため、イベントの進行テンポ自体は変えない構成にした。
+  - 折り返し幅は安全側へ寄せて `22文字` 前後に設定し、オープニングの長文が右端へはみ出しにくいよう調整。
+- 2026-03-26: オープニング字幕折り返しの検証結果
+  - `node --check js/event.js` 通過。
+  - `develop-web-game` の Playwright client を `http://127.0.0.1:4173` に対して実行し、`はじめから` → オープニング進行時のスクリーンショットと `render_game_to_text` を確認。
+  - 変更後はイベント状態へ正しく遷移し、長文字幕が1行固定ではなく折り返し描画に切り替わっていることを確認。
+  - 新規のコンソールエラーはなく、既知の `favicon.ico` 404 のみ。
+- 2026-03-26: 戦闘SFXを増強。
+  - `js/audio.js` に `slash_hit`, `glancing_hit`, `enemy_strike`, `enemy_strike_heavy`, `battle_intro_enemy`, `battle_intro_group`, `battle_intro_boss`, `battle_intro_ritual`, `dice_stop`, `ritual_chime` を追加。
+  - `js/battle.js` で戦闘導入時のSEを `通常 / 群れ / ボス / 儀式` で分岐。
+  - プレイヤー命中時は `slash_hit`、通りの浅い当たりは `glancing_hit`、敵からの被弾は `enemy_strike` 系、ダイス固定時は `dice_stop`、儀式アイテム成功時は `ritual_chime` を鳴らすよう更新。
+- 2026-03-26: 戦闘SFXの検証結果
+  - `node --check js/audio.js js/battle.js` 通過。
+  - Playwright evaluate で `Game.Audio.playSfx` を一時ロギングし、通常戦闘の1ターンで `battle_intro_enemy → dice_stop → slash_hit → enemy_strike` が順に発火することを確認。
+  - 儀式ボス開始時は `battle_intro_ritual` が発火することを確認。
+  - `develop-web-game` の Playwright client でも `?debugBattle=roadsideBandit` を通し、戦闘画面と `render_game_to_text` の整合を確認。
+- 2026-03-26: 通常戦闘 / 儀式戦 / ボス戦で戦闘BGMの入り方を分岐。
+  - `js/battle.js` に導入プロファイルを追加し、戦闘種別ごとに `intro` の長さと BGM 開始タイミングを変更。
+  - 通常戦闘は導入中の早めの段階で BGM が入り、テンポよく本戦へ繋がるようにした。
+  - 儀式戦は少し長めに溜めてから、わずかな遅延つきで BGM を立ち上げ、儀式感を強めた。
+  - 非儀式ボス戦は導入を長めに取り、切り替わり直前で BGM が入るようにして、登場の重みを強めた。
+  - `js/audio.js` の `playBgm()` は `startDelay` オプションに対応し、最初のループだけ立ち上がりを少しコントロールできるようにした。
+- 2026-03-26: 戦闘BGMの入り方差分の検証結果
+  - `node --check js/audio.js js/battle.js` 通過。
+  - Playwright evaluate で `Game.Audio.playBgm` を一時ロギングし、通常戦闘 `roadsideBandit` は tick 26、儀式戦 `yubatake_guardian` は tick 50、ボス戦 `juke_final` は tick 54 で BGM が開始されることを確認。
+  - `develop-web-game` の Playwright client で `?debugBattle=roadsideBandit` と `?debugBattle=juke_final` を実行し、両方とも戦闘画面遷移後に正しい BGM 名が `render_game_to_text` へ反映されることを確認。
+  - `WEB_GAME_CLIENT` を `http://127.0.0.1:4173/?v=ui_objective_menu_2` で再実行し、変更後ビルドを確認。
+  - Playwright で `maebashi` を探索状態へセットし、探索HUDの下段2パネルが消えていることを確認。
+  - 続けてメニューを開き、`現在地 / 目標` パネル内で目的文が2行表示されることを確認。
+  - Playwright の console error は `0` 件。
+- 2026-03-26: タイトル画面の情報量と構図を整理。
+  - `js/ui.js` の `drawTitleScreen()` を再設計し、左に寄って見えていたタイトルを中央基準の構図へ変更。
+  - 説明テキストを大幅に削り、`シュール` などの自己説明文は撤去。
+  - 代わりに、県境ゲート、赤い警告灯、奥へ伸びる道路、旅人の小さな後ろ姿で `脱出感` を絵として出す方向へ調整。
+  - メニュー下の説明文も短文化し、タイトル全体の情報密度を下げた。
+- 2026-03-26: タイトル画面改修の検証結果
+  - `node --check js/ui.js` 通過。
+  - `WEB_GAME_CLIENT` を `http://127.0.0.1:4173/?v=title_escape_ui_1` で再実行し、変更後ビルドを確認。
+  - Playwright でタイトル画面を目視し、中央寄せ・脱出モチーフ・説明文削減を確認。
+  - `ArrowDown` 入力で `titleSelection: 0 -> 1` へ変化することを `render_game_to_text` で確認。
+  - Playwright の console error は `0` 件。
+- 2026-03-26: NPCダイアログの長文が途中で端折られる不具合を修正。
+  - `js/npc.js` に会話ページング状態 (`dialogPages`, `dialogPageIndex`) を追加し、1つの発言が3行を超える場合は複数ページへ自動分割するよう更新。
+  - `js/ui.js` の折り返し処理を改行対応へ拡張し、共有ヘルパ `paginateDialogText()` を追加。
+  - これにより、1つの長い発言でも `1ページ目 -> 2ページ目 -> 会話終了` の順で自然に送れるようになった。
+- 2026-03-26: ダイアログ修正の検証結果
+  - `node --check js/npc.js js/ui.js` 通過。
+  - `WEB_GAME_CLIENT` を最新コード確認用に実行。
+  - 静的サーバー `http://127.0.0.1:4174` で Playwright 検証を実施し、高崎の「上毛かるた少年」に2ページ分の長文を与えて確認。
+  - 1回目の入力で1ページ目が3行表示され、2回目の入力で2ページ目の残り文が表示され、3回目の入力で探索へ戻ることを確認。
+  - console error は既知の `favicon.ico` 404 のみ。
+- 2026-03-26: タイトルの選択ハイライト演出を気持ちよく調整。
+  - `js/ui.js` に `titleSelectionVisual` と `titleHighlightFlash` を追加し、選択帯が即座に切り替わるのではなく、少し滑って追従するアニメーションに変更。
+  - 選択中の項目には、薄い発光帯、左側の前進マーカー、小さく流れる光、軽い脈動を追加。
+  - 選択変更時だけ短いフラッシュを入れ、`はじめから` に戻した瞬間の手触りを強化。
+- 2026-03-26: タイトル選択演出の検証結果
+  - `node --check js/ui.js` 通過。
+  - `WEB_GAME_CLIENT` を `http://127.0.0.1:4174/?titlefx=1` で実行して最新ビルドを確認。
+  - Playwright でタイトル画面を目視し、`はじめから -> つづきから -> はじめから` の移動で、選択帯の追従と発光が自然に見えることを確認。
+  - `render_game_to_text` で `titleSelection: 0 -> 1 -> 0` を確認。
+  - Playwright の console error は `0` 件。
+- 2026-03-26: メニュー内の `現在地 / 目標` パネルを少し拡張。
+  - `js/ui.js` の `infoH` を 52 -> 56 に引き上げ、目標文エリアに少し余白を追加。
+  - `目標` の折り返しを 2行 -> 3行へ変更し、長い章目標でも省略されにくいよう更新。
+  - 位置も数pxだけ詰め直し、下のタブや一覧エリアは大きく崩さないまま調整。
+- 2026-03-26: 目標パネル拡張の検証結果
+  - `node --check js/ui.js` 通過。
+  - `WEB_GAME_CLIENT` を `http://127.0.0.1:4174/?menuobjective=1` で実行して最新ビルドを確認。
+  - Playwright でメニュー状態を開き、長めの目標文を差し込んだ状態でも `現在地 / 目標` パネル内に3行で収まり、下のタブと重ならないことを確認。
+  - console error は既知の `favicon.ico` 404 のみ。
+- 2026-03-26: HUDの進行バッジを設定で OFF できるようにした。
+  - `js/ui.js` に UI 設定の localStorage 保存 (`gunmaEscape_ui_settings_v1`) を追加。
+  - フィールドメニューに4つ目のタブ `せってい` を追加し、`進行バッジ` の ON/OFF 項目を実装。
+  - 探索HUDの進行バッジは `uiSettings.showJourneyBadge` を見て描画するよう変更。
+  - `js/main.js` の `render_game_to_text` に `ui.showJourneyBadge` と、メニュー中の `menu.section` を追加して検証しやすくした。
+- 2026-03-26: 進行バッジ設定の検証結果
+  - `node --check js/ui.js js/main.js` 通過。
+  - `WEB_GAME_CLIENT` を `http://127.0.0.1:4174/?hudsetting=1` で実行して最新ビルドを確認。
+  - Playwright で `せってい` タブの画面を目視し、`進行バッジ ON` 項目が表示されることを確認。
+  - その後 `showJourneyBadge=false` を反映して探索へ戻し、HUD上部の進行バッジが消えていることをスクリーンショットで確認。
+  - ページ再読み込み後も `render_game_to_text.ui.showJourneyBadge === false` を確認。
+  - 最終確認時の console error は `0` 件。
+- 2026-03-26: リザルト画面に `同行支援` と `余韻` を追加。
+  - `js/battle.js` の `buildRewardSummary()` を拡張し、通常勝利でも儀式勝利でも `supportLogs` と `afterglowText` を保持できるよう更新。
+  - 仲間がいる場合は、`アカギ / 山川 / 古谷` の短い支援ログをリザルトへ表示するよう追加。
+  - 儀式勝利では `repair_eye / untangle / temperature / offering / resonance / review_mix` ごとに専用の余韻テキストを返すよう追加。
+  - 戦果パネルは可変高さに変更し、`戦利品` `余韻` `同行支援` を段分けして表示するよう整理。
+- 2026-03-26: リザルト強化の検証結果
+  - `node --check js/battle.js` 通過。
+  - `WEB_GAME_CLIENT` を `http://127.0.0.1:4173/?debugBattle=roadsideBandit` で実行して最新コードを確認。
+  - Playwright evaluate で通常戦闘を reward phase まで進め、`supportLogs` が3件入り、リザルト画面に `同行支援` が表示されることを確認。
+  - Playwright evaluate で `temperature` 儀式戦を reward phase まで進め、`afterglowText` と `同行支援` が同時に表示されることを確認。
+  - 新規の console error はなく、既知の `favicon.ico` 404 のみ。

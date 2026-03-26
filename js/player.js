@@ -38,6 +38,7 @@ Game.Player = (function() {
     maxHp: 100,
     attack: 12,
     defense: 5,
+    experience: 0,
     gold: 100,
     chapter: 1,                  // current chapter (1 or 2)
     diceSlots: 1,                // max dice slots (1-5)
@@ -231,10 +232,11 @@ Game.Player = (function() {
   }
 
   function addItem(id) {
-    if (!hasItem(id)) {
-      data.inventory.push(id);
-      registerCatalystIfNeeded(id);
-    }
+    var item = Game.Items && Game.Items.get ? Game.Items.get(id) : null;
+    var allowDuplicates = item && item.type === 'heal';
+    if (!allowDuplicates && hasItem(id)) return;
+    data.inventory.push(id);
+    registerCatalystIfNeeded(id);
   }
 
   function removeItem(id) {
@@ -372,6 +374,15 @@ Game.Player = (function() {
     data.gold = Math.max(0, data.gold + amount);
   }
 
+  function addExperience(amount) {
+    data.experience = Math.max(0, (data.experience || 0) + Math.max(0, amount || 0));
+    return data.experience;
+  }
+
+  function getJourneyRank() {
+    return 1 + Math.floor((data.experience || 0) / 80);
+  }
+
   function syncCatalystsFromInventory() {
     for (var i = 0; i < data.inventory.length; i++) {
       registerCatalystIfNeeded(data.inventory[i]);
@@ -398,6 +409,8 @@ Game.Player = (function() {
     equipArmor: equipArmor,
     unequipArmor: unequipArmor,
     addGold: addGold,
+    addExperience: addExperience,
+    getJourneyRank: getJourneyRank,
     addPartyMember: addPartyMember,
     removePartyMember: removePartyMember,
     setPartyMembers: setPartyMembers,

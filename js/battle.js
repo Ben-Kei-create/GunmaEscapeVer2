@@ -45,6 +45,11 @@ Game.Battle = (function() {
   var gimmickMessageTimer = 0;
   var ritualRuntime = null;
   var victoryGoldReward = 0;
+  var introTimer = 0;
+  var introMaxTimer = 0;
+  var introLabel = '';
+  var introSubLabel = '';
+  var introAccent = '#8fb8ff';
 
   // Boss dialogue system: queued multi-line dialogue for phase_change/special/victory
   var dialogueQueue = [];      // array of { speaker, text }
@@ -1633,6 +1638,25 @@ Game.Battle = (function() {
     return names.join(' / ') + ' が現れた！';
   }
 
+  function getBattleHeaderLabel() {
+    if (ritualRuntime) return '儀式開始';
+    if (isGroupBattle()) return '群れ遭遇';
+    if (currentGimmick) return '異形接触';
+    return '敵影接近';
+  }
+
+  function getBattleAccentColor() {
+    if (ritualRuntime) return '#ffd66b';
+    if (isGroupBattle()) return '#8fe0ff';
+    if (enemy && enemy.palette && enemy.palette[1]) return enemy.palette[1];
+    return '#8fb8ff';
+  }
+
+  function startBattleBgm() {
+    var bossBgm = (currentGimmick && currentGimmick.bgm) ? currentGimmick.bgm : 'battle';
+    Game.Audio.playBgm(bossBgm);
+  }
+
   function start(enemyId, npc) {
     active = true;
     npcRef = npc;
@@ -1650,9 +1674,9 @@ Game.Battle = (function() {
     itemMenuItems = [];
     itemMenuMode = 'heal';
     ritualMenuActionId = null;
-    phase = 'menu';
+    phase = 'intro';
     message = getEncounterIntroText();
-    messageTimer = 60;
+    messageTimer = 0;
     playerEffects = [];
     enemyEffects = enemy._effects || [];
     comboText = '';
@@ -1682,11 +1706,14 @@ Game.Battle = (function() {
         ritualDefinition.setup(ritualRuntime, enemy, Game.Player.getData());
       }
     }
+    introMaxTimer = isGroupBattle() ? 54 : 42;
+    introTimer = introMaxTimer;
+    introLabel = getBattleHeaderLabel();
+    introSubLabel = isGroupBattle() ? enemyParty.map(function(foe) { return foe.name; }).join(' / ') : enemy.name;
+    introAccent = getBattleAccentColor();
 
     Game.Audio.stopBgm();
-    // Use boss-specific BGM if defined, otherwise generic 'battle'
-    var bossBgm = (currentGimmick && currentGimmick.bgm) ? currentGimmick.bgm : 'battle';
-    Game.Audio.playBgm(bossBgm);
+    Game.Audio.playSfx('battle_intro');
   }
 
   // ── Boss Dialogue Queue System ──
@@ -1796,6 +1823,15 @@ Game.Battle = (function() {
     }
 
     switch (phase) {
+      case 'intro':
+        introTimer--;
+        if (introTimer <= 0) {
+          phase = 'menu';
+          introTimer = 0;
+          startBattleBgm();
+        }
+        break;
+
       case 'menu':
         var menuEntries = getMenuEntries();
         if (menuIndex >= menuEntries.length) {
@@ -2467,6 +2503,78 @@ Game.Battle = (function() {
     R.drawTextJP('←→: 対象切替', 318, 136, '#8b96b6', 9);
   }
 
+  function drawBattlePanelAccent(R, x, y, w, h, accent) {
+    var ctx = R.getContext();
+    var color = accent || '#8fb8ff';
+    R.drawRectAbsolute(x + 6, y + 5, Math.max(12, w - 12), 1, color);
+    R.drawRectAbsolute(x + 5, y + 6, 2, Math.max(8, h - 12), color);
+    ctx.fillStyle = 'rgba(255,255,255,0.03)';
+    ctx.fillRect(x + 6, y + 8, Math.max(8, w - 12), 4);
+  }
+
+  function drawBattleBackdrop(R, ctx, C) {
+    R.drawRectAbsolute(0, 0, C.CANVAS_WIDTH, C.CANVAS_HEIGHT, '#0c1020');
+    ctx.fillStyle = 'rgba(120,160,255,0.04)';
+    for (var s = 0; s < 18; s++) {
+      var sx = (s * 31 + turnCount * 3) % C.CANVAS_WIDTH;
+      var sy = 14 + (s * 23 % 90);
+      ctx.fillRect(sx, sy, 2, 2);
+    }
+    ctx.fillStyle = '#111a36';
+    ctx.beginPath();
+    ctx.moveTo(0, 126);
+    ctx.lineTo(52, 104);
+    ctx.lineTo(118, 118);
+    ctx.lineTo(196, 90);
+    ctx.lineTo(288, 124);
+    ctx.lineTo(364, 96);
+    ctx.lineTo(480, 118);
+    ctx.lineTo(480, 320);
+    ctx.lineTo(0, 320);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = '#172347';
+    ctx.fillRect(0, 186, C.CANVAS_WIDTH, 134);
+    ctx.fillStyle = 'rgba(255,255,255,0.04)';
+    for (var gy = 60; gy < C.CANVAS_HEIGHT; gy += 32) {
+      ctx.fillRect(0, gy, C.CANVAS_WIDTH, 1);
+    }
+    for (var gx = 0; gx < C.CANVAS_WIDTH; gx += 32) {
+      ctx.fillRect(gx, 60, 1, C.CANVAS_HEIGHT - 60);
+    }
+    ctx.fillStyle = 'rgba(255,255,255,0.02)';
+    ctx.fillRect(0, 176, C.CANVAS_WIDTH, 16);
+  }
+
+  function drawBattleIntroOverlay(R, ctx, C) {
+    if (phase !== 'intro' || introMaxTimer <= 0) return;
+    var progress = 1 - (introTimer / introMaxTimer);
+    var eased = progress < 0.5 ? progress * 2 : 1 - (progress - 0.5) * 0.55;
+    var bandWidth = Math.floor(180 + eased * 180);
+    var leftX = -bandWidth + Math.floor(progress * (120 + bandWidth));
+    var rightX = C.CANVAS_WIDTH - Math.floor(progress * (120 + bandWidth));
+
+    ctx.fillStyle = 'rgba(5,8,20,0.62)';
+    ctx.fillRect(0, 0, C.CANVAS_WIDTH, C.CANVAS_HEIGHT);
+
+    ctx.fillStyle = '#060a17';
+    ctx.fillRect(leftX, 86, bandWidth, 30);
+    ctx.fillRect(rightX, 140, bandWidth, 30);
+    ctx.fillStyle = introAccent;
+    ctx.fillRect(leftX + 10, 91, Math.max(40, bandWidth - 20), 2);
+    ctx.fillRect(rightX + 10, 145, Math.max(40, bandWidth - 20), 2);
+
+    var flashAlpha = Math.max(0, 0.4 - progress * 0.35);
+    if (flashAlpha > 0) {
+      ctx.fillStyle = 'rgba(255,255,255,' + flashAlpha.toFixed(3) + ')';
+      ctx.fillRect(0, 0, C.CANVAS_WIDTH, C.CANVAS_HEIGHT);
+    }
+
+    R.drawTextJP(introLabel, 240, 96, introAccent, 15, 'center');
+    R.drawTextJP(introSubLabel, 240, 146, '#ffffff', isGroupBattle() ? 12 : 15, 'center');
+    R.drawTextJP('境界がきしむ', 240, 120, '#a9b5d9', 9, 'center');
+  }
+
   function getStateSnapshot() {
     if (!active || !enemy) return null;
     return {
@@ -2506,17 +2614,16 @@ Game.Battle = (function() {
     var C = Game.Config;
     var ctx = R.getContext();
 
-    // Background
-    R.drawRectAbsolute(0, 0, C.CANVAS_WIDTH, C.CANVAS_HEIGHT, '#111122');
+    drawBattleBackdrop(R, ctx, C);
 
-    // Grid
-    ctx.strokeStyle = '#222244';
-    ctx.lineWidth = 1;
-    for (var i = 0; i < C.CANVAS_WIDTH; i += 32) {
-      ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, C.CANVAS_HEIGHT); ctx.stroke();
-    }
-    for (var i = 0; i < C.CANVAS_HEIGHT; i += 32) {
-      ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(C.CANVAS_WIDTH, i); ctx.stroke();
+    R.drawDialogBox(10, 8, 112, 18);
+    drawBattlePanelAccent(R, 10, 8, 112, 18, ritualRuntime ? '#ffd66b' : '#8fb8ff');
+    if (ritualRuntime) {
+      R.drawTextJP('儀式戦', 20, 12, '#ffd66b', 10);
+    } else if (isGroupBattle()) {
+      R.drawTextJP('群れ遭遇 ' + getLivingEnemies().length + '体', 20, 12, '#8fe0ff', 10);
+    } else {
+      R.drawTextJP('通常戦闘', 20, 12, '#8fe0ff', 10);
     }
 
     // Enemy
@@ -2590,6 +2697,8 @@ Game.Battle = (function() {
     // Player stats
     var pd = Game.Player.getData();
     R.drawDialogBox(10, 200, 200, 60);
+    drawBattlePanelAccent(R, 10, 200, 200, 60, '#8fe0ff');
+    R.drawTextJP('旅人', 22, 204, '#8fe0ff', 10);
     R.drawTextJP('HP: ' + pd.hp + '/' + pd.maxHp, 25, 210, '#fff', 14);
 
     R.drawRectAbsolute(25, 230, 170, 10, '#333');
@@ -2620,9 +2729,11 @@ Game.Battle = (function() {
     var partyMembers = Game.Player.getPartyMembers ? Game.Player.getPartyMembers() : [];
     if (partyMembers.length > 0) {
       R.drawDialogBox(10, 150, 138, 44);
+      drawBattlePanelAccent(R, 10, 150, 138, 44, '#8fe0ff');
       R.drawTextJP('同行支援', 20, 158, '#8fe0ff', 10);
       for (var pmi = 0; pmi < Math.min(3, partyMembers.length); pmi++) {
         var member = partyMembers[pmi];
+        R.drawRectAbsolute(20 + pmi * 42, 172, 4, 4, member.color || '#dce6ff');
         R.drawTextJP(member.name, 20 + pmi * 42, 172, member.color || '#dce6ff', 9);
       }
     }
@@ -2631,6 +2742,8 @@ Game.Battle = (function() {
     if (phase === 'diceRoll' || phase === 'diceResult') {
       var diceCount = battleDice.length;
       R.drawDialogBox(220, 150, 250, 80);
+      drawBattlePanelAccent(R, 220, 150, 250, 80, '#d0b46c');
+      R.drawTextJP('サイコロ', 232, 154, '#d0b46c', 10);
 
       var dieSize = 44;
       if (diceCount > 2) dieSize = 38;
@@ -2674,23 +2787,33 @@ Game.Battle = (function() {
       var currentMenuEntries = getMenuEntries();
       var menuHeight = Math.max(80, 18 + currentMenuEntries.length * 22);
       R.drawDialogBox(300, 200, 160, menuHeight);
+      drawBattlePanelAccent(R, 300, 200, 160, menuHeight, '#ffd66b');
+      R.drawTextJP('行動', 314, 204, '#ffd66b', 10);
       for (var i = 0; i < currentMenuEntries.length; i++) {
         var sealed = (sealedCommand >= 0 && i === sealedCommand);
         var color = sealed ? '#555' : (i === menuIndex) ? C.COLORS.GOLD : '#fff';
         var prefix = (i === menuIndex) ? '▶ ' : '  ';
         var baseLabel = currentMenuEntries[i].label;
         var label = sealed ? baseLabel + '×' : baseLabel;
+        if (i === menuIndex) {
+          R.drawRectAbsolute(312, 214 + i * 22, 134, 16, 'rgba(255,204,0,0.12)');
+        }
         R.drawTextJP(prefix + label, 315, 212 + i * 22, color, 14);
       }
     }
 
     if (phase === 'itemMenu' && messageTimer <= 0) {
       R.drawDialogBox(280, 184, 180, 96);
+      drawBattlePanelAccent(R, 280, 184, 180, 96, '#8fe0ff');
+      R.drawTextJP('もちもの', 292, 188, '#8fe0ff', 10);
       for (var ii = 0; ii < itemMenuItems.length; ii++) {
         var selected = (ii === itemMenuIndex);
         var itemName = itemMenuItems[ii].item.name;
         var prefix2 = selected ? '▶ ' : '  ';
         var col2 = selected ? C.COLORS.GOLD : '#fff';
+        if (selected) {
+          R.drawRectAbsolute(290, 196 + ii * 18, 148, 14, 'rgba(143,224,255,0.1)');
+        }
         R.drawTextJP(prefix2 + itemName, 292, 194 + ii * 18, col2, 12);
       }
       if (itemMenuItems[itemMenuIndex]) {
@@ -2716,8 +2839,10 @@ Game.Battle = (function() {
 
     // Message
     if (message) {
-      R.drawDialogBox(10, 282, 460, 35);
-      R.drawTextJP(message, 20, 290, '#fff', 14);
+      R.drawDialogBox(10, 278, 460, 39);
+      drawBattlePanelAccent(R, 10, 278, 460, 39, ritualRuntime ? '#ffd66b' : '#8fb8ff');
+      R.drawTextJP(ritualRuntime ? '儀式の声' : '戦況', 20, 286, ritualRuntime ? '#ffd66b' : '#8fb8ff', 10);
+      R.drawTextJP(message, 20, 295, '#fff', 13);
     }
 
     if (ritualRuntime && ritualRuntime.uiFlags && ritualRuntime.uiFlags.failureOverlay) {
@@ -2727,6 +2852,8 @@ Game.Battle = (function() {
         120, 92, '#f2d8d8', 14
       );
     }
+
+    drawBattleIntroOverlay(R, ctx, C);
   }
 
   function isActive() { return active; }

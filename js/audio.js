@@ -342,6 +342,12 @@ Game.Audio = (function() {
         playNote(220, 0.3, 'square', now + 0.6, 0.15);
         playNote(196, 0.6, 'square', now + 0.9, 0.15);
         break;
+      case 'battle_intro':
+        playSweep(180, 420, 0.12, 'square', now, 0.12);
+        playNote(196, 0.06, 'square', now + 0.05, 0.1);
+        playNote(262, 0.08, 'sawtooth', now + 0.11, 0.12);
+        playSweep(520, 220, 0.18, 'triangle', now + 0.16, 0.09);
+        break;
       case 'critical':
         playSweep(700, 1400, 0.18, 'square', now, 0.14);
         playNote(1568, 0.08, 'triangle', now + 0.14, 0.1);

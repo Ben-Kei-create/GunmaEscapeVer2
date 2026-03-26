@@ -25,6 +25,7 @@ Game.Main = (function() {
       }
     });
 
+    applyDebugLaunchOptions();
     requestAnimationFrame(gameLoop);
   }
 
@@ -390,6 +391,10 @@ Game.Main = (function() {
         setState(Game.Config.STATE.BATTLE);
         Game.Battle.start('yubatake_guardian', npc);
         break;
+      case 'battle_thread_maiden':
+        setState(Game.Config.STATE.BATTLE);
+        Game.Battle.start('threadMaiden', npc);
+        break;
       case 'event_ch4_ending':
         setState(Game.Config.STATE.EVENT);
         Game.Event.start('ch4_ending', function() {
@@ -482,11 +487,7 @@ Game.Main = (function() {
     }
   }
 
-  function startGame() {
-    Game.Map.load('maebashi', 14, 8);
-    setState(Game.Config.STATE.EXPLORING);
-    Game.Audio.playBgm('field');
-
+  function resetNewGameState() {
     // Reset all NPC states
     var allMaps = ['maebashi', 'takasaki', 'kusatsu', 'ikaho', 'shimonita', 'tomioka', 'tsumagoi',
                    'tamura', 'forest', 'konuma', 'onuma', 'akagi_ranch', 'akagi_shrine',
@@ -521,6 +522,18 @@ Game.Main = (function() {
       Game.Story.reset();
       if (Game.Story.saveFlags) Game.Story.saveFlags();
     }
+  }
+
+  function startGame() {
+    resetNewGameState();
+    Game.Map.load('maebashi', 14, 8);
+    setState(Game.Config.STATE.EVENT);
+    Game.Audio.stopBgm();
+    Game.Event.start('opening', function() {
+      setState(Game.Config.STATE.EXPLORING);
+      if (Game.UI && Game.UI.showAreaBanner) Game.UI.showAreaBanner('maebashi');
+      Game.Audio.playBgm('field');
+    });
   }
 
   function startChapter2() {
@@ -859,7 +872,7 @@ Game.Main = (function() {
     var chapterInfo = Game.Chapters && Game.Chapters.getChapter ? Game.Chapters.getChapter(pd.chapter, mapId) : null;
     var mapInfo = Game.Chapters && Game.Chapters.getMap && mapId ? Game.Chapters.getMap(mapId) : null;
     var journeyState = Game.Story && Game.Story.getJourneyState ? Game.Story.getJourneyState() : { respectGauge: 0, catalysts: [] };
-    return JSON.stringify({
+    var payload = {
       mode: state,
       titleSelection: Game.UI.getTitleSelection ? Game.UI.getTitleSelection() : 0,
       map: mapId,
@@ -881,7 +894,27 @@ Game.Main = (function() {
       catalystCount: journeyState.catalysts ? journeyState.catalysts.length : 0,
       hasAnySave: Game.Save && Game.Save.hasAnySave ? Game.Save.hasAnySave() : false,
       saveMenuContext: Game.SaveMenu && Game.SaveMenu.getContext ? Game.SaveMenu.getContext() : null
-    });
+    };
+    if (state === Game.Config.STATE.BATTLE && Game.Battle && Game.Battle.getStateSnapshot) {
+      payload.battle = Game.Battle.getStateSnapshot();
+    }
+    return JSON.stringify(payload);
+  }
+
+  function applyDebugLaunchOptions() {
+    if (typeof window === 'undefined' || !window.location || !window.location.search) return;
+    var params = new URLSearchParams(window.location.search);
+    var debugBattle = params.get('debugBattle');
+    if (!debugBattle) return;
+
+    var pd = Game.Player.getData();
+    var debugInventory = params.get('debugInventory');
+    pd.inventory = debugInventory ? debugInventory.split(',').filter(Boolean) : [];
+    pd.equippedDice = ['normalDice'];
+    pd.hp = pd.maxHp;
+
+    setState(Game.Config.STATE.BATTLE);
+    Game.Battle.start(debugBattle, null);
   }
 
   // Start when page loads
@@ -899,6 +932,7 @@ Game.Main = (function() {
   return {
     init: init,
     setState: setState,
-    startStoryBattle: startStoryBattle
+    startStoryBattle: startStoryBattle,
+    applyDebugLaunchOptions: applyDebugLaunchOptions
   };
 })();

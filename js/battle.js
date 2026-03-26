@@ -227,6 +227,19 @@ Game.Battle = (function() {
       name: '湯畑の守護者',
       hp: 140, maxHp: 140,
       attack: 22, defense: 12, goldReward: 200,
+      ritualMode: 'temperature',
+      ritualFailStyle: {
+        text: '熱情が沸騰し、濁流となってあなたを押し流した。',
+        returnEventId: 'ev_fail_yubatake_downstream'
+      },
+      ritualParams: {
+        startTemperature: 110,
+        targetMin: 35,
+        targetMax: 50,
+        freezeFailThreshold: 10,
+        lowDiceCoolValue: 15,
+        highDiceHeatValue: 8
+      },
       sprite: [
         [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
         [0,0,1,0,0,0,0,0,0,0,0,0,0,1,0,0],
@@ -1180,6 +1193,41 @@ Game.Battle = (function() {
     palette: enemies.cabbage.palette
   };
 
+  enemies.threadMaiden = {
+    name: '絡糸の機女',
+    hp: 1, maxHp: 1,
+    attack: 15, defense: 999, goldReward: 140,
+    ritualMode: 'untangle',
+    ritualFailStyle: {
+      text: '強引に引いた糸が切れ、記憶が絡まり直していく。',
+      returnEventId: 'ev_fail_tomioka_rewind'
+    },
+    ritualParams: {
+      maxTangle: 12,
+      lowDiceThreshold: 2,
+      highDicePenaltyThreshold: 6
+    },
+    sprite: [
+      [0,0,0,0,0,1,1,1,1,1,0,0,0,0,0,0],
+      [0,0,0,0,1,1,2,2,2,1,1,0,0,0,0,0],
+      [0,0,0,1,1,2,2,2,2,2,1,1,0,0,0,0],
+      [0,0,1,1,2,2,3,2,2,3,2,1,1,0,0,0],
+      [0,0,1,2,2,2,2,4,4,2,2,2,1,0,0,0],
+      [0,1,2,2,2,5,5,5,5,5,5,2,2,1,0,0],
+      [0,1,2,2,5,5,5,5,5,5,5,5,2,1,0,0],
+      [1,2,2,5,5,5,5,5,5,5,5,5,5,2,1,0],
+      [1,2,2,5,5,5,5,5,5,5,5,5,5,2,1,0],
+      [0,1,2,2,5,5,5,5,5,5,5,5,2,1,0,0],
+      [0,1,2,2,2,5,5,5,5,5,5,2,2,1,0,0],
+      [0,0,1,2,2,2,6,6,6,6,2,2,1,0,0,0],
+      [0,0,0,1,2,6,0,0,0,0,6,2,1,0,0,0],
+      [0,0,0,0,1,6,0,0,0,0,6,1,0,0,0,0],
+      [0,0,0,0,0,1,0,0,0,0,1,0,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+    ],
+    palette: { 1:'#2f2d3a', 2:'#d8d3c8', 3:'#1b1b22', 4:'#c96f7a', 5:'#f2f1ee', 6:'#8b7f6f' }
+  };
+
   var menuItems = ['たたかう', 'アイテム', 'にげる'];
 
   function getRitualDefinition() {
@@ -1377,7 +1425,7 @@ Game.Battle = (function() {
     bossEnraged = false;
     enrageTimer = 0;
     // Initialize boss gimmick
-    currentGimmick = bossGimmicks[enemyId] || null;
+    currentGimmick = enemy && enemy.ritualMode ? null : (bossGimmicks[enemyId] || null);
     turnCount = 0;
     phaseChanged = false;
     sealedCommand = -1;
@@ -2154,6 +2202,28 @@ Game.Battle = (function() {
     R.drawTextJP('目を入れる', enemyX + 36, 82, '#d8c68a', 10);
   }
 
+  function getStateSnapshot() {
+    if (!active || !enemy) return null;
+    return {
+      phase: phase,
+      message: message,
+      enemy: {
+        name: enemy.name,
+        hp: enemy.hp,
+        maxHp: enemy.maxHp
+      },
+      menuEntries: getMenuEntries().map(function(entry) { return entry.label; }),
+      ritual: ritualRuntime ? {
+        mode: ritualRuntime.ritualMode,
+        gauge: ritualRuntime.ritualGauge,
+        targetZone: ritualRuntime.ritualTargetZone,
+        hintState: ritualRuntime.ritualHintState,
+        slots: ritualRuntime.ritualSlots,
+        state: ritualRuntime.ritualState
+      } : null
+    };
+  }
+
   function draw() {
     if (!active) return;
 
@@ -2379,6 +2449,7 @@ Game.Battle = (function() {
     isActive: isActive,
     getAllEnemies: function() { return enemies; },
     getMenuEntries: getMenuEntries,
+    getStateSnapshot: getStateSnapshot,
     getRitualRuntime: function() { return ritualRuntime; },
     getRitualDefinition: function(mode) {
       return Game.RitualBattles && Game.RitualBattles.getDefinition ? Game.RitualBattles.getDefinition(mode) : null;

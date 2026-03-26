@@ -12,6 +12,7 @@ Game.Event = (function() {
   var waitTimer = 0;
   var onComplete = null;
   var textComplete = false;
+  var autoAdvanceTimer = 0;
 
   // Scene format:
   // {
@@ -26,53 +27,62 @@ Game.Event = (function() {
 
   // Predefined event scripts
   var events = {
-    // Opening event when game starts
+    // Opening mini-movie when starting a new game
     opening: [
       {
-        bg: '#000011',
+        bg: '#060814',
+        motion: 'road_trip',
+        bgm: 'sad',
         speaker: null,
         lines: [
-          '……暗い。',
-          '揺れるワゴン車のエンジン音と、',
-          '下北沢から群馬へ向かう道の記憶だけが、',
-          '途切れた意識の底で鳴っていた。',
-          'サトウ、フルヤ、ヤマカワ――',
-          '三人の声を思い出した瞬間、',
-          '朽ちた森の地面でひとり目を覚ました。'
-        ]
-      },
-      {
-        bg: '#0a1a0a',
-        speaker: 'おばあちゃん',
-        speakerColor: '#ffaa88',
-        lines: [
-          'おや、目が覚めたかい。',
-          'ここは群馬県の前橋じゃよ。',
-          '見上げな、空に鶴みたいな裂け目があるだろう。',
-          '群馬県は一度入ったら出られない...',
-          'そういう言い伝えがあるんじゃ。'
-        ]
-      },
-      {
-        bg: '#0a1a0a',
-        speaker: 'おばあちゃん',
-        speakerColor: '#ffaa88',
-        lines: [
-          'でも方法がないわけじゃないよ。',
-          '結界を破るには四つの証がいる。',
-          '温泉の鍵、だるまの目、',
-          'こんにゃくパス、キャベツの紋章...',
-          'この4つじゃ。',
-          '四つそろわなけりゃ、何度でもこの県に飲まれるよ。'
-        ]
-      },
-      {
-        bg: '#0a0a22',
-        speaker: null,
-        lines: [
-          '群馬県からの脱出が、今はじまる……。'
+          '深夜の関越道。ワゴン車は、群馬へ向かっていた。',
+          'くだらない笑い声と、見慣れた横顔だけが、暗闇の中で揺れている。'
         ],
-        effect: 'fade'
+        autoAdvance: 30
+      },
+      {
+        bg: '#0b0f1b',
+        motion: 'van_memory',
+        speaker: null,
+        lines: [
+          'サトウ、フルヤ、ヤマカワ――',
+          '名前だけが、ヘッドライトの残像みたいに浮かんでは消えていく。'
+        ],
+        autoAdvance: 30
+      },
+      {
+        bg: '#101420',
+        motion: 'border_glitch',
+        sfx: 'critical',
+        effect: 'shake',
+        speaker: null,
+        lines: [
+          '県境を越えた瞬間、景色がノイズ混じりに裂けた。',
+          '白線もガードレールも、群馬の闇に飲み込まれていく。'
+        ],
+        autoAdvance: 34
+      },
+      {
+        bg: '#0b1510',
+        motion: 'forest_wake',
+        speaker: null,
+        lines: [
+          '気がつくと、朽ちた森の地面にひとりで倒れていた。',
+          '空には、鶴の形に裂けた赤いひびだけが残っている。'
+        ],
+        autoAdvance: 34
+      },
+      {
+        bg: '#161326',
+        motion: 'dawn_frontier',
+        speaker: '主人公',
+        speakerColor: '#88aaff',
+        lines: [
+          '……ここは前橋？ どうして、ひとりなんだ。',
+          '群馬の誇りと悲哀を辿る旅が、静かに始まる。'
+        ],
+        effect: 'fade',
+        autoAdvance: 48
       }
     ],
 
@@ -498,6 +508,30 @@ Game.Event = (function() {
         ],
         effect: 'fade'
       }
+    ],
+
+    ev_fail_tomioka_rewind: [
+      {
+        bg: '#101018',
+        speaker: null,
+        lines: [
+          '強く引いた糸が、耳障りな音を立てて切れた。',
+          '気づくと、製糸場の回廊の入口まで静かに巻き戻されている。'
+        ],
+        effect: 'fade'
+      }
+    ],
+
+    ev_fail_yubatake_downstream: [
+      {
+        bg: '#1a1208',
+        speaker: null,
+        lines: [
+          '熱が暴れ、湯の濁流が足元をさらっていく。',
+          '下流まで押し流され、荒い息だけが残った。'
+        ],
+        effect: 'fade'
+      }
     ]
   };
 
@@ -517,6 +551,7 @@ Game.Event = (function() {
     fadeDir = -1; // fade in
     waitTimer = 0;
     textComplete = false;
+    autoAdvanceTimer = 0;
     onComplete = callback || null;
 
     var firstScene = scenes[0];
@@ -570,6 +605,16 @@ Game.Event = (function() {
           textComplete = true;
         }
       }
+    } else if (scene.autoAdvance) {
+      if (autoAdvanceTimer <= 0) {
+        autoAdvanceTimer = scene.autoAdvance;
+      } else {
+        autoAdvanceTimer--;
+        if (autoAdvanceTimer <= 0) {
+          advanceScene(false);
+          return null;
+        }
+      }
     }
 
     // Advance on confirm
@@ -579,48 +624,10 @@ Game.Event = (function() {
         var currentLine = scene.lines[lineIndex] || '';
         charIndex = currentLine.length;
         textComplete = true;
+        autoAdvanceTimer = scene.autoAdvance || 0;
         return null;
       }
-
-      // Next line
-      lineIndex++;
-      if (lineIndex >= scene.lines.length) {
-        // Next scene
-        sceneIndex++;
-        lineIndex = 0;
-        charIndex = 0;
-        charTimer = 0;
-        textComplete = false;
-
-        if (sceneIndex >= scenes.length) {
-          // End of event
-          if (scene.effect === 'fade') {
-            fadeDir = 1; // fade out
-          } else {
-            active = false;
-            if (onComplete) onComplete();
-            return { result: 'done' };
-          }
-        } else {
-          // Transition between scenes
-          var nextScene = scenes[sceneIndex];
-          if (nextScene.bgm) {
-            Game.Audio.stopBgm();
-            Game.Audio.playBgm(nextScene.bgm);
-          }
-          if (nextScene.sfx) Game.Audio.playSfx(nextScene.sfx);
-
-          if (scene.effect === 'fade') {
-            fadeDir = 1; // fade out then in
-            waitTimer = 5;
-          }
-        }
-      } else {
-        charIndex = 0;
-        charTimer = 0;
-        textComplete = false;
-        Game.Audio.playSfx('confirm');
-      }
+      advanceScene(true);
     }
 
     return null;
@@ -639,6 +646,7 @@ Game.Event = (function() {
     // Background
     var bg = scene.bg || '#000011';
     R.drawRectAbsolute(0, 0, C.CANVAS_WIDTH, C.CANVAS_HEIGHT, bg);
+    drawMotionLayer(ctx, C, scene, Date.now() / 1000);
 
     // Atmospheric particles
     var t = Date.now() / 1000;
@@ -689,7 +697,7 @@ Game.Event = (function() {
     R.drawRectAbsolute(20, C.CANVAS_HEIGHT - 60, C.CANVAS_WIDTH - 40, 1, '#334');
 
     // Advance prompt
-    if (textComplete) {
+    if (textComplete && !scene.autoAdvance) {
       var blinkT = Date.now() / 400;
       if (Math.sin(blinkT) > 0) {
         R.drawTextJP('▼', C.CANVAS_WIDTH - 45, C.CANVAS_HEIGHT - 50, '#aaa', 14);
@@ -702,6 +710,175 @@ Game.Event = (function() {
     // Fade overlay
     if (fadeAlpha > 0) {
       R.fadeOverlay(fadeAlpha);
+    }
+  }
+
+  function advanceScene(playConfirmSfx) {
+    var scene = scenes[sceneIndex];
+    if (!scene) return;
+
+    lineIndex++;
+    autoAdvanceTimer = 0;
+    if (lineIndex >= scene.lines.length) {
+      sceneIndex++;
+      lineIndex = 0;
+      charIndex = 0;
+      charTimer = 0;
+      textComplete = false;
+
+      if (sceneIndex >= scenes.length) {
+        if (scene.effect === 'fade') {
+          fadeDir = 1;
+        } else {
+          active = false;
+          if (onComplete) onComplete();
+        }
+        return;
+      }
+
+      var nextScene = scenes[sceneIndex];
+      if (nextScene.bgm) {
+        Game.Audio.stopBgm();
+        Game.Audio.playBgm(nextScene.bgm);
+      }
+      if (nextScene.sfx) Game.Audio.playSfx(nextScene.sfx);
+
+      if (scene.effect === 'fade') {
+        fadeDir = 1;
+        waitTimer = 5;
+      }
+      return;
+    }
+
+    charIndex = 0;
+    charTimer = 0;
+    textComplete = false;
+    if (playConfirmSfx) Game.Audio.playSfx('confirm');
+  }
+
+  function drawMotionLayer(ctx, C, scene, t) {
+    if (!scene.motion) return;
+    var w = C.CANVAS_WIDTH;
+    var h = C.CANVAS_HEIGHT;
+    var i;
+
+    switch (scene.motion) {
+      case 'road_trip':
+        ctx.fillStyle = '#080b15';
+        ctx.beginPath();
+        ctx.moveTo(w * 0.24, h);
+        ctx.lineTo(w * 0.42, h * 0.36);
+        ctx.lineTo(w * 0.58, h * 0.36);
+        ctx.lineTo(w * 0.76, h);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = '#f4d96f';
+        for (i = 0; i < 7; i++) {
+          var laneY = ((t * 90 + i * 42) % (h + 30)) - 20;
+          var laneW = 4 + laneY * 0.03;
+          ctx.fillRect(w * 0.5 - laneW * 0.5, laneY, laneW, 18);
+        }
+        ctx.fillStyle = 'rgba(255,255,255,0.45)';
+        for (i = 0; i < 22; i++) {
+          ctx.fillRect((i * 23 + 17) % w, 10 + ((i * 37) % 90), 2, 2);
+        }
+        break;
+
+      case 'van_memory':
+        ctx.fillStyle = '#121725';
+        ctx.fillRect(0, h * 0.52, w, h * 0.18);
+        ctx.fillStyle = '#262d40';
+        ctx.fillRect(0, h * 0.7, w, h * 0.3);
+        ctx.fillStyle = '#e8d38a';
+        ctx.fillRect(w * 0.18, h * 0.62, w * 0.64, 4);
+        ctx.fillStyle = '#88b9ff';
+        for (i = 0; i < 5; i++) {
+          var dashX = (w * 0.2 + ((t * 120 + i * 88) % (w * 0.6)));
+          ctx.fillRect(dashX, h * 0.57, 24, 3);
+        }
+        ctx.fillStyle = 'rgba(255,120,120,0.2)';
+        ctx.fillRect(22, 24, 34, 14);
+        ctx.fillRect(w - 56, 24, 34, 14);
+        break;
+
+      case 'border_glitch':
+        ctx.fillStyle = '#171d2e';
+        ctx.fillRect(0, h * 0.55, w, h * 0.45);
+        ctx.strokeStyle = '#ff5c7a';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(w * 0.48, 0);
+        ctx.lineTo(w * 0.52, h * 0.2);
+        ctx.lineTo(w * 0.46, h * 0.42);
+        ctx.lineTo(w * 0.54, h * 0.64);
+        ctx.lineTo(w * 0.5, h);
+        ctx.stroke();
+        for (i = 0; i < 9; i++) {
+          ctx.fillStyle = i % 2 === 0 ? 'rgba(255,255,255,0.08)' : 'rgba(255,60,90,0.08)';
+          ctx.fillRect(((i * 53) + Math.floor(t * 20)) % w, 20 + i * 18, 60, 6);
+        }
+        break;
+
+      case 'forest_wake':
+        ctx.fillStyle = '#10170f';
+        for (i = 0; i < 12; i++) {
+          var trunkX = i * 42 + ((i % 2) * 10);
+          ctx.fillRect(trunkX, h * 0.18, 12, h * 0.52);
+        }
+        ctx.fillStyle = 'rgba(180,210,190,0.08)';
+        for (i = 0; i < 5; i++) {
+          var fogX = ((t * 24) + i * 90) % (w + 80) - 80;
+          ctx.fillRect(fogX, h * 0.58 + i * 8, 80, 18);
+        }
+        ctx.strokeStyle = '#b8404e';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(w * 0.28, h * 0.16);
+        ctx.lineTo(w * 0.41, h * 0.08);
+        ctx.lineTo(w * 0.54, h * 0.18);
+        ctx.lineTo(w * 0.66, h * 0.1);
+        ctx.stroke();
+        break;
+
+      case 'dawn_frontier':
+        ctx.fillStyle = '#261f3a';
+        ctx.fillRect(0, h * 0.52, w, h * 0.48);
+        ctx.fillStyle = '#ef8f73';
+        ctx.fillRect(0, h * 0.42, w, 10);
+        ctx.fillStyle = '#3a314f';
+        ctx.beginPath();
+        ctx.moveTo(0, h * 0.72);
+        ctx.lineTo(w * 0.16, h * 0.58);
+        ctx.lineTo(w * 0.34, h * 0.68);
+        ctx.lineTo(w * 0.52, h * 0.54);
+        ctx.lineTo(w * 0.72, h * 0.69);
+        ctx.lineTo(w, h * 0.57);
+        ctx.lineTo(w, h);
+        ctx.lineTo(0, h);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(255,115,115,0.8)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(w * 0.5, 18);
+        ctx.lineTo(w * 0.56, 42);
+        ctx.lineTo(w * 0.52, 70);
+        ctx.lineTo(w * 0.58, 98);
+        ctx.stroke();
+        for (i = 0; i < 4; i++) {
+          var poleX = 44 + i * 90;
+          ctx.strokeStyle = '#2b2536';
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.moveTo(poleX, h * 0.5);
+          ctx.lineTo(poleX, h * 0.75);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.moveTo(poleX - 8, h * 0.56);
+          ctx.lineTo(poleX + 8, h * 0.56);
+          ctx.stroke();
+        }
+        break;
     }
   }
 

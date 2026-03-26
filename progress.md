@@ -75,4 +75,28 @@ Original prompt: そうだね。セーブできる村役場みたいなところ
   - 併せて `konnyakuKing` / `cabbageGuardian` の不足敵定義も補完し、Story戦での未定義クラッシュを解消。
   - `js/event.js` に `ev_fail_ch1_pushback` / `ev_fail_ch2_rewind` を追加。
   - `js/ui.js` のダイアログ描画を null-safe にして、戦闘デバッグ時の描画落ちを回避。
-- TODO: `battle.js` に第2章 `untangle` と第3章 `temperature` の実敵データを割り当て、フィールド/ストーリー導線へつなぐ。
+- 2026-03-26: `untangle` / `temperature` を実敵へ接続し、検証用導線も追加。
+  - `js/battle.js` で `yubatake_guardian` を `temperature` 化し、`threadMaiden` を `untangle` ボスとして追加。
+  - `js/maps/tomioka.js` に富岡製糸場の新規NPC「糸繰りの残響」を追加し、`battle_thread_maiden` へ接続。
+  - `js/maps/kusatsu_deep.js` の湯畑ボス文言を温度儀式向けに調整。
+  - `js/main.js` に `debugBattle` URL起動と、`render_game_to_text` の battle snapshot 追加。
+  - `js/event.js` に `ev_fail_tomioka_rewind` / `ev_fail_yubatake_downstream` を追加。
+  - Playwright client で `?debugBattle=threadMaiden` と `?debugBattle=yubatake_guardian` を回し、`untangle` が `gauge:12→9`、`temperature` が `gauge:110→95` へ変化することを確認。
+- 2026-03-26: タイトルの `はじめから` を、即探索開始ではなくオープニングのミニムービーから始まる流れへ変更。
+  - `js/main.js` の新規開始処理を `resetNewGameState()` と `startGame()` に分離し、開始時は `maebashi` をロードしたうえで `Game.Event.start('opening', ...)` を経由するよう更新。
+  - `js/event.js` の `opening` を5場面のミニムービーへ刷新。
+    - 深夜の関越道
+    - 仲間の名前が揺らぐ車内
+    - 県境のノイズ崩壊
+    - 森での目覚め
+    - 夜明け前の前橋
+  - `js/event.js` に `motion` ごとの簡易アニメーション描画と `autoAdvance` を追加し、冒頭は半自動で流れる演出へ変更。
+  - 旧来の説明寄り導入ではなく、「切ない旅」と「境界に飲まれる不穏さ」を先に体験させる構造へ寄せた。
+- 2026-03-26: オープニング演出の検証結果
+  - `node --check js/event.js js/main.js` 通過。
+  - Playwright client で `はじめから` 押下後のオープニングを確認し、`mode: event` のままミニムービーへ入ることを確認。
+  - スクリーンショットで道路演出と車内回想シーンの表示を目視確認。
+  - 最終カットも `autoAdvance` 化し、最後の主人公台詞のあとに手動入力なしで探索へ着地するよう微調整。
+- TODO: `temperature` 勝利時の専用余韻メッセージと、`untangle` の成功/失敗時に環境音や画面色が変わる演出を追加する。
+- TODO: 富岡側の報酬を暫定 `yakimanju` から、物語/触媒設計に沿った固有アイテムへ差し替える。
+- TODO: オープニングの再視聴負荷を下げるため、一定条件でのスキップ導線や既読演出短縮を検討する。

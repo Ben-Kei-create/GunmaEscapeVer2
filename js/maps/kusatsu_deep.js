@@ -46,9 +46,9 @@ Game.Maps.kusatsu_deep = (function() {
   var npcs = [
     {
       id: 'yubatake_guardian', x: 14, y: 4, name: '湯畑の守護者',
-      dialog: ['ここは...忘却の源泉...', '全てを洗い流し...楽になれ...'],
+      dialog: ['ここは...沸きこぼれる記憶の源泉...', '熱に呑まれたままでは...誰も通せない...'],
       afterDialog: 'battle_yubatake', afterDefeat: 'event_ch4_ending',
-      defeatedDialog: ['湯の花が...散っていく...', '大丈夫、源泉は守られた。'],
+      defeatedDialog: ['温度が...戻っていく...', 'ようやく、誰かを癒やせる。先へお行き。'],
       defeated: false, sprite: bossSprite, palette: { 1:'#ddbbcc', 2:'#66ccff', 3:'#2288cc', 4:'#ffffff' }
     },
     {

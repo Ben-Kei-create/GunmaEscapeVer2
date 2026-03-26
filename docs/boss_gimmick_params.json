@@ -1,0 +1,138 @@
+[
+  {
+    "boss_id": "anguraBoss",
+    "gimmick_id": "heavy_delay",
+    "trigger_timing": "turn_start",
+    "description": "重量圧で行動が遅れ、一定ターンで攻撃不能になる",
+    "parameters": {
+      "delay_turn_interval": 3,
+      "skip_action_turns": 1,
+      "self_attack_bonus": 4,
+      "effect_text": "重量圧で動きが鈍る！",
+      "sfx_id": "cargo_creak"
+    }
+  },
+  {
+    "boss_id": "gobouFang",
+    "gimmick_id": "burrow_ambush",
+    "trigger_timing": "turn_start",
+    "description": "潜伏中は被ダメ軽減し、次ターンに奇襲攻撃する",
+    "parameters": {
+      "burrow_cycle_turns": 2,
+      "burrow_damage_reduction_rate": 0.8,
+      "ambush_multiplier": 1.6,
+      "effect_text": "爆根が地中に潜った！",
+      "sfx_id": "earth_dive"
+    }
+  },
+  {
+    "boss_id": "furuyaBattle",
+    "gimmick_id": "respect_duel",
+    "trigger_timing": "on_dice_result",
+    "description": "出目差を尊重値として蓄積し、閾値で特殊行動を行う",
+    "parameters": {
+      "respect_gain_per_win": 2,
+      "respect_gain_per_lose": 1,
+      "respect_threshold": 6,
+      "respect_action": "nullify_next_player_buff",
+      "effect_text": "古谷は静かに構えた",
+      "sfx_id": "tension_chime"
+    }
+  },
+  {
+    "boss_id": "kumako_steam",
+    "gimmick_id": "heal_inversion",
+    "trigger_timing": "on_player_heal",
+    "description": "プレイヤーが回復行動をした際、回復量をダメージに反転する",
+    "parameters": {
+      "damage_multiplier": 1.0,
+      "min_damage": 1,
+      "effect_text": "回復が毒に反転した！",
+      "sfx_id": "steam_hiss"
+    }
+  },
+  {
+    "boss_id": "juke_gakuen",
+    "gimmick_id": "dice_rigging",
+    "trigger_timing": "on_dice_roll_end",
+    "description": "プレイヤーのダイス出目を確率で書き換える",
+    "parameters": {
+      "rig_chance": 0.45,
+      "target_dice_count": 1,
+      "forced_face": 1,
+      "effect_text": "ジュークが出目を捻じ曲げた！",
+      "sfx_id": "dice_shatter"
+    }
+  },
+  {
+    "boss_id": "echo_guardian",
+    "gimmick_id": "chain_action_lock",
+    "trigger_timing": "on_player_action",
+    "description": "同一コマンドの連続使用を制限し、違反時に失敗扱いにする",
+    "parameters": {
+      "max_same_action_chain": 1,
+      "penalty_type": "action_fail",
+      "penalty_damage": 8,
+      "effect_text": "反響で行動が阻まれた！",
+      "sfx_id": "echo_snap"
+    }
+  },
+  {
+    "boss_id": "jokouchou",
+    "gimmick_id": "command_seal",
+    "trigger_timing": "turn_start",
+    "description": "一定ターンごとにプレイヤーコマンドをランダム封印する",
+    "parameters": {
+      "seal_interval_turns": 2,
+      "sealed_command_count": 1,
+      "seal_duration_turns": 1,
+      "effect_text": "女工長が指示を封じた！",
+      "sfx_id": "seal_stamp"
+    }
+  },
+  {
+    "boss_id": "soncho",
+    "gimmick_id": "water_level_gauge",
+    "trigger_timing": "turn_end",
+    "description": "水位ゲージが上昇し、満タン時に全体攻撃を発動する",
+    "parameters": {
+      "gauge_max": 100,
+      "gauge_gain_per_turn": 25,
+      "overflow_attack_multiplier": 1.8,
+      "reset_on_overflow": true,
+      "effect_text": "水位が上昇している！",
+      "sfx_id": "water_rise"
+    }
+  },
+  {
+    "boss_id": "daruma_revenant",
+    "gimmick_id": "eye_paint_gamble",
+    "trigger_timing": "turn_start",
+    "description": "目入れ宣言を行い、成功で強化・失敗で自傷する賭け行動",
+    "parameters": {
+      "gamble_success_rate": 0.5,
+      "success_attack_bonus": 10,
+      "success_duration_turns": 2,
+      "failure_self_damage_rate": 0.12,
+      "effect_text": "達磨が目入れの賭けに出た！",
+      "sfx_id": "brush_stroke"
+    }
+  },
+  {
+    "boss_id": "bunrei_final",
+    "gimmick_id": "rule_shift",
+    "trigger_timing": "turn_start",
+    "description": "ターンごとに戦闘ルールを切り替え、ダメージ計算式を変動させる",
+    "parameters": {
+      "rule_cycle": [
+        "crit_rate_up",
+        "heal_disabled",
+        "defense_half",
+        "dice_bonus_invalid"
+      ],
+      "cycle_interval_turns": 1,
+      "effect_text": "分霊が戦闘ルールを書き換えた！",
+      "sfx_id": "reality_glitch"
+    }
+  }
+]

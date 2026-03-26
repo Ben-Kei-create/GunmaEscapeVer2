@@ -1,0 +1,47 @@
+[
+  {
+    "event_id": "ch5_branch_point",
+    "scenes": [
+      { "type": "dialog", "speaker": "主人公", "text": "佐藤の机に手紙がある" },
+      { "type": "dialog", "speaker": "主人公", "text": "「ここにいたい」" },
+      { "type": "dialog", "speaker": "ジューク", "text": "佐藤は帰還を拒んだ" },
+      { "type": "dialog", "speaker": "主人公", "text": "それでも連れ帰るか" },
+      {
+        "type": "choice",
+        "speaker": "主人公",
+        "text": "どう答える？",
+        "choices": [
+          { "text": "記憶を手放さない", "flag": "sato_rescue_determined" },
+          { "text": "佐藤の意志を尊重", "flag": "sato_will_respected" }
+        ]
+      }
+    ]
+  },
+  {
+    "event_id": "ch9_branch_point",
+    "scenes": [
+      { "type": "dialog", "speaker": "古谷", "text": "俺は一人で消える" },
+      { "type": "dialog", "speaker": "主人公", "text": "それは違うだろ" },
+      { "type": "dialog", "speaker": "ジューク", "text": "掟は現実を守る" },
+      { "type": "dialog", "speaker": "ジューク", "text": "真実は受け入れろ" },
+      {
+        "type": "choice",
+        "speaker": "主人公",
+        "text": "古谷に何と言う？",
+        "choices": [
+          { "text": "一緒に記憶を探す", "flag": "furuya_join_true" },
+          { "text": "無理には誘わない", "flag": "furuya_join_false" }
+        ]
+      },
+      {
+        "type": "choice",
+        "speaker": "主人公",
+        "text": "ジュークの真実は？",
+        "choices": [
+          { "text": "真実を拒む", "flag": "ed_flag_ominous_off" },
+          { "text": "真実を受け入れる", "flag": "ed_flag_ominous_on" }
+        ]
+      }
+    ]
+  }
+]

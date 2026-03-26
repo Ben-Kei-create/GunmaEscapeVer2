@@ -498,6 +498,7 @@ Game.NPC = (function() {
         if (map.npcs) {
           for (var n = 0; n < map.npcs.length; n++) {
             var npc = map.npcs[n];
+            if (npc.hideWhenDefeated && npc.defeated) continue;
             var renderPos = getNpcRenderPos(npc);
             var state = getMovementState(npc);
             var flipped = state && state.facing === 'right';

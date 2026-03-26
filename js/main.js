@@ -317,6 +317,10 @@ Game.Main = (function() {
 
   function handleAction(action, npc) {
     switch (action) {
+      case 'battle_ruined_checkpoint':
+        setState(Game.Config.STATE.BATTLE);
+        Game.Battle.start('ruined_checkpoint', npc);
+        break;
       case 'battle_onsenMonkey':
         setState(Game.Config.STATE.BATTLE);
         Game.Battle.start('onsenMonkey', npc);
@@ -340,6 +344,10 @@ Game.Main = (function() {
           setState(Game.Config.STATE.EXPLORING);
           Game.Audio.playBgm('field');
         });
+        break;
+      case 'mark_defeated':
+        if (npc) npc.defeated = true;
+        setState(Game.Config.STATE.EXPLORING);
         break;
       case 'event_firstKey':
         setState(Game.Config.STATE.EVENT);

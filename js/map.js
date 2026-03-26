@@ -51,7 +51,9 @@ Game.Map = (function() {
     // Check NPC collision
     if (currentMap.npcs) {
       for (var i = 0; i < currentMap.npcs.length; i++) {
-        if (currentMap.npcs[i].x === x && currentMap.npcs[i].y === y) return false;
+        var npc = currentMap.npcs[i];
+        if (npc.hideWhenDefeated && npc.defeated) continue;
+        if (npc.x === x && npc.y === y) return false;
       }
     }
 
@@ -108,6 +110,7 @@ Game.Map = (function() {
     if (currentMap.npcs) {
       for (var i = 0; i < currentMap.npcs.length; i++) {
         var npc = currentMap.npcs[i];
+        if (npc.hideWhenDefeated && npc.defeated) continue;
         var ts = Game.Config.TILE_SIZE;
         Game.Renderer.drawSprite(npc.sprite, npc.x * ts, npc.y * ts, npc.palette);
       }

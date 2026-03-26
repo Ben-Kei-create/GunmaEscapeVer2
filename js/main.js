@@ -342,6 +342,90 @@ Game.Main = (function() {
       case 'event_ch2_ending':
         setState(Game.Config.STATE.EVENT);
         Game.Event.start('ch2_ending', function() {
+          startChapter3();
+        });
+        break;
+      case 'battle_kumako_steam':
+        setState(Game.Config.STATE.BATTLE);
+        Game.Battle.start('kumako_steam', npc);
+        break;
+      case 'event_ch3_ending':
+        setState(Game.Config.STATE.EVENT);
+        Game.Event.start('ch3_ending', function() {
+          startChapter4();
+        });
+        break;
+      case 'battle_yubatake':
+        setState(Game.Config.STATE.BATTLE);
+        Game.Battle.start('yubatake_guardian', npc);
+        break;
+      case 'event_ch4_ending':
+        setState(Game.Config.STATE.EVENT);
+        Game.Event.start('ch4_ending', function() {
+          startChapter5();
+        });
+        break;
+      case 'battle_juke_gakuen':
+        setState(Game.Config.STATE.BATTLE);
+        Game.Battle.start('juke_gakuen', npc);
+        break;
+      case 'event_ch5_ending':
+        setState(Game.Config.STATE.EVENT);
+        Game.Event.start('ch5_ending', function() {
+          startChapter6();
+        });
+        break;
+      case 'battle_echo_guardian':
+        setState(Game.Config.STATE.BATTLE);
+        Game.Battle.start('echo_guardian', npc);
+        break;
+      case 'battle_sato_kumako':
+        setState(Game.Config.STATE.BATTLE);
+        Game.Battle.start('sato_kumako_tunnel', npc);
+        break;
+      case 'event_ch6_ending':
+        setState(Game.Config.STATE.EVENT);
+        Game.Event.start('ch6_ending', function() {
+          startChapter7();
+        });
+        break;
+      case 'battle_haruna_beast':
+        setState(Game.Config.STATE.BATTLE);
+        Game.Battle.start('haruna_lake_beast', npc);
+        break;
+      case 'event_ch7_ending':
+        setState(Game.Config.STATE.EVENT);
+        Game.Event.start('ch7_ending', function() {
+          startChapter8();
+        });
+        break;
+      case 'battle_oze_wraith':
+        setState(Game.Config.STATE.BATTLE);
+        Game.Battle.start('oze_mud_wraith', npc);
+        break;
+      case 'event_ch8_ending':
+        setState(Game.Config.STATE.EVENT);
+        Game.Event.start('ch8_ending', function() {
+          startChapter9();
+        });
+        break;
+      case 'battle_juke_minakami':
+        setState(Game.Config.STATE.BATTLE);
+        Game.Battle.start('juke_minakami', npc);
+        break;
+      case 'event_ch9_ending':
+        setState(Game.Config.STATE.EVENT);
+        Game.Event.start('ch9_ending', function() {
+          startChapter10();
+        });
+        break;
+      case 'battle_juke_final':
+        setState(Game.Config.STATE.BATTLE);
+        Game.Battle.start('juke_final', npc);
+        break;
+      case 'event_ch10_ending':
+        setState(Game.Config.STATE.EVENT);
+        Game.Event.start('ch10_ending', function() {
           setState(Game.Config.STATE.ENDING);
         });
         break;
@@ -374,7 +458,9 @@ Game.Main = (function() {
 
     // Reset all NPC states
     var allMaps = ['maebashi', 'takasaki', 'kusatsu', 'ikaho', 'shimonita', 'tomioka', 'tsumagoi',
-                   'tamura', 'forest', 'konuma', 'onuma', 'akagi_ranch', 'akagi_shrine'];
+                   'tamura', 'forest', 'konuma', 'onuma', 'akagi_ranch', 'akagi_shrine',
+                   'shirane_trail', 'kusatsu_deep', 'jomo_gakuen', 'tanigawa_tunnel',
+                   'haruna_lake', 'oze_marsh', 'minakami_valley', 'border_tunnel'];
     for (var m = 0; m < allMaps.length; m++) {
       var mapData = Game.Maps[allMaps[m]];
       if (mapData && mapData.npcs) {
@@ -433,6 +519,206 @@ Game.Main = (function() {
     Game.Map.load('forest', 10, 10);
     setState(Game.Config.STATE.EVENT);
     Game.Event.start('ch2_opening', function() {
+      setState(Game.Config.STATE.EXPLORING);
+      Game.Audio.playBgm('field');
+    });
+  }
+
+  function startChapter3() {
+    var pd = Game.Player.getData();
+    pd.chapter = 3;
+    pd.inventory = pd.inventory.filter(function(id) {
+      var item = Game.Items.get(id);
+      return !item || item.type !== 'key';
+    });
+    var ch3Maps = ['shirane_trail'];
+    for (var m = 0; m < ch3Maps.length; m++) {
+      var mapData = Game.Maps[ch3Maps[m]];
+      if (mapData && mapData.npcs) {
+        for (var n = 0; n < mapData.npcs.length; n++) { mapData.npcs[n].defeated = false; }
+      }
+      if (mapData && mapData.items) {
+        for (var i = 0; i < mapData.items.length; i++) { mapData.items[i].taken = false; }
+      }
+    }
+    Game.Map.load('shirane_trail', 14, 18);
+    setState(Game.Config.STATE.EVENT);
+    Game.Event.start('ch3_opening', function() {
+      setState(Game.Config.STATE.EXPLORING);
+      Game.Audio.playBgm('field');
+    });
+  }
+
+  function startChapter4() {
+    var pd = Game.Player.getData();
+    pd.chapter = 4;
+    pd.inventory = pd.inventory.filter(function(id) {
+      var item = Game.Items.get(id);
+      return !item || item.type !== 'key';
+    });
+    var ch4Maps = ['kusatsu_deep'];
+    for (var m = 0; m < ch4Maps.length; m++) {
+      var mapData = Game.Maps[ch4Maps[m]];
+      if (mapData && mapData.npcs) {
+        for (var n = 0; n < mapData.npcs.length; n++) { mapData.npcs[n].defeated = false; }
+      }
+      if (mapData && mapData.items) {
+        for (var i = 0; i < mapData.items.length; i++) { mapData.items[i].taken = false; }
+      }
+    }
+    Game.Map.load('kusatsu_deep', 14, 18);
+    setState(Game.Config.STATE.EVENT);
+    Game.Event.start('ch4_opening', function() {
+      setState(Game.Config.STATE.EXPLORING);
+      Game.Audio.playBgm('field');
+    });
+  }
+
+  function startChapter5() {
+    var pd = Game.Player.getData();
+    pd.chapter = 5;
+    pd.inventory = pd.inventory.filter(function(id) {
+      var item = Game.Items.get(id);
+      return !item || item.type !== 'key';
+    });
+    var ch5Maps = ['jomo_gakuen'];
+    for (var m = 0; m < ch5Maps.length; m++) {
+      var mapData = Game.Maps[ch5Maps[m]];
+      if (mapData && mapData.npcs) {
+        for (var n = 0; n < mapData.npcs.length; n++) { mapData.npcs[n].defeated = false; }
+      }
+      if (mapData && mapData.items) {
+        for (var i = 0; i < mapData.items.length; i++) { mapData.items[i].taken = false; }
+      }
+    }
+    Game.Map.load('jomo_gakuen', 14, 18);
+    setState(Game.Config.STATE.EVENT);
+    Game.Event.start('ch5_opening', function() {
+      setState(Game.Config.STATE.EXPLORING);
+      Game.Audio.playBgm('field');
+    });
+  }
+
+  function startChapter6() {
+    var pd = Game.Player.getData();
+    pd.chapter = 6;
+    pd.inventory = pd.inventory.filter(function(id) {
+      var item = Game.Items.get(id);
+      return !item || item.type !== 'key';
+    });
+    var ch6Maps = ['tanigawa_tunnel'];
+    for (var m = 0; m < ch6Maps.length; m++) {
+      var mapData = Game.Maps[ch6Maps[m]];
+      if (mapData && mapData.npcs) {
+        for (var n = 0; n < mapData.npcs.length; n++) { mapData.npcs[n].defeated = false; }
+      }
+      if (mapData && mapData.items) {
+        for (var i = 0; i < mapData.items.length; i++) { mapData.items[i].taken = false; }
+      }
+    }
+    Game.Map.load('tanigawa_tunnel', 14, 18);
+    setState(Game.Config.STATE.EVENT);
+    Game.Event.start('ch6_opening', function() {
+      setState(Game.Config.STATE.EXPLORING);
+      Game.Audio.playBgm('field');
+    });
+  }
+
+  function startChapter7() {
+    var pd = Game.Player.getData();
+    pd.chapter = 7;
+    pd.inventory = pd.inventory.filter(function(id) {
+      var item = Game.Items.get(id);
+      return !item || item.type !== 'key';
+    });
+    var ch7Maps = ['haruna_lake'];
+    for (var m = 0; m < ch7Maps.length; m++) {
+      var mapData = Game.Maps[ch7Maps[m]];
+      if (mapData && mapData.npcs) {
+        for (var n = 0; n < mapData.npcs.length; n++) { mapData.npcs[n].defeated = false; }
+      }
+      if (mapData && mapData.items) {
+        for (var i = 0; i < mapData.items.length; i++) { mapData.items[i].taken = false; }
+      }
+    }
+    Game.Map.load('haruna_lake', 14, 18);
+    setState(Game.Config.STATE.EVENT);
+    Game.Event.start('ch7_opening', function() {
+      setState(Game.Config.STATE.EXPLORING);
+      Game.Audio.playBgm('field');
+    });
+  }
+
+  function startChapter8() {
+    var pd = Game.Player.getData();
+    pd.chapter = 8;
+    pd.inventory = pd.inventory.filter(function(id) {
+      var item = Game.Items.get(id);
+      return !item || item.type !== 'key';
+    });
+    var ch8Maps = ['oze_marsh'];
+    for (var m = 0; m < ch8Maps.length; m++) {
+      var mapData = Game.Maps[ch8Maps[m]];
+      if (mapData && mapData.npcs) {
+        for (var n = 0; n < mapData.npcs.length; n++) { mapData.npcs[n].defeated = false; }
+      }
+      if (mapData && mapData.items) {
+        for (var i = 0; i < mapData.items.length; i++) { mapData.items[i].taken = false; }
+      }
+    }
+    Game.Map.load('oze_marsh', 14, 18);
+    setState(Game.Config.STATE.EVENT);
+    Game.Event.start('ch8_opening', function() {
+      setState(Game.Config.STATE.EXPLORING);
+      Game.Audio.playBgm('field');
+    });
+  }
+
+  function startChapter9() {
+    var pd = Game.Player.getData();
+    pd.chapter = 9;
+    pd.inventory = pd.inventory.filter(function(id) {
+      var item = Game.Items.get(id);
+      return !item || item.type !== 'key';
+    });
+    var ch9Maps = ['minakami_valley'];
+    for (var m = 0; m < ch9Maps.length; m++) {
+      var mapData = Game.Maps[ch9Maps[m]];
+      if (mapData && mapData.npcs) {
+        for (var n = 0; n < mapData.npcs.length; n++) { mapData.npcs[n].defeated = false; }
+      }
+      if (mapData && mapData.items) {
+        for (var i = 0; i < mapData.items.length; i++) { mapData.items[i].taken = false; }
+      }
+    }
+    Game.Map.load('minakami_valley', 14, 18);
+    setState(Game.Config.STATE.EVENT);
+    Game.Event.start('ch9_opening', function() {
+      setState(Game.Config.STATE.EXPLORING);
+      Game.Audio.playBgm('field');
+    });
+  }
+
+  function startChapter10() {
+    var pd = Game.Player.getData();
+    pd.chapter = 10;
+    pd.inventory = pd.inventory.filter(function(id) {
+      var item = Game.Items.get(id);
+      return !item || item.type !== 'key';
+    });
+    var ch10Maps = ['border_tunnel'];
+    for (var m = 0; m < ch10Maps.length; m++) {
+      var mapData = Game.Maps[ch10Maps[m]];
+      if (mapData && mapData.npcs) {
+        for (var n = 0; n < mapData.npcs.length; n++) { mapData.npcs[n].defeated = false; }
+      }
+      if (mapData && mapData.items) {
+        for (var i = 0; i < mapData.items.length; i++) { mapData.items[i].taken = false; }
+      }
+    }
+    Game.Map.load('border_tunnel', 14, 18);
+    setState(Game.Config.STATE.EVENT);
+    Game.Event.start('ch10_opening', function() {
       setState(Game.Config.STATE.EXPLORING);
       Game.Audio.playBgm('field');
     });

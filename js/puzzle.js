@@ -44,6 +44,209 @@ Game.Puzzle = (function() {
         q: '群馬県の県庁所在地は？',
         choices: ['高崎市', '前橋市', '太田市'],
         answer: 1
+      },
+      {
+        q: '群馬県の「上毛三山」に含まれないのは？',
+        choices: ['赤城山', '浅間山', '榛名山'],
+        answer: 1
+      },
+      {
+        q: '富岡製糸場が世界遺産に登録された年は？',
+        choices: ['2010年', '2014年', '2018年'],
+        answer: 1
+      },
+      {
+        q: '群馬県の名物「焼きまんじゅう」のタレは何味？',
+        choices: ['醤油', '味噌', '塩'],
+        answer: 1
+      },
+      {
+        q: '「上毛かるた」は全部で何枚？',
+        choices: ['44枚', '48枚', '52枚'],
+        answer: 0
+      },
+      {
+        q: '草津温泉の「湯もみ」で使う板の長さは約？',
+        choices: ['約30cm', '約180cm', '約300cm'],
+        answer: 1
+      },
+      {
+        q: '群馬県の県の花は？',
+        choices: ['サクラ', 'レンゲツツジ', 'ヒマワリ'],
+        answer: 1
+      },
+      {
+        q: '国定忠治が処刑された場所は？',
+        choices: ['大戸の関所', '碓氷峠', '草津温泉'],
+        answer: 0
+      },
+      {
+        q: '伊香保温泉の石段は何段？',
+        choices: ['265段', '365段', '465段'],
+        answer: 1
+      },
+      {
+        q: '群馬弁で「なげる」の意味は？',
+        choices: ['投げる', '捨てる', '走る'],
+        answer: 1
+      },
+      {
+        q: '赤城山の山頂にある湖の名前は？',
+        choices: ['大沼', '中禅寺湖', '榛名湖'],
+        answer: 0
+      },
+      // ── 上毛かるたクイズ（難易度1: 易） ──
+      {
+        q: '「つる舞う形の群馬県」の「つる」とは？',
+        choices: ['鶴', '蔓', '弦'],
+        answer: 0, difficulty: 1, karuta: 'つ'
+      },
+      {
+        q: '「ねぎとこんにゃく下仁田宿」で有名なのは何ねぎ？',
+        choices: ['下仁田ねぎ', '深谷ねぎ', '九条ねぎ'],
+        answer: 0, difficulty: 1, karuta: 'ね'
+      },
+      {
+        q: '「草津よいとこ薬の温泉」の「草津」は何と読む？',
+        choices: ['くさつ', 'くさづ', 'そうしん'],
+        answer: 0, difficulty: 1, karuta: 'く'
+      },
+      {
+        q: '「紅葉に映える妙義山」の妙義山の特徴は？',
+        choices: ['奇岩怪石', '日本一高い', '一年中雪'],
+        answer: 0, difficulty: 1, karuta: 'も'
+      },
+      {
+        q: '「裾野は長し赤城山」の赤城山にある湖は？',
+        choices: ['大沼', '芦ノ湖', '中禅寺湖'],
+        answer: 0, difficulty: 1, karuta: 'す'
+      },
+      {
+        q: '「登る榛名のキャンプ村」の「榛名」は何山？',
+        choices: ['榛名山', '浅間山', '谷川岳'],
+        answer: 0, difficulty: 1, karuta: 'の'
+      },
+      {
+        q: '「伊香保温泉日本の名湯」のシンボルは？',
+        choices: ['石段街', '大鳥居', '砂風呂'],
+        answer: 0, difficulty: 1, karuta: 'い'
+      },
+      {
+        q: '「世のちり洗う四万温泉」の四万温泉は何県？',
+        choices: ['群馬県', '長野県', '新潟県'],
+        answer: 0, difficulty: 1, karuta: 'よ'
+      },
+      {
+        q: '「雷とからっ風義理人情」の「からっ風」とは？',
+        choices: ['強い冬の風', '夏の通り雨', '春の突風'],
+        answer: 0, difficulty: 1, karuta: 'ら'
+      },
+      {
+        q: '「力あわせる二百万」の二百万は何の数？',
+        choices: ['群馬県の人口', '温泉の数', '山の数'],
+        answer: 0, difficulty: 1, karuta: 'ち'
+      },
+      // ── 上毛かるたクイズ（難易度2: 中） ──
+      {
+        q: '「浅間のいたずら鬼の押出し」はどうやってできた？',
+        choices: ['火山の溶岩', '隕石の落下', '大地震の亀裂'],
+        answer: 0, difficulty: 2, karuta: 'あ'
+      },
+      {
+        q: '「関東と信越つなぐ高崎市」高崎市の名物は？',
+        choices: ['だるま', 'こけし', '赤べこ'],
+        answer: 0, difficulty: 2, karuta: 'か'
+      },
+      {
+        q: '「桐生は日本の機どころ」桐生市で盛んなのは？',
+        choices: ['織物', '陶器', '刃物'],
+        answer: 0, difficulty: 2, karuta: 'き'
+      },
+      {
+        q: '「銘仙織り出す伊勢崎市」伊勢崎銘仙とは？',
+        choices: ['絹織物', '陶磁器', '郷土玩具'],
+        answer: 0, difficulty: 2, karuta: 'め'
+      },
+      {
+        q: '「縁起だるまの少林山」少林山達磨寺がある市は？',
+        choices: ['高崎市', '前橋市', '太田市'],
+        answer: 0, difficulty: 2, karuta: 'え'
+      },
+      {
+        q: '「和算の大家関孝和」和算とは何のこと？',
+        choices: ['日本独自の数学', '日本独自の暦', '日本独自の占い'],
+        answer: 0, difficulty: 2, karuta: 'わ'
+      },
+      {
+        q: '「滝は吹割片品渓谷」吹割の滝の別名は？',
+        choices: ['東洋のナイアガラ', '東洋のビクトリア', '東洋のイグアス'],
+        answer: 0, difficulty: 2, karuta: 'た'
+      },
+      {
+        q: '「中仙道しのぶ安中杉並木」安中杉並木を植えたのは？',
+        choices: ['松平勝男', '徳川家康', '上杉謙信'],
+        answer: 0, difficulty: 2, karuta: 'な'
+      },
+      {
+        q: '「耶馬渓しのぐ吾妻峡」吾妻峡は何が美しい？',
+        choices: ['紅葉と渓谷美', '夜景', '砂浜'],
+        answer: 0, difficulty: 2, karuta: 'や'
+      },
+      {
+        q: '「県都前橋生糸の市」前橋市は何の県都？',
+        choices: ['群馬県', '埼玉県', '栃木県'],
+        answer: 0, difficulty: 2, karuta: 'け'
+      },
+      // ── 上毛かるたクイズ（難易度3: 難） ──
+      {
+        q: '「ゆかりは古し貫前神社」の珍しい参拝方法は？',
+        choices: ['石段を下る', '石段を後ろ向きに', '石段を這って'],
+        answer: 0, difficulty: 3, karuta: 'ゆ'
+      },
+      {
+        q: '「三波石と共に名高い冬桜」冬桜の名所は？',
+        choices: ['桜山公園', '敷島公園', '華蔵寺公園'],
+        answer: 0, difficulty: 3, karuta: 'さ'
+      },
+      {
+        q: '「老農船津伝次平」船津伝次平は何に貢献した？',
+        choices: ['農業指導', '養蚕業', '温泉の開拓'],
+        answer: 0, difficulty: 3, karuta: 'ろ'
+      },
+      {
+        q: '「日本で最初の富岡製糸」富岡製糸場は何の工場？',
+        choices: ['生糸', '鉄鋼', '紡績'],
+        answer: 0, difficulty: 3, karuta: 'に'
+      },
+      {
+        q: '「誇る文豪田山花袋」田山花袋の代表作は？',
+        choices: ['蒲団', '吾輩は猫である', '雪国'],
+        answer: 0, difficulty: 3, karuta: 'ほ'
+      },
+      {
+        q: '「平和の使徒新島襄」新島襄が創立した大学は？',
+        choices: ['同志社大学', '早稲田大学', '慶應義塾大学'],
+        answer: 0, difficulty: 3, karuta: 'へ'
+      },
+      {
+        q: '「心の燈台内村鑑三」内村鑑三の有名な思想は？',
+        choices: ['無教会主義', '武士道', '脱亜入欧'],
+        answer: 0, difficulty: 3, karuta: 'こ'
+      },
+      {
+        q: '「そろいの仕度で八木節音頭」の伴奏で使う樽は？',
+        choices: ['空樽', '酒樽', '味噌樽'],
+        answer: 0, difficulty: 3, karuta: 'そ'
+      },
+      {
+        q: '「白衣観音慈悲の御手」白衣大観音がある山は？',
+        choices: ['観音山', '赤城山', '妙義山'],
+        answer: 0, difficulty: 3, karuta: 'ひ'
+      },
+      {
+        q: '「昔を語る多胡の古碑」多胡碑は何と呼ばれる？',
+        choices: ['上野三碑', '日本三古碑', '関東三碑'],
+        answer: 0, difficulty: 3, karuta: 'む'
       }
     ],
     currentQ: 0,
@@ -95,6 +298,7 @@ Game.Puzzle = (function() {
     type = puzzleType;
     npcRef = npc;
     result = null;
+    var opts = options || {};
 
     if (type === 'daruma') {
       daruma.stack = [];
@@ -104,9 +308,20 @@ Game.Puzzle = (function() {
       daruma.phase = 'moving';
       daruma.lives = 3;
     } else if (type === 'quiz') {
-      // Pick 3 random questions
-      var shuffled = quiz.questions.slice().sort(function() { return Math.random() - 0.5; });
-      quiz.selectedQuestions = shuffled.slice(0, 3);
+      // Filter by difficulty if specified, otherwise use all
+      var pool = quiz.questions;
+      if (opts.difficulty) {
+        var filtered = [];
+        for (var qi = 0; qi < pool.length; qi++) {
+          // Questions without difficulty field are treated as difficulty 1
+          var qDiff = pool[qi].difficulty || 1;
+          if (qDiff <= opts.difficulty) filtered.push(pool[qi]);
+        }
+        if (filtered.length >= 3) pool = filtered;
+      }
+      var count = opts.count || 3;
+      var shuffled = pool.slice().sort(function() { return Math.random() - 0.5; });
+      quiz.selectedQuestions = shuffled.slice(0, count);
       quiz.currentQ = 0;
       quiz.score = 0;
       quiz.selectedChoice = 0;

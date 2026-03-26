@@ -1,4 +1,4 @@
-// Rendering system
+// Rendering system with animated tiles and screen effects
 Game.Renderer = (function() {
   var canvas, ctx;
   var cameraX = 0, cameraY = 0;
@@ -65,8 +65,13 @@ Game.Renderer = (function() {
     var ts = Game.Config.TILE_SIZE;
     var cw = Game.Config.CANVAS_WIDTH;
     var ch = Game.Config.CANVAS_HEIGHT;
-    var mw = Game.Config.MAP_COLS * ts;
-    var mh = Game.Config.MAP_ROWS * ts;
+    
+    var currentMap = (Game.Map && Game.Map.getCurrentMap) ? Game.Map.getCurrentMap() : null;
+    var mapCols = currentMap ? currentMap.tiles[0].length : Game.Config.MAP_COLS;
+    var mapRows = currentMap ? currentMap.tiles.length : Game.Config.MAP_ROWS;
+    
+    var mw = mapCols * ts;
+    var mh = mapRows * ts;
 
     cameraX = Math.max(0, Math.min(x - cw / 2, mw - cw));
     cameraY = Math.max(0, Math.min(y - ch / 2, mh - ch));
@@ -423,6 +428,88 @@ Game.Renderer = (function() {
 
   function getContext() {
     return ctx;
+  }
+
+  // Screen effects
+  function screenShake(intensity, duration) {
+    effects.shake.active = true;
+    effects.shake.intensity = intensity || 4;
+    effects.shake.timer = duration || 20;
+  }
+
+  function screenFlash(color, duration) {
+    effects.flash.active = true;
+    effects.flash.color = color || '#fff';
+    effects.flash.timer = duration || 10;
+    effects.flash.maxTimer = duration || 10;
+  }
+
+  function screenFade(targetAlpha, duration, callback) {
+    effects.fade.active = true;
+    effects.fade.target = targetAlpha;
+    effects.fade.speed = Math.abs(targetAlpha - effects.fade.alpha) / (duration || 30);
+    effects.fade.callback = callback || null;
+  }
+
+  function screenTint(color, alpha) {
+    if (alpha <= 0) {
+      effects.tint.active = false;
+    } else {
+      effects.tint.active = true;
+      effects.tint.color = color || '#000';
+      effects.tint.alpha = alpha;
+    }
+  }
+
+  function updateEffects() {
+    if (effects.shake.active) {
+      effects.shake.timer--;
+      if (effects.shake.timer <= 0) {
+        effects.shake.active = false;
+        effects.shake.intensity = 0;
+      }
+    }
+    if (effects.flash.active) {
+      effects.flash.timer--;
+      if (effects.flash.timer <= 0) {
+        effects.flash.active = false;
+      }
+    }
+    if (effects.fade.active) {
+      if (effects.fade.alpha < effects.fade.target) {
+        effects.fade.alpha = Math.min(effects.fade.alpha + effects.fade.speed, effects.fade.target);
+      } else {
+        effects.fade.alpha = Math.max(effects.fade.alpha - effects.fade.speed, effects.fade.target);
+      }
+      if (Math.abs(effects.fade.alpha - effects.fade.target) < 0.01) {
+        effects.fade.alpha = effects.fade.target;
+        effects.fade.active = false;
+        if (effects.fade.callback) {
+          effects.fade.callback();
+          effects.fade.callback = null;
+        }
+      }
+    }
+  }
+
+  function drawEffects() {
+    if (effects.flash.active) {
+      var flashAlpha = effects.flash.timer / effects.flash.maxTimer;
+      ctx.fillStyle = effects.flash.color;
+      ctx.globalAlpha = flashAlpha * 0.6;
+      ctx.fillRect(0, 0, Game.Config.CANVAS_WIDTH, Game.Config.CANVAS_HEIGHT);
+      ctx.globalAlpha = 1;
+    }
+    if (effects.tint.active) {
+      ctx.fillStyle = effects.tint.color;
+      ctx.globalAlpha = effects.tint.alpha;
+      ctx.fillRect(0, 0, Game.Config.CANVAS_WIDTH, Game.Config.CANVAS_HEIGHT);
+      ctx.globalAlpha = 1;
+    }
+    if (effects.fade.alpha > 0) {
+      ctx.fillStyle = 'rgba(0,0,0,' + effects.fade.alpha + ')';
+      ctx.fillRect(0, 0, Game.Config.CANVAS_WIDTH, Game.Config.CANVAS_HEIGHT);
+    }
   }
 
   return {

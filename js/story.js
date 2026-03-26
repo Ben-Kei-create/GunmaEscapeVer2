@@ -415,6 +415,40 @@ Game.Story = (function() {
         processStep();
         break;
 
+      case 'route_ending':
+        // Determine ending based on accumulated flags
+        var endingId = resolveEnding();
+        var endingEvent = chapterEvents[endingId];
+        if (endingEvent) {
+          currentEvent = endingEvent;
+          stepIndex = 0;
+          processStep();
+        } else {
+          stepIndex++;
+          processStep();
+        }
+        return;
+
+      case 'start_quiz':
+        // Trigger quiz puzzle from story event
+        // Usage: { type: 'start_quiz', difficulty: 2, count: 3 }
+        var quizDiff = step.difficulty || 1;
+        var quizCount = step.count || 3;
+        var afterQuiz = currentEvent.slice(stepIndex + 1);
+        var afterQuizCallback = onEventEnd;
+        endEvent();
+        Game.Main.setState(Game.Config.STATE.PUZZLE);
+        Game.Puzzle.start('quiz', null, { difficulty: quizDiff, count: quizCount });
+        // Resume story after quiz ends (handled by main.js puzzle completion)
+        onEventEnd = function() {
+          if (afterQuiz.length > 0) {
+            startEvent(afterQuiz, afterQuizCallback);
+          } else if (afterQuizCallback) {
+            afterQuizCallback();
+          }
+        };
+        return;
+
       case 'give_item':
         Game.Player.addItem(step.item);
         var itemDef = Game.Items.get(step.item);
@@ -485,6 +519,12 @@ Game.Story = (function() {
 
       case 'end_chapter':
         chapter = step.next || chapter + 1;
+        // Play chapter-specific field BGM if available
+        var chFieldBgm = chapterFieldBgm[chapter];
+        if (chFieldBgm) {
+          Game.Audio.stopBgm();
+          Game.Audio.playBgm(chFieldBgm);
+        }
         stepIndex++;
         processStep();
         break;
@@ -759,6 +799,21 @@ Game.Story = (function() {
     }
   }
 
+  function drawPortrait(R, C, speaker) {
+    var p = portraits[speaker];
+    if (!p) return;
+    var px = 12, py = C.CANVAS_HEIGHT - 100 - 70;
+    // Portrait frame
+    R.drawRectAbsolute(px - 2, py - 2, 68, 68, '#888');
+    R.drawRectAbsolute(px, py, 64, 64, p.color);
+    // Accent rectangle (face area)
+    R.drawRectAbsolute(px + 16, py + 12, 32, 24, p.accent);
+    // Label
+    R.drawTextJP(p.label, px + 20, py + 40, '#fff', 16);
+    // Name below portrait
+    R.drawTextJP(speaker, px, py + 66, '#ccc', 9);
+  }
+
   function drawSceneBg(R, C, scene) {
     var ctx = R.getContext();
     switch (scene) {
@@ -885,6 +940,60 @@ Game.Story = (function() {
 
       case 'chapter_end':
         R.drawRectAbsolute(0, 0, C.CANVAS_WIDTH, C.CANVAS_HEIGHT, '#0a0a1a');
+        break;
+
+      case 'gakuen':
+        // School interior (ch5)
+        R.drawRectAbsolute(0, 0, C.CANVAS_WIDTH, C.CANVAS_HEIGHT, '#2a2a3a');
+        R.drawRectAbsolute(0, 200, C.CANVAS_WIDTH, 120, '#4a4a3a');
+        // Desks
+        for (var d = 0; d < 4; d++) {
+          ctx.fillStyle = '#5a4a3a';
+          ctx.fillRect(60 + d * 100, 140, 60, 30);
+          ctx.fillStyle = '#4a3a2a';
+          ctx.fillRect(70 + d * 100, 170, 10, 30);
+          ctx.fillRect(110 + d * 100, 170, 10, 30);
+        }
+        // Blackboard
+        R.drawRectAbsolute(100, 20, 280, 100, '#2a4a2a');
+        R.drawRectAbsolute(105, 25, 270, 90, '#1a3a1a');
+        R.drawTextJP('上毛学園', 190, 60, '#aaccaa', 14);
+        break;
+
+      case 'tunnel':
+        // Dark tunnel (ch6)
+        R.drawRectAbsolute(0, 0, C.CANVAS_WIDTH, C.CANVAS_HEIGHT, '#050508');
+        // Tunnel walls
+        ctx.fillStyle = '#1a1a22';
+        ctx.beginPath();
+        ctx.moveTo(0, 0); ctx.lineTo(120, 80); ctx.lineTo(120, 240); ctx.lineTo(0, 320);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(480, 0); ctx.lineTo(360, 80); ctx.lineTo(360, 240); ctx.lineTo(480, 320);
+        ctx.fill();
+        // Rails
+        R.drawRectAbsolute(140, 260, 200, 3, '#333');
+        R.drawRectAbsolute(140, 275, 200, 3, '#333');
+        // Faint light at end
+        ctx.fillStyle = 'rgba(180,200,220,0.08)';
+        ctx.beginPath();
+        ctx.arc(240, 160, 40, 0, Math.PI * 2);
+        ctx.fill();
+        break;
+
+      case 'shirane':
+        // Mt Shirane volcanic area (ch4)
+        R.drawRectAbsolute(0, 0, C.CANVAS_WIDTH, C.CANVAS_HEIGHT, '#1a1a0a');
+        R.drawRectAbsolute(0, 180, C.CANVAS_WIDTH, 140, '#3a3a1a');
+        // Sulfur vents
+        for (var v = 0; v < 5; v++) {
+          var vx = 40 + v * 95;
+          ctx.fillStyle = '#4a4a1a';
+          ctx.fillRect(vx, 165, 20, 15);
+          ctx.fillStyle = 'rgba(220,220,100,0.15)';
+          var st = Date.now() / 1500 + v;
+          ctx.fillRect(vx - 10, 100 + Math.sin(st) * 20, 40, 60);
+        }
         break;
 
       default:

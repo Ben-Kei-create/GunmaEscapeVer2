@@ -11,6 +11,8 @@ Game.Battle = (function() {
   var shakeX = 0;
   var itemMenuIndex = 0;
   var itemMenuItems = [];
+  var itemMenuMode = 'heal';
+  var ritualMenuActionId = null;
 
   // Dice system
   var battleDice = [];     // array of dice definitions for this battle
@@ -39,6 +41,7 @@ Game.Battle = (function() {
   var sealedCommand = -1;      // index of sealed menu item (-1 = none)
   var gimmickMessage = '';     // queued gimmick message to show
   var gimmickMessageTimer = 0;
+  var ritualRuntime = null;
 
   // Boss dialogue system: queued multi-line dialogue for phase_change/special/victory
   var dialogueQueue = [];      // array of { speaker, text }
@@ -1127,7 +1130,164 @@ Game.Battle = (function() {
     palette: { 1:'#446', 2:'#aab', 3:'#22f', 4:'#c88', 5:'#369', 6:'#247', 7:'#335' }
   };
 
+  enemies.darumaMaster = {
+    name: '欠け目のだるま',
+    hp: 40, maxHp: 40,
+    attack: 9, defense: 4, goldReward: 0,
+    ritualMode: 'repair_eye',
+    ritualItemRequirement: 'darumaEye',
+    ritualFailStyle: {
+      text: 'だるまの虚無に押し返された。',
+      returnEventId: 'ev_fail_ch2_rewind'
+    },
+    ritualParams: {
+      eyeSlotCount: 1
+    },
+    sprite: [
+      [0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0],
+      [0,0,0,1,2,2,2,2,2,2,1,0,0,0,0,0],
+      [0,0,1,2,2,2,2,2,2,2,2,1,0,0,0,0],
+      [0,1,2,2,2,0,2,2,0,2,2,2,1,0,0,0],
+      [0,1,2,2,2,2,2,2,2,2,2,2,1,0,0,0],
+      [1,2,2,2,2,2,3,3,2,2,2,2,2,1,0,0],
+      [1,2,2,2,3,2,2,2,2,3,2,2,2,1,0,0],
+      [1,2,2,2,2,2,2,2,2,2,2,2,2,1,0,0],
+      [1,2,2,2,2,2,2,2,2,2,2,2,2,1,0,0],
+      [0,1,2,2,2,2,4,4,2,2,2,2,1,0,0,0],
+      [0,0,1,2,2,2,2,2,2,2,2,1,0,0,0,0],
+      [0,0,0,1,2,2,2,2,2,2,1,0,0,0,0,0],
+      [0,0,0,0,1,2,2,2,2,1,0,0,0,0,0,0],
+      [0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0],
+      [0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0],
+      [0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0]
+    ],
+    palette: { 1:'#7a0f18', 2:'#d33942', 3:'#111111', 4:'#f4e2b3' }
+  };
+
   var menuItems = ['たたかう', 'アイテム', 'にげる'];
+
+  function getRitualDefinition() {
+    if (!ritualRuntime || !Game.RitualBattles || !Game.RitualBattles.getDefinition) return null;
+    return Game.RitualBattles.getDefinition(ritualRuntime.ritualMode);
+  }
+
+  function getMenuEntries() {
+    var entries = [
+      { id: 'attack', label: menuItems[0] },
+      { id: 'items', label: menuItems[1] },
+      { id: 'flee', label: menuItems[2] }
+    ];
+
+    if (ritualRuntime && Game.RitualBattles && Game.RitualBattles.getExtraActions) {
+      var extraActions = Game.RitualBattles.getExtraActions(ritualRuntime, enemy, Game.Player.getData()) || [];
+      for (var i = 0; i < extraActions.length; i++) {
+        entries.push({
+          id: extraActions[i].id,
+          label: extraActions[i].name || extraActions[i].id,
+          ritual: true
+        });
+      }
+    }
+    return entries;
+  }
+
+  function getDiceResultValues() {
+    var values = [];
+    for (var i = 0; i < diceResults.length; i++) {
+      values.push(parseFace(diceResults[i]).value);
+    }
+    return values;
+  }
+
+  function openHealItemMenu() {
+    var inv = Game.Player.getData().inventory;
+    itemMenuItems = [];
+    itemMenuIndex = 0;
+    itemMenuMode = 'heal';
+    ritualMenuActionId = null;
+    for (var i = 0; i < inv.length; i++) {
+      var item = Game.Items.get(inv[i]);
+      if (item && item.type === 'heal') {
+        itemMenuItems.push({
+          id: inv[i],
+          item: item
+        });
+      }
+    }
+    if (itemMenuItems.length > 0) {
+      phase = 'itemMenu';
+      message = '使うアイテムを選べ';
+      messageTimer = 0;
+      Game.Audio.playSfx('confirm');
+    } else {
+      message = '使えるアイテムがない！';
+      messageTimer = 30;
+    }
+  }
+
+  function openRitualItemMenu(actionId) {
+    var inv = Game.Player.getData().inventory;
+    var requiredId = ritualRuntime && ritualRuntime.ritualItemRequirement ? ritualRuntime.ritualItemRequirement : null;
+    var added = {};
+    itemMenuItems = [];
+    itemMenuIndex = 0;
+    itemMenuMode = 'ritual';
+    ritualMenuActionId = actionId;
+
+    if (requiredId && Game.Player.hasItem(requiredId)) {
+      var requiredItem = Game.Items.get(requiredId);
+      if (requiredItem) {
+        itemMenuItems.push({ id: requiredId, item: requiredItem });
+        added[requiredId] = true;
+      }
+    }
+
+    for (var i = 0; i < inv.length; i++) {
+      var itemId = inv[i];
+      if (added[itemId]) continue;
+      var item = Game.Items.get(itemId);
+      if (!item) continue;
+      itemMenuItems.push({
+        id: itemId,
+        item: item
+      });
+      added[itemId] = true;
+    }
+
+    if (itemMenuItems.length > 0) {
+      phase = 'itemMenu';
+      message = '差し出す記憶を選べ';
+      messageTimer = 0;
+      Game.Audio.playSfx('confirm');
+    } else {
+      message = '差し出せるものがない…';
+      messageTimer = 30;
+    }
+  }
+
+  function evaluateRitualOutcome() {
+    var ritualDefinition = getRitualDefinition();
+    if (!ritualDefinition || !ritualRuntime) return null;
+
+    var playerData = Game.Player.getData();
+    if (ritualDefinition.checkVictory && ritualDefinition.checkVictory(ritualRuntime, enemy, playerData)) {
+      phase = 'victory';
+      message = enemy.name + 'を鎮めた。';
+      messageTimer = 60;
+      if (Game.Particles) Game.Particles.emit('victory', 240, 100, { count: 20 });
+      return 'victory';
+    }
+
+    if (ritualDefinition.checkFailure && ritualDefinition.checkFailure(ritualRuntime, enemy, playerData)) {
+      phase = 'ritualFail';
+      message = (ritualRuntime.ritualFailStyle && ritualRuntime.ritualFailStyle.text) || '理解が届かなかった…';
+      messageTimer = 60;
+      ritualRuntime.uiFlags.failureOverlay = true;
+      return 'failure';
+    }
+
+    return null;
+  }
 
   // Status effect helpers
   function addEffect(list, type, turnsLeft, value) {
@@ -1188,6 +1348,8 @@ Game.Battle = (function() {
     menuIndex = 0;
     itemMenuIndex = 0;
     itemMenuItems = [];
+    itemMenuMode = 'heal';
+    ritualMenuActionId = null;
     phase = 'menu';
     message = enemy.name + 'が現れた！';
     messageTimer = 60;
@@ -1210,6 +1372,15 @@ Game.Battle = (function() {
     dialogueTimer = 0;
     dialogueSpeaker = '';
     dialogueText = '';
+    ritualRuntime = Game.RitualBattles && Game.RitualBattles.createRuntime
+      ? Game.RitualBattles.createRuntime(enemyId, enemy)
+      : null;
+    if (ritualRuntime) {
+      var ritualDefinition = Game.RitualBattles.getDefinition(ritualRuntime.ritualMode);
+      if (ritualDefinition && ritualDefinition.setup) {
+        ritualDefinition.setup(ritualRuntime, enemy, Game.Player.getData());
+      }
+    }
 
     Game.Audio.stopBgm();
     // Use boss-specific BGM if defined, otherwise generic 'battle'
@@ -1325,16 +1496,20 @@ Game.Battle = (function() {
 
     switch (phase) {
       case 'menu':
+        var menuEntries = getMenuEntries();
+        if (menuIndex >= menuEntries.length) {
+          menuIndex = Math.max(0, menuEntries.length - 1);
+        }
         if (Game.Input.isPressed('up')) {
-          menuIndex = (menuIndex - 1 + menuItems.length) % menuItems.length;
+          menuIndex = (menuIndex - 1 + menuEntries.length) % menuEntries.length;
           Game.Audio.playSfx('confirm');
         }
         if (Game.Input.isPressed('down')) {
-          menuIndex = (menuIndex + 1) % menuItems.length;
+          menuIndex = (menuIndex + 1) % menuEntries.length;
           Game.Audio.playSfx('confirm');
         }
         if (Game.Input.isPressed('confirm')) {
-          executeAction(menuIndex);
+          executeAction(menuIndex, menuEntries[menuIndex]);
         }
         break;
 
@@ -1397,6 +1572,9 @@ Game.Battle = (function() {
             comboText = combo.text;
             comboTimer = combo.text ? 60 : 0;
 
+            var ritualDefinition = getRitualDefinition();
+            var ritualDiceValues = getDiceResultValues();
+
             // Apply status effect bonuses
             var atkBonus = getEffectBonus(playerEffects, 'attack_up');
             var enemyDefReduction = hasEffect(enemyEffects, 'stun') ? Math.floor(enemy.defense / 2) : 0;
@@ -1408,6 +1586,20 @@ Game.Battle = (function() {
             var baseDmg = damageTotal + Game.Player.getAttack() + atkBonus - (enemy.defense - enemyDefReduction);
             var dmg = Math.max(0, Math.floor(baseDmg * comboMultiplier));
             if (damageTotal > 0 && dmg < 1) dmg = 1;
+            var actionResult = {
+              damage: dmg,
+              heal: healTotal,
+              projectedEnemyHp: Math.max(0, enemy.hp - dmg)
+            };
+
+            if (ritualDefinition && ritualDefinition.onDiceResolved) {
+              ritualDefinition.onDiceResolved(ritualRuntime, enemy, Game.Player.getData(), ritualDiceValues);
+            }
+            if (ritualDefinition && ritualDefinition.onActionResolved) {
+              ritualDefinition.onActionResolved(ritualRuntime, enemy, Game.Player.getData(), { id: 'attack' }, actionResult);
+            }
+
+            dmg = Math.max(0, Math.floor(actionResult.damage || 0));
             if (dmg > 0) {
               enemy.hp -= dmg;
               shakeX = 4 + battleDice.length;
@@ -1496,6 +1688,19 @@ Game.Battle = (function() {
               message = msgParts.join('！ ') + '！';
             }
 
+            if (ritualRuntime && ritualRuntime.ritualMode === 'repair_eye' && ritualRuntime.ritualState.hpZeroReached && !ritualRuntime.ritualState.eyeRepaired) {
+              message = '空っぽの目が、こちらを見ている。';
+            } else if (ritualRuntime && ritualRuntime.ritualMode === 'untangle') {
+              message += ' 絡まり:' + ritualRuntime.ritualGauge;
+            } else if (ritualRuntime && ritualRuntime.ritualMode === 'temperature') {
+              message += ' 温度:' + ritualRuntime.ritualGauge;
+            }
+
+            var ritualOutcome = evaluateRitualOutcome();
+            if (ritualOutcome) {
+              break;
+            }
+
             // Boss enrage check (HP > 100 and below 50%)
             if (!bossEnraged && enemy.maxHp > 100 && enemy.hp > 0 && enemy.hp <= enemy.maxHp / 2) {
               bossEnraged = true;
@@ -1529,7 +1734,9 @@ Game.Battle = (function() {
               }
             }
 
-            if (enemy.hp <= 0) {
+            var ritualVictory = ritualDefinition && ritualDefinition.checkVictory &&
+              ritualDefinition.checkVictory(ritualRuntime, enemy, Game.Player.getData());
+            if (enemy.hp <= 0 && (!ritualRuntime || ritualVictory)) {
               enemy.hp = 0;
               phase = 'victory';
               message = message + ' ' + enemy.name + 'を倒した！ ' + (enemy.goldReward || 50) + 'G獲得！';
@@ -1545,7 +1752,15 @@ Game.Battle = (function() {
       case 'diceResult':
         animTimer--;
         if (animTimer <= 0) {
-          if (enemy.hp <= 0) {
+          var ritualDefAfterRoll = getRitualDefinition();
+          var ritualVictoryAfterRoll = ritualDefAfterRoll && ritualDefAfterRoll.checkVictory &&
+            ritualDefAfterRoll.checkVictory(ritualRuntime, enemy, Game.Player.getData());
+          if (ritualRuntime && ritualRuntime.ritualMode === 'repair_eye' &&
+              ritualRuntime.ritualState.hpZeroReached && !ritualVictoryAfterRoll) {
+            phase = 'menu';
+            message = '暴力では、まだ満たせない。';
+            messageTimer = 45;
+          } else if (enemy.hp <= 0) {
             phase = 'victory';
           } else {
             phase = 'playerAttack';
@@ -1665,6 +1880,7 @@ Game.Battle = (function() {
         }
         active = false;
         Game.Audio.stopBgm();
+        ritualRuntime = null;
         // Use boss-specific victory BGM if defined
         var victoryBgm = (currentGimmick && currentGimmick.victory_bgm) ? currentGimmick.victory_bgm : null;
         if (victoryBgm) {
@@ -1677,7 +1893,19 @@ Game.Battle = (function() {
       case 'defeat':
         active = false;
         Game.Audio.stopBgm();
+        ritualRuntime = null;
         return { result: 'defeat' };
+
+      case 'ritualFail':
+        active = false;
+        Game.Audio.stopBgm();
+        var failStyle = ritualRuntime ? ritualRuntime.ritualFailStyle : null;
+        ritualRuntime = null;
+        return {
+          result: 'ritual_fail',
+          returnEventId: failStyle ? failStyle.returnEventId : null,
+          failText: failStyle ? failStyle.text : message
+        };
 
       case 'useItem':
         phase = 'enemyAttack';
@@ -1701,12 +1929,13 @@ Game.Battle = (function() {
         active = false;
         Game.Audio.stopBgm();
         Game.Audio.playBgm('field');
+        ritualRuntime = null;
         return { result: 'flee' };
     }
     return null;
   }
 
-  function executeAction(index) {
+  function executeAction(index, menuEntry) {
     // ── Boss gimmick: sealed command ──
     if (sealedCommand >= 0 && index === sealedCommand) {
       message = 'その行動は封じられている！';
@@ -1715,35 +1944,15 @@ Game.Battle = (function() {
       return;
     }
 
-    var playerData = Game.Player.getData();
-    switch (index) {
-      case 0:
+    var entry = menuEntry || getMenuEntries()[index] || { id: 'attack' };
+    switch (entry.id) {
+      case 'attack':
         startDiceRoll();
         break;
-      case 1:
-        var inv = playerData.inventory;
-        itemMenuItems = [];
-        itemMenuIndex = 0;
-        for (var i = 0; i < inv.length; i++) {
-          var item = Game.Items.get(inv[i]);
-          if (item && item.type === 'heal') {
-            itemMenuItems.push({
-              id: inv[i],
-              item: item
-            });
-          }
-        }
-        if (itemMenuItems.length > 0) {
-          phase = 'itemMenu';
-          message = '使うアイテムを選べ';
-          messageTimer = 0;
-          Game.Audio.playSfx('confirm');
-        } else {
-          message = '使えるアイテムがない！';
-          messageTimer = 30;
-        }
+      case 'items':
+        openHealItemMenu();
         break;
-      case 2:
+      case 'flee':
         if (Math.random() < 0.5) {
           message = '逃げ出した！';
           messageTimer = 30;
@@ -1754,6 +1963,9 @@ Game.Battle = (function() {
           phase = 'playerAttack';
           animTimer = 5;
         }
+        break;
+      case 'drop_item_to_eye_slot':
+        openRitualItemMenu(entry.id);
         break;
     }
   }
@@ -1769,6 +1981,33 @@ Game.Battle = (function() {
       return;
     }
 
+    if (itemMenuMode === 'ritual') {
+      var ritualDefinition = getRitualDefinition();
+      if (ritualDefinition && ritualDefinition.onActionResolved) {
+        ritualDefinition.onActionResolved(
+          ritualRuntime,
+          enemy,
+          Game.Player.getData(),
+          { id: ritualMenuActionId || 'drop_item_to_eye_slot', itemId: selected.id },
+          { damage: 0, heal: 0 }
+        );
+      }
+
+      if (evaluateRitualOutcome() !== 'victory') {
+        message = ritualRuntime && ritualRuntime.ritualState.eyeRepaired
+          ? selected.item.name + 'をそっと重ねた。'
+          : 'その記憶は、まだ噛み合わない。';
+        messageTimer = 45;
+        phase = 'menu';
+      }
+      itemMenuItems = [];
+      itemMenuIndex = 0;
+      itemMenuMode = 'heal';
+      ritualMenuActionId = null;
+      Game.Audio.playSfx('confirm');
+      return;
+    }
+
     Game.Player.removeItem(selected.id);
     Game.Player.heal(selected.item.healAmount);
     message = selected.item.name + 'を使った！ HPが' + selected.item.healAmount + '回復！';
@@ -1776,6 +2015,8 @@ Game.Battle = (function() {
     Game.Audio.playSfx('item');
     itemMenuItems = [];
     itemMenuIndex = 0;
+    itemMenuMode = 'heal';
+    ritualMenuActionId = null;
     phase = 'useItem';
   }
 
@@ -2051,6 +2292,10 @@ Game.Battle = (function() {
     update: update,
     draw: draw,
     isActive: isActive,
+    getRitualRuntime: function() { return ritualRuntime; },
+    getRitualDefinition: function(mode) {
+      return Game.RitualBattles && Game.RitualBattles.getDefinition ? Game.RitualBattles.getDefinition(mode) : null;
+    },
     getBossGimmick: function(bossId) { return bossGimmicks[bossId] || null; },
     getAllBossGimmicks: function() { return bossGimmicks; }
   };

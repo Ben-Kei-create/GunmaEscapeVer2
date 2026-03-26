@@ -59,3 +59,13 @@ Original prompt: そうだね。セーブできる村役場みたいなところ
   - 第1章〜第5章のUI開示タイミング、誤読ポイント、チュートリアル導線、失敗時フォローを整理。
   - 第6章の総復習3形態、終章の奉納UI、`battle.js` の必要ランタイム状態を整理。
   - Phase 2 の Gemini / ChatGPT プロンプトも、この戦闘別紙を参照するよう更新。
+- 2026-03-26: 追加のGemini案を反映し、`docs/gunma_ritual_battle_spec.md` を精密化。
+  - 第1章〜第5章のUI開示をさらに具体化し、`0ダメージ継続`, `固定配牌`, `火傷`, `HPバー明滅` などの演出を追記。
+  - 総復習ボスの形態名を更新。
+  - 終章奉納UIは「5スロット + 第6章は光ダイス出現条件」という設計判断で固定。
+  - `docs/gunma_narrative_level_blueprint.md` 側も同判断に合わせ、第6章は供物追加ではなく「真相の鍵」として整理。
+- 2026-03-26: `Game.RitualBattles` のコード土台を追加。
+  - `js/ritual_battles.js` を新設し、`repair_eye / untangle / temperature` の定義、ランタイム生成、Story連携ヘルパを実装。
+  - `index.html` で読み込みを追加。
+  - `js/battle.js` はまだ既存ループを保ったまま、儀式ランタイム初期化と getter 公開だけを先行実装。
+- TODO: `battle.js` の `diceResult / executeAction / draw` に `ritualRuntime` フックを差し込み、第1章 `repair_eye` を最初の実戦投入対象にする。

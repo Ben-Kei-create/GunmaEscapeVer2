@@ -6,6 +6,7 @@ Game.Items = (function() {
       name: '温泉の鍵',
       desc: '草津の温泉猿から手に入れた鍵',
       type: 'key',
+      isCatalyst: true,
       icon: [
         [0,0,1,1,1,0,0,0],
         [0,1,2,2,2,1,0,0],
@@ -23,6 +24,7 @@ Game.Items = (function() {
       name: 'だるまの目',
       desc: '高崎のだるま師匠の証',
       type: 'key',
+      isCatalyst: true,
       icon: [
         [0,0,1,1,1,1,0,0],
         [0,1,2,2,2,2,1,0],
@@ -40,6 +42,7 @@ Game.Items = (function() {
       name: 'こんにゃくパス',
       desc: '下仁田の通行証',
       type: 'key',
+      isCatalyst: true,
       icon: [
         [0,1,1,1,1,1,1,0],
         [1,2,2,2,2,2,2,1],
@@ -57,6 +60,7 @@ Game.Items = (function() {
       name: 'キャベツの紋章',
       desc: '嬬恋の守護者から貰った紋章',
       type: 'key',
+      isCatalyst: true,
       icon: [
         [0,0,1,1,1,1,0,0],
         [0,1,2,2,2,2,1,0],
@@ -76,6 +80,7 @@ Game.Items = (function() {
       name: '赤城の鍵',
       desc: '赤城神社への鍵',
       type: 'key',
+      isCatalyst: true,
       icon: [
         [0,0,1,1,1,0,0,0],
         [0,1,2,2,2,1,0,0],

@@ -11,6 +11,9 @@ Game.Map = (function() {
     if (Game.Weather) {
       Game.Weather.setMapWeather(currentMap.name || currentMapId);
     }
+    if (Game.UI && Game.UI.showAreaBanner) {
+      Game.UI.showAreaBanner(currentMapId);
+    }
   }
 
   function getCurrentMap() {

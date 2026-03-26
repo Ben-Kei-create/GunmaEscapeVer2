@@ -8,6 +8,8 @@ Game.Story = (function() {
   var storyFlags = {};
   var chapter = 1;
   var phase = ''; // current story phase tracking
+  var JOURNEY_STORAGE_KEY = 'gunmaEscape_storyJourney';
+  var journeyState = createJourneyState();
 
   // Chapter → field BGM mapping (uses audio.js melody IDs)
   var chapterFieldBgm = {
@@ -39,6 +41,33 @@ Game.Story = (function() {
   var typewriterTimer = 0;
   var pauseTimer = 0;
   var bgmOverride = null;
+
+  function createJourneyState() {
+    return {
+      respectGauge: 0,
+      catalysts: []
+    };
+  }
+
+  function normalizeJourneyState(state) {
+    var normalized = createJourneyState();
+    if (!state || typeof state !== 'object') return normalized;
+
+    if (typeof state.respectGauge === 'number' && isFinite(state.respectGauge)) {
+      normalized.respectGauge = Math.max(0, Math.round(state.respectGauge));
+    }
+
+    if (Array.isArray(state.catalysts)) {
+      for (var i = 0; i < state.catalysts.length; i++) {
+        var catalystId = state.catalysts[i];
+        if (typeof catalystId === 'string' && normalized.catalysts.indexOf(catalystId) < 0) {
+          normalized.catalysts.push(catalystId);
+        }
+      }
+    }
+
+    return normalized;
+  }
 
   // Character portraits (8x8 pixel grids, scaled to 64x64)
   var portraits = {
@@ -1857,6 +1886,7 @@ Game.Story = (function() {
     storyFlags = {};
     chapter = 1;
     phase = '';
+    journeyState = createJourneyState();
     eventQueue = [];
     onEventEnd = null;
     choices = null;
@@ -1881,6 +1911,7 @@ Game.Story = (function() {
     try {
       localStorage.setItem('gunmaEscape_storyFlags', JSON.stringify(storyFlags));
     } catch (e) {}
+    saveJourneyState();
   }
 
   function loadFlags() {
@@ -1888,6 +1919,7 @@ Game.Story = (function() {
       var saved = localStorage.getItem('gunmaEscape_storyFlags');
       if (saved) storyFlags = JSON.parse(saved);
     } catch (e) {}
+    loadJourneyState();
   }
 
   function exportFlags() {
@@ -1897,6 +1929,55 @@ Game.Story = (function() {
   function importFlags(flags) {
     storyFlags = JSON.parse(JSON.stringify(flags || {}));
     saveFlags();
+  }
+
+  function saveJourneyState() {
+    try {
+      localStorage.setItem(JOURNEY_STORAGE_KEY, JSON.stringify(journeyState));
+    } catch (e) {}
+  }
+
+  function loadJourneyState() {
+    try {
+      var saved = localStorage.getItem(JOURNEY_STORAGE_KEY);
+      journeyState = saved ? normalizeJourneyState(JSON.parse(saved)) : createJourneyState();
+    } catch (e) {
+      journeyState = createJourneyState();
+    }
+  }
+
+  function getJourneyState() {
+    return journeyState;
+  }
+
+  function exportJourneyState() {
+    return normalizeJourneyState(journeyState);
+  }
+
+  function importJourneyState(state) {
+    journeyState = normalizeJourneyState(state);
+    saveJourneyState();
+  }
+
+  function setRespectGauge(value) {
+    journeyState.respectGauge = Math.max(0, Math.round(value || 0));
+    saveJourneyState();
+    return journeyState.respectGauge;
+  }
+
+  function addRespect(amount) {
+    return setRespectGauge(journeyState.respectGauge + (amount || 0));
+  }
+
+  function registerCatalyst(itemId) {
+    if (!itemId || journeyState.catalysts.indexOf(itemId) >= 0) return false;
+    journeyState.catalysts.push(itemId);
+    saveJourneyState();
+    return true;
+  }
+
+  function hasCatalyst(itemId) {
+    return journeyState.catalysts.indexOf(itemId) >= 0;
   }
 
   return {
@@ -1921,6 +2002,13 @@ Game.Story = (function() {
     getFlags: exportFlags,
     exportFlags: exportFlags,
     importFlags: importFlags,
+    getJourneyState: getJourneyState,
+    exportJourneyState: exportJourneyState,
+    importJourneyState: importJourneyState,
+    setRespectGauge: setRespectGauge,
+    addRespect: addRespect,
+    registerCatalyst: registerCatalyst,
+    hasCatalyst: hasCatalyst,
     resolveEnding: resolveEnding
   };
 })();

@@ -14,3 +14,48 @@ Original prompt: そうだね。セーブできる村役場みたいなところ
   - `node --check` は save/main/ui/story/maebashi/save_menu で通過。
   - Playwright でタイトル画面、前橋の記録帳UI、タイトルの `つづきから` スロット画面の描画を確認。
   - ブラウザ上の evaluate で `Game.Save.save(1)`, `Game.Save.load(1)`, `Game.Save.createPassphrase()`, `Game.Save.loadPassphrase(...)` の成功を確認。
+- 2026-03-26: ユーザー方針を「10章をベースに、全章で群馬の深部へ進み続ける構造へ寄せる」に更新。
+- 2026-03-26: `js/chapter_data.js` を新設し、章タイトル・目的・マップ演出用メタデータを追加。`index.html` で読み込み。
+- 2026-03-26: `js/ui.js` を10章ロードムービー前提の見せ方へ更新。
+  - タイトル画面を「10章の旅」前提のビジュアルと文言に変更。
+  - 探索HUDに章名・旅路トラッカー・現在目標を追加。
+  - フィールドメニューを章ベースの見出しと現在地/目標表示つきに更新。
+  - マップ遷移時のエリアバナー演出を追加。
+  - 最終エンディング文言を「全二章」前提から10章旅路前提へ差し替え。
+- 2026-03-26: `js/map.js` でマップロード時にエリアバナーを発火、`js/main.js` でUI更新と `render_game_to_text` へ章情報を追加。
+- 2026-03-26: 検証結果
+  - `node --check js/chapter_data.js js/ui.js js/main.js js/map.js` 通過。
+  - Playwright で新タイトル画面、探索HUD、章ベースのメニュー表示を確認。
+- TODO: `event.js` / `story.js` の二重構造を整理し、章導入イベントの文言も10章ロードムービー前提へ統一する。
+- TODO: 旧「4つの証」前提の導線を、第一章ローカル目標として再解釈しつつ全体目的と矛盾しないようイベント/NPC会話を調整する。
+- TODO: 各章ごとにマップ上のランドマークと環境ストーリーテリング用オブジェクトを追加し、会話依存を減らす。
+- 2026-03-26: プロデューサ回答を反映した再構成仕様書 `docs/gunma_rebuild_spec.md` を追加。
+  - 5〜8時間の密度優先
+  - 6章+終章への再編
+  - 3つの感情ピーク
+  - 3つのアハ体験
+  - マップ演出 / 音 / UI の優先順位
+- 2026-03-26: 外部AI連携用プロンプト `docs/gemini_accel_prompt.md`, `docs/chatgpt_accel_prompt.md` を追加。
+- 2026-03-26: 再構成仕様に合わせ、表示系の旅路を「6章+終章 = 7区分」へ変更。
+  - `js/chapter_data.js` に raw chapter → journey arc のマッピングを追加。
+  - 前橋/路線/赤城/白根/湯水/交差点/国境 の7区分で表示するよう更新。
+  - HUD / タイトル / メニュー / エリアバナー / `render_game_to_text` が新 journey 表示に追従。
+- 2026-03-26: Gemini案の基盤部分を安全に先行実装。
+  - `js/story.js` に `journeyState` を追加し、`敬意(respectGauge)` と `触媒(catalysts)` を別キーで永続化。
+  - `js/items.js` の主要通行キーに `isCatalyst` を付与し、`js/player.js` で入手時に自動登録するよう更新。
+  - `js/save.js` を version 3 に更新し、通常セーブ / あいことばへ `journeyState` を保存。旧データ読込時は所持品から触媒を補完。
+  - `js/ui.js` の探索HUDとメニューに敬意ゲージ/触媒数を表示。
+  - `js/main.js` の `render_game_to_text` に `respectGauge` と `catalystCount` を追加。
+- TODO: `battle.js` に「敬意を貯めて浄化する」戦闘分岐を入れ、まず第4章以降だけで有効化する。
+- TODO: `event.js` / `story.js` に `purify` 系イベントIDを追加し、序盤の転調イベントと中盤の儀式反転イベントを先行実装する。
+- 2026-03-26: 外部AIから得た詳細案を、実装青写真として `docs/gunma_narrative_level_blueprint.md` に整理。
+  - 6章+終章の各章テーマ、重要アイテム、ボスの誇り/悲哀、儀式ルールを固定。
+  - 各章3つの環境ストーリーテリング案、3つの感情ピーク、Steam看板案を整理。
+  - 「削ってはいけない要素 / 削ってよい要素」を再定義。
+- 2026-03-26: 追撃用AIプロンプト `docs/gemini_followup_prompt_phase2.md` と `docs/chatgpt_followup_prompt_phase2.md` を追加。
+  - Gemini にはボス戦UI / チュートリアル / 失敗時フォロー / 奉納UI設計を掘らせる。
+  - ChatGPT には `battle.js` / `event.js` / `ui.js` の差分設計と疑似コードを掘らせる。
+- 2026-03-26: 外部AIから得た儀式戦仕様を `docs/gunma_ritual_battle_spec.md` として固定。
+  - 第1章〜第5章のUI開示タイミング、誤読ポイント、チュートリアル導線、失敗時フォローを整理。
+  - 第6章の総復習3形態、終章の奉納UI、`battle.js` の必要ランタイム状態を整理。
+  - Phase 2 の Gemini / ChatGPT プロンプトも、この戦闘別紙を参照するよう更新。

@@ -46,6 +46,7 @@ Game.Main = (function() {
     if (Game.Weather) Game.Weather.update();
     if (Game.Particles) Game.Particles.update();
     if (Game.UI.updatePopups) Game.UI.updatePopups();
+    if (Game.UI.updateAreaBanner) Game.UI.updateAreaBanner();
     if (Game.Renderer.updateEffects) Game.Renderer.updateEffects();
 
     switch (state) {
@@ -766,7 +767,7 @@ Game.Main = (function() {
         break;
 
       case Game.Config.STATE.MENU:
-        renderExploring();
+        renderExploring(true);
         Game.UI.drawMenu();
         break;
 
@@ -774,7 +775,7 @@ Game.Main = (function() {
         if (Game.SaveMenu && Game.SaveMenu.getContext && Game.SaveMenu.getContext() === 'title') {
           Game.UI.drawTitleScreen();
         } else {
-          renderExploring();
+          renderExploring(true);
         }
         if (Game.SaveMenu && Game.SaveMenu.draw) Game.SaveMenu.draw();
         break;
@@ -795,7 +796,7 @@ Game.Main = (function() {
     }
   }
 
-  function renderExploring() {
+  function renderExploring(overlayMode) {
     Game.Renderer.clear('#000');
     var pd = Game.Player.getData();
     Game.Renderer.setCamera(pd.x + 8, pd.y + 8);
@@ -804,8 +805,11 @@ Game.Main = (function() {
     if (Game.Particles) Game.Particles.draw();
     if (Game.Weather) Game.Weather.draw();
     if (Game.Renderer.drawEffects) Game.Renderer.drawEffects();
-    Game.UI.drawHUD();
-    if (Game.UI.drawMinimap) Game.UI.drawMinimap();
+    if (!overlayMode) {
+      Game.UI.drawHUD();
+      if (Game.UI.drawMinimap) Game.UI.drawMinimap();
+      if (Game.UI.drawAreaBanner) Game.UI.drawAreaBanner();
+    }
     if (Game.UI.drawPopups) Game.UI.drawPopups();
   }
 
@@ -821,10 +825,15 @@ Game.Main = (function() {
 
   function renderGameToText() {
     var pd = Game.Player.getData();
+    var mapId = Game.Map.getCurrentMapId ? Game.Map.getCurrentMapId() : '';
+    var chapterInfo = Game.Chapters && Game.Chapters.getChapter ? Game.Chapters.getChapter(pd.chapter, mapId) : null;
+    var mapInfo = Game.Chapters && Game.Chapters.getMap && mapId ? Game.Chapters.getMap(mapId) : null;
+    var journeyState = Game.Story && Game.Story.getJourneyState ? Game.Story.getJourneyState() : { respectGauge: 0, catalysts: [] };
     return JSON.stringify({
       mode: state,
       titleSelection: Game.UI.getTitleSelection ? Game.UI.getTitleSelection() : 0,
-      map: Game.Map.getCurrentMapId ? Game.Map.getCurrentMapId() : '',
+      map: mapId,
+      mapLabel: mapInfo ? mapInfo.label : '',
       player: {
         tileX: pd.tileX,
         tileY: pd.tileY,
@@ -834,6 +843,12 @@ Game.Main = (function() {
         gold: pd.gold,
         chapter: pd.chapter
       },
+      journeyLabel: chapterInfo ? chapterInfo.displayLabel : '',
+      journeyIndex: chapterInfo ? chapterInfo.journeyIndex : pd.chapter,
+      chapterTitle: chapterInfo ? chapterInfo.title : '',
+      objective: Game.Chapters && Game.Chapters.getObjective ? Game.Chapters.getObjective(pd.chapter, mapId) : '',
+      respectGauge: journeyState.respectGauge || 0,
+      catalystCount: journeyState.catalysts ? journeyState.catalysts.length : 0,
       hasAnySave: Game.Save && Game.Save.hasAnySave ? Game.Save.hasAnySave() : false,
       saveMenuContext: Game.SaveMenu && Game.SaveMenu.getContext ? Game.SaveMenu.getContext() : null
     });

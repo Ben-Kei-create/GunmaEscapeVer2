@@ -175,9 +175,17 @@ Game.Player = (function() {
     return data.inventory.indexOf(id) >= 0;
   }
 
+  function registerCatalystIfNeeded(id) {
+    var item = Game.Items && Game.Items.get ? Game.Items.get(id) : null;
+    if (item && item.isCatalyst && Game.Story && Game.Story.registerCatalyst) {
+      Game.Story.registerCatalyst(id);
+    }
+  }
+
   function addItem(id) {
     if (!hasItem(id)) {
       data.inventory.push(id);
+      registerCatalystIfNeeded(id);
     }
   }
 
@@ -252,6 +260,12 @@ Game.Player = (function() {
     data.gold = Math.max(0, data.gold + amount);
   }
 
+  function syncCatalystsFromInventory() {
+    for (var i = 0; i < data.inventory.length; i++) {
+      registerCatalystIfNeeded(data.inventory[i]);
+    }
+  }
+
   function getData() { return data; }
 
   return {
@@ -272,6 +286,7 @@ Game.Player = (function() {
     equipArmor: equipArmor,
     unequipArmor: unequipArmor,
     addGold: addGold,
+    syncCatalystsFromInventory: syncCatalystsFromInventory,
     getData: getData
   };
 })();

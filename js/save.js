@@ -1,7 +1,7 @@
 // Save system using localStorage + passphrase export
 Game.Save = (function() {
   var MAX_SLOTS = 3;
-  var VERSION = 2;
+  var VERSION = 3;
   var PASSPHRASE_PREFIX = 'GM2';
   var BASE32_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
   var runtime = window.__gunmaSaveRuntime || {
@@ -102,6 +102,13 @@ Game.Save = (function() {
     return {};
   }
 
+  function getJourneyState() {
+    if (Game.Story && Game.Story.exportJourneyState) {
+      return Game.Story.exportJourneyState();
+    }
+    return { respectGauge: 0, catalysts: [] };
+  }
+
   function buildSaveData() {
     var playerSnapshot = getPlayerSnapshot();
     var currentMapId = Game.Map.getCurrentMapId();
@@ -117,7 +124,8 @@ Game.Save = (function() {
       player: playerSnapshot,
       npcStates: getNpcStates(),
       itemStates: getItemStates(),
-      storyFlags: getStoryFlags()
+      storyFlags: getStoryFlags(),
+      journeyState: getJourneyState()
     };
   }
 
@@ -190,6 +198,12 @@ Game.Save = (function() {
     }
   }
 
+  function applyJourneyState(journeyState) {
+    if (Game.Story && Game.Story.importJourneyState) {
+      Game.Story.importJourneyState(journeyState || { respectGauge: 0, catalysts: [] });
+    }
+  }
+
   function applyPlayerData(savedPlayer) {
     if (!savedPlayer) return;
 
@@ -229,6 +243,10 @@ Game.Save = (function() {
     Game.Map.load(data.mapName, data.player.tileX, data.player.tileY);
     applyPlayerData(data.player);
     applyStoryFlags(data.storyFlags || {});
+    applyJourneyState(data.journeyState || null);
+    if (Game.Player && Game.Player.syncCatalystsFromInventory) {
+      Game.Player.syncCatalystsFromInventory();
+    }
     setPlayTime(data.playTime || 0);
     return true;
   }
@@ -243,6 +261,17 @@ Game.Save = (function() {
 
   function getDirectionCatalog() {
     return ['up', 'down', 'left', 'right'];
+  }
+
+  function extractCatalystsFromInventory(inventory) {
+    var catalysts = [];
+    for (var i = 0; i < inventory.length; i++) {
+      var item = Game.Items.get(inventory[i]);
+      if (item && item.isCatalyst && catalysts.indexOf(inventory[i]) < 0) {
+        catalysts.push(inventory[i]);
+      }
+    }
+    return catalysts;
   }
 
   function indexOfOr(list, value, fallback) {
@@ -403,6 +432,7 @@ Game.Save = (function() {
     var player = data.player || {};
     var activeStoryFlags = [];
     var flagSource = data.storyFlags || {};
+    var journeyState = data.journeyState || {};
 
     for (var flag in flagSource) {
       if (flagSource.hasOwnProperty(flag) && flagSource[flag]) {
@@ -432,7 +462,11 @@ Game.Save = (function() {
       ],
       n: encodeNpcStatesCompact(data.npcStates || {}),
       i: encodeItemStatesCompact(data.itemStates || {}),
-      s: activeStoryFlags
+      s: activeStoryFlags,
+      j: [
+        journeyState.respectGauge || 0,
+        encodeIdList(journeyState.catalysts || [], itemCatalog)
+      ]
     };
   }
 
@@ -449,10 +483,13 @@ Game.Save = (function() {
     var equippedDice = decodeIdList(playerData[11] || [], itemCatalog);
     if (!equippedDice.length) equippedDice = ['normalDice'];
     var inventory = decodeIdList(playerData[12] || [], itemCatalog);
+    var journeyData = compact.j || [];
     var storyFlags = {};
     for (var i = 0; i < (compact.s || []).length; i++) {
       storyFlags[compact.s[i]] = true;
     }
+    var catalysts = decodeIdList(journeyData[1] || [], itemCatalog);
+    if (!catalysts.length) catalysts = extractCatalystsFromInventory(inventory);
 
     return {
       version: compact.v || VERSION,
@@ -481,7 +518,11 @@ Game.Save = (function() {
       },
       npcStates: decodeNpcStatesCompact(compact.n || ''),
       itemStates: decodeItemStatesCompact(compact.i || ''),
-      storyFlags: storyFlags
+      storyFlags: storyFlags,
+      journeyState: {
+        respectGauge: journeyData[0] || 0,
+        catalysts: catalysts
+      }
     };
   }
 

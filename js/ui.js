@@ -9,6 +9,16 @@ Game.UI = (function() {
   var blinkTimer = 0;
   var minimapVisible = true;
   var titleSelection = 0;
+  var areaBanner = {
+    active: false,
+    timer: 0,
+    maxTimer: 0,
+    chapterNumber: 1,
+    chapterTitle: '',
+    mapLabel: '',
+    mapSubtitle: '',
+    accent: '#ffcc00'
+  };
   var fieldMenuState = {
     section: 0,
     itemIndex: 0,
@@ -30,78 +40,156 @@ Game.UI = (function() {
     8: '#6a4a0a', 9: '#6a5a4a'
   };
 
+  function getChapterInfo() {
+    var pd = Game.Player && Game.Player.getData ? Game.Player.getData() : null;
+    var chapterNumber = pd && pd.chapter ? pd.chapter : 1;
+    var mapId = Game.Map && Game.Map.getCurrentMapId ? Game.Map.getCurrentMapId() : '';
+    if (Game.Chapters && Game.Chapters.getChapter) {
+      return Game.Chapters.getChapter(chapterNumber, mapId);
+    }
+    return {
+      number: chapterNumber,
+      displayLabel: '第一章',
+      act: 'ACT',
+      title: '群馬の旅',
+      subtitle: '',
+      objective: '',
+      hint: '',
+      accent: Game.Config.COLORS.GOLD,
+      journeyIndex: chapterNumber,
+      journeyCount: 7
+    };
+  }
+
+  function getMapInfo() {
+    var mapId = Game.Map && Game.Map.getCurrentMapId ? Game.Map.getCurrentMapId() : '';
+    if (Game.Chapters && Game.Chapters.getMap) {
+      return Game.Chapters.getMap(mapId);
+    }
+    return null;
+  }
+
+  function getCurrentObjective() {
+    var pd = Game.Player && Game.Player.getData ? Game.Player.getData() : null;
+    var chapterNumber = pd && pd.chapter ? pd.chapter : 1;
+    var mapId = Game.Map && Game.Map.getCurrentMapId ? Game.Map.getCurrentMapId() : '';
+    if (Game.Chapters && Game.Chapters.getObjective) {
+      return Game.Chapters.getObjective(chapterNumber, mapId);
+    }
+    return '';
+  }
+
+  function getJourneyState() {
+    if (Game.Story && Game.Story.getJourneyState) {
+      return Game.Story.getJourneyState();
+    }
+    return { respectGauge: 0, catalysts: [] };
+  }
+
+  function clampText(text, maxChars) {
+    if (!text || text.length <= maxChars) return text || '';
+    return text.substring(0, Math.max(0, maxChars - 1)) + '…';
+  }
+
+  function drawMountainLayer(ctx, points, color) {
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(0, Game.Config.CANVAS_HEIGHT);
+    for (var i = 0; i < points.length; i++) {
+      ctx.lineTo(points[i][0], points[i][1]);
+    }
+    ctx.lineTo(Game.Config.CANVAS_WIDTH, Game.Config.CANVAS_HEIGHT);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  function drawJourneyTracker(x, y, chapterInfo) {
+    var R = Game.Renderer;
+    var current = chapterInfo.journeyIndex || chapterInfo.number || 1;
+    var total = chapterInfo.journeyCount || (Game.Chapters && Game.Chapters.getJourneyCount ? Game.Chapters.getJourneyCount() : 7);
+    R.drawDialogBox(x, y, 180, 18);
+    R.drawTextJP('旅路', x + 8, y + 4, '#aac6ff', 9);
+    var spacing = total <= 7 ? 18 : 13;
+    for (var i = 0; i < total; i++) {
+      var px = x + 36 + i * spacing;
+      var color = '#273349';
+      if (i + 1 < current) color = 'rgba(255,255,255,0.35)';
+      if (i + 1 === current) color = chapterInfo.accent || Game.Config.COLORS.GOLD;
+      R.drawRectAbsolute(px, y + 5, 12, 7, color);
+    }
+    R.drawTextJP(current + '/' + total, x + 150, y + 4, '#fff', 9);
+  }
+
   function drawTitleScreen() {
     var R = Game.Renderer;
     var C = Game.Config;
-
-    R.clear('#0a0a1a');
-
-    // Decorative border
     var ctx = R.getContext();
-    ctx.strokeStyle = '#334';
-    ctx.lineWidth = 1;
-    for (var i = 20; i < C.CANVAS_WIDTH; i += 40) {
-      ctx.beginPath();
-      ctx.moveTo(i, 0);
-      ctx.lineTo(i, C.CANVAS_HEIGHT);
-      ctx.stroke();
+    var journeyStops = Game.Chapters && Game.Chapters.getJourneyStops ? Game.Chapters.getJourneyStops() : [];
+
+    R.clear('#060813');
+    titleTimer++;
+
+    ctx.fillStyle = '#0b1226';
+    ctx.fillRect(0, 0, C.CANVAS_WIDTH, C.CANVAS_HEIGHT);
+    ctx.fillStyle = 'rgba(255,255,255,0.06)';
+    for (var s = 0; s < 24; s++) {
+      var sx = (s * 37 + titleTimer * 0.2) % C.CANVAS_WIDTH;
+      var sy = 18 + (s * 29 % 110);
+      ctx.fillRect(sx, sy, 2, 2);
     }
-    for (var i = 20; i < C.CANVAS_HEIGHT; i += 40) {
+
+    drawMountainLayer(ctx, [[0, 178], [46, 152], [102, 168], [165, 132], [236, 171], [314, 126], [392, 162], [480, 146]], '#0d1730');
+    drawMountainLayer(ctx, [[0, 214], [54, 184], [120, 202], [196, 168], [256, 212], [332, 174], [420, 198], [480, 180]], '#132146');
+    drawMountainLayer(ctx, [[0, 250], [74, 228], [138, 240], [224, 214], [302, 250], [366, 222], [430, 236], [480, 224]], '#18284f');
+
+    ctx.strokeStyle = 'rgba(129,145,201,0.18)';
+    ctx.lineWidth = 1;
+    for (var gy = 18; gy < 250; gy += 42) {
       ctx.beginPath();
-      ctx.moveTo(0, i);
-      ctx.lineTo(C.CANVAS_WIDTH, i);
+      ctx.moveTo(0, gy);
+      ctx.lineTo(C.CANVAS_WIDTH, gy);
       ctx.stroke();
     }
 
-    // Title
-    titleTimer++;
     var yOff = Math.sin(titleTimer / 30) * 3;
 
-    R.drawTextJP('群馬県からの脱出', 100, 60 + yOff, C.COLORS.GOLD, 28);
-    R.drawTextJP('〜 Escape from Gunma 〜', 130, 100 + yOff, '#aaaacc', 14);
+    R.drawRectAbsolute(34, 34, 140, 1, 'rgba(255,204,51,0.38)');
+    R.drawRectAbsolute(306, 34, 140, 1, 'rgba(255,204,51,0.38)');
+    R.drawTextJP('異界ロードムービーRPG', 160, 28, '#8fb8ff', 10);
+    R.drawTextJP('群馬県からの脱出', 87, 48 + yOff, C.COLORS.GOLD, 28);
+    R.drawTextJP('Escape from Gunma', 154, 82 + yOff, '#c6d0ff', 13);
 
-    // Subtitle
-    R.drawTextJP('群馬県は一度入ったら出られない...', 115, 140, '#888', 12);
-    R.drawTextJP('4つの証を集めて県境の結界を破れ！', 110, 158, '#888', 12);
-    R.drawTextJP('第一章「群馬脱出編」 第二章「赤城の闇編」', 85, 178, '#555', 10);
+    R.drawTextJP('群馬の深部へ進み、仲間と記憶を取り戻せ。', 85, 110, '#eef2ff', 11);
+    R.drawTextJP('シュールなご当地異界と、土地に残る誇りと悲哀を辿る濃密な6章+終章。', 34, 126, '#9aa6c8', 9);
 
-    // Decorative daruma
-    var darumaPalette = { 1:'#882222', 2:'#cc3333', 3:'#000' };
-    var darumaSprite = [
-      [0,0,1,1,1,1,0,0],
-      [0,1,2,2,2,2,1,0],
-      [1,2,3,2,2,3,2,1],
-      [1,2,2,2,2,2,2,1],
-      [1,2,2,2,2,2,2,1],
-      [0,1,2,2,2,2,1,0],
-      [0,0,1,1,1,1,0,0],
-      [0,0,0,0,0,0,0,0]
-    ];
-    R.drawSpriteAbsolute(darumaSprite, 50, 60, darumaPalette, 3);
-    R.drawSpriteAbsolute(darumaSprite, 400, 60, darumaPalette, 3);
-
-    // Subtitle
-    R.drawTextJP('〜サイコロ博打RPG〜', 168, 118, '#cc8844', 11);
+    R.drawDialogBox(42, 146, 396, 34);
+    R.drawTextJP('旅の節目', 56, 151, '#8fb8ff', 10);
+    for (var ci = 0; ci < journeyStops.length; ci++) {
+      var cx = 116 + ci * 42;
+      var pulse = (titleTimer + ci * 5) % 80;
+      var fill = pulse < 42 ? 'rgba(255,204,51,0.18)' : 'rgba(255,255,255,0.05)';
+      R.drawRectAbsolute(cx, 150, 28, 10, fill);
+      R.drawTextJP(journeyStops[ci].shortLabel, cx + 3, 164, ci < 4 ? '#ffe18b' : '#d1d8ff', 8);
+    }
 
     // Menu selection
     blinkTimer++;
     var menuOptions = ['はじめから', 'つづきから', 'あいことば', '実績'];
     var hasSave = Game.Save && Game.Save.hasAnySave && Game.Save.hasAnySave();
+    R.drawDialogBox(148, 188, 184, 92);
     for (var mi = 0; mi < menuOptions.length; mi++) {
-      var myy = 210 + mi * 24;
+      var myy = 203 + mi * 18;
       var selected = (mi === titleSelection);
       var col = '#fff';
-      if (mi === 1 && !hasSave) col = '#555'; // grey out continue if no save
+      if (mi === 1 && !hasSave) col = '#555';
       if (selected) col = Game.Config.COLORS.GOLD;
       var pre = selected ? '▶ ' : '  ';
-      R.drawTextJP(pre + menuOptions[mi], 190, myy, col, 14);
+      R.drawTextJP(pre + menuOptions[mi], 184, myy, col, 13);
     }
 
-    // Controls
-    R.drawTextJP('操作方法:', 50, 272, '#888', 11);
-    R.drawTextJP('矢印/WASD: 移動  Z: 決定  X: メニュー  M: ミュート', 50, 288, '#666', 9);
+    R.drawTextJP('目的ごとに章が進み、景色とルールが少しずつ歪んでいく。', 84, 284, '#8c95b2', 9);
+    R.drawTextJP('矢印/WASD: 移動  Z/Enter: 決定  X/Esc: メニュー  M: ミュート', 56, 299, '#616c8a', 9);
 
-    // Version
     R.drawText('v2.1', 430, 305, '#444', 10);
   }
 
@@ -109,33 +197,40 @@ Game.UI = (function() {
     var R = Game.Renderer;
     var pd = Game.Player.getData();
     var map = Game.Map.getCurrentMap();
+    var chapterInfo = getChapterInfo();
+    var mapInfo = getMapInfo();
+    var journeyState = getJourneyState();
+    var accent = chapterInfo.accent || Game.Config.COLORS.GOLD;
+    var objective = clampText(getCurrentObjective(), 30);
+    var hint = mapInfo && mapInfo.hint ? clampText(mapInfo.hint, 34) : clampText(chapterInfo.hint, 34);
 
-    // Area name with chapter
     if (map) {
-      var chLabel = pd.chapter === 2 ? '二章' : '一章';
-      R.drawDialogBox(5, 5, 100, 22);
-      R.drawTextJP(chLabel + ' ' + map.name, 12, 9, '#fff', 11);
+      R.drawDialogBox(5, 5, 166, 28);
+      R.drawTextJP(chapterInfo.act + ' / ' + chapterInfo.displayLabel, 12, 8, accent, 9);
+      R.drawTextJP((mapInfo && mapInfo.label) || map.name, 12, 18, '#fff', 11);
     }
 
-    // HP bar (mini)
-    R.drawRectAbsolute(Game.Config.CANVAS_WIDTH - 105, 5, 100, 18, 'rgba(0,0,0,0.7)');
-    R.drawRectAbsolute(Game.Config.CANVAS_WIDTH - 104, 6, 98, 16, '#333');
+    drawJourneyTracker(184, 5, chapterInfo);
+
+    R.drawDialogBox(Game.Config.CANVAS_WIDTH - 110, 5, 105, 38);
+    R.drawTextJP('HP', Game.Config.CANVAS_WIDTH - 101, 9, '#fff', 9);
     var hpRatio = pd.hp / pd.maxHp;
-    R.drawRectAbsolute(Game.Config.CANVAS_WIDTH - 103, 7, 96 * hpRatio, 14,
+    R.drawRectAbsolute(Game.Config.CANVAS_WIDTH - 76, 10, 60, 8, '#243147');
+    R.drawRectAbsolute(Game.Config.CANVAS_WIDTH - 76, 10, 60 * hpRatio, 8,
       hpRatio > 0.3 ? Game.Config.COLORS.HP_GREEN : Game.Config.COLORS.HP_RED);
-    R.drawText('HP ' + pd.hp, Game.Config.CANVAS_WIDTH - 98, 8, '#fff', 10);
+    R.drawText(pd.hp + '/' + pd.maxHp, Game.Config.CANVAS_WIDTH - 79, 18, '#d9e6ff', 8);
+    R.drawText(pd.gold + 'G', Game.Config.CANVAS_WIDTH - 32, 9, '#ffdd44', 8, 'right');
+    var respectGauge = journeyState && typeof journeyState.respectGauge === 'number' ? journeyState.respectGauge : 0;
+    var respectRatio = Math.max(0, Math.min(1, respectGauge / 100));
+    R.drawTextJP('敬意', Game.Config.CANVAS_WIDTH - 101, 22, '#ffe08f', 9);
+    R.drawRectAbsolute(Game.Config.CANVAS_WIDTH - 76, 23, 60, 6, '#243147');
+    R.drawRectAbsolute(Game.Config.CANVAS_WIDTH - 76, 23, 60 * respectRatio, 6, '#ffd66b');
+    R.drawText(Math.min(respectGauge, 999), Game.Config.CANVAS_WIDTH - 17, 30, '#ffe08f', 8, 'right');
 
-    // Gold display
-    R.drawText(pd.gold + 'G', Game.Config.CANVAS_WIDTH - 45, 8, '#ffdd44', 10);
-
-    // Key items indicator
-    var keyItems = ['onsenKey', 'darumaEye', 'konnyakuPass', 'cabbageCrest'];
-    var keyColors = ['#88ccee', '#cc2222', '#888888', '#44bb44'];
-    for (var i = 0; i < keyItems.length; i++) {
-      var hasKey = pd.inventory.indexOf(keyItems[i]) >= 0;
-      R.drawRectAbsolute(Game.Config.CANVAS_WIDTH - 105 + i * 25, 26, 20, 8,
-        hasKey ? keyColors[i] : '#333');
-    }
+    R.drawDialogBox(5, Game.Config.CANVAS_HEIGHT - 41, 296, 36);
+    R.drawTextJP('目的', 12, Game.Config.CANVAS_HEIGHT - 36, accent, 10);
+    R.drawTextJP(objective, 44, Game.Config.CANVAS_HEIGHT - 36, '#fff', 10);
+    R.drawTextJP(hint, 12, Game.Config.CANVAS_HEIGHT - 22, '#9fb0d6', 9);
   }
 
   function drawDialog(text) {
@@ -179,17 +274,26 @@ Game.UI = (function() {
     var C = Game.Config;
     var pd = Game.Player.getData();
     var equipped = Game.Player.getEquippedDice();
+    var chapterInfo = getChapterInfo();
+    var mapInfo = getMapInfo();
+    var map = Game.Map.getCurrentMap();
+    var journeyState = getJourneyState();
 
+    R.drawRectAbsolute(0, 0, C.CANVAS_WIDTH, C.CANVAS_HEIGHT, 'rgba(4, 6, 18, 0.5)');
     R.drawDialogBox(100, 30, 280, 260);
-    var chTitle = pd.chapter === 2 ? '第二章 赤城の闇編' : '第一章 群馬脱出編';
-    R.drawTextJP(chTitle, 200, 38, C.COLORS.GOLD, 12, 'center');
+    R.drawTextJP(chapterInfo.act + ' / ' + chapterInfo.displayLabel + ' ' + chapterInfo.title, 240, 38, chapterInfo.accent || C.COLORS.GOLD, 12, 'center');
+    R.drawTextJP(chapterInfo.subtitle, 240, 52, '#cfd7f2', 9, 'center');
 
     // Stats
-    R.drawTextJP('HP: ' + pd.hp + '/' + pd.maxHp, 120, 60, '#fff', 13);
-    R.drawTextJP('防御力: ' + Game.Player.getDefense(), 120, 78, '#fff', 13);
-    R.drawTextJP('所持金: ' + pd.gold + 'G', 120, 96, '#ffdd44', 13);
+    R.drawTextJP('HP: ' + pd.hp + '/' + pd.maxHp, 120, 68, '#fff', 13);
+    R.drawTextJP('防御力: ' + Game.Player.getDefense(), 120, 84, '#fff', 13);
+    R.drawTextJP('所持金: ' + pd.gold + 'G', 120, 100, '#ffdd44', 13);
     var aName = pd.armor ? Game.Items.get(pd.armor).name : 'なし';
-    R.drawTextJP('防具: ' + aName, 260, 78, '#aaa', 11);
+    R.drawTextJP('防具: ' + aName, 258, 84, '#aaa', 11);
+    R.drawTextJP('敬意: ' + (journeyState.respectGauge || 0), 258, 100, '#ffe08f', 11);
+    R.drawTextJP('触媒: ' + ((journeyState.catalysts && journeyState.catalysts.length) || 0), 258, 112, '#9ed7ff', 11);
+    R.drawTextJP('現在地: ' + ((mapInfo && mapInfo.label) || (map && map.name) || '不明'), 120, 116, '#8fb8ff', 10);
+    R.drawTextJP('目標: ' + clampText(getCurrentObjective(), 22), 120, 128, '#dce6ff', 10);
 
     // Tabs
     var tabs = ['もちもの', 'サイコロ', 'ぼうぐ'];
@@ -197,10 +301,10 @@ Game.UI = (function() {
     for (var t = 0; t < tabs.length; t++) {
       var tx = tabX + t * 76;
       var activeTab = (fieldMenuState.section === t);
-      R.drawRectAbsolute(tx, 112, 68, 18, activeTab ? 'rgba(255,204,0,0.16)' : 'rgba(255,255,255,0.06)');
-      R.drawTextJP(tabs[t], tx + 8, 116, activeTab ? C.COLORS.GOLD : '#aaa', 11);
+      R.drawRectAbsolute(tx, 144, 68, 18, activeTab ? 'rgba(255,204,0,0.16)' : 'rgba(255,255,255,0.06)');
+      R.drawTextJP(tabs[t], tx + 8, 148, activeTab ? C.COLORS.GOLD : '#aaa', 11);
     }
-    R.drawRectAbsolute(120, 134, 240, 1, '#446');
+    R.drawRectAbsolute(120, 166, 240, 1, '#446');
 
     switch (fieldMenuState.section) {
       case 0:
@@ -215,16 +319,16 @@ Game.UI = (function() {
     }
 
     if (fieldMenuState.messageTimer > 0 && fieldMenuState.message) {
-      R.drawDialogBox(120, 266, 240, 18);
-      R.drawTextJP(fieldMenuState.message, 126, 269, '#fff', 10);
+      R.drawDialogBox(120, 252, 240, 18);
+      R.drawTextJP(fieldMenuState.message, 126, 255, '#fff', 10);
     }
 
-    R.drawTextJP('←→: 切替  Z/Space: 決定  X: 戻る', 126, 288, '#888', 10);
+    R.drawTextJP('←→: 切替  Z/Space: 決定  X: 戻る', 126, 274, '#888', 10);
   }
 
   function drawItemMenuSection(R, C, pd) {
     var visibleItems = 6;
-    var areaY = 140;
+    var areaY = 172;
     R.drawTextJP('持ち物:', 120, areaY, C.COLORS.GOLD, 12);
 
     if (pd.inventory.length === 0) {
@@ -265,10 +369,10 @@ Game.UI = (function() {
     var ctx = R.getContext();
     var ownedDice = getOwnedDiceOptions();
     var visibleDice = 5;
-    R.drawTextJP('装備スロット:', 120, 140, C.COLORS.GOLD, 12);
+    R.drawTextJP('装備スロット:', 120, 172, C.COLORS.GOLD, 12);
 
     for (var s = 0; s < pd.diceSlots; s++) {
-      var slotY = 158 + s * 18;
+      var slotY = 190 + s * 18;
       var selectedSlot = (s === fieldMenuState.diceSlotIndex);
       var di = Game.Items.get(equipped[s] || 'normalDice');
       var prefix = selectedSlot ? '▶ ' : '  ';
@@ -284,17 +388,17 @@ Game.UI = (function() {
 
     var selectedDie = Game.Items.get(equipped[fieldMenuState.diceSlotIndex] || 'normalDice');
     if (selectedDie) {
-      R.drawRectAbsolute(120, 214, 240, 1, '#446');
-      R.drawTextJP('出目: ' + selectedDie.faces.join(' - '), 122, 220, '#fff', 11);
-      R.drawTextJP(selectedDie.desc || '説明なし', 122, 236, '#aaa', 10);
+      R.drawRectAbsolute(120, 246, 240, 1, '#446');
+      R.drawTextJP('出目: ' + selectedDie.faces.join(' - '), 122, 252, '#fff', 11);
+      R.drawTextJP(selectedDie.desc || '説明なし', 122, 268, '#aaa', 10);
     }
 
     if (!fieldMenuState.diceEquipActive) {
-      R.drawTextJP('決定で入れ替え', 238, 196, '#888', 10);
+      R.drawTextJP('決定で入れ替え', 238, 228, '#888', 10);
       return;
     }
 
-    R.drawDialogBox(250, 150, 110, 100);
+    R.drawDialogBox(250, 182, 110, 84);
     var maxOffset = Math.max(0, ownedDice.length - visibleDice);
     var scrollOffset = Math.min(maxOffset, Math.max(0, fieldMenuState.diceEquipIndex - visibleDice + 1));
     for (var i = scrollOffset; i < ownedDice.length && i < scrollOffset + visibleDice; i++) {
@@ -302,10 +406,10 @@ Game.UI = (function() {
       var selected = (i === fieldMenuState.diceEquipIndex);
       var prefix2 = selected ? '▶ ' : '  ';
       var label = option.item ? option.item.name : option.name;
-      R.drawTextJP(prefix2 + label, 258, 160 + (i - scrollOffset) * 16, selected ? C.COLORS.GOLD : '#fff', 10);
+      R.drawTextJP(prefix2 + label, 258, 192 + (i - scrollOffset) * 14, selected ? C.COLORS.GOLD : '#fff', 10);
     }
     if (ownedDice[fieldMenuState.diceEquipIndex] && ownedDice[fieldMenuState.diceEquipIndex].item) {
-      R.drawTextJP(ownedDice[fieldMenuState.diceEquipIndex].item.faces.join('-'), 258, 236, '#88dd88', 9);
+      R.drawTextJP(ownedDice[fieldMenuState.diceEquipIndex].item.faces.join('-'), 258, 252, '#88dd88', 9);
     }
   }
 
@@ -313,12 +417,12 @@ Game.UI = (function() {
     var armorOptions = getOwnedArmorOptions();
     var visibleArmor = 4;
     var currentArmor = pd.armor ? Game.Items.get(pd.armor) : null;
-    R.drawTextJP('現在の防具:', 120, 140, C.COLORS.GOLD, 12);
-    R.drawTextJP(currentArmor ? currentArmor.name : 'なし', 200, 140, '#fff', 12);
-    R.drawTextJP(currentArmor ? currentArmor.desc : '装備していない', 120, 158, '#aaa', 10);
+    R.drawTextJP('現在の防具:', 120, 172, C.COLORS.GOLD, 12);
+    R.drawTextJP(currentArmor ? currentArmor.name : 'なし', 200, 172, '#fff', 12);
+    R.drawTextJP(currentArmor ? currentArmor.desc : '装備していない', 120, 190, '#aaa', 10);
 
-    R.drawRectAbsolute(120, 176, 240, 1, '#446');
-    R.drawTextJP('装備候補:', 120, 182, C.COLORS.GOLD, 12);
+    R.drawRectAbsolute(120, 208, 240, 1, '#446');
+    R.drawTextJP('装備候補:', 120, 214, C.COLORS.GOLD, 12);
 
     var maxOffset = Math.max(0, armorOptions.length - visibleArmor);
     var scrollOffset = Math.min(maxOffset, Math.max(0, fieldMenuState.armorIndex - visibleArmor + 1));
@@ -327,14 +431,14 @@ Game.UI = (function() {
       var selected = (i === fieldMenuState.armorIndex);
       var prefix = selected ? '▶ ' : '  ';
       var label = option.item ? option.item.name : 'はずす';
-      R.drawTextJP(prefix + label, 130, 200 + (i - scrollOffset) * 16, selected ? C.COLORS.GOLD : '#fff', 11);
+      R.drawTextJP(prefix + label, 130, 232 + (i - scrollOffset) * 14, selected ? C.COLORS.GOLD : '#fff', 11);
     }
 
     var selectedArmor = armorOptions[fieldMenuState.armorIndex];
     if (selectedArmor) {
-      R.drawRectAbsolute(120, 244, 240, 1, '#446');
+      R.drawRectAbsolute(120, 286, 240, 1, '#446');
       var desc = selectedArmor.item ? selectedArmor.item.desc : '現在の防具を外す';
-      R.drawTextJP(desc, 122, 248, '#aaa', 10);
+      R.drawTextJP(clampText(desc, 24), 122, 290, '#aaa', 10);
     }
   }
 
@@ -622,35 +726,26 @@ Game.UI = (function() {
   function drawEnding() {
     var R = Game.Renderer;
     var pd = Game.Player.getData();
-    R.clear('#001122');
+    var chapterInfo = getChapterInfo();
+    R.clear('#05070d');
 
     titleTimer++;
     var yOff = Math.sin(titleTimer / 40) * 2;
 
-    if (pd.chapter >= 2) {
-      // Chapter 2 ending
-      R.drawTextJP('赤城の闇、晴れる', 130, 35 + yOff, Game.Config.COLORS.GOLD, 24);
-      R.drawTextJP('暗鞍を倒し、タムラ村に平和が戻った。', 85, 80, '#fff', 13);
-
-      R.drawTextJP('群馬から脱出はできなかった。', 120, 115, '#aaa', 12);
-      R.drawTextJP('だが、ここで生きる意味を見つけた。', 110, 135, '#aaa', 12);
-
-      R.drawTextJP('サイコロに宿る力...', 160, 170, '#cc8844', 12);
-      R.drawTextJP('それは「リスペクト」の証だった。', 120, 190, '#cc8844', 12);
-
-      R.drawTextJP('〜 Complete 〜', 185, 230, Game.Config.COLORS.GOLD, 16);
-      R.drawTextJP('全二章クリア おめでとう！', 145, 260, '#fff', 12);
+    if (pd.chapter >= 10) {
+      R.drawTextJP('群馬の深部、その先へ', 112, 34 + yOff, Game.Config.COLORS.GOLD, 24);
+      R.drawTextJP('十章にわたる異界の旅路を、ついに走り抜けた。', 74, 78, '#f2f5ff', 12);
+      R.drawTextJP('土地の誇りも、敵の悲哀も、仲間との記憶も、', 72, 114, '#bfc8df', 11);
+      R.drawTextJP('すべてを抱えたまま境界を越える。', 110, 132, '#bfc8df', 11);
+      R.drawTextJP('リスペクトを賭けたダイスは、最後まで旅そのものだった。', 46, 176, '#d7a85d', 11);
+      R.drawTextJP('〜 Journey Complete 〜', 138, 226, Game.Config.COLORS.GOLD, 15);
+      R.drawTextJP('第十章「' + chapterInfo.title + '」完', 146, 258, '#fff', 12);
     } else {
-      R.drawTextJP('脱出成功！', 170, 40 + yOff, Game.Config.COLORS.GOLD, 28);
-      R.drawTextJP('群馬県からの脱出に成功した！', 115, 90, '#fff', 14);
-
-      R.drawTextJP('...しかし、本当に', 165, 130, '#aaa', 12);
-      R.drawTextJP('脱出できたのだろうか？', 150, 150, '#aaa', 12);
-
-      R.drawTextJP('周りを見渡すと...', 170, 185, '#888', 12);
-      R.drawTextJP('そこにはまた群馬県が広がっていた。', 100, 210, '#cc8844', 13);
-
-      R.drawTextJP('〜 Fin 〜', 210, 250, Game.Config.COLORS.GOLD, 14);
+      R.drawTextJP('旅はまだ終わらない', 126, 40 + yOff, Game.Config.COLORS.GOLD, 24);
+      R.drawTextJP('ここは一区切りにすぎない。', 152, 92, '#fff', 13);
+      R.drawTextJP('県境の向こうにも、さらに濃い群馬が待っている。', 72, 128, '#b8c0d8', 12);
+      R.drawTextJP('次の章で、旅路はもっと深く歪んでいく。', 96, 146, '#b8c0d8', 12);
+      R.drawTextJP('〜 Continue The Journey 〜', 122, 234, Game.Config.COLORS.GOLD, 14);
     }
 
     R.drawText('Credits:', 200, 280, '#555', 10);
@@ -666,13 +761,51 @@ Game.UI = (function() {
     Game.Renderer.fadeOverlay(alpha);
   }
 
+  function showAreaBanner(mapId) {
+    var chapterInfo = getChapterInfo();
+    var mapInfo = Game.Chapters && Game.Chapters.getMap ? Game.Chapters.getMap(mapId) : null;
+    var map = Game.Map && Game.Map.getCurrentMap ? Game.Map.getCurrentMap() : null;
+    areaBanner.active = true;
+    areaBanner.timer = 150;
+    areaBanner.maxTimer = 150;
+    areaBanner.chapterNumber = chapterInfo.journeyIndex || chapterInfo.number || 1;
+    areaBanner.chapterTitle = chapterInfo.displayLabel + ' ' + (chapterInfo.title || '');
+    areaBanner.mapLabel = mapInfo && mapInfo.label ? mapInfo.label : (map && map.name ? map.name : '');
+    areaBanner.mapSubtitle = mapInfo && mapInfo.subtitle ? mapInfo.subtitle : '';
+    areaBanner.accent = chapterInfo.accent || Game.Config.COLORS.GOLD;
+  }
+
+  function updateAreaBanner() {
+    if (!areaBanner.active) return;
+    areaBanner.timer--;
+    if (areaBanner.timer <= 0) {
+      areaBanner.active = false;
+    }
+  }
+
+  function drawAreaBanner() {
+    if (!areaBanner.active) return;
+    var R = Game.Renderer;
+    var ctx = R.getContext();
+    var progress = areaBanner.timer / areaBanner.maxTimer;
+    var fade = Math.min(1, progress * 2.2);
+    var slide = progress > 0.5 ? (1 - progress) * 26 : 0;
+
+    ctx.globalAlpha = fade;
+    R.drawDialogBox(96, 52 + slide, 288, 46);
+    R.drawTextJP(areaBanner.chapterTitle, 116, 61 + slide, areaBanner.accent, 12);
+    R.drawTextJP(areaBanner.mapLabel, 116, 77 + slide, '#ffffff', 14);
+    R.drawTextJP(areaBanner.mapSubtitle, 116, 92 + slide, '#9fb0d6', 9);
+    ctx.globalAlpha = 1;
+  }
+
   // Minimap
   function drawMinimap() {
     if (!minimapVisible) return;
     var map = Game.Map.getCurrentMap();
     if (!map || !map.tiles) return;
     var R = Game.Renderer;
-    var mx = 385, my = 5, pw = 3, ph = 3;
+    var mx = 385, my = 34, pw = 3, ph = 3;
 
     // Background
     R.drawRectAbsolute(mx - 2, my - 2, 94, 64, 'rgba(0,0,0,0.7)');
@@ -775,6 +908,9 @@ Game.UI = (function() {
     addDamagePopup: addDamagePopup,
     updatePopups: updatePopups,
     drawPopups: drawPopups,
+    showAreaBanner: showAreaBanner,
+    updateAreaBanner: updateAreaBanner,
+    drawAreaBanner: drawAreaBanner,
     getTitleSelection: getTitleSelection,
     updateTitleMenu: updateTitleMenu,
     toggleMinimap: toggleMinimap,

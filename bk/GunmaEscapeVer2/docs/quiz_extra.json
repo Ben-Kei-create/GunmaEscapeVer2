@@ -1,0 +1,142 @@
+[
+  {
+    "id": "jk_31",
+    "category": "history",
+    "question": "「碓氷峠の関所跡」があるのは何市？",
+    "choices": ["安中市", "高崎市", "富岡市", "藤岡市"],
+    "answer": 0,
+    "hint": "長野県との県境",
+    "difficulty": 2,
+    "karuta": "う"
+  },
+  {
+    "id": "jk_32",
+    "category": "culture",
+    "question": "「太田金山子育て呑龍」呑龍様は何と呼ばれて親しまれている？",
+    "choices": ["子育て呑龍", "厄除け呑龍", "火伏せ呑龍", "縁結び呑龍"],
+    "answer": 0,
+    "hint": "札の句にも入っている",
+    "difficulty": 2,
+    "karuta": "お"
+  },
+  {
+    "id": "jk_33",
+    "category": "history",
+    "question": "「しのぶ毛の国二子塚」二子塚とは何のこと？",
+    "choices": ["前方後円墳", "双子山", "古い橋", "昔の城跡"],
+    "answer": 0,
+    "hint": "古代の大きなお墓",
+    "difficulty": 3,
+    "karuta": "し"
+  },
+  {
+    "id": "jk_34",
+    "category": "nature",
+    "question": "「仙境尾瀬沼花の原」尾瀬を代表する花といえば？",
+    "choices": ["ミズバショウ", "サクラ", "ヒマワリ", "コスモス"],
+    "answer": 0,
+    "hint": "夏の思い出",
+    "difficulty": 1,
+    "karuta": "せ"
+  },
+  {
+    "id": "jk_35",
+    "category": "history",
+    "question": "「天下の義人茂左衛門」彼が直訴した相手は誰？",
+    "choices": ["徳川綱吉", "徳川家康", "織田信長", "豊臣秀吉"],
+    "answer": 0,
+    "hint": "犬公方と呼ばれた将軍",
+    "difficulty": 3,
+    "karuta": "て"
+  },
+  {
+    "id": "jk_36",
+    "category": "nature",
+    "question": "「利根は坂東一の川」利根川の流域面積は日本で第何位？",
+    "choices": ["第1位", "第2位", "第3位", "第4位"],
+    "answer": 0,
+    "hint": "日本で一番広い",
+    "difficulty": 2,
+    "karuta": "と"
+  },
+  {
+    "id": "jk_37",
+    "category": "culture",
+    "question": "「沼田城下の塩原太助」彼は何で財を成した？",
+    "choices": ["炭", "塩", "絹", "鉄"],
+    "answer": 0,
+    "hint": "愛馬「青」との別れ",
+    "difficulty": 3,
+    "karuta": "ぬ"
+  },
+  {
+    "id": "jk_38",
+    "category": "nature",
+    "question": "「花山公園つつじの名所」この公園があるのは何市？",
+    "choices": ["館林市", "前橋市", "沼田市", "渋川市"],
+    "answer": 0,
+    "hint": "分福茶釜のお寺も近い",
+    "difficulty": 2,
+    "karuta": "は"
+  },
+  {
+    "id": "jk_39",
+    "category": "culture",
+    "question": "「分福茶釜の茂林寺」このお寺の伝説に出てくる動物は？",
+    "choices": ["タヌキ", "キツネ", "ムジナ", "ネコ"],
+    "answer": 0,
+    "hint": "茶釜に化ける",
+    "difficulty": 1,
+    "karuta": "ふ"
+  },
+  {
+    "id": "jk_40",
+    "category": "culture",
+    "question": "「繭と生糸は日本一」群馬県が生産量日本一を誇ったのは？",
+    "choices": ["生糸", "綿", "麻", "レーヨン"],
+    "answer": 0,
+    "hint": "富岡製糸場で作るもの",
+    "difficulty": 1,
+    "karuta": "ま"
+  },
+  {
+    "id": "jk_41",
+    "category": "nature",
+    "question": "「水上、谷川スキーと登山」谷川岳の別名は？",
+    "choices": ["魔の山", "神の山", "火の山", "氷の山"],
+    "answer": 0,
+    "hint": "遭難者が多いことで有名",
+    "difficulty": 2,
+    "karuta": "み"
+  },
+  {
+    "id": "jk_42",
+    "category": "geography",
+    "question": "「理想の電化に電源群馬」群馬県に多い発電所は？",
+    "choices": ["水力発電所", "火力発電所", "原子力発電所", "風力発電所"],
+    "answer": 0,
+    "hint": "ダムが多い県",
+    "difficulty": 2,
+    "karuta": "り"
+  },
+  {
+    "id": "jk_43",
+    "category": "history",
+    "question": "「ループで名高い清水トンネル」何線のトンネル？",
+    "choices": ["上越線", "吾妻線", "両毛線", "信越本線"],
+    "answer": 0,
+    "hint": "国境の長いトンネル",
+    "difficulty": 3,
+    "karuta": "る"
+  },
+  {
+    "id": "jk_44",
+    "category": "history",
+    "question": "「歴史に名高い新田義貞」彼が倒幕の兵を挙げた場所は？",
+    "choices": ["生品神社", "貫前神社", "赤城神社", "榛名神社"],
+    "answer": 0,
+    "hint": "太田市にある神社",
+    "difficulty": 3,
+    "karuta": "れ"
+  }
+]

@@ -1,0 +1,22 @@
+[
+  { "id": "lc_001", "name": "赤城の霊風", "type": "legacy_card", "effect_type": "stat_up", "target_stat": "speed", "effect_value": 5, "description": "赤城おろしの力が宿る。素早さが5上昇する。", "price": 1000 },
+  { "id": "lc_002", "name": "榛名の霧雨", "type": "legacy_card", "effect_type": "resist", "target_stat": "blind", "effect_value": 1.0, "description": "視界を奪う霧への完全耐性。暗闇状態を無効化。", "price": 1200 },
+  { "id": "lc_003", "name": "妙義の奇岩", "type": "legacy_card", "effect_type": "stat_up", "target_stat": "defense", "effect_value": 8, "description": "切り立った岩山のごとき堅牢さ。防御力が8上昇。", "price": 1500 },
+  { "id": "lc_004", "name": "達磨の左目", "type": "legacy_card", "effect_type": "auto_revive", "target_stat": "hp", "effect_value": 0.2, "description": "戦闘不能時、一度だけHP20%で復活する。", "price": 3000 },
+  { "id": "lc_005", "name": "富岡の絹糸", "type": "legacy_card", "effect_type": "action_buff", "target_stat": "chain_attack", "effect_value": 2, "description": "通常攻撃が確率で2回連続になる。", "price": 2500 },
+  { "id": "lc_006", "name": "からっ風の護符", "type": "legacy_card", "effect_type": "resist", "target_stat": "wind", "effect_value": 0.5, "description": "風属性のダメージを半減する。", "price": 800 },
+  { "id": "lc_007", "name": "草津の湯の花", "type": "legacy_card", "effect_type": "auto_heal", "target_stat": "hp", "effect_value": 10, "description": "ターン終了時、HPが10ずつ自動回復する。", "price": 2000 },
+  { "id": "lc_008", "name": "下仁田の土", "type": "legacy_card", "effect_type": "stat_up", "target_stat": "max_hp", "effect_value": 30, "description": "栄養満点の土の力。最大HPが30上昇する。", "price": 900 },
+  { "id": "lc_009", "name": "水上の激流", "type": "legacy_card", "effect_type": "stat_up", "target_stat": "attack", "effect_value": 7, "description": "荒々しい川の流れの力。攻撃力が7上昇する。", "price": 1100 },
+  { "id": "lc_010", "name": "尾瀬の木道", "type": "legacy_card", "effect_type": "resist", "target_stat": "speed_down", "effect_value": 1.0, "description": "足場を安定させる。素早さ低下ギミックを無効化。", "price": 1500 },
+  { "id": "lc_011", "name": "焼きまんじゅうの串", "type": "legacy_card", "effect_type": "critical_rate", "target_stat": "crit", "effect_value": 0.15, "description": "クリティカル率が15%上昇する。", "price": 1300 },
+  { "id": "lc_012", "name": "県庁の展望", "type": "legacy_card", "effect_type": "exp_up", "target_stat": "exp", "effect_value": 1.2, "description": "獲得経験値が1.2倍になる。", "price": 5000 },
+  { "id": "lc_013", "name": "こんにゃくの盾", "type": "legacy_card", "effect_type": "damage_reflect", "target_stat": "physical", "effect_value": 0.1, "description": "受けた物理ダメージの10%を弾き返す。", "price": 1800 },
+  { "id": "lc_014", "name": "分福の茶釜", "type": "legacy_card", "effect_type": "gold_up", "target_stat": "gold", "effect_value": 1.3, "description": "戦闘勝利時に得られるゴールドが1.3倍になる。", "price": 4000 },
+  { "id": "lc_015", "name": "鬼の押出し岩", "type": "legacy_card", "effect_type": "counter", "target_stat": "attack", "effect_value": 0.5, "description": "敵の直接攻撃を受けた際、50%の威力で反撃する。", "price": 2800 },
+  { "id": "lc_016", "name": "四万の碧色", "type": "legacy_card", "effect_type": "tp_regen", "target_stat": "tp", "effect_value": 5, "description": "ターン終了時、TPが5ずつ回復する。", "price": 2200 },
+  { "id": "lc_017", "name": "八木節の太鼓", "type": "legacy_card", "effect_type": "initial_tp", "target_stat": "tp", "effect_value": 20, "description": "戦闘開始時、すでにTPが20溜まった状態になる。", "price": 2600 },
+  { "id": "lc_018", "name": "白衣観音の慈悲", "type": "legacy_card", "effect_type": "heal_amp", "target_stat": "hp", "effect_value": 1.5, "description": "自分が使う回復アイテムやスキルの効果が1.5倍になる。", "price": 1900 },
+  { "id": "lc_019", "name": "多胡碑の拓本", "type": "legacy_card", "effect_type": "skill_seal_resist", "target_stat": "seal", "effect_value": 1.0, "description": "記憶を刻み込む。コマンド封印を完全に防ぐ。", "price": 1700 },
+  { "id": "lc_020", "name": "境界の切符", "type": "legacy_card", "effect_type": "escape_rate", "target_stat": "escape", "effect_value": 1.0, "description": "ボス戦以外の戦闘から確実に逃走できる。", "price": 0 }
+]

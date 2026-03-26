@@ -1,0 +1,65 @@
+[
+  {
+    "id": "item_yakimanju",
+    "name": "焼きまんじゅう",
+    "type": "consumable",
+    "effect_type": "heal_hp",
+    "effect_value": 50,
+    "description": "甘じょっぱい味噌ダレが香ばしいソウルフード。HPを50回復。",
+    "price": 150
+  },
+  {
+    "id": "item_yakimanju_pan",
+    "name": "焼きまんじゅうパン",
+    "type": "consumable",
+    "effect_type": "heal_hp",
+    "effect_value": 80,
+    "description": "学食のおばちゃん特製。パンにまんじゅうが挟まっている。HP80回復。",
+    "price": 200
+  },
+  {
+    "id": "item_konnyaku_jelly",
+    "name": "こんにゃくゼリー",
+    "type": "consumable",
+    "effect_type": "heal_tp",
+    "effect_value": 30,
+    "description": "弾力のあるゼリー。喉に詰まらせないよう注意。TPを30回復。",
+    "price": 300
+  },
+  {
+    "id": "item_shimonita_negi",
+    "name": "下仁田ネギ",
+    "type": "consumable",
+    "effect_type": "buff_attack",
+    "effect_value": 1.5,
+    "description": "太くて甘い高級ネギ。食べると体が温まり、3ターン攻撃力が1.5倍。",
+    "price": 500
+  },
+  {
+    "id": "item_onsen_manju",
+    "name": "湯けむり温泉まんじゅう",
+    "type": "consumable",
+    "effect_type": "clear_status",
+    "effect_value": "all",
+    "description": "伊香保や草津で売られている茶色いまんじゅう。全状態異常を回復。",
+    "price": 400
+  },
+  {
+    "id": "item_daruma_bento",
+    "name": "だるま弁当",
+    "type": "consumable",
+    "effect_type": "heal_hp_all",
+    "effect_value": 100,
+    "description": "食べ終わった容器は貯金箱になる。味方全体のHPを100回復。",
+    "price": 1000
+  },
+  {
+    "id": "item_blank_ticket",
+    "name": "白紙の切符",
+    "type": "key_item",
+    "effect_type": "none",
+    "effect_value": 0,
+    "description": "行き先の書かれていない古い切符。どこかへ帰れるかもしれない。",
+    "price": 0
+  }
+]

@@ -109,7 +109,7 @@ Game.Battle = (function() {
     ritualItemRequirement: 'darumaEye',
     ritualFailStyle: {
       text: 'だるまの虚無に押し返された。',
-      returnEventId: 'ev_fail_ch2_rewind'
+      returnEventId: 'ev_fail_ch1_pushback'
     },
     ritualParams: {
       eyeSlotCount: 1
@@ -502,12 +502,21 @@ Game.Battle = (function() {
   function getPartySupportLogs() {
     var partyMembers = Game.Player.getPartyMembers ? Game.Player.getPartyMembers() : [];
     var logs = [];
+    var mapId = getBattleMapId();
     for (var i = 0; i < partyMembers.length; i++) {
       var member = partyMembers[i];
       if (!member) continue;
       var text = member.name + ': ';
       if (member.id === 'akagi') {
-        text += '境界を読み、攻め筋を整えた。';
+        if (mapId === 'maebashi') {
+          text += '関所の脈を読み、崩れた境界の綻びを見抜いた。';
+        } else if (mapId === 'takasaki') {
+          text += '願いの空白を見抜き、乱れた呼吸を落ち着かせた。';
+        } else if (mapId === 'shimonita' || mapId === 'tomioka') {
+          text += '土地の癖を先に読み、強引に引かない間合いを作った。';
+        } else {
+          text += '境界を読み、攻め筋を整えた。';
+        }
       } else if (member.id === 'yamakawa') {
         text += '地形を見切り、守りを支えた。';
       } else if (member.id === 'furuya') {
@@ -1030,11 +1039,11 @@ Game.Battle = (function() {
         }
         if (isGroupBattle() && Game.Input.isPressed('left')) {
           cycleTarget(-1);
-          break;
+          return;
         }
         if (isGroupBattle() && Game.Input.isPressed('right')) {
           cycleTarget(1);
-          break;
+          return;
         }
         if (Game.Input.isPressed('up')) {
           menuIndex = (menuIndex - 1 + menuEntries.length) % menuEntries.length;
@@ -1078,7 +1087,7 @@ Game.Battle = (function() {
           message = '構えを解いた。';
           messageTimer = 18;
           Game.Audio.playSfx('cancel');
-          break;
+          return;
         }
 
         diceTimer++;
@@ -1188,7 +1197,7 @@ Game.Battle = (function() {
                 messageTimer = 90;
                 Game.Audio.stopBgm();
                 Game.Audio.playSfx('gameover');
-                break;
+                return;
               }
             }
             // Self stun after special
@@ -1226,7 +1235,7 @@ Game.Battle = (function() {
           // Wait for dialogue to finish before ending battle
           if (isDialogueActive()) {
             updateDialogue();
-            break;
+            return;
           }
         }
         if (!rewardSummary) {
@@ -1285,6 +1294,7 @@ Game.Battle = (function() {
         rewardSummary = null;
         return {
           result: 'ritual_fail',
+          enemyId: enemy && enemy._enemyId ? enemy._enemyId : null,
           returnEventId: failStyle ? failStyle.returnEventId : null,
           failText: failStyle ? failStyle.text : message
         };
@@ -2500,7 +2510,7 @@ Game.Battle = (function() {
 
             var ritualOutcome = evaluateRitualOutcome();
             if (ritualOutcome) {
-              break;
+              return;
             }
 
             // Boss enrage check (HP > 100 and below 50%)
@@ -2550,10 +2560,6 @@ Game.Battle = (function() {
                 message = message + ' ' + defeatedName + 'を倒した！ 次は' + enemy.name + 'だ。';
               }
             }
-          } else {
-            message = battleDice.length > 1
-              ? '次のサイコロ！ もう戻れない。'
-              : '次のサイコロ！ 止めろ！';
   }
   return {
     start: start,

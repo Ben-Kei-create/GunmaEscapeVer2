@@ -136,10 +136,10 @@ Game.Maps.tomioka = (function() {
       afterDialog: 'battle_thread_maiden',
       defeatedDialog: [
         '……ほどけた。やっと、止まれる。',
-        'この束を持って行って。旅のどこかで役に立つはず。'
+        'この生糸を持って行って。いつか、旅の終わりで意味を持つ。'
       ],
       defeated: false,
-      giveItem: 'yakimanju',
+      giveItem: 'silkBundle',
       sprite: [
         [0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0],
         [0,0,0,0,1,2,2,2,2,1,0,0,0,0,0,0],

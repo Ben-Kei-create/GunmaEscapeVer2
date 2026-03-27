@@ -191,6 +191,15 @@ Game.Main = (function() {
               }
             } else {
               if (battleResult.npc) {
+                if (battleResult.npc.id === 'ruined_checkpoint' && Game.Story && Game.Story.setFlag) {
+                  Game.Story.setFlag('checkpoint_cleared');
+                }
+                if (battleResult.npc.id === 'darumaMaster' && Game.Story && Game.Story.setFlag) {
+                  Game.Story.setFlag('daruma_master_cleared_slice');
+                }
+                if (battleResult.npc.id === 'threadMaiden' && Game.Story && Game.Story.setFlag) {
+                  Game.Story.setFlag('thread_maiden_cleared_slice');
+                }
                 Game.NPC.showDefeatedDialog(battleResult.npc);
                 dialogText = Game.NPC.getCurrentDialog();
                 setState(Game.Config.STATE.DIALOG);
@@ -204,6 +213,9 @@ Game.Main = (function() {
             setState(Game.Config.STATE.GAMEOVER);
           } else if (battleResult.result === 'ritual_fail') {
             storyBattleContext = null;
+            if (battleResult.enemyId === 'ruined_checkpoint' && Game.Story && Game.Story.setFlag) {
+              Game.Story.setFlag('checkpoint_failed_once');
+            }
             if (battleResult.returnEventId && Game.Event && Game.Event.hasEvent && Game.Event.hasEvent(battleResult.returnEventId)) {
               setState(Game.Config.STATE.EVENT);
               Game.Event.start(battleResult.returnEventId, function() {
@@ -349,32 +361,26 @@ Game.Main = (function() {
         if (npc) npc.defeated = true;
         setState(Game.Config.STATE.EXPLORING);
         break;
-      case 'event_firstKey':
-        setState(Game.Config.STATE.EVENT);
-        Game.Event.start('firstKey', function() {
+      case 'join_akagi':
+        if (npc) {
+          npc.defeated = true;
+          if (Game.Player && Game.Player.addPartyMember) {
+            Game.Player.addPartyMember('akagi');
+          }
+          if (Game.Story && Game.Story.setFlag) {
+            Game.Story.setFlag('party_akagi');
+            Game.Story.setFlag('akagi_joined_slice');
+          }
+          Game.NPC.showDefeatedDialog(npc);
+          dialogText = Game.NPC.getCurrentDialog();
+          setState(Game.Config.STATE.DIALOG);
+        } else {
           setState(Game.Config.STATE.EXPLORING);
-          Game.Audio.playBgm('field');
-        });
+        }
         break;
-      case 'event_preBoss':
-        setState(Game.Config.STATE.EVENT);
-        Game.Event.start('preBoss', function() {
-          setState(Game.Config.STATE.EXPLORING);
-          Game.Audio.playBgm('field');
-        });
-        break;
-      case 'event_allKeys':
-        setState(Game.Config.STATE.EVENT);
-        Game.Event.start('allKeys', function() {
-          setState(Game.Config.STATE.EXPLORING);
-          Game.Audio.playBgm('field');
-        });
-        break;
-      case 'event_preEnding':
-        setState(Game.Config.STATE.EVENT);
-        Game.Event.start('preEnding', function() {
-          setState(Game.Config.STATE.ENDING);
-        });
+      case 'battle_daruma_master':
+        setState(Game.Config.STATE.BATTLE);
+        Game.Battle.start('darumaMaster', npc);
         break;
       // Ikaho battle
       case 'battle_ishidanGuard':
@@ -902,6 +908,7 @@ Game.Main = (function() {
     var chapterInfo = Game.Chapters && Game.Chapters.getChapter ? Game.Chapters.getChapter(pd.chapter, mapId) : null;
     var mapInfo = Game.Chapters && Game.Chapters.getMap && mapId ? Game.Chapters.getMap(mapId) : null;
     var journeyState = Game.Story && Game.Story.getJourneyState ? Game.Story.getJourneyState() : { respectGauge: 0, catalysts: [] };
+    var storyFlags = Game.Story && Game.Story.getFlags ? Game.Story.getFlags() : {};
     var payload = {
       mode: state,
       titleSelection: Game.UI.getTitleSelection ? Game.UI.getTitleSelection() : 0,
@@ -930,6 +937,13 @@ Game.Main = (function() {
       respectGauge: journeyState.respectGauge || 0,
       catalystCount: journeyState.catalysts ? journeyState.catalysts.length : 0,
       party: Game.Player.getPartyMemberIds ? Game.Player.getPartyMemberIds() : [],
+      storyFlags: {
+        checkpointFailedOnce: !!storyFlags.checkpoint_failed_once,
+        checkpointCleared: !!storyFlags.checkpoint_cleared,
+        akagiJoinedSlice: !!storyFlags.akagi_joined_slice,
+        darumaCleared: !!storyFlags.daruma_master_cleared_slice,
+        threadCleared: !!storyFlags.thread_maiden_cleared_slice
+      },
       hasAnySave: Game.Save && Game.Save.hasAnySave ? Game.Save.hasAnySave() : false,
       saveMenuContext: Game.SaveMenu && Game.SaveMenu.getContext ? Game.SaveMenu.getContext() : null
     };

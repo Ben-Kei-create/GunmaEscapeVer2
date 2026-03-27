@@ -86,91 +86,6 @@ Game.Event = (function() {
       }
     ],
 
-    // First key obtained
-    firstKey: [
-      {
-        bg: '#111122',
-        speaker: null,
-        lines: [
-          '最初の証を手に入れた！',
-          'あと3つ...群馬の力を感じる...'
-        ]
-      }
-    ],
-
-    // Pre-boss event at Tsumagoi
-    preBoss: [
-      {
-        bg: '#0a1a0a',
-        speaker: null,
-        lines: [
-          '嬬恋の空気が変わった...',
-          '強大な気配を感じる。'
-        ]
-      },
-      {
-        bg: '#1a0a0a',
-        speaker: 'キャベツ番人',
-        speakerColor: '#66dd66',
-        lines: [
-          'よくぞここまで来た、旅の者よ。',
-          '3つの証を持っているようだな。',
-          'しかし、最後の紋章はそう簡単には渡せぬ。',
-          'この群馬を出るにふさわしい者か...',
-          '我が見極めてやろう！'
-        ]
-      }
-    ],
-
-    // All keys collected
-    allKeys: [
-      {
-        bg: '#112244',
-        speaker: null,
-        lines: [
-          '4つの証が揃った！',
-          '温泉の鍵が光っている...',
-          'だるまの目が見開いた...',
-          'こんにゃくパスが震えている...',
-          'キャベツの紋章が輝いている...'
-        ],
-        effect: 'shake'
-      },
-      {
-        bg: '#223355',
-        speaker: null,
-        lines: [
-          '県境の結界が弱まっていく...',
-          '今なら脱出できるかもしれない！',
-          '嬬恋の南にある県境を目指そう！'
-        ]
-      }
-    ],
-
-    // Pre-ending (Ch2 only)
-    preEnding: [
-      {
-        bg: '#1a2844',
-        speaker: null,
-        lines: [
-          '赤城を覆っていた闇が薄れ、',
-          'タムラ村には久しぶりの静かな風が戻ってきた。',
-          '村人たちは空を見上げ、失われかけた平穏の気配を確かめている。'
-        ],
-        sfx: 'victory',
-        effect: 'fade'
-      },
-      {
-        bg: '#1a2844',
-        speaker: null,
-        lines: [
-          'だが旅はまだ終わらない。',
-          '名も、仲間も、県の奥に沈んだ真実も、',
-          'これから取り戻さなければならない。'
-        ]
-      }
-    ],
-
     // === Chapter 1 Ending → Chapter 2 Transition ===
     ch1_ending: [
       {
@@ -492,7 +407,8 @@ Game.Event = (function() {
         speaker: null,
         lines: [
           '暴力では、空っぽの器を満たせなかった。',
-          '目の前が赤く揺らぎ、工場の入り口まで押し返される。'
+          '目の前が赤く揺らぎ、工場の入り口まで押し返される。',
+          '瓦礫の中心だけが、まだ何かを待っているようだった。'
         ],
         effect: 'fade'
       }

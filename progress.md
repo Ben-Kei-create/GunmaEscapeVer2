@@ -218,6 +218,34 @@ Original prompt: そうだね。セーブできる村役場みたいなところ
 - 2026-03-26: フィールドメニューと記録UIの読みやすさを改善。
   - `js/ui.js` のフィールドメニューを大きめの1枚パネル + `状態カード / 旅路カード / 現在地と目的 / タブ / 左右ペイン` 構成へ再設計。
   - `もちもの / サイコロ / ぼうぐ` をそれぞれ `一覧` と `詳細` に分け、文字が重ならないように行間・表示件数・説明欄を整理。
+- 2026-03-27: 縦スライス向けの基盤整理を再開。
+  - `js/battle.js` の末尾崩れを修復し、`node --check js/battle.js` が通る状態へ復旧。
+  - 旧進行の退避メモとして `archive/legacy_10_chapter_flow.json` を追加。縦スライス安定後に削除対象となる `event_ch3_ending` 以降のアクション / `startChapter3-10` / 旧 `story.js` ルートIDを一覧化。
+  - `js/main.js` の戦闘復帰処理に縦スライス用の Story flag 更新を追加し、`checkpoint_failed_once / checkpoint_cleared / akagi_joined_slice / daruma_master_cleared_slice / thread_maiden_cleared_slice` を追跡できるようにした。
+  - `js/battle.js` の `ritual_fail` 戻り値に `enemyId` を追加し、関所の失敗だけを個別に拾えるようにした。
+- 2026-03-27: 第1〜第2章の導線を縦スライス向けに整理。
+  - `js/maps/maebashi.js` に軽量仲間導線として `アカギ` NPC を追加。短い会話のあと `join_akagi` で同行に加わるよう更新。
+  - `js/main.js` に `join_akagi` アクションを追加し、仲間加入 + Story flag 付与 + 加入後会話まで接続。
+  - `js/maps/maebashi.js` の西出口を削除し、前橋からはまず `高崎` へ向かう線に固定。
+  - `js/maps/takasaki.js` に `高崎 -> 下仁田` の東出口を追加し、`js/maps/shimonita.js` 側も右端出口を `高崎` 戻りに変更。
+  - `js/maps/shimonita.js` の北出口から `富岡` に抜ける既存導線と合わせて、`前橋 -> 高崎 -> 下仁田 -> 富岡` が一本でつながるようにした。
+- 2026-03-27: 環境主導チュートリアルを一歩前進。
+  - `js/npc.js` で `checkpoint_failed_once` を見て `朽ちた関所` の会話を差し替える分岐を追加。
+  - 1回失敗したあとだけ、`中心だけが空いて見える / 空洞だけが塞がっていない` という最小限の環境ヒントが出るようにした。
+  - `js/event.js` の `ev_fail_ch1_pushback` にも同トーンの一文を追加し、「失敗後にだけ世界が少し教える」UXへ寄せた。
+- 2026-03-27: 縦スライス区間の通常戦闘を軽量化。
+  - `js/encounters.js` から `maebashi` の通常エンカウントを削除して、安全な起点へ戻した。
+  - `takasaki / shimonita / tomioka` の `stepInterval` と `cooldown` を上げ、通常戦闘は「土地の空気を支える短いフレーバー戦闘」寄りに調整。
+- 2026-03-27: Playwright / render_game_to_text 検証結果
+  - オープニングから探索着地まで進め、`mode: exploring`, `map: maebashi`, `currentBgm: field_maebashi` を確認。
+  - `アカギ` 会話を進めた結果、`party: ['akagi']` と `storyFlags.akagiJoinedSlice === true` になることを確認。
+  - `maebashi` の右出口が `takasaki`、左出口が `null`、`takasaki` の右出口が `shimonita`、`shimonita` の北出口が `tomioka` であることを確認。
+  - `Game.Encounters.consumeStep('maebashi', 0)` が `null` になり、前橋に通常エンカウントが発生しないことを確認。
+  - `checkpoint_failed_once` 付与後の `朽ちた関所` が、失敗後専用の環境ヒント文へ切り替わることを確認。
+  - コンソールの新規 error / warning は 0 件。
+- TODO: `join_akagi` は実入力経由ではなく Playwright 内の key event + `advanceTime` で確認した。通常の実プレイ導線でも違和感がないか、次回はフィールド移動込みで再確認したい。
+- TODO: `main.js` / `story.js` に残る `startChapter3-10` と `event_ch3_ending` 以降の旧導線を、`archive/legacy_10_chapter_flow.json` を見ながら段階的に物理削除する。
+- TODO: `threadMaiden` 戦後の `silkBundle` は入ったが、富岡区間に Gemini 量産敵の一部を接続して道中の空気をさらに濃くできる。
   - フッター文言を整理し、メッセージと操作ヒントがボックス下端で潰れにくいよう位置とサイズを調整。
   - `js/save_menu.js` にも同系統のレイアウトを入れ、背景を少し暗くして記録/説明テキストの視認性を上げた。
 - 2026-03-26: UI整理の検証結果

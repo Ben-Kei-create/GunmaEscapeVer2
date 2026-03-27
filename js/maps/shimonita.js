@@ -106,7 +106,7 @@ Game.Maps.shimonita = (function() {
     x: 22, y: 7,
     name: '製糸工の娘',
     dialog: [
-      'ここから東に行くと富岡があるの。',
+      'この宿場の北の峠を越えると富岡があるの。',
       '富岡製糸場って知ってる？世界遺産なのよ！',
       '明治時代、日本の近代化を支えたのが群馬の絹なの。',
       'フランスの技術者ブリュナさんが指導してくれたんだって。',
@@ -138,8 +138,10 @@ Game.Maps.shimonita = (function() {
   ];
 
   var exits = [
-    { x: 29, y: 10, target: 'maebashi', spawnX: 1, spawnY: 10, dir: 'right' },
-    { x: 29, y: 11, target: 'maebashi', spawnX: 1, spawnY: 11, dir: 'right' }
+    { x: 29, y: 10, target: 'takasaki', spawnX: 1, spawnY: 10, dir: 'right' },
+    { x: 29, y: 11, target: 'takasaki', spawnX: 1, spawnY: 11, dir: 'right' },
+    { x: 14, y: 1, target: 'tomioka', spawnX: 14, spawnY: 18, dir: 'up' },
+    { x: 15, y: 1, target: 'tomioka', spawnX: 15, spawnY: 18, dir: 'up' }
   ];
 
   return {

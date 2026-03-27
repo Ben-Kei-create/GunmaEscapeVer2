@@ -78,7 +78,6 @@ Game.Maps.shimonita = (function() {
       '「こんにゃくパーク」は無料で食べ放題なんだ。',
       '上州の最強装備もあるよ！'
     ],
-    afterDialog: 'shop_こんにゃく商店_superYakimanju,onsenArmor,diceSlot',
     sprite: [
       [0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0],
       [0,0,1,2,2,2,2,1,0,0,0,0,0,0,0,0],
@@ -105,6 +104,8 @@ Game.Maps.shimonita = (function() {
   ];
 
   var exits = [
+    { x: 15, y: 8, target: 'tomioka', spawnX: 14, spawnY: 18, dir: 'left' },
+    { x: 15, y: 9, target: 'tomioka', spawnX: 15, spawnY: 18, dir: 'left' },
     { x: 29, y: 10, target: 'maebashi', spawnX: 1, spawnY: 10, dir: 'right' },
     { x: 29, y: 11, target: 'maebashi', spawnX: 1, spawnY: 11, dir: 'right' }
   ];

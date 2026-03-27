@@ -35,7 +35,6 @@ Game.Maps.konuma = (function() {
         '強力なサイコロを売ってやろう。',
         '暗鞍に勝ちたいなら、買っておけ。'
       ],
-      afterDialog: 'shop_闇サイコロ屋_fireDice,onsenDice,konnyakuDice,cabbageDice,superYakimanju,diceSlot',
       sprite: [
         [0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0],
         [0,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0],

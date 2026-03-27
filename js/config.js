@@ -49,7 +49,6 @@ Game.Config = {
     PUZZLE: 'puzzle',
     MENU: 'menu',
     TRANSITION: 'transition',
-    SHOP: 'shop',
     EVENT: 'event',
     ENDING: 'ending',
     GAMEOVER: 'gameover'

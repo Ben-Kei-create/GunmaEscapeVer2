@@ -34,7 +34,6 @@ Game.Maps.akagi_ranch = (function() {
         '最強のサイコロを見せてやろう。',
         '上州カミナリ...この力が必要になるぞ。'
       ],
-      afterDialog: 'shop_伝説の鍛冶_gunmaDice,fireDice,cabbageDice,onsenArmor,superYakimanju,diceSlot',
       sprite: [
         [0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0],
         [0,0,1,2,2,2,2,1,0,0,0,0,0,0,0,0],

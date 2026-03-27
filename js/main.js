@@ -8,6 +8,12 @@ Game.Main = (function() {
   var transitionSpawnY = 0;
   var dialogText = '';
   var pendingAction = null;
+  var menuMessage = '';
+  var menuMessageTimer = 0;
+  var prevTileX = null;
+  var prevTileY = null;
+  var prevMoveDir = null;
+  var currentBattleId = '';
 
   function init() {
     Game.Renderer.init();
@@ -41,6 +47,14 @@ Game.Main = (function() {
   }
 
   function update(dt) {
+    if (Game.Renderer && Game.Renderer.updateEffects) {
+      Game.Renderer.updateEffects();
+    }
+
+    if (Game.Weather) {
+      Game.Weather.update();
+    }
+
     switch (state) {
       case Game.Config.STATE.TITLE:
         if (Game.Input.isPressed('confirm')) {
@@ -51,9 +65,34 @@ Game.Main = (function() {
 
       case Game.Config.STATE.EXPLORING:
         Game.Player.update();
+        var currentMap = Game.Map.getCurrentMap();
+        if (currentMap && currentMap.npcs && Game.NPC && Game.NPC.updateMovement) {
+          Game.NPC.updateMovement(currentMap.npcs);
+          if (state !== Game.Config.STATE.EXPLORING) {
+            break;
+          }
+        }
 
         // Check exits
         var pd = Game.Player.getData();
+        if (prevTileX === null || prevTileY === null) {
+          prevTileX = pd.tileX;
+          prevTileY = pd.tileY;
+        } else if (pd.tileX !== prevTileX || pd.tileY !== prevTileY) {
+          var dir = null;
+          if (pd.tileX > prevTileX) dir = 'right';
+          else if (pd.tileX < prevTileX) dir = 'left';
+          else if (pd.tileY > prevTileY) dir = 'down';
+          else if (pd.tileY < prevTileY) dir = 'up';
+          if (dir && Game.KPI && Game.KPI.recordMove) {
+            Game.KPI.recordMove(dir, prevMoveDir);
+          }
+          prevMoveDir = dir || prevMoveDir;
+          prevTileX = pd.tileX;
+          prevTileY = pd.tileY;
+        } else if (Game.KPI && Game.KPI.recordIdleFrame) {
+          Game.KPI.recordIdleFrame();
+        }
         var exit = Game.Map.checkExit(pd.tileX, pd.tileY);
         if (exit) {
           startTransition(exit.target, exit.spawnX, exit.spawnY);
@@ -130,16 +169,20 @@ Game.Main = (function() {
         var battleResult = Game.Battle.update();
         if (battleResult) {
           if (battleResult.result === 'victory') {
-            // Give gold reward
-            Game.Player.addGold(battleResult.goldReward || 50);
+            if (currentBattleId === 'onsenMonkey' && Game.KPI && Game.KPI.markFirstBossClear) {
+              Game.KPI.markFirstBossClear();
+            }
+            currentBattleId = '';
             // Show defeated dialog
             Game.NPC.showDefeatedDialog(battleResult.npc);
             dialogText = Game.NPC.getCurrentDialog();
             setState(Game.Config.STATE.DIALOG);
             Game.Audio.playBgm('field');
           } else if (battleResult.result === 'defeat') {
+            currentBattleId = '';
             setState(Game.Config.STATE.GAMEOVER);
           } else if (battleResult.result === 'flee') {
+            currentBattleId = '';
             setState(Game.Config.STATE.EXPLORING);
           }
         }
@@ -149,22 +192,17 @@ Game.Main = (function() {
         var puzzleResult = Game.Puzzle.update();
         if (puzzleResult) {
           if (puzzleResult.result === 'success') {
-            Game.Player.addGold(40);
+            if (Game.KPI && Game.KPI.endFirstGate) {
+              Game.KPI.endFirstGate(true);
+            }
             Game.NPC.showDefeatedDialog(puzzleResult.npc);
             dialogText = Game.NPC.getCurrentDialog();
             setState(Game.Config.STATE.DIALOG);
             Game.Audio.playBgm('field');
           } else {
-            setState(Game.Config.STATE.EXPLORING);
-            Game.Audio.playBgm('field');
-          }
-        }
-        break;
-
-      case Game.Config.STATE.SHOP:
-        var shopResult = Game.Shop.update();
-        if (shopResult) {
-          if (shopResult.result === 'exit') {
+            if (Game.KPI && Game.KPI.endFirstGate) {
+              Game.KPI.endFirstGate(false);
+            }
             setState(Game.Config.STATE.EXPLORING);
             Game.Audio.playBgm('field');
           }
@@ -184,6 +222,12 @@ Game.Main = (function() {
         break;
 
       case Game.Config.STATE.MENU:
+        if (menuMessageTimer > 0) {
+          menuMessageTimer--;
+          if (menuMessageTimer === 0) {
+            menuMessage = '';
+          }
+        }
         if (Game.Input.isPressed('cancel')) {
           setState(Game.Config.STATE.EXPLORING);
           Game.Audio.playSfx('cancel');
@@ -200,6 +244,21 @@ Game.Main = (function() {
               break;
             }
           }
+        }
+        if (Game.Input.isKeyPressed && Game.Input.isKeyPressed('KeyS')) {
+          var saveOk = Game.Save && Game.Save.save ? Game.Save.save(1) : false;
+          menuMessage = saveOk ? 'セーブしました（スロット1）' : 'セーブに失敗しました';
+          menuMessageTimer = 120;
+          Game.Audio.playSfx(saveOk ? 'save' : 'cancel');
+        }
+        if (Game.Input.isKeyPressed && Game.Input.isKeyPressed('KeyL')) {
+          var loadOk = Game.Save && Game.Save.load ? Game.Save.load(1) : false;
+          menuMessage = loadOk ? 'ロードしました（スロット1）' : 'ロードデータがありません';
+          menuMessageTimer = 120;
+          if (loadOk) {
+            setState(Game.Config.STATE.EXPLORING);
+          }
+          Game.Audio.playSfx(loadOk ? 'save' : 'cancel');
         }
         break;
 
@@ -237,14 +296,24 @@ Game.Main = (function() {
   function handleAction(action, npc) {
     switch (action) {
       case 'battle_onsenMonkey':
+        currentBattleId = 'onsenMonkey';
         setState(Game.Config.STATE.BATTLE);
         Game.Battle.start('onsenMonkey', npc);
         break;
       case 'battle_cabbage':
+        currentBattleId = 'cabbage';
         setState(Game.Config.STATE.BATTLE);
         Game.Battle.start('cabbage', npc);
         break;
+      case 'battle_ishidanGuard':
+        currentBattleId = 'ishidanGuard';
+        setState(Game.Config.STATE.BATTLE);
+        Game.Battle.start('ishidanGuard', npc);
+        break;
       case 'puzzle_daruma':
+        if (Game.KPI && Game.KPI.startFirstGate) {
+          Game.KPI.startFirstGate();
+        }
         setState(Game.Config.STATE.PUZZLE);
         Game.Puzzle.start('daruma', npc);
         break;
@@ -289,10 +358,12 @@ Game.Main = (function() {
         break;
       // Chapter 2 battles
       case 'battle_angura_guard':
+        currentBattleId = 'anguraGuard';
         setState(Game.Config.STATE.BATTLE);
         Game.Battle.start('anguraGuard', npc);
         break;
       case 'battle_chuji':
+        currentBattleId = 'chuji';
         setState(Game.Config.STATE.EVENT);
         Game.Event.start('preChuji', function() {
           setState(Game.Config.STATE.BATTLE);
@@ -300,6 +371,7 @@ Game.Main = (function() {
         });
         break;
       case 'battle_angura_boss':
+        currentBattleId = 'anguraBoss';
         setState(Game.Config.STATE.EVENT);
         Game.Event.start('preAnguraBoss', function() {
           setState(Game.Config.STATE.BATTLE);
@@ -313,16 +385,7 @@ Game.Main = (function() {
         });
         break;
       default:
-        // Check for shop actions: shop_<shopName>_<item1>,<item2>,...
-        if (action.indexOf('shop_') === 0) {
-          var parts = action.substring(5).split('_');
-          var shopName = parts[0];
-          var shopItemIds = parts[1] ? parts[1].split(',') : [];
-          setState(Game.Config.STATE.SHOP);
-          Game.Shop.start(shopName, shopItemIds);
-        } else {
-          setState(Game.Config.STATE.EXPLORING);
-        }
+        setState(Game.Config.STATE.EXPLORING);
     }
   }
 
@@ -330,9 +393,16 @@ Game.Main = (function() {
     Game.Map.load('maebashi', 14, 8);
     setState(Game.Config.STATE.EXPLORING);
     Game.Audio.playBgm('field');
+    prevTileX = null;
+    prevTileY = null;
+    prevMoveDir = null;
+    currentBattleId = '';
+    if (Game.KPI && Game.KPI.startSession) {
+      Game.KPI.startSession();
+    }
 
     // Reset all NPC states
-    var allMaps = ['maebashi', 'takasaki', 'kusatsu', 'shimonita', 'tsumagoi',
+    var allMaps = ['maebashi', 'takasaki', 'kusatsu', 'ikaho', 'shimonita', 'tomioka', 'tsumagoi',
                    'tamura', 'forest', 'konuma', 'onuma', 'akagi_ranch', 'akagi_shrine'];
     for (var m = 0; m < allMaps.length; m++) {
       var mapData = Game.Maps[allMaps[m]];
@@ -397,6 +467,9 @@ Game.Main = (function() {
     transitionSpawnX = spawnX;
     transitionSpawnY = spawnY;
     transitionAlpha = 0;
+    if (Game.KPI && Game.KPI.onMapTransition) {
+      Game.KPI.onMapTransition();
+    }
     setState(Game.Config.STATE.TRANSITION);
   }
 
@@ -412,7 +485,7 @@ Game.Main = (function() {
 
       case Game.Config.STATE.DIALOG:
         renderExploring();
-        Game.UI.drawDialog(dialogText);
+        Game.UI.drawDialog(Game.NPC.getDialogText(dialogText));
         break;
 
       case Game.Config.STATE.BATTLE:
@@ -423,17 +496,13 @@ Game.Main = (function() {
         Game.Puzzle.draw();
         break;
 
-      case Game.Config.STATE.SHOP:
-        Game.Shop.draw();
-        break;
-
       case Game.Config.STATE.EVENT:
         Game.Event.draw();
         break;
 
       case Game.Config.STATE.MENU:
         renderExploring();
-        Game.UI.drawMenu();
+        Game.UI.drawMenu(menuMessage);
         break;
 
       case Game.Config.STATE.TRANSITION:
@@ -450,6 +519,10 @@ Game.Main = (function() {
         Game.UI.drawEnding();
         break;
     }
+
+    if (Game.Renderer && Game.Renderer.drawEffects) {
+      Game.Renderer.drawEffects();
+    }
   }
 
   function renderExploring() {
@@ -458,6 +531,9 @@ Game.Main = (function() {
     Game.Renderer.setCamera(pd.x + 8, pd.y + 8);
     Game.Map.draw();
     Game.Player.draw();
+    if (Game.Weather) {
+      Game.Weather.draw();
+    }
     Game.UI.drawHUD();
   }
 

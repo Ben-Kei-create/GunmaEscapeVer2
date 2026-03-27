@@ -77,7 +77,6 @@ Game.Maps.kusatsu = (function() {
       '源泉は毎分三万リットル以上湧いてるんだ。',
       '温泉パワーの装備はいかがですか？'
     ],
-    afterDialog: 'shop_温泉土産屋_yakimanju,superYakimanju,konnyakuArmor,diceSlot',
     sprite: [
       [0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0],
       [0,0,1,2,2,2,2,1,0,0,0,0,0,0,0,0],
@@ -138,6 +137,8 @@ Game.Maps.kusatsu = (function() {
   ];
 
   var exits = [
+    { x: 22, y: 6, target: 'ikaho', spawnX: 14, spawnY: 18, dir: 'up' },
+    { x: 22, y: 7, target: 'ikaho', spawnX: 15, spawnY: 18, dir: 'up' },
     { x: 14, y: 19, target: 'maebashi', spawnX: 14, spawnY: 1, dir: 'down' },
     { x: 15, y: 19, target: 'maebashi', spawnX: 15, spawnY: 1, dir: 'down' }
   ];

@@ -8,6 +8,12 @@ Game.Map = (function() {
     currentMap = Game.Maps[mapId];
     if (!currentMap) return;
     Game.Player.init(spawnX, spawnY);
+    if (Game.Weather) {
+      Game.Weather.setMapWeather(currentMap.name || currentMapId);
+    }
+    if (Game.NPC && Game.NPC.initMovement && currentMap && currentMap.npcs) {
+      Game.NPC.initMovement(currentMap.npcs);
+    }
   }
 
   function getCurrentMap() {
@@ -76,6 +82,9 @@ Game.Map = (function() {
 
   function draw() {
     if (!currentMap) return;
+    if (Game.Renderer.drawParallaxBackground) {
+      Game.Renderer.drawParallaxBackground(currentMap);
+    }
     for (var y = 0; y < Game.Config.MAP_ROWS; y++) {
       for (var x = 0; x < Game.Config.MAP_COLS; x++) {
         Game.Renderer.drawTile(currentMap.tiles[y][x], x, y);
@@ -97,7 +106,11 @@ Game.Map = (function() {
       for (var i = 0; i < currentMap.npcs.length; i++) {
         var npc = currentMap.npcs[i];
         var ts = Game.Config.TILE_SIZE;
-        Game.Renderer.drawSprite(npc.sprite, npc.x * ts, npc.y * ts, npc.palette);
+        var renderPos = Game.NPC && Game.NPC.getNpcRenderPos
+          ? Game.NPC.getNpcRenderPos(npc)
+          : { x: npc.x * ts, y: npc.y * ts };
+        var flipped = npc.facing === 'right';
+        Game.Renderer.drawSprite(npc.sprite, renderPos.x, renderPos.y, npc.palette, flipped);
       }
     }
   }

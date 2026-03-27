@@ -70,6 +70,30 @@ Game.Battle = (function() {
       ],
       palette: { 1:'#2d6e1e', 2:'#44bb44', 3:'#66dd66' }
     },
+    ishidanGuard: {
+      name: '石段番人',
+      hp: 90, maxHp: 90,
+      attack: 17, defense: 7, goldReward: 130,
+      sprite: [
+        [0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0],
+        [0,0,1,2,2,2,2,1,0,0,0,0,0,0,0,0],
+        [0,0,1,3,2,3,2,1,0,0,0,0,0,0,0,0],
+        [0,0,1,2,2,2,2,1,0,0,0,0,0,0,0,0],
+        [0,0,0,1,4,4,1,0,0,0,0,0,0,0,0,0],
+        [0,0,1,5,5,5,5,1,0,0,0,0,0,0,0,0],
+        [0,1,5,5,5,5,5,5,1,0,0,0,0,0,0,0],
+        [0,1,5,6,5,5,6,5,1,0,0,0,0,0,0,0],
+        [0,0,1,5,5,5,5,1,0,0,0,0,0,0,0,0],
+        [0,0,1,5,5,5,5,1,0,0,0,0,0,0,0,0],
+        [0,0,1,7,0,0,7,1,0,0,0,0,0,0,0,0],
+        [0,0,1,7,0,0,7,1,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+      ],
+      palette: { 1:'#3b342f', 2:'#c7a27b', 3:'#2b1d14', 4:'#8f8577', 5:'#6b5846', 6:'#a89988', 7:'#4a3c2f' }
+    },
     // Chapter 2 enemies
     anguraGuard: {
       name: 'アングラの見張り',
@@ -527,27 +551,27 @@ Game.Battle = (function() {
       ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(C.CANVAS_WIDTH, i); ctx.stroke();
     }
 
-    // Enemy
+    // Enemy (minimal info only)
     if (enemy) {
       var ex = 200 + (shakeX > 0 ? (Math.random() - 0.5) * shakeX : 0);
       R.drawSpriteAbsolute(enemy.sprite, ex, 30, enemy.palette, 5);
-
-      R.drawRectAbsolute(160, 120, 160, 12, '#333');
-      var hpRatio = enemy.hp / enemy.maxHp;
-      R.drawRectAbsolute(161, 121, 158 * hpRatio, 10,
-        hpRatio > 0.3 ? C.COLORS.HP_GREEN : C.COLORS.HP_RED);
-      R.drawTextJP(enemy.name + ' HP:' + enemy.hp + '/' + enemy.maxHp, 160, 135, '#fff', 12);
+      R.drawTextJP(enemy.name, 188, 132, '#bbb', 12);
     }
 
-    // Player stats
+    // Player state (no numeric HP)
     var pd = Game.Player.getData();
-    R.drawDialogBox(10, 200, 200, 60);
-    R.drawTextJP('HP: ' + pd.hp + '/' + pd.maxHp, 25, 210, '#fff', 14);
-
-    R.drawRectAbsolute(25, 230, 170, 10, '#333');
-    var playerHpRatio = pd.hp / pd.maxHp;
-    R.drawRectAbsolute(26, 231, 168 * playerHpRatio, 8,
-      playerHpRatio > 0.3 ? C.COLORS.HP_GREEN : C.COLORS.HP_RED);
+    var playerHpRatio = pd.maxHp > 0 ? pd.hp / pd.maxHp : 0;
+    var playerStateText = '安定';
+    var playerStateColor = '#88cc88';
+    if (playerHpRatio <= 0.25) {
+      playerStateText = '危険';
+      playerStateColor = '#ff6666';
+    } else if (playerHpRatio <= 0.5) {
+      playerStateText = '負荷';
+      playerStateColor = '#ffcc66';
+    }
+    R.drawDialogBox(10, 200, 200, 44);
+    R.drawTextJP('状態: ' + playerStateText, 25, 212, playerStateColor, 14);
 
     // Dice display
     if (phase === 'diceRoll' || phase === 'diceResult') {

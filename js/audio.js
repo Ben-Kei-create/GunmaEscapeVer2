@@ -23,7 +23,7 @@ Game.Audio = (function() {
   }
 
   function playNote(freq, duration, type, startTime, gain) {
-    if (!audioCtx || muted) return;
+    if (!audioCtx || muted || freq <= 0) return;
     ensureContext();
     var osc = audioCtx.createOscillator();
     var g = audioCtx.createGain();
@@ -32,6 +32,40 @@ Game.Audio = (function() {
     g.gain.value = gain || 0.15;
     g.gain.setValueAtTime(gain || 0.15, startTime);
     g.gain.exponentialRampToValueAtTime(0.001, startTime + duration - 0.01);
+    osc.connect(g);
+    g.connect(masterGain);
+    osc.start(startTime);
+    osc.stop(startTime + duration);
+  }
+
+  function playSweep(startFreq, endFreq, duration, type, startTime, gain) {
+    if (!audioCtx || muted) return;
+    ensureContext();
+    var osc = audioCtx.createOscillator();
+    var g = audioCtx.createGain();
+    osc.type = type || 'square';
+    osc.frequency.setValueAtTime(startFreq, startTime);
+    osc.frequency.exponentialRampToValueAtTime(Math.max(1, endFreq), startTime + duration);
+    g.gain.setValueAtTime(gain || 0.15, startTime);
+    g.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+    osc.connect(g);
+    g.connect(masterGain);
+    osc.start(startTime);
+    osc.stop(startTime + duration);
+  }
+
+  function playThunderNoise(startTime, duration, gain) {
+    if (!audioCtx || muted) return;
+    ensureContext();
+    var osc = audioCtx.createOscillator();
+    var g = audioCtx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(120, startTime);
+    for (var i = 1; i <= 12; i++) {
+      osc.frequency.setValueAtTime(60 + Math.random() * 180, startTime + duration * (i / 12));
+    }
+    g.gain.setValueAtTime(gain || 0.18, startTime);
+    g.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
     osc.connect(g);
     g.connect(masterGain);
     osc.start(startTime);
@@ -67,7 +101,39 @@ Game.Audio = (function() {
     event: [
       [262, 0.5], [294, 0.5], [330, 0.5], [262, 0.5],
       [294, 0.5], [330, 0.5], [349, 0.5], [330, 0.5]
+    ],
+    boss: [
+      [220, 0.12], [196, 0.12], [174, 0.12], [196, 0.12],
+      [247, 0.12], [220, 0.12], [196, 0.12], [174, 0.12],
+      [262, 0.12], [247, 0.12], [220, 0.12], [196, 0.12],
+      [294, 0.12], [262, 0.12], [247, 0.12], [220, 0.12],
+      [330, 0.18], [294, 0.12], [262, 0.12], [247, 0.18]
+    ],
+    dungeon: [
+      [196, 0.45], [0, 0.18], [233, 0.38], [0, 0.18],
+      [185, 0.5], [0, 0.22], [174, 0.38], [0, 0.18],
+      [196, 0.45], [0, 0.18], [262, 0.3], [247, 0.3],
+      [196, 0.5], [0, 0.2], [165, 0.6], [0, 0.3]
+    ],
+    victory_fanfare: [
+      [262, 0.12], [330, 0.12], [392, 0.12], [523, 0.2],
+      [392, 0.12], [523, 0.12], [659, 0.18], [523, 0.15],
+      [784, 0.35]
+    ],
+    sad: [
+      [392, 0.55], [349, 0.55], [330, 0.55], [294, 0.55],
+      [262, 0.7], [247, 0.55], [220, 0.8], [196, 0.9]
+    ],
+    kusatsu_bushi: [
+      [392, 0.2], [440, 0.2], [392, 0.2], [349, 0.2],
+      [294, 0.25], [262, 0.25], [294, 0.2], [349, 0.2],
+      [392, 0.3], [392, 0.15], [440, 0.15], [392, 0.2],
+      [349, 0.2], [294, 0.25], [262, 0.35], [0, 0.15]
     ]
+  };
+
+  var oneShotBgm = {
+    victory_fanfare: true
   };
 
   function playBgm(name) {
@@ -80,12 +146,26 @@ Game.Audio = (function() {
     var loopLength = 0;
     melody.forEach(function(n) { loopLength += n[1]; });
 
-    function scheduleLoop() {
+    function scheduleSequence() {
       var time = audioCtx.currentTime + 0.1;
       melody.forEach(function(note) {
-        playNote(note[0], note[1] * 0.9, 'square', time, 0.1);
+        if (note[0] > 0) {
+          playNote(note[0], note[1] * 0.9, 'square', time, 0.1);
+        }
         time += note[1];
       });
+    }
+
+    if (oneShotBgm[name]) {
+      scheduleSequence();
+      currentBgm = setTimeout(function() {
+        currentBgm = null;
+      }, loopLength * 1000 + 150);
+      return;
+    }
+
+    function scheduleLoop() {
+      scheduleSequence();
       currentBgm = setTimeout(scheduleLoop, loopLength * 1000);
     }
     scheduleLoop();
@@ -139,6 +219,31 @@ Game.Audio = (function() {
         playNote(247, 0.3, 'square', now + 0.3, 0.15);
         playNote(220, 0.3, 'square', now + 0.6, 0.15);
         playNote(196, 0.6, 'square', now + 0.9, 0.15);
+        break;
+      case 'critical':
+        playSweep(700, 1400, 0.18, 'square', now, 0.14);
+        playNote(1568, 0.08, 'triangle', now + 0.14, 0.1);
+        break;
+      case 'miss':
+        playSweep(180, 70, 0.22, 'triangle', now, 0.14);
+        break;
+      case 'door':
+        playSweep(260, 140, 0.28, 'sawtooth', now, 0.1);
+        playSweep(180, 90, 0.35, 'triangle', now + 0.04, 0.08);
+        break;
+      case 'achievement':
+        playNote(523, 0.1, 'square', now, 0.14);
+        playNote(659, 0.1, 'square', now + 0.1, 0.14);
+        playNote(784, 0.16, 'square', now + 0.2, 0.14);
+        break;
+      case 'save':
+        playNote(523, 0.12, 'triangle', now, 0.08);
+        playNote(659, 0.16, 'triangle', now + 0.12, 0.08);
+        break;
+      case 'thunder':
+        playThunderNoise(now, 0.24, 0.16);
+        playThunderNoise(now + 0.05, 0.18, 0.1);
+        playSweep(220, 80, 0.22, 'sawtooth', now, 0.05);
         break;
     }
   }

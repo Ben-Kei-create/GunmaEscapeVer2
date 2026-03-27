@@ -96,10 +96,15 @@ Game.Input = (function() {
     return false;
   }
 
+  function isKeyPressed(code) {
+    return !!keysPressed[code];
+  }
+
   return {
     init: init,
     update: update,
     isDown: isDown,
-    isPressed: isPressed
+    isPressed: isPressed,
+    isKeyPressed: isKeyPressed
   };
 })();

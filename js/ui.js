@@ -40,7 +40,7 @@ Game.UI = (function() {
 
     // Subtitle
     R.drawTextJP('群馬県は一度入ったら出られない...', 115, 140, '#888', 12);
-    R.drawTextJP('4つの証を集めて県境の結界を破れ！', 110, 158, '#888', 12);
+    R.drawTextJP('道と異界の気配を読み、儀式を進めよ。', 105, 158, '#888', 12);
     R.drawTextJP('第一章「群馬脱出編」 第二章「赤城の闇編」', 85, 178, '#555', 10);
 
     // Decorative daruma
@@ -64,9 +64,7 @@ Game.UI = (function() {
       R.drawTextJP('Zキーでスタート', 175, 220, '#fff', 14);
     }
 
-    // Controls
-    R.drawTextJP('操作方法:', 50, 260, '#888', 11);
-    R.drawTextJP('矢印キー: 移動  Z: 決定  X: メニュー', 50, 278, '#666', 10);
+    // Minimal prompts
     R.drawTextJP('M: ミュート', 50, 293, '#666', 10);
 
     // Version
@@ -93,9 +91,6 @@ Game.UI = (function() {
       hpRatio > 0.3 ? Game.Config.COLORS.HP_GREEN : Game.Config.COLORS.HP_RED);
     R.drawText('HP ' + pd.hp, Game.Config.CANVAS_WIDTH - 98, 8, '#fff', 10);
 
-    // Gold display
-    R.drawText(pd.gold + 'G', Game.Config.CANVAS_WIDTH - 45, 8, '#ffdd44', 10);
-
     // Key items indicator
     var keyItems = ['onsenKey', 'darumaEye', 'konnyakuPass', 'cabbageCrest'];
     var keyColors = ['#88ccee', '#cc2222', '#888888', '#44bb44'];
@@ -108,6 +103,9 @@ Game.UI = (function() {
 
   function drawDialog(text) {
     var R = Game.Renderer;
+    if (typeof text !== 'string') {
+      text = text ? String(text) : '';
+    }
     var npc = Game.NPC.getCurrentNpc();
     var speakerName = npc ? npc.name : '';
 
@@ -142,7 +140,7 @@ Game.UI = (function() {
     blinkTimer++;
   }
 
-  function drawMenu() {
+  function drawMenu(menuMessage) {
     var R = Game.Renderer;
     var C = Game.Config;
     var pd = Game.Player.getData();
@@ -195,7 +193,10 @@ Game.UI = (function() {
       }
     }
 
-    R.drawTextJP('Xキーで閉じる', 185, 272, '#888', 10);
+    if (menuMessage) {
+      R.drawTextJP(menuMessage, 128, 256, '#44ddaa', 10);
+    }
+    R.drawTextJP('Z:回復  S:セーブ  L:ロード  X:閉じる', 118, 272, '#888', 10);
   }
 
   function drawGameOver() {

@@ -75,7 +75,6 @@ Game.Maps.maebashi = (function() {
         'うちの焼きまんじゅうは味噌ダレが自慢さ！',
         '群馬の旅にゃ欠かせねえぞ。さあ見てきな！'
       ],
-      afterDialog: 'shop_前橋道具屋_healHerb,yakimanju,leatherArmor,diceSlot',
       sprite: [
         [0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0],
         [0,0,1,2,2,2,2,1,0,0,0,0,0,0,0,0],

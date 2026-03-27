@@ -8,11 +8,10 @@ Game.Encounters = (function() {
   };
 
   var tables = {
-    maebashi: { stepInterval: 10, cooldown: 4, tiles: [0, 6], formations: ['strayDaruma', ['strayDaruma', 'roadsideBandit'], 'roadsideBandit'] },
-    takasaki: { stepInterval: 10, cooldown: 4, tiles: [0], formations: ['strayDaruma', ['roadsideBandit', 'strayDaruma'], 'roadsideBandit'] },
+    takasaki: { stepInterval: 16, cooldown: 6, tiles: [0], formations: ['strayDaruma', ['roadsideBandit', 'strayDaruma']] },
     kusatsu: { stepInterval: 10, cooldown: 4, tiles: [0, 5], formations: ['steamMonkey', ['steamMonkey', 'strayDaruma'], 'strayDaruma'] },
-    shimonita: { stepInterval: 10, cooldown: 4, tiles: [0, 6], formations: ['konnyakuCrawler', ['konnyakuCrawler', 'roadsideBandit'], 'roadsideBandit'] },
-    tomioka: { stepInterval: 9, cooldown: 4, tiles: [0, 1], formations: ['silkShade', ['silkShade', 'roadsideBandit'], ['silkShade', 'silkShade']] },
+    shimonita: { stepInterval: 15, cooldown: 6, tiles: [0, 6], formations: ['konnyakuCrawler', ['konnyakuCrawler', 'roadsideBandit']] },
+    tomioka: { stepInterval: 13, cooldown: 5, tiles: [0, 1], formations: ['silkShade', ['silkShade', 'roadsideBandit'], ['silkShade', 'silkShade']] },
     tsumagoi: { stepInterval: 9, cooldown: 4, tiles: [0, 6], formations: ['cabbageWisp', ['cabbageWisp', 'roadsideBandit'], ['cabbageWisp', 'cabbageWisp']] },
     forest: { stepInterval: 7, cooldown: 3, tiles: [0, 1], formations: ['roadsideBandit', ['roadsideBandit', 'strayDaruma'], 'strayDaruma'] },
     konuma: { stepInterval: 7, cooldown: 3, tiles: [0, 1, 6], formations: ['mistBeastling', ['roadsideBandit', 'mistBeastling'], ['mistBeastling', 'mistBeastling']] },

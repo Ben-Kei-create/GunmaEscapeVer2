@@ -125,6 +125,8 @@ Game.NPC = (function() {
     dialogIndex = 0;
     resetDialogPagination();
 
+    var checkpointFailedOnce = Game.Story && Game.Story.hasFlag && Game.Story.hasFlag('checkpoint_failed_once');
+
     if (npc.defeated) {
       // Shop NPCs always reopen
       if (npc.afterDialog && npc.afterDialog.indexOf('shop_') === 0) {
@@ -146,6 +148,12 @@ Game.NPC = (function() {
                Game.Player.hasItem('konnyakuPass')) {
       dialogLines = npc.allKeysDialog;
       onDialogEnd = npc.afterDialog;
+    } else if (npc.id === 'ruined_checkpoint' && checkpointFailedOnce) {
+      dialogLines = [
+        '（崩れた関所の中心だけが、妙に空いて見える）',
+        '（力ずくで削れた跡はあるのに、空洞だけがまだ塞がっていない）'
+      ];
+      onDialogEnd = npc.afterDialog || null;
     } else if (npc.id === 'cabbageGuardian') {
       dialogLines = npc.dialog;
       onDialogEnd = null;

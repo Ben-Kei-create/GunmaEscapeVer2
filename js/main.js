@@ -587,6 +587,58 @@ Game.Main = (function() {
     }
   }
 
+  function openSystemDialog(lines) {
+    if (Game.NPC && Game.NPC.openDialog) {
+      dialogText = Game.NPC.openDialog(lines || ['']);
+    } else {
+      dialogText = (lines && lines[0]) || '';
+    }
+    setState(Game.Config.STATE.DIALOG);
+  }
+
+  function handleInnAction(action) {
+    var parts = action.substring(4).split('_');
+    var innName = parts[0] || '宿';
+    var price = Math.max(0, parseInt(parts[1] || '0', 10) || 0);
+    var pd = Game.Player.getData ? Game.Player.getData() : null;
+    if (!pd) {
+      setState(Game.Config.STATE.EXPLORING);
+      return;
+    }
+
+    if (pd.hp >= pd.maxHp) {
+      openSystemDialog([
+        innName + 'の帳場は静かだ。',
+        '今はもう、身体を休めきっている。'
+      ]);
+      Game.Audio.playSfx('confirm');
+      return;
+    }
+
+    if (pd.gold < price) {
+      openSystemDialog([
+        innName + 'は一泊 ' + price + 'G だ。',
+        '手持ちが少し足りない。'
+      ]);
+      Game.Audio.playSfx('cancel');
+      return;
+    }
+
+    if (Game.Player && Game.Player.addGold) {
+      Game.Player.addGold(-price);
+    }
+    if (Game.Player && Game.Player.fullHeal) {
+      Game.Player.fullHeal();
+    } else {
+      pd.hp = pd.maxHp;
+    }
+    openSystemDialog([
+      innName + 'でひと晩休んだ。',
+      '湯気と寝息にほどけて、HPが全回復した。'
+    ]);
+    Game.Audio.playSfx('item');
+  }
+
   function handleAction(action, npc) {
     switch (action) {
       case 'battle_ruined_checkpoint':
@@ -834,6 +886,10 @@ Game.Main = (function() {
         turnInDeliveryQuest('yumomi_letter_delivery', 'yumomiLetter', npc);
         break;
       default:
+        if (action.indexOf('inn_') === 0) {
+          handleInnAction(action);
+          break;
+        }
         // Check for shop actions: shop_<shopName>_<item1>,<item2>,...
         if (action.indexOf('shop_') === 0) {
           var parts = action.substring(5).split('_');
@@ -1263,7 +1319,6 @@ Game.Main = (function() {
     if (Game.Renderer.drawEffects) Game.Renderer.drawEffects();
     if (!overlayMode) {
       Game.UI.drawHUD();
-      if (Game.UI.drawMinimap) Game.UI.drawMinimap();
       if (Game.UI.drawAreaBanner) Game.UI.drawAreaBanner();
       if (Game.Quests && Game.Quests.drawTracker) Game.Quests.drawTracker();
     }
@@ -1344,6 +1399,21 @@ Game.Main = (function() {
           };
         }) : []
       };
+    }
+    if (Game.Map && Game.Map.getCurrentMap && Game.NPC && Game.NPC.getNpcServiceType) {
+      var currentMap = Game.Map.getCurrentMap();
+      if (currentMap && currentMap.npcs) {
+        payload.services = currentMap.npcs.map(function(npc) {
+          return {
+            id: npc.id,
+            type: Game.NPC.getNpcServiceType(npc),
+            x: npc.x,
+            y: npc.y
+          };
+        }).filter(function(entry) {
+          return !!entry.type;
+        });
+      }
     }
     payload.ui = {
       showJourneyBadge: Game.UI && Game.UI.isJourneyBadgeEnabled ? Game.UI.isJourneyBadgeEnabled() : true,

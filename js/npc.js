@@ -8,6 +8,50 @@ Game.NPC = (function() {
   var onDialogEnd = null;
   var npcMovement = {};
   var AUTO_DIALOG_KEY = '__gunmaNpcAutoDialogText';
+  var SERVICE_ICONS = {
+    dice_shop: {
+      sprite: [
+        [0,1,1,1,1,1,0,0],
+        [1,2,2,2,2,2,1,0],
+        [1,2,3,2,3,2,1,0],
+        [1,2,2,2,2,2,1,0],
+        [1,2,3,2,2,3,1,0],
+        [1,2,2,2,2,2,1,0],
+        [0,1,1,1,1,1,0,0],
+        [0,0,0,0,0,0,0,0]
+      ],
+      palette: { 1: '#f7e4a3', 2: '#fff8de', 3: '#293147' },
+      frame: '#6a5629'
+    },
+    item_shop: {
+      sprite: [
+        [0,0,1,1,1,1,0,0],
+        [0,1,2,2,2,2,1,0],
+        [1,2,2,3,3,2,2,1],
+        [1,2,2,2,2,2,2,1],
+        [1,2,4,2,2,4,2,1],
+        [1,2,2,2,2,2,2,1],
+        [0,1,1,1,1,1,1,0],
+        [0,0,0,0,0,0,0,0]
+      ],
+      palette: { 1: '#4d3a22', 2: '#d4a164', 3: '#f6dcb0', 4: '#7d4d1d' },
+      frame: '#6b4020'
+    },
+    inn: {
+      sprite: [
+        [1,1,1,1,1,1,1,0],
+        [1,2,2,2,2,2,1,0],
+        [1,3,3,2,2,2,1,0],
+        [1,2,2,2,2,2,1,0],
+        [1,4,4,4,4,4,1,0],
+        [1,2,2,2,2,2,1,0],
+        [1,1,1,1,1,1,1,0],
+        [0,0,0,0,0,0,0,0]
+      ],
+      palette: { 1: '#8aa8d4', 2: '#f4f6fb', 3: '#d4e4ff', 4: '#5f7aa9' },
+      frame: '#314768'
+    }
+  };
 
   function clampText(text, maxChars) {
     if (!text || text.length <= maxChars) return text || '';
@@ -166,6 +210,15 @@ Game.NPC = (function() {
     return getCurrentDialog();
   }
 
+  function openDialog(lines, action) {
+    currentNpc = null;
+    dialogIndex = 0;
+    dialogLines = (lines || []).slice ? lines.slice() : [lines || ''];
+    onDialogEnd = action || null;
+    setCurrentDialogPages();
+    return getCurrentDialog();
+  }
+
   function advance() {
     window[AUTO_DIALOG_KEY] = null;
     if (dialogPageIndex < dialogPages.length - 1) {
@@ -244,6 +297,44 @@ Game.NPC = (function() {
 
   function getCurrentNpcDisplayName() {
     return getNpcDisplayName(currentNpc);
+  }
+
+  function getShopItemIdsFromAction(action) {
+    if (!action || action.indexOf('shop_') !== 0) return [];
+    var parts = action.substring(5).split('_');
+    return parts[1] ? parts[1].split(',').filter(Boolean) : [];
+  }
+
+  function getNpcServiceType(npc) {
+    if (!npc || npc.hideServiceIcon) return null;
+    if (npc.serviceType) return npc.serviceType;
+
+    var action = npc.afterDialog || '';
+    if (action.indexOf('inn_') === 0) return 'inn';
+    if (action.indexOf('shop_') !== 0) return null;
+
+    var itemIds = getShopItemIdsFromAction(action);
+    for (var i = 0; i < itemIds.length; i++) {
+      var item = Game.Items && Game.Items.get ? Game.Items.get(itemIds[i]) : null;
+      if (item && (item.type === 'dice' || item.type === 'diceSlot')) {
+        return 'dice_shop';
+      }
+    }
+    return 'item_shop';
+  }
+
+  function drawNpcServiceIcon(npc, renderPos) {
+    var serviceType = getNpcServiceType(npc);
+    var iconDef = SERVICE_ICONS[serviceType];
+    if (!iconDef || !renderPos || !Game.Renderer) return;
+
+    var bob = Math.round(Math.sin(Date.now() / 220 + (npc.x || 0) * 0.8 + (npc.y || 0) * 0.6) * 1);
+    var baseX = Math.floor(renderPos.x + 4);
+    var baseY = Math.floor(renderPos.y - 8 + bob);
+
+    Game.Renderer.drawRect(baseX - 2, baseY - 2, 10, 10, iconDef.frame);
+    Game.Renderer.drawRect(baseX - 1, baseY - 1, 8, 8, '#0c1324');
+    Game.Renderer.drawSprite(iconDef.sprite, baseX - 1, baseY - 1, iconDef.palette);
   }
 
   function canOccupyTile(npc, npcs, x, y) {
@@ -545,6 +636,7 @@ Game.NPC = (function() {
             var state = getMovementState(npc);
             var flipped = state && state.facing === 'right';
             Game.Renderer.drawSprite(npc.sprite, renderPos.x, renderPos.y, npc.palette, flipped);
+            drawNpcServiceIcon(npc, renderPos);
           }
         }
       };
@@ -580,6 +672,8 @@ Game.NPC = (function() {
     getCurrentDialog: getCurrentDialog,
     getCurrentNpc: getCurrentNpc,
     getCurrentNpcDisplayName: getCurrentNpcDisplayName,
+    getNpcServiceType: getNpcServiceType,
+    openDialog: openDialog,
     updateMovement: updateMovement,
     getNpcRenderPos: getNpcRenderPos,
     initMovement: initMovement

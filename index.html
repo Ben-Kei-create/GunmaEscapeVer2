@@ -7,27 +7,51 @@
   <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
+    html,
     body {
+      width: 100%;
+      min-height: 100%;
       background: #111;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
       overflow: hidden;
     }
+    body {
+      min-height: 100vh;
+      min-height: 100dvh;
+    }
+    .game-shell {
+      position: fixed;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      width: 100vw;
+      height: 100vh;
+      height: 100dvh;
+      padding: 16px;
+      background: #111;
+    }
     canvas {
+      display: block;
       image-rendering: pixelated;
       image-rendering: crisp-edges;
-      width: 960px;
-      height: 640px;
+      width: min(960px, calc(100vw - 32px), calc((100dvh - 32px) * 1.5));
+      height: auto;
+      max-width: calc(100vw - 32px);
+      max-height: calc(100dvh - 32px);
+      margin: auto;
     }
-    @media (max-width: 960px) {
-      canvas { width: 100vw; height: auto; }
+    :fullscreen .game-shell,
+    :-webkit-full-screen .game-shell {
+      width: 100vw;
+      height: 100vh;
+      height: 100dvh;
+      padding: 24px;
     }
   </style>
 </head>
 <body>
-  <canvas id="game" width="480" height="320"></canvas>
+  <main class="game-shell">
+    <canvas id="game" width="480" height="320"></canvas>
+  </main>
   <script src="js/config.js"></script>
   <script src="js/chapter_data.js"></script>
   <script src="js/input.js"></script>

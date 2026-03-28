@@ -71,6 +71,7 @@ Game.Maps.takasaki = (function() {
     id: 'weaponShop',
     x: 5, y: 9,
     name: '鍛冶屋',
+    serviceType: 'dice_shop',
     dialog: [
       'ここは高崎の鍛冶屋だ！',
       '昔、高崎は中山道の宿場町として栄えたんだ。',

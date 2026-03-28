@@ -31,6 +31,7 @@ Game.BattleData = (function() {
       mapTags: ["tomioka"],
       pride: '極上の生糸を生産し続けること',
       sorrow: '機械が止まっても手を止められないこと',
+      echoText: '止められなかった両手の癖だけが、工場跡の薄い光にまだ残っていた。',
       silhouetteDiff: [
         '頭頂部から細い糸の束が上へ伸びる',
         '右腕が鋭く機械的な形状になっている',
@@ -72,6 +73,7 @@ Game.BattleData = (function() {
       mapTags: ["tomioka", "shimonita"],
       pride: '決して切れぬ丈夫な絆であること',
       sorrow: 'もはや何を繋いでいたのか分からないこと',
+      echoText: '何を結んでいたのか分からない糸でも、離したくなかった温度だけは残っていた。',
       silhouetteDiff: [
         '全身が丸みを帯びた繭のような輪郭',
         '右目だけが糸の隙間から覗いている',
@@ -112,6 +114,7 @@ Game.BattleData = (function() {
       mapTags: ["shimonita"],
       pride: '規格通りに全てを納めること',
       sorrow: '中身がとうに空っぽであること',
+      echoText: '届けるはずの中身を失っても、抱え続けた重みだけは肩に残っていた。',
       silhouetteDiff: [
         '背中に巨大な四角い荷物を背負っている',
         '両腕が異様に長く、地面につきそう',
@@ -152,6 +155,7 @@ Game.BattleData = (function() {
       mapTags: ["tomioka"],
       pride: '不良品を絶対に通さない厳しい眼',
       sorrow: 'もはや検査すべきものが生産されていないこと',
+      echoText: '睨みつけるような検査眼の奥で、守るべき出来栄えだけがまだ消えずにいた。',
       silhouetteDiff: [
         '頭部に角張った作業帽を被っている',
         '右手に細く長い検査杖を持っている',
@@ -193,6 +197,7 @@ Game.BattleData = (function() {
       mapTags: ["shimonita", "tomioka"],
       pride: '工場の安全を静かに見守ること',
       sorrow: '片目を入れる主がもう戻らないこと',
+      echoText: '煤けた片目は、帰らなかった誰かの無事だけをずっと待っていた。',
       silhouetteDiff: [
         '全体に煤のような黒い斑点が散っている',
         '左目だけが虚ろに開眼している',
@@ -234,6 +239,7 @@ Game.BattleData = (function() {
       mapTags: ["tomioka", "shimonita"],
       pride: '色鮮やかな布を染め上げた誇り',
       sorrow: '混ざり合い、黒く濁って流された痛み',
+      echoText: '鮮やかだったはずの色の名残が、濁りの底でようやく静かにほどけた。',
       silhouetteDiff: [
         '下半身がドロドロに溶けて地面と同化している',
         '頭頂部から不定形の染料が垂れている',

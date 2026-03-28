@@ -399,6 +399,10 @@ Game.Player = (function() {
     data.hp = Math.min(data.hp + amount, data.maxHp);
   }
 
+  function fullHeal() {
+    data.hp = data.maxHp;
+  }
+
   function hasAllKeys() {
     return hasItem('onsenKey') && hasItem('darumaEye') &&
            hasItem('konnyakuPass') && hasItem('cabbageCrest');
@@ -750,6 +754,7 @@ Game.Player = (function() {
     addItem: addItem,
     removeItem: removeItem,
     heal: heal,
+    fullHeal: fullHeal,
     hasAllKeys: hasAllKeys,
     getAttack: getAttack,
     getDefense: getDefense,

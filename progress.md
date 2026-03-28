@@ -715,3 +715,46 @@ Original prompt: そうだね。セーブできる村役場みたいなところ
   - Playwright MCP では最新 `audio/event/battle_data/battle` を読み直したうえで、`Game.Battle.getBossGimmick('chuji')` が存在し、専用技名が `夜半の抜き打ち` であることを確認。
   - 同じく `Game.Battle.debugForceBossCue('special_move')` で `bossAction.lines = ['ヒュン']`、中央ダイアログが `見ろ。生き残るってのは、こういう音だ。` になることを確認。
   - 念のため `debugBattle=chuji` を攻撃999で倒し切り、`rewardSummary.exp = 90` と `enemyEchoText` が返るところまで見た。Playwright console error は 0 件。
+- 2026-03-28: 店種別ドットアイコンと宿屋を追加。
+  - `js/npc.js` にサービス判定とドット看板描画を追加し、`shop_...` / `inn_...` を元に `dice_shop / item_shop / inn` を自動判別して NPC 頭上へ表示するようにした。
+  - 同じく `Game.NPC.openDialog()` を追加し、店や宿のような NPC 依存しない結果メッセージも既存ダイアログ導線で表示できるようにした。
+  - `js/player.js` に `fullHeal()` を追加し、`js/main.js` に `inn_宿名_料金` アクション処理を追加。宿屋では所持金を払って HP 全回復、満タン時や金欠時は専用メッセージを返す。
+  - `js/main.js` の `render_game_to_text` に `services` を追加し、各マップのサービス NPC 種別をテキスト検証できるようにした。
+  - 前橋・伊香保・富岡に宿屋 NPC を追加し、高崎の鍛冶屋は `dice_shop` として明示した。前橋の道具屋と伊香保の湯守も `item_shop` 表示になる。
+- 2026-03-28: 店アイコン / 宿屋の検証結果
+  - `node --check js/npc.js js/player.js js/main.js js/maps/maebashi.js js/maps/takasaki.js js/maps/ikaho.js js/maps/tomioka.js` 通過。
+  - `develop-web-game` の Playwright client を `output/web-game/service-icons-smoke` と `output/web-game/service-icons-field` で実行し、最新ビルドのスモークを確認。前者 `state-0.json` では前橋の `shopkeeper:item_shop`, `maebashiInnkeeper:inn` が出ることを確認した。
+  - Playwright MCP ではブラウザキャッシュを無効化してページを再読込し、前橋で `services` が `item_shop / inn`、高崎で `weaponShop:dice_shop`、伊香保と富岡でも `item_shop / inn / dice_shop` が返ることを確認。
+  - 宿屋実戦では前橋宿の前に立たせて `Space` 入力を進め、`HP 41 -> 96`, `100G -> 88G` で全回復し、結果ダイアログを閉じると `mode = exploring` に戻ることを確認。
+  - Playwright console error は 0 件。
+- 2026-03-28: 全画面時のキャンバス左寄りを修正。
+  - `index.html` のレイアウトを `body` 直置きの flex から、全ビューポート固定の `.game-shell` に変更した。
+  - キャンバスは `width: min(960px, calc(100vw - 32px), calc((100dvh - 32px) * 1.5))` と `margin: auto` を使う形へ更新し、通常時もブラウザ全画面時も 3:2 比率のまま中央に収まるようにした。
+  - `:fullscreen` / `:-webkit-full-screen` 時も同じ中央寄せが崩れないよう、ラッパー側のサイズと余白を明示した。
+- 2026-03-28: 全画面センタリング修正の検証結果
+  - Playwright で `1440x960` ビューポートにて `.game-shell` と `#game` の矩形を実測し、`left=240`, `right余白=240`, `top=160`, `bottom余白=160`、`horizontalDelta=0`, `verticalDelta=0` を確認。
+  - 同じページをブラウザの実フルスクリーン状態へ遷移させても `fullscreen=true` のまま同一矩形が維持され、中央ズレが出ないことを確認。
+  - `develop-web-game` の Playwright client を `output/web-game/fullscreen-center-smoke` で実行し、最新ビルドのスモークとスクリーンショットを保存。
+  - Playwright console error は 0 件。
+- 2026-03-28: 常時ミニマップを探索HUDから外し、`せってい` タブ内の現在地図へ移設。
+  - `js/main.js` の探索描画から `drawMinimap()` を外し、プレイ中の右上干渉を解消した。
+  - `js/ui.js` の右上HUDは `HP / 所持金 / 敬意` が同居しても重ならない専用レイアウトへ再構成した。
+  - `js/ui.js` の `drawSettingsSection()` に現在地図の埋め込み表示を追加し、設定説明と同時に `現在地 / 怪異数 / 出口数` を確認できるようにした。
+  - `drawMinimap()` は座標・倍率・背景色を受け取れる汎用描画にして、メニュー側へ横展開しやすい形へ整理した。
+- 2026-03-28: HUD / 設定マップ移設の検証結果
+  - `node --check js/ui.js js/main.js` 通過。
+  - `develop-web-game` の Playwright client を `output/web-game/ui-minimap-hud-smoke` で実行し、起動スモークと `state-0.json` を確認。
+  - Playwright MCP で `Game.Map.load('maebashi', 14, 10)` 後の探索画面を目視し、右上にミニマップが出ず、`HP 96/96` と `100G` が重ならないことを確認。
+  - 同じく `せってい` タブを直接開いて、右下パネルに現在地ミニマップが表示され、HP枠との重なりがないことを確認。
+  - Playwright console error は 0 件。
+- 2026-03-28: 通常敵のバリエーションを増やし、各敵に哀愁の余韻を追加。
+  - `js/battle_data.js` の未使用だった工場系怪異 `tomioka_weaver / tomioka_tangled / shimonita_packer / tomioka_inspector / shimonita_neglected_daruma / tomioka_dyer_sludge` に `echoText` を追加した。
+  - `js/battle.js` に新規通常敵 `wishShelfShade / bathhouseRemnant / lanternKeeper / ferryBellEcho / marshPathShade` を追加し、`pride / sorrow / echoText` を持たせた。
+  - `js/battle.js` の戦果余韻は `echoText` を優先して拾うようにし、単体撃破時は敵ごとの哀愁がそのまま表示されるようにした。
+  - `js/encounters.js` は高崎・下仁田・富岡・草津・森・小沼/大沼・赤城牧場・白根山道・谷川トンネル・榛名湖・尾瀬・水上に新しい敵編成を差し込んだ。
+- 2026-03-28: 敵バリエーション追加の検証結果
+  - `node --check js/battle.js js/battle_data.js js/encounters.js` 通過。
+  - `develop-web-game` の Playwright client を `output/web-game/enemy-variation-smoke` で実行し、`debugBattle=wishShelfShade` の起動スモークと `state-0.json` を保存。
+  - Playwright MCP で `wishShelfShade` と `tomioka_weaver` の戦闘開始を確認し、新しい敵名とスプライトが表示されることを目視した。
+  - 同じくブラウザ上で `encounters.js` を再読込して遭遇サイクルをサンプリングし、高崎で `wishShelfShade`、下仁田で `shimonita_packer / shimonita_neglected_daruma`、富岡で `tomioka_weaver / tomioka_inspector / tomioka_dyer_sludge`、草津で `bathhouseRemnant`、山側で `lanternKeeper`、トンネル/水上で `ferryBellEcho`、尾瀬で `marshPathShade` が出ることを確認。
+  - `echoText` も Playwright evaluate で直接確認し、console error は 0 件。

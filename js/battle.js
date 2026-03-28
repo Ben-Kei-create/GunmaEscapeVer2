@@ -267,6 +267,66 @@ Game.Battle = (function() {
     palette: enemies.oze_mud_wraith.palette
   };
 
+  enemies.wishShelfShade = {
+    name: '願棚のこぼれ火',
+    mapTags: ['takasaki'],
+    pride: '願いを最後まで棚の上で見届けること',
+    sorrow: '願い主が戻らぬまま夜を越えたこと',
+    echoText: '棚の上で冷えた願いの熱だけが、赤い粉の匂いと一緒に残っていた。',
+    hp: 58, maxHp: 58,
+    attack: 15, defense: 5, goldReward: 19, expReward: 21, dropItem: 'darumaSuzu', dropRate: 0.08,
+    sprite: enemies.darumaMaster.sprite,
+    palette: { 1:'#5c181d', 2:'#b74a42', 3:'#171212', 4:'#d8c68f' }
+  };
+
+  enemies.bathhouseRemnant = {
+    name: '湯治帰りの残り火',
+    mapTags: ['kusatsu', 'shirane_trail', 'kusatsu_deep'],
+    pride: '湯で人の痛みを軽くして送り出すこと',
+    sorrow: '自分だけは湯から上がれなかったこと',
+    echoText: '人を癒やして見送った手つきだけが、硫黄の風のなかにまだ残っていた。',
+    hp: 72, maxHp: 72,
+    attack: 18, defense: 8, goldReward: 23, expReward: 27, dropItem: 'emberIncense', dropRate: 0.16,
+    sprite: enemies.ishidanGuard.sprite,
+    palette: { 1:'#694a37', 2:'#d6b189', 3:'#241713', 4:'#f0d29f', 5:'#8d6c57', 6:'#634937', 7:'#453125' }
+  };
+
+  enemies.lanternKeeper = {
+    name: '灯籠の見回り',
+    mapTags: ['forest', 'onuma', 'akagi_ranch', 'haruna_lake'],
+    pride: '夜道の灯りを絶やさないこと',
+    sorrow: '迎える客がもう来ないこと',
+    echoText: '帰り道を照らしたかった灯りが、霧の向こうでようやく静かに伏せた。',
+    hp: 102, maxHp: 102,
+    attack: 23, defense: 11, goldReward: 27, expReward: 36, dropItem: 'measureLens', dropRate: 0.15,
+    sprite: enemies.anguraGuard.sprite,
+    palette: { 1:'#3f4556', 3:'#ffd36b', 4:'#334052', 5:'#202733', 6:'#121722' }
+  };
+
+  enemies.ferryBellEcho = {
+    name: '渡しの呼び声',
+    mapTags: ['tanigawa_tunnel', 'minakami_valley', 'border_tunnel'],
+    pride: '境を越える者へ合図を送り続けること',
+    sorrow: 'もう誰もその合図を待っていないこと',
+    echoText: '誰かを無事に通すための呼び声が、トンネルの壁でやさしく消えていった。',
+    hp: 110, maxHp: 110,
+    attack: 25, defense: 13, goldReward: 29, expReward: 40, dropItem: 'loadedSand', dropRate: 0.15,
+    sprite: enemies.echo_guardian.sprite,
+    palette: { 1:'#3a4050', 2:'#7b8ca8', 3:'#0c1018', 4:'#d8e3ff', 5:'#4e5d79' }
+  };
+
+  enemies.marshPathShade = {
+    name: '木道の置き傘',
+    mapTags: ['oze_marsh'],
+    pride: '濡れた道で人を転ばせないこと',
+    sorrow: '置き主を待つだけで朽ちていくこと',
+    echoText: '濡れた木道を案じる気配だけが、湿原の風にほどけていった。',
+    hp: 116, maxHp: 116,
+    attack: 26, defense: 14, goldReward: 30, expReward: 42, dropItem: 'guardChalk', dropRate: 0.15,
+    sprite: enemies.oze_mud_wraith.sprite,
+    palette: { 1:'#5c6c52', 2:'#a9b38f', 3:'#2b2b24', 4:'#5c4f3f' }
+  };
+
   var menuItems = ['たたかう', 'アイテム', 'とくぎ', 'にげる'];
 
   function getRitualDefinition() {
@@ -646,14 +706,26 @@ Game.Battle = (function() {
     }
   }
 
+  function getDirectEnemyEchoText(foe) {
+    if (!foe) return '';
+    if (foe.echoText) return foe.echoText;
+    if (foe.sorrow && foe.pride) {
+      return foe.sorrow + '。それでも「' + foe.pride + '」だけは手放せなかった。';
+    }
+    if (foe.sorrow) return foe.sorrow + '。';
+    return '';
+  }
+
   function getEnemyEchoText() {
     var ids = [];
+    var uniqueFoes = [];
     var seen = {};
     for (var i = 0; i < enemyParty.length; i++) {
       var foe = enemyParty[i];
       if (!foe || !foe._enemyId || seen[foe._enemyId]) continue;
       seen[foe._enemyId] = true;
       ids.push(foe._enemyId);
+      uniqueFoes.push(foe);
     }
     if (!ids.length) return '';
 
@@ -678,7 +750,11 @@ Game.Battle = (function() {
       juke_minakami: '渓谷にひびいていた執着が薄れ、冷たい水音だけが輪郭を取り戻した。',
       juke_final: '境界へ縫い留められていた執念がほどけ、夜明け前の空気だけが残った。'
     };
-    if (ids.length === 1 && singleEcho[ids[0]]) return singleEcho[ids[0]];
+    if (uniqueFoes.length === 1) {
+      var directEcho = getDirectEnemyEchoText(uniqueFoes[0]);
+      if (directEcho) return directEcho;
+      if (singleEcho[ids[0]]) return singleEcho[ids[0]];
+    }
 
     var mapId = getBattleMapId();
     if (mapId === 'maebashi') return 'この入口にも、通れなかった旅と置いていかれた息づかいが積もっていた。';

@@ -841,21 +841,29 @@ Game.UI = (function() {
       drawJourneyTracker(194, 7, chapterInfo);
     }
 
-    R.drawDialogBox(Game.Config.CANVAS_WIDTH - 110, 5, 105, 38);
-    drawPanelAccent(Game.Config.CANVAS_WIDTH - 110, 5, 105, 38, '#8fb8ff');
-    R.drawTextJP('HP', Game.Config.CANVAS_WIDTH - 101, 9, '#fff', 9);
-    var hpRatio = pd.hp / pd.maxHp;
-    R.drawRectAbsolute(Game.Config.CANVAS_WIDTH - 76, 10, 60, 8, '#243147');
-    R.drawRectAbsolute(Game.Config.CANVAS_WIDTH - 76, 10, 60 * hpRatio, 8,
-      hpRatio > 0.3 ? Game.Config.COLORS.HP_GREEN : Game.Config.COLORS.HP_RED);
-    R.drawText(pd.hp + '/' + pd.maxHp, Game.Config.CANVAS_WIDTH - 79, 18, '#d9e6ff', 8);
-    R.drawText(pd.gold + 'G', Game.Config.CANVAS_WIDTH - 32, 9, '#ffdd44', 8, 'right');
+    var hudX = Game.Config.CANVAS_WIDTH - 132;
+    var hudY = 5;
+    var hudW = 127;
+    var hudH = 44;
+    var hpBarX = hudX + 10;
+    var hpBarY = hudY + 18;
+    var hpBarW = hudW - 20;
     var respectGauge = journeyState && typeof journeyState.respectGauge === 'number' ? journeyState.respectGauge : 0;
     var respectRatio = Math.max(0, Math.min(1, respectGauge / 100));
-    R.drawTextJP('敬意', Game.Config.CANVAS_WIDTH - 101, 22, '#ffe08f', 9);
-    R.drawRectAbsolute(Game.Config.CANVAS_WIDTH - 76, 23, 60, 6, '#243147');
-    R.drawRectAbsolute(Game.Config.CANVAS_WIDTH - 76, 23, 60 * respectRatio, 6, '#ffd66b');
-    R.drawText(Math.min(respectGauge, 999), Game.Config.CANVAS_WIDTH - 17, 30, '#ffe08f', 8, 'right');
+
+    R.drawDialogBox(hudX, hudY, hudW, hudH);
+    drawPanelAccent(hudX, hudY, hudW, hudH, '#8fb8ff');
+    R.drawTextJP('HP', hudX + 9, hudY + 5, '#fff', 9);
+    R.drawText(pd.hp + '/' + pd.maxHp, hudX + 58, hudY + 5, '#d9e6ff', 8);
+    R.drawText(pd.gold + 'G', hudX + hudW - 10, hudY + 5, '#ffdd44', 8, 'right');
+    var hpRatio = pd.hp / pd.maxHp;
+    R.drawRectAbsolute(hpBarX, hpBarY, hpBarW, 8, '#243147');
+    R.drawRectAbsolute(hpBarX, hpBarY, hpBarW * hpRatio, 8,
+      hpRatio > 0.3 ? Game.Config.COLORS.HP_GREEN : Game.Config.COLORS.HP_RED);
+    R.drawTextJP('敬意', hudX + 9, hudY + 31, '#ffe08f', 8);
+    R.drawRectAbsolute(hudX + 35, hudY + 31, 58, 5, '#243147');
+    R.drawRectAbsolute(hudX + 35, hudY + 31, 58 * respectRatio, 5, '#ffd66b');
+    R.drawText(Math.min(respectGauge, 999), hudX + hudW - 10, hudY + 29, '#ffe08f', 8, 'right');
   }
 
   function drawDialog(text) {
@@ -998,7 +1006,7 @@ Game.UI = (function() {
         break;
     }
 
-    var sectionHints = ['使う・捨てるで持ち物を整理', '役目に応じてサイコロを組み替える', '防具で守りを整える', '見つけた停留所へ高速移動する', '表示の見え方を切り替える'];
+    var sectionHints = ['使う・捨てるで持ち物を整理', '役目に応じてサイコロを組み替える', '防具で守りを整える', '見つけた停留所へ高速移動する', '表示と現在地図を整える'];
     var footerText = fieldMenuState.messageTimer > 0 && fieldMenuState.message
       ? clampText(fieldMenuState.message, 40)
       : sectionHints[fieldMenuState.section];
@@ -1157,9 +1165,20 @@ Game.UI = (function() {
     var detailW = 186;
     var panelH = 62;
     var settingsOptions = getSettingsOptions();
+    var mapInfo = getMapInfo();
+    var map = Game.Map.getCurrentMap();
+    var currentMapLabel = (mapInfo && mapInfo.label) || (map && map.name) || '現在地';
+    var activeNpcCount = 0;
+    var exitCount = map && map.exits ? map.exits.length : 0;
+
+    if (map && map.npcs) {
+      for (var ni = 0; ni < map.npcs.length; ni++) {
+        if (!map.npcs[ni].defeated) activeNpcCount++;
+      }
+    }
 
     drawInsetPanel(listX, panelY, listW, panelH, '記録と設定', C.COLORS.GOLD, C.COLORS.GOLD);
-    drawInsetPanel(detailX, panelY, detailW, panelH, '項目詳細', '#8fb8ff', '#8fb8ff');
+    drawInsetPanel(detailX, panelY, detailW, panelH, '項目詳細 / 現在地図', '#8fb8ff', '#8fb8ff');
 
     for (var i = 0; i < settingsOptions.length; i++) {
       var option = settingsOptions[i];
@@ -1174,9 +1193,25 @@ Game.UI = (function() {
 
     var current = settingsOptions[fieldMenuState.settingIndex];
     if (!current) return;
-    R.drawTextJP(current.label, detailX + 10, panelY + 18, '#ffffff', 11);
-    R.drawTextJP(current.valueLabel, detailX + detailW - 10, panelY + 18, current.valueColor, 10, 'right');
-    drawWrappedTextBlock(current.description, detailX + 10, panelY + 32, 19, 2, 10, '#b7c3e3', 9);
+    R.drawTextJP(current.label, detailX + 10, panelY + 18, '#ffffff', 10);
+    R.drawTextJP(current.valueLabel, detailX + 102, panelY + 18, current.valueColor, 9, 'right');
+    drawWrappedTextBlock(current.description, detailX + 10, panelY + 30, 10, 2, 10, '#b7c3e3', 9);
+    R.drawTextJP(clampText(currentMapLabel, 8), detailX + 10, panelY + 52, '#8fe0ff', 8);
+    R.drawTextJP('怪異' + activeNpcCount + ' 出口' + exitCount, detailX + 108, panelY + 52, '#9fb6dc', 8, 'right');
+    drawMinimap({
+      forceVisible: true,
+      x: detailX + 118,
+      y: panelY + 16,
+      tileWidth: 2,
+      tileHeight: 2,
+      maxCols: 30,
+      maxRows: 20,
+      padding: 2,
+      backgroundColor: 'rgba(4, 10, 20, 0.82)',
+      borderColor: 'rgba(143,224,255,0.24)',
+      npcMarkerSize: 2,
+      exitMarkerSize: 2
+    });
   }
 
   function drawBusSection(R, C) {
@@ -1861,19 +1896,38 @@ Game.UI = (function() {
   }
 
   // Minimap
-  function drawMinimap() {
-    if (!minimapVisible) return;
+  function drawMinimap(options) {
+    options = options || {};
+    if (!options.forceVisible && !minimapVisible) return;
     var map = Game.Map.getCurrentMap();
     if (!map || !map.tiles) return;
     var R = Game.Renderer;
-    var mx = 385, my = 34, pw = 3, ph = 3;
+    var mx = typeof options.x === 'number' ? options.x : 385;
+    var my = typeof options.y === 'number' ? options.y : 34;
+    var pw = options.tileWidth || 3;
+    var ph = options.tileHeight || 3;
+    var maxCols = options.maxCols || 30;
+    var maxRows = options.maxRows || 20;
+    var padding = typeof options.padding === 'number' ? options.padding : 2;
+    var bgColor = options.backgroundColor || 'rgba(0,0,0,0.7)';
+    var borderColor = options.borderColor || null;
+    var npcMarkerSize = options.npcMarkerSize || 2;
+    var exitMarkerSize = options.exitMarkerSize || 2;
+    var mapW = maxCols * pw;
+    var mapH = maxRows * ph;
 
     // Background
-    R.drawRectAbsolute(mx - 2, my - 2, 94, 64, 'rgba(0,0,0,0.7)');
+    R.drawRectAbsolute(mx - padding, my - padding, mapW + padding * 2, mapH + padding * 2, bgColor);
+    if (borderColor) {
+      R.drawRectAbsolute(mx - padding, my - padding, mapW + padding * 2, 1, borderColor);
+      R.drawRectAbsolute(mx - padding, my + mapH + padding - 1, mapW + padding * 2, 1, 'rgba(255,255,255,0.08)');
+      R.drawRectAbsolute(mx - padding, my - padding, 1, mapH + padding * 2, 'rgba(255,255,255,0.08)');
+      R.drawRectAbsolute(mx + mapW + padding - 1, my - padding, 1, mapH + padding * 2, 'rgba(255,255,255,0.08)');
+    }
 
     // Draw tiles
-    for (var row = 0; row < map.tiles.length && row < 20; row++) {
-      for (var col = 0; col < map.tiles[row].length && col < 30; col++) {
+    for (var row = 0; row < map.tiles.length && row < maxRows; row++) {
+      for (var col = 0; col < map.tiles[row].length && col < maxCols; col++) {
         var tileType = map.tiles[row][col];
         var color = minimapColors[tileType] || '#000';
         R.drawRectAbsolute(mx + col * pw, my + row * ph, pw, ph, color);
@@ -1884,7 +1938,7 @@ Game.UI = (function() {
     if (map.npcs) {
       for (var n = 0; n < map.npcs.length; n++) {
         if (!map.npcs[n].defeated) {
-          R.drawRectAbsolute(mx + map.npcs[n].x * pw, my + map.npcs[n].y * ph, 2, 2, '#ffdd00');
+          R.drawRectAbsolute(mx + map.npcs[n].x * pw, my + map.npcs[n].y * ph, npcMarkerSize, npcMarkerSize, '#ffdd00');
         }
       }
     }
@@ -1892,7 +1946,7 @@ Game.UI = (function() {
     // Exit positions
     if (map.exits) {
       for (var e = 0; e < map.exits.length; e++) {
-        R.drawRectAbsolute(mx + map.exits[e].x * pw, my + map.exits[e].y * ph, 2, 2, '#44ff44');
+        R.drawRectAbsolute(mx + map.exits[e].x * pw, my + map.exits[e].y * ph, exitMarkerSize, exitMarkerSize, '#44ff44');
       }
     }
 

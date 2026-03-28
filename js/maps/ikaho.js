@@ -207,11 +207,17 @@ Game.Maps.ikaho = (function() {
     { x: 15, y: 19, target: 'kusatsu', spawnX: 15, spawnY: 1, dir: 'down' }
   ];
 
+  var blockedPassages = [
+    { x: 14, y: 0, dir: 'up', message: '石段の上は濃い湯けむりで白く塞がれている。今は草津側へ戻るしかなさそうだ。' },
+    { x: 15, y: 0, dir: 'up', message: '石段の上は濃い湯けむりで白く塞がれている。今は草津側へ戻るしかなさそうだ。' }
+  ];
+
   return {
     name: '伊香保',
     tiles: tiles,
     npcs: npcs,
     items: items,
-    exits: exits
+    exits: exits,
+    blockedPassages: blockedPassages
   };
 })();

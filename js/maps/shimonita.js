@@ -183,11 +183,17 @@ Game.Maps.shimonita = (function() {
     { x: 15, y: 1, target: 'tomioka', spawnX: 15, spawnY: 18, dir: 'up' }
   ];
 
+  var blockedPassages = [
+    { x: 29, y: 10, dir: 'right', message: '東の山道は崩れていて、荷車でも人でも抜けられそうにない。富岡へは北の峠から回れそうだ。' },
+    { x: 29, y: 11, dir: 'right', message: '東の山道は崩れていて、荷車でも人でも抜けられそうにない。富岡へは北の峠から回れそうだ。' }
+  ];
+
   return {
     name: '下仁田',
     tiles: tiles,
     npcs: npcs,
     items: items,
-    exits: exits
+    exits: exits,
+    blockedPassages: blockedPassages
   };
 })();

@@ -438,6 +438,7 @@ Game.Event = (function() {
     preChuji: [
       {
         bg: '#1a1a2a',
+        bgm: 'sad',
         speaker: null,
         lines: [
           '霧に沈んだ廃牧場。',

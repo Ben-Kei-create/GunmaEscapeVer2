@@ -111,11 +111,17 @@ Game.Maps.akagi_shrine = (function() {
     { x: 14, y: 0, target: 'akagi_ranch', spawnX: 13, spawnY: 18, dir: 'up' }
   ];
 
+  var blockedPassages = [
+    { x: 13, y: 19, dir: 'down', message: '背後の参道は闇に沈み、もう戻り道になっていない。ここで赤城の決着をつけるしかない。' },
+    { x: 14, y: 19, dir: 'down', message: '背後の参道は闇に沈み、もう戻り道になっていない。ここで赤城の決着をつけるしかない。' }
+  ];
+
   return {
     name: '赤城神社',
     tiles: tiles,
     npcs: npcs,
     items: items,
-    exits: exits
+    exits: exits,
+    blockedPassages: blockedPassages
   };
 })();

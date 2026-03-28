@@ -338,11 +338,19 @@ Game.Maps.maebashi = (function() {
     { x: 29, y: 11, target: 'takasaki', spawnX: 1, spawnY: 11, dir: 'right' }
   ];
 
+  var blockedPassages = [
+    { x: 0, y: 10, dir: 'left', message: '西口の道は、まだ霞の向こうで途切れている。今は高崎側へ向かおう。' },
+    { x: 0, y: 11, dir: 'left', message: '西口の道は、まだ霞の向こうで途切れている。今は高崎側へ向かおう。' },
+    { x: 14, y: 19, dir: 'down', message: '南へ抜ける路線は封じられている。旅の筋を結ぶには、まず東の町を越える必要がある。' },
+    { x: 15, y: 19, dir: 'down', message: '南へ抜ける路線は封じられている。旅の筋を結ぶには、まず東の町を越える必要がある。' }
+  ];
+
   return {
     name: '前橋',
     tiles: tiles,
     npcs: npcs,
     items: items,
-    exits: exits
+    exits: exits,
+    blockedPassages: blockedPassages
   };
 })();

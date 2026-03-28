@@ -77,5 +77,9 @@ Game.Maps.kusatsu_deep = (function() {
     { x: 14, y: 0, target: 'jomo_gakuen', spawnX: 14, spawnY: 18, dir: 'up' },
     { x: 15, y: 0, target: 'jomo_gakuen', spawnX: 15, spawnY: 18, dir: 'up' }
   ];
-  return { name: '草津温泉・深奥', tiles: tiles, npcs: npcs, items: items, exits: exits };
+  var blockedPassages = [
+    { x: 13, y: 19, dir: 'down', message: '南端の蒸気が壁のように噴き上がり、そこから先の道筋を呑み込んでいる。中央の踏み跡を辿ろう。' },
+    { x: 16, y: 19, dir: 'down', message: '南端の蒸気が壁のように噴き上がり、そこから先の道筋を呑み込んでいる。中央の踏み跡を辿ろう。' }
+  ];
+  return { name: '草津温泉・深奥', tiles: tiles, npcs: npcs, items: items, exits: exits, blockedPassages: blockedPassages };
 })();

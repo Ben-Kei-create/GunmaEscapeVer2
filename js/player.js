@@ -54,6 +54,8 @@ Game.Player = (function() {
     walkSfxTimer: 0
   };
   var lastCompletedStep = null;
+  var lastBlockedMove = null;
+  var blockedDirectionLatch = '';
   var pendingSkillChoices = [];
 
   var sprites = {
@@ -131,6 +133,16 @@ Game.Player = (function() {
     data.y = data.tileY * Game.Config.TILE_SIZE;
     data.moving = false;
     lastCompletedStep = null;
+    lastBlockedMove = null;
+    blockedDirectionLatch = '';
+  }
+
+  function getAttemptDirection(dx, dy) {
+    if (dx < 0) return 'left';
+    if (dx > 0) return 'right';
+    if (dy < 0) return 'up';
+    if (dy > 0) return 'down';
+    return '';
   }
 
   function normalizePartyMembers(ids) {
@@ -198,11 +210,25 @@ Game.Player = (function() {
     else if (Game.Input.isDown('left'))  { dx = -1; data.direction = 'left'; }
     else if (Game.Input.isDown('right')) { dx = 1;  data.direction = 'right'; }
 
+    if (dx === 0 && dy === 0) {
+      blockedDirectionLatch = '';
+      return;
+    }
+
     if (dx !== 0 || dy !== 0) {
       var newX = data.tileX + dx;
       var newY = data.tileY + dy;
+      var attemptDirection = getAttemptDirection(dx, dy);
+      var blockedMessage = Game.Map.getBlockedPassage ? Game.Map.getBlockedPassage(data.tileX, data.tileY, dx, dy) : null;
+
+      if (blockedMessage && blockedDirectionLatch !== attemptDirection) {
+        lastBlockedMove = blockedMessage;
+        blockedDirectionLatch = attemptDirection;
+        return;
+      }
 
       if (Game.Map.isPassable(newX, newY)) {
+        blockedDirectionLatch = '';
         data.tileX = newX;
         data.tileY = newY;
         data.moving = true;
@@ -345,6 +371,12 @@ Game.Player = (function() {
     var step = lastCompletedStep;
     lastCompletedStep = null;
     return step;
+  }
+
+  function consumeBlockedMove() {
+    var blockedMove = lastBlockedMove;
+    lastBlockedMove = null;
+    return blockedMove;
   }
 
   function equipDice(diceId, slot) {
@@ -597,6 +629,7 @@ Game.Player = (function() {
     getCompanionCatalog: getCompanionCatalog,
     getMaxPartyMembers: getMaxPartyMembers,
     consumeCompletedStep: consumeCompletedStep,
+    consumeBlockedMove: consumeBlockedMove,
     syncCatalystsFromInventory: syncCatalystsFromInventory,
     getData: getData
   };

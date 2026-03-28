@@ -1267,6 +1267,14 @@ Game.Battle = (function() {
       ruined_checkpoint: { phase_change: 'ギ…ギギ…', special_move: 'ゴォン…' },
       darumaMaster: { phase_change: 'ギロ…', special_move: 'ゾワッ' },
       threadMaiden: { phase_change: 'キ…', special_move: 'シュルル…' },
+      yubatake_guardian: { phase_change: 'ボコ…', special_move: 'ボワァッ' },
+      kumako_steam: { phase_change: 'とろ…', special_move: 'じゅわっ' },
+      juke_gakuen: { phase_change: 'キィン', special_move: 'ザラッ' },
+      sato_kumako_tunnel: { phase_change: 'ゴゴ…', special_move: 'ガタンゴトン' },
+      echo_guardian: { phase_change: 'びぃん…', special_move: 'ワン…' },
+      haruna_lake_beast: { phase_change: 'グオ…', special_move: 'ザバァッ' },
+      oze_mud_wraith: { phase_change: 'ズブ…', special_move: 'ボコッ' },
+      juke_minakami: { phase_change: 'ヒュ…', special_move: 'ギュン' },
       anguraBoss: { phase_change: 'ガタン', special_move: 'ドドド…' },
       juke_final: { phase_change: 'ザザッ', special_move: 'ギィン' }
     };
@@ -1274,19 +1282,47 @@ Game.Battle = (function() {
     return kind === 'special_move' ? 'ゴウッ' : 'ゾク…';
   }
 
+  function buildBossActionSummary(kind, actionDef, detailParts) {
+    var summary = '';
+    if (kind === 'phase_change') {
+      summary = '気配が変わった…';
+    } else {
+      summary = (actionDef && actionDef.name) || '大技';
+    }
+    if (detailParts && detailParts.length) {
+      summary += ' ' + detailParts.join(' / ');
+    }
+    return summary;
+  }
+
+  function queueBossActionDialogue(kind, actionDef, fallbackText) {
+    var lines = currentGimmick && currentGimmick.dialogue ? currentGimmick.dialogue[kind] : null;
+    if (lines && lines.length) {
+      queueDialogue(lines);
+      return;
+    }
+    var explanation = '';
+    if (typeof fallbackText === 'string' && fallbackText) {
+      explanation = fallbackText;
+    } else if (actionDef && actionDef.message) {
+      explanation = actionDef.message;
+    } else if (actionDef && actionDef.description) {
+      explanation = actionDef.description;
+    }
+    if (!explanation) return;
+    queueDialogue([{ speaker: '', text: explanation }]);
+  }
+
   function startBossActionOverlay(kind, actionDef, fallbackText) {
     if (!enemy) return;
     var theme = getBossActionTheme(enemy._enemyId);
-    var title = kind === 'phase_change'
-      ? (theme.label || '形態変化')
-      : ((actionDef && actionDef.name) || '必殺技');
     var bodyText = (actionDef && actionDef.onomatopoeia) ||
       getBossActionOnomatopoeia(kind, enemy._enemyId);
     var overlayDuration = kind === 'special_move' ? 42 : 34;
     bossActionOverlay = {
       kind: kind,
-      title: title,
-      subtitle: enemy.name,
+      title: '',
+      subtitle: '',
       lines: wrapBattleText(bodyText, 22, 2),
       accent: theme.accent,
       shadow: theme.shadow,
@@ -1658,17 +1694,11 @@ Game.Battle = (function() {
               sealedCommand = 1; // seal 'アイテム'
               specialParts.push('アイテム封印');
             }
-            gimmickMessage = sm.message || (sm.name || '必殺技');
-            if (specialParts.length) {
-              gimmickMessage += ' ' + specialParts.join(' / ');
-            }
-            gimmickMessageTimer = 55;
+            gimmickMessage = buildBossActionSummary('special_move', sm, specialParts);
+            gimmickMessageTimer = 44;
             startBossActionOverlay('special_move', sm, sm.message || sm.description);
-            // Play special_move SFX and queue dialogue
             playBossSfx('special_move');
-            if (currentGimmick.dialogue && currentGimmick.dialogue.special_move) {
-              queueDialogue(currentGimmick.dialogue.special_move);
-            }
+            queueBossActionDialogue('special_move', sm, sm.message || sm.description);
             if (Game.Player.getData().hp <= 0) {
               Game.Audio.stopBgm();
               Game.Audio.playSfx('gameover');
@@ -2796,10 +2826,10 @@ Game.Battle = (function() {
     var fadeOut = overlay.timer < 8 ? overlay.timer / 8 : 1;
     var alpha = Math.max(0.25, Math.min(fadeIn, fadeOut));
     var pulse = Math.sin(elapsed * 0.32) * 0.5 + 0.5;
-    var panelW = 360;
-    var panelH = overlay.kind === 'special_move' ? 98 : 88;
+    var panelW = 320;
+    var panelH = overlay.kind === 'special_move' ? 74 : 68;
     var panelX = Math.floor((C.CANVAS_WIDTH - panelW) / 2);
-    var panelY = overlay.kind === 'special_move' ? 72 : 86;
+    var panelY = overlay.kind === 'special_move' ? 84 : 92;
 
     ctx.fillStyle = 'rgba(8, 10, 20, ' + (0.30 + alpha * 0.28).toFixed(2) + ')';
     ctx.fillRect(0, 0, C.CANVAS_WIDTH, C.CANVAS_HEIGHT);
@@ -2814,18 +2844,14 @@ Game.Battle = (function() {
     ctx.fillRect(panelX, panelY, panelW, panelH);
     ctx.fillStyle = overlay.veil;
     ctx.fillRect(panelX + 8, panelY + 8, panelW - 16, panelH - 16);
-    ctx.fillStyle = 'rgba(255,255,255,0.05)';
-    ctx.fillRect(panelX + 10, panelY + 10, panelW - 20, 8);
     ctx.fillStyle = overlay.accent;
     ctx.fillRect(panelX + 14, panelY + 14, panelW - 28, 3);
     ctx.fillRect(panelX + 14, panelY + panelH - 16, panelW - 28, 2);
     ctx.fillRect(panelX + 8, panelY + 12, 4, panelH - 24);
     ctx.fillRect(panelX + panelW - 12, panelY + 12, 4, panelH - 24);
 
-    R.drawTextJP(overlay.title, 240, panelY + 20, overlay.accent, 18, 'center');
-    R.drawTextJP(overlay.subtitle, 240, panelY + 42, '#f4f6ff', 11, 'center');
     for (var li = 0; li < overlay.lines.length; li++) {
-      R.drawTextJP(overlay.lines[li], 240, panelY + 58 + li * 14, '#ffffff', 12, 'center');
+      R.drawTextJP(overlay.lines[li], 240, panelY + 28 + li * 18, li === 0 ? overlay.accent : '#ffffff', 18, 'center');
     }
   }
 
@@ -3135,7 +3161,7 @@ Game.Battle = (function() {
         R.drawTextJP(dialogueSpeaker, 30, 128, '#ffcc44', 11);
       }
       R.drawTextJP(dialogueText, 30, 143, '#ffffff', 13);
-      R.drawTextJP('Z / Enter', 398, 144, '#c8d0e8', 9);
+      R.drawTextJP('Space / Z / Enter', 376, 144, '#c8d0e8', 9);
     }
 
     // Menu
@@ -3281,7 +3307,7 @@ Game.Battle = (function() {
         rewardY += 18 + Math.min(3, supportLogs.length) * 12;
       }
 
-      R.drawTextJP('Z / Enter で進む', 244, panelY + panelH - 18, '#b7bfd8', 10);
+      R.drawTextJP('Space / Z / Enter で進む', 236, panelY + panelH - 18, '#b7bfd8', 10);
     }
 
     drawBossActionOverlay(R, ctx, C);
@@ -3527,15 +3553,11 @@ Game.Battle = (function() {
               if (currentGimmick.phase_change.condition(enemy)) {
                 phaseChanged = true;
                 var pcMsg = currentGimmick.phase_change.action(enemy);
-                if (pcMsg) {
-                  message += ' ' + pcMsg;
-                }
+                gimmickMessage = buildBossActionSummary('phase_change', currentGimmick.phase_change, []);
+                gimmickMessageTimer = 40;
                 startBossActionOverlay('phase_change', currentGimmick.phase_change, pcMsg);
-                // Play phase_change SFX and queue dialogue
                 playBossSfx('phase_change');
-                if (currentGimmick.dialogue && currentGimmick.dialogue.phase_change) {
-                  queueDialogue(currentGimmick.dialogue.phase_change);
-                }
+                queueBossActionDialogue('phase_change', currentGimmick.phase_change, pcMsg);
                 shakeX = 10;
                 if (Game.Particles) Game.Particles.emit('damage', 280, 60, { count: 15 });
               }
@@ -3576,6 +3598,25 @@ Game.Battle = (function() {
       return Game.RitualBattles && Game.RitualBattles.getDefinition ? Game.RitualBattles.getDefinition(mode) : null;
     },
     getBossGimmick: function(bossId) { return bossGimmicks[bossId] || null; },
-    getAllBossGimmicks: function() { return bossGimmicks; }
+    getAllBossGimmicks: function() { return bossGimmicks; },
+    debugForceBossCue: function(kind) {
+      if (!active || !enemy || !currentGimmick) return false;
+      if (kind === 'phase_change' && currentGimmick.phase_change) {
+        var phaseText = currentGimmick.phase_change.action ? currentGimmick.phase_change.action(enemy) : '';
+        gimmickMessage = buildBossActionSummary('phase_change', currentGimmick.phase_change, []);
+        gimmickMessageTimer = 40;
+        startBossActionOverlay('phase_change', currentGimmick.phase_change, phaseText);
+        queueBossActionDialogue('phase_change', currentGimmick.phase_change, phaseText);
+        return true;
+      }
+      if (kind === 'special_move' && currentGimmick.special_move) {
+        gimmickMessage = buildBossActionSummary('special_move', currentGimmick.special_move, []);
+        gimmickMessageTimer = 44;
+        startBossActionOverlay('special_move', currentGimmick.special_move, currentGimmick.special_move.message || currentGimmick.special_move.description);
+        queueBossActionDialogue('special_move', currentGimmick.special_move, currentGimmick.special_move.message || currentGimmick.special_move.description);
+        return true;
+      }
+      return false;
+    }
   };
 })();

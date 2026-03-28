@@ -631,3 +631,26 @@ Original prompt: そうだね。セーブできる村役場みたいなところ
   - 同画面で `Z` 決定後、`skillsKnown` が `見切り足 -> 湯まとい` へ置き換わって探索へ戻ることを確認。
   - `debugBattle=roadsideBandit&debugSkills=yunomatoi` では実戦使用後に `playerEffects = [defense_up, onsen_heal]` が付くことまで確認。
   - 生成物として `output/web-game/skills-smoke/` を残した。Playwright console error は `0` 件、AudioContext 警告のみ継続。
+- 2026-03-28: 哀愁漂う専用バトルと戦闘曲を追加。
+  - `js/audio.js` に `melancholy_battle` と `melancholy_victory` を追加し、ループ用 variant と専用 gain/wave を設定した。
+  - `js/battle_data.js` の `chuji` へ `battleTheme / victoryTheme / battleBackdrop / battleLabel / battleAccent` を追加し、国定忠治戦を哀愁バトル化した。
+  - `js/battle.js` では `enemy` ごとの `battleLabel / battleAccent / battleBackdrop / victoryTheme` を参照できるようにし、新背景 `field_requiem` と漂う埃の前景演出を追加した。
+  - `js/event.js` の `preChuji` は冒頭から `sad` を流して、忠治戦の前口上でも寂しさが残るようにした。
+  - `js/main.js` の debug launch に `debugAttack / debugMaxHp` を追加し、今後の戦闘バランス確認をしやすくした。
+- 2026-03-28: 哀愁バトル追加の検証結果
+  - `node --check js/audio.js js/battle.js js/battle_data.js js/event.js js/main.js` 通過。
+  - `develop-web-game` の Playwright client を `output/web-game/melancholy-battle` で実行し、`debugBattle=chuji` で `audio.requestedBgm = melancholy_battle`、`battle.backdropId = field_requiem` を確認。スクリーンショットでも専用の暗い牧場背景になっていることを目視した。
+  - 同 client を `output/web-game/melancholy-battle-victory-fast` で実行し、`debugBattle=chuji&debugAttack=999&debugMaxHp=300` から忠治を一撃で倒し、報酬画面時点で `audio.requestedBgm = melancholy_victory`、`battle.phase = reward` を確認した。
+  - 生成物として `output/web-game/melancholy-battle/`、`output/web-game/melancholy-battle-victory/`、`output/web-game/melancholy-battle-victory-fast/` を残した。console error は 0 件、AudioContext 警告のみ継続。
+- 2026-03-28: 戦闘テキスト量を整理し、演出はオノマトペ中心へ寄せた。
+  - `js/battle.js` でボス演出オーバーレイは `技名/敵名` を描かず、中央にオノマトペだけを大きく出すよう変更した。
+  - ボスの `phase_change` と `special_move` は、下段の自動メッセージを簡潔な要約へ短縮し、読ませる本文は `queueDialogue` 側へ回すようにした。台詞定義がないボスでも、説明文は確認送りの戦闘ダイアログへ出る。
+  - `getBossActionOnomatopoeia()` を増補して、湯畑・熊子・学園・佐藤/熊子・反響・榛名・尾瀬・水上なども generic ではなく固有の擬音を返すようにした。
+  - 戦闘ダイアログと戦果画面の案内文は `Space / Z / Enter` を明示する表記へ変更した。
+  - 検証用に `Game.Battle.debugForceBossCue(kind)` を追加し、実戦を待たずに `phase_change / special_move` の演出と手動送りダイアログを確認できるようにした。
+- 2026-03-28: 戦闘テキスト整理の検証結果
+  - `node --check js/battle.js` 通過。
+  - `develop-web-game` の Playwright client を `output/web-game/battle-text-polish` で実行し、通常のボス戦スモークと console error 0 件を確認した。
+  - Playwright MCP で `debugBattle=anguraBoss` を開き、`Game.Battle.debugForceBossCue('special_move')` 実行時に `battle.bossAction.lines = ['ドドド…']`、`title/subtitle = ''`、`battle.dialogue.waitingConfirm = true`、`battle.dialogue.text = 'ナンバー12は荷車ごと突っ込んできた！'` を確認。
+  - 同じく `debugForceBossCue('phase_change')` で `battle.bossAction.lines = ['ガタン']` と、本文説明が確認送りダイアログへ回ることを確認。
+  - 表示確認では Playwright スクリーンショットに `Space / Z / Enter` の案内が出ることを目視した。

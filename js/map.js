@@ -63,13 +63,113 @@ Game.Map = (function() {
     return true;
   }
 
-  function checkExit(x, y) {
+  function getExitAt(x, y) {
     if (!currentMap || !currentMap.exits) return null;
     for (var i = 0; i < currentMap.exits.length; i++) {
       var exit = currentMap.exits[i];
       if (exit.x === x && exit.y === y) return exit;
     }
     return null;
+  }
+
+  function isExitUnlocked(exit) {
+    if (!exit) return false;
+    if (typeof exit.minChapter === 'number' && Game.Player && Game.Player.getData) {
+      if ((Game.Player.getData().chapter || 1) < exit.minChapter) return false;
+    }
+    if (exit.requiresFlag && (!Game.Story || !Game.Story.hasFlag || !Game.Story.hasFlag(exit.requiresFlag))) {
+      return false;
+    }
+    if (exit.requiresNotFlag && Game.Story && Game.Story.hasFlag && Game.Story.hasFlag(exit.requiresNotFlag)) {
+      return false;
+    }
+    if (exit.requiresItem && Game.Player && Game.Player.hasItem && !Game.Player.hasItem(exit.requiresItem)) {
+      return false;
+    }
+    return true;
+  }
+
+  function buildBlockedExitMessage(exit) {
+    if (exit && exit.blockedMessage) return exit.blockedMessage;
+    return 'この先は、まだ町の気配がつながっていない。';
+  }
+
+  function getBlockedExitAt(x, y) {
+    var exit = getExitAt(x, y);
+    if (!exit || isExitUnlocked(exit)) return null;
+    return {
+      x: x,
+      y: y,
+      exit: exit,
+      message: buildBlockedExitMessage(exit)
+    };
+  }
+
+  function getDirectionFromDelta(dx, dy) {
+    if (dx < 0) return 'left';
+    if (dx > 0) return 'right';
+    if (dy < 0) return 'up';
+    if (dy > 0) return 'down';
+    return '';
+  }
+
+  function getDefaultBlockedPassageMessage(direction) {
+    var dirLabel = {
+      up: '北',
+      down: '南',
+      left: '西',
+      right: '東'
+    };
+    return (dirLabel[direction] || '先') + 'へ続く道は、まだ旅の筋が結ばれていない。';
+  }
+
+  function getBlockedPassage(currentX, currentY, dx, dy) {
+    if (!currentMap) return null;
+    var targetX = currentX + dx;
+    var targetY = currentY + dy;
+    var direction = getDirectionFromDelta(dx, dy);
+    var blockedExit = getBlockedExitAt(targetX, targetY);
+    if (blockedExit) return blockedExit;
+
+    if (currentMap.blockedPassages) {
+      for (var i = 0; i < currentMap.blockedPassages.length; i++) {
+        var passage = currentMap.blockedPassages[i];
+        if (passage.x !== currentX || passage.y !== currentY) continue;
+        if (passage.dir && passage.dir !== direction) continue;
+        return {
+          x: currentX,
+          y: currentY,
+          direction: direction,
+          message: passage.message || getDefaultBlockedPassageMessage(direction)
+        };
+      }
+    }
+
+    if (targetX >= 0 && targetX < Game.Config.MAP_COLS &&
+        targetY >= 0 && targetY < Game.Config.MAP_ROWS) {
+      return null;
+    }
+
+    var currentTile = getTile(currentX, currentY);
+    if (currentTile !== Game.Config.TILE.ROAD &&
+        currentTile !== Game.Config.TILE.FLOOR &&
+        currentTile !== Game.Config.TILE.DOOR) {
+      return null;
+    }
+    if (getExitAt(currentX, currentY)) return null;
+
+    return {
+      x: currentX,
+      y: currentY,
+      direction: direction,
+      message: getDefaultBlockedPassageMessage(direction)
+    };
+  }
+
+  function checkExit(x, y) {
+    var exit = getExitAt(x, y);
+    if (!exit || !isExitUnlocked(exit)) return null;
+    return exit;
   }
 
   function checkItem(x, y) {
@@ -140,6 +240,8 @@ Game.Map = (function() {
     getTile: getTile,
     isPassable: isPassable,
     checkExit: checkExit,
+    getBlockedExitAt: getBlockedExitAt,
+    getBlockedPassage: getBlockedPassage,
     checkItem: checkItem,
     getNpcAt: getNpcAt,
     draw: draw

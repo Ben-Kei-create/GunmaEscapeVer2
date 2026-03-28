@@ -313,6 +313,14 @@ Game.Main = (function() {
         }
         Game.Player.update();
         var stepInfo = Game.Player.consumeCompletedStep ? Game.Player.consumeCompletedStep() : null;
+        var blockedMove = Game.Player.consumeBlockedMove ? Game.Player.consumeBlockedMove() : null;
+
+        if (blockedMove && blockedMove.message) {
+          dialogText = blockedMove.message;
+          setState(Game.Config.STATE.DIALOG);
+          Game.Audio.playSfx('cancel');
+          break;
+        }
 
         // Check exits
         var pd = Game.Player.getData();
@@ -1368,10 +1376,18 @@ Game.Main = (function() {
     var debugInventory = params.get('debugInventory');
     var debugSkills = params.get('debugSkills');
     var debugExp = parseInt(params.get('debugExp') || '', 10);
+    var debugAttack = parseInt(params.get('debugAttack') || '', 10);
+    var debugMaxHp = parseInt(params.get('debugMaxHp') || '', 10);
     pd.inventory = debugInventory ? debugInventory.split(',').filter(Boolean) : [];
     pd.skillsKnown = debugSkills ? debugSkills.split(',').filter(Boolean) : [];
     if (!isNaN(debugExp)) {
       pd.experience = Math.max(0, debugExp);
+    }
+    if (!isNaN(debugAttack)) {
+      pd.attack = Math.max(1, debugAttack);
+    }
+    if (!isNaN(debugMaxHp)) {
+      pd.maxHp = Math.max(1, debugMaxHp);
     }
     pd.equippedDice = ['normalDice'];
     pd.hp = pd.maxHp;

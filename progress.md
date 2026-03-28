@@ -758,3 +758,14 @@ Original prompt: そうだね。セーブできる村役場みたいなところ
   - Playwright MCP で `wishShelfShade` と `tomioka_weaver` の戦闘開始を確認し、新しい敵名とスプライトが表示されることを目視した。
   - 同じくブラウザ上で `encounters.js` を再読込して遭遇サイクルをサンプリングし、高崎で `wishShelfShade`、下仁田で `shimonita_packer / shimonita_neglected_daruma`、富岡で `tomioka_weaver / tomioka_inspector / tomioka_dyer_sludge`、草津で `bathhouseRemnant`、山側で `lanternKeeper`、トンネル/水上で `ferryBellEcho`、尾瀬で `marshPathShade` が出ることを確認。
   - `echoText` も Playwright evaluate で直接確認し、console error は 0 件。
+- 2026-03-28: 通常戦のライブ感を上げるため、敵ダイス演出とターン間の余韻を延長。
+  - `js/battle.js` に `PLAYER_DICE_RESULT_FRAMES` を追加し、プレイヤーの出目結果表示を 30f -> 38f へ延長した。
+  - `PLAYER_ACTION_RECOVERY_FRAMES` は 8f -> 14f へ伸ばし、攻撃・特技・補助アイテム後に次ターンへ急に切り替わらないよう調整した。
+  - 敵ダイス演出は `windup / roll / settle` の 3段で見せる構成のまま、通常で約 1.4 秒、鈍化時で約 1.7 秒残るテンポに整えた。
+  - 回復アイテム使用後も `handleUseItemPhase()` から敵ロール演出を経由するようにして、敵ターンだけ妙に安っぽく飛ぶ状態をなくした。
+- 2026-03-28: 戦闘ライブ感調整の検証結果
+  - `node --check js/battle.js` 通過。
+  - `develop-web-game` の Playwright client を `output/web-game/battle-live-feel-roll` と `output/web-game/battle-live-feel-roll-mid` で実行し、通常攻撃後に敵ロールが差し込まれる流れを確認。`battle-live-feel-roll-mid/shot-0.png` ではロール中の白ダイスと `コロン…` オノマトペが見えている。
+  - 同じく `output/web-game/battle-live-feel-heal-item/shot-0.png` で、回復アイテム使用後にも敵ロール演出が入ることを確認した。
+  - Playwright MCP では `debugBattle=roadsideBandit` を直接進め、`render_game_to_text` 上で `battle.phase = enemyAttack`、`battle.enemyRoll.timer = 65` を確認。ロール中状態がテキスト出力にも反映される。
+  - Playwright の console error は 0 件。AudioContext の autoplay 警告のみ発生した。

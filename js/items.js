@@ -113,6 +113,24 @@ Game.Items = (function() {
       palette: { 1: '#8a7d6c', 2: '#f1ece4' }
     },
 
+    gururinPass: {
+      id: 'gururinPass',
+      name: 'ぐるりん定期',
+      desc: '町と町を結ぶ循環便に乗れる、不思議な定期券',
+      type: 'key',
+      icon: [
+        [0,1,1,1,1,1,1,0],
+        [1,2,2,2,2,2,2,1],
+        [1,2,3,3,2,3,3,1],
+        [1,2,2,2,2,2,2,1],
+        [1,2,4,2,2,2,4,1],
+        [1,2,2,2,2,2,2,1],
+        [0,1,1,1,1,1,1,0],
+        [0,0,0,0,0,0,0,0]
+      ],
+      palette: { 1: '#2d5e41', 2: '#7fd39f', 3: '#0e1520', 4: '#f3e9b8' }
+    },
+
     // === Heal Items ===
     healHerb: {
       id: 'healHerb',
@@ -137,6 +155,42 @@ Game.Items = (function() {
       type: 'heal',
       healAmount: 100,
       price: 80
+    },
+
+    tempoCharm: {
+      id: 'tempoCharm',
+      name: 'ゆるみ札',
+      desc: '戦闘用。次のダイスがゆっくり回る',
+      type: 'battle',
+      effect: 'slow_roll',
+      price: 35
+    },
+    loadedSand: {
+      id: 'loadedSand',
+      name: '目盛り砂',
+      desc: '戦闘用。次のダイス補正を+2する',
+      type: 'battle',
+      effect: 'dice_bonus',
+      value: 2,
+      price: 40
+    },
+    guardChalk: {
+      id: 'guardChalk',
+      name: '守り白墨',
+      desc: '戦闘用。2ターン防御力を上げる',
+      type: 'battle',
+      effect: 'defense_up',
+      turns: 2,
+      value: 4,
+      price: 42
+    },
+    emberIncense: {
+      id: 'emberIncense',
+      name: '火走り香',
+      desc: '戦闘用。次の一投に火傷を乗せる',
+      type: 'battle',
+      effect: 'ignite_next',
+      price: 48
     },
 
     // === Armor ===
@@ -312,8 +366,9 @@ Game.Items = (function() {
     diceSlot: {
       id: 'diceSlot',
       name: 'サイコロポーチ',
-      desc: 'サイコロ装備枠を1つ増やす（最大5）',
+      desc: '装備枠を1つ増やす希少なポーチ（最大5）',
       type: 'diceSlot',
+      uniqueStock: true,
       price: 100
     }
   };

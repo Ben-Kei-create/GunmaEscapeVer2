@@ -6,6 +6,8 @@ Game.Input = (function() {
   var touchDir = null;
   var touchConfirm = false;
   var touchCancel = false;
+  var mouseConfirmQueued = false;
+  var mouseCancelQueued = false;
 
   function init() {
     window.addEventListener('keydown', function(e) {
@@ -26,6 +28,17 @@ Game.Input = (function() {
       touchDir = null;
       touchConfirm = false;
       touchCancel = false;
+    }, { passive: false });
+    canvas.addEventListener('mousedown', function(e) {
+      e.preventDefault();
+      if (e.button === 2) {
+        mouseCancelQueued = true;
+        return;
+      }
+      mouseConfirmQueued = true;
+    }, { passive: false });
+    canvas.addEventListener('contextmenu', function(e) {
+      e.preventDefault();
     }, { passive: false });
   }
 
@@ -66,6 +79,14 @@ Game.Input = (function() {
         keysPressed[key] = true;
       }
     }
+    if (mouseConfirmQueued) {
+      keysPressed.MouseConfirm = true;
+      mouseConfirmQueued = false;
+    }
+    if (mouseCancelQueued) {
+      keysPressed.MouseCancel = true;
+      mouseCancelQueued = false;
+    }
     prevKeys = {};
     for (var key in keysDown) {
       prevKeys[key] = keysDown[key];
@@ -90,8 +111,8 @@ Game.Input = (function() {
       case 'down':  return keysPressed['ArrowDown'] || keysPressed['KeyS'];
       case 'left':  return keysPressed['ArrowLeft'] || keysPressed['KeyA'];
       case 'right': return keysPressed['ArrowRight'] || keysPressed['KeyD'];
-      case 'confirm': return keysPressed['KeyZ'] || keysPressed['Enter'] || keysPressed['Space'] || touchConfirm;
-      case 'cancel':  return keysPressed['KeyX'] || keysPressed['Escape'] || touchCancel;
+      case 'confirm': return keysPressed['KeyZ'] || keysPressed['Enter'] || keysPressed['Space'] || keysPressed.MouseConfirm || touchConfirm;
+      case 'cancel':  return keysPressed['KeyX'] || keysPressed['Escape'] || keysPressed.MouseCancel || touchCancel;
     }
     return false;
   }

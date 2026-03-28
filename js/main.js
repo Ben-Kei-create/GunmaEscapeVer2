@@ -9,12 +9,14 @@ Game.Main = (function() {
   var dialogText = '';
   var pendingAction = null;
   var storyBattleContext = null;
+  var pendingArrivalCheck = '';
 
   function init() {
     Game.Renderer.init();
     Game.Input.init();
     Game.Audio.init();
     setState(Game.Config.STATE.TITLE);
+    if (Game.UI && Game.UI.startIntroMovie) Game.UI.startIntroMovie();
     window.advanceTime = advanceTime;
     window.render_game_to_text = renderGameToText;
 
@@ -31,6 +33,134 @@ Game.Main = (function() {
 
   function setState(newState) {
     state = newState;
+  }
+
+  function markMapVisited(mapId) {
+    if (!mapId) return;
+    pendingArrivalCheck = mapId;
+    if (Game.Story && Game.Story.setFlag) {
+      Game.Story.setFlag('visited_' + mapId);
+      if (Game.Story.saveFlags) Game.Story.saveFlags();
+    }
+    if (Game.Achievements && Game.Achievements.check) {
+      Game.Achievements.check(mapId);
+    }
+  }
+
+  function startForcedEvent(eventId, onComplete) {
+    setState(Game.Config.STATE.EVENT);
+    Game.Event.start(eventId, function() {
+      if (onComplete) {
+        onComplete();
+      } else {
+        setState(Game.Config.STATE.EXPLORING);
+        if (!Game.Audio.isBgmPlaying()) Game.Audio.playBgm('field');
+      }
+    });
+  }
+
+  function maybeStartArrivalEvent() {
+    var mapId = pendingArrivalCheck;
+    if (!mapId) return false;
+    pendingArrivalCheck = '';
+    if (!Game.Story || !Game.Story.hasFlag || !Game.Story.setFlag) return false;
+
+    var eventMap = {
+      takasaki: { flag: 'arrival_takasaki_auto', eventId: 'arrival_takasaki_auto' },
+      shimonita: { flag: 'arrival_shimonita_auto', eventId: 'arrival_shimonita_auto' },
+      tomioka: { flag: 'arrival_tomioka_auto', eventId: 'arrival_tomioka_auto' },
+      kusatsu: { flag: 'arrival_kusatsu_auto', eventId: 'arrival_kusatsu_auto' },
+      ikaho: { flag: 'arrival_ikaho_auto', eventId: 'arrival_ikaho_auto' },
+      akagi_ranch: { flag: 'arrival_akagi_ranch_auto', eventId: 'arrival_akagi_ranch_auto' }
+    };
+    var entry = eventMap[mapId];
+    if (!entry || Game.Story.hasFlag(entry.flag)) return false;
+    Game.Story.setFlag(entry.flag);
+    if (Game.Story.saveFlags) Game.Story.saveFlags();
+    startForcedEvent(entry.eventId, function() {
+      setState(Game.Config.STATE.EXPLORING);
+      Game.Audio.playBgm('field');
+    });
+    return true;
+  }
+
+  function continuePendingSkillFlow() {
+    var nextSkill = Game.Player && Game.Player.consumePendingSkillChoice ? Game.Player.consumePendingSkillChoice() : null;
+    if (nextSkill && Game.UI && Game.UI.openSkillLearn) {
+      Game.UI.openSkillLearn(nextSkill);
+      setState(Game.Config.STATE.SKILL_LEARN);
+      return true;
+    }
+    if (pendingAction && pendingAction.type === 'postBattleVictory' && pendingAction.resume) {
+      var resume = pendingAction.resume;
+      pendingAction = null;
+      resume();
+      return true;
+    }
+    pendingAction = null;
+    return false;
+  }
+
+  function resolveBattleVictory(battleResult) {
+    if (battleResult.goldReward) {
+      Game.Player.addGold(battleResult.goldReward);
+    }
+    var expSummary = null;
+    if (battleResult.expReward) {
+      expSummary = Game.Player.addExperience(battleResult.expReward);
+    }
+    if (battleResult.itemRewards && battleResult.itemRewards.length) {
+      for (var rewardIndex = 0; rewardIndex < battleResult.itemRewards.length; rewardIndex++) {
+        Game.Player.addItem(battleResult.itemRewards[rewardIndex]);
+      }
+    }
+    if (Game.Achievements && Game.Achievements.check) {
+      Game.Achievements.check({ type: 'battle_win' });
+    }
+
+    var finishVictory = function() {
+      if (storyBattleContext) {
+        var resume = storyBattleContext;
+        storyBattleContext = null;
+        if (resume.afterBattle && resume.afterBattle.length) {
+          setState(Game.Config.STATE.EVENT);
+          Game.Story.startEvent(resume.afterBattle, resume.afterCallback || null);
+        } else if (resume.afterCallback) {
+          resume.afterCallback();
+        } else {
+          setState(Game.Config.STATE.EXPLORING);
+          Game.Audio.playBgm('field');
+        }
+      } else {
+        if (battleResult.npc) {
+          if (battleResult.npc.id === 'ruined_checkpoint' && Game.Story && Game.Story.setFlag) {
+            Game.Story.setFlag('checkpoint_cleared');
+          }
+          if (battleResult.npc.id === 'darumaMaster' && Game.Story && Game.Story.setFlag) {
+            Game.Story.setFlag('daruma_master_cleared_slice');
+          }
+          if (battleResult.npc.id === 'threadMaiden' && Game.Story && Game.Story.setFlag) {
+            Game.Story.setFlag('thread_maiden_cleared_slice');
+          }
+          Game.NPC.showDefeatedDialog(battleResult.npc);
+          dialogText = Game.NPC.getCurrentDialog();
+          setState(Game.Config.STATE.DIALOG);
+        } else {
+          setState(Game.Config.STATE.EXPLORING);
+        }
+        Game.Audio.playBgm('field');
+      }
+    };
+
+    if (expSummary && expSummary.levelUps && expSummary.levelUps.length && Game.UI && Game.UI.addDamagePopup) {
+      var lastRank = expSummary.levelUps[expSummary.levelUps.length - 1].rank;
+      Game.UI.addDamagePopup('RANK ' + lastRank, 176, 34, '#ffdd66');
+    }
+
+    pendingAction = { type: 'postBattleVictory', resume: finishVictory };
+    if (continuePendingSkillFlow()) return;
+    pendingAction = null;
+    finishVictory();
   }
 
   function gameLoop(timestamp) {
@@ -50,10 +180,20 @@ Game.Main = (function() {
     if (Game.UI.updatePopups) Game.UI.updatePopups();
     if (Game.UI.updateAreaBanner) Game.UI.updateAreaBanner();
     if (Game.Renderer.updateEffects) Game.Renderer.updateEffects();
+    if (Game.Achievements && Game.Achievements.update) Game.Achievements.update();
 
     switch (state) {
       case Game.Config.STATE.TITLE:
+        var titleLocked = false;
+        if (Game.UI.updateIntroMovie) {
+          Game.UI.updateIntroMovie();
+        }
+        titleLocked = Game.UI.isTitleIntroLocked ? Game.UI.isTitleIntroLocked() : false;
+        if (titleLocked) break;
         if (Game.UI.updateTitleMenu) Game.UI.updateTitleMenu();
+        if (Game.UI.isAchievementListOpen && Game.UI.isAchievementListOpen()) {
+          break;
+        }
         if (Game.Input.isPressed('confirm')) {
           var sel = Game.UI.getTitleSelection ? Game.UI.getTitleSelection() : 0;
           if (sel === 0) {
@@ -69,12 +209,15 @@ Game.Main = (function() {
             setState(Game.Config.STATE.SAVE);
           } else if (sel === 3) {
             Game.Audio.playSfx('confirm');
-            // Show achievements (toggle back with confirm)
+            if (Game.UI.openAchievementList) Game.UI.openAchievementList();
           }
         }
         break;
 
       case Game.Config.STATE.EXPLORING:
+        if (maybeStartArrivalEvent()) {
+          break;
+        }
         Game.Player.update();
         var stepInfo = Game.Player.consumeCompletedStep ? Game.Player.consumeCompletedStep() : null;
 
@@ -110,6 +253,9 @@ Game.Main = (function() {
               startChapter2();
             });
           } else {
+            if (Game.Achievements && Game.Achievements.check) {
+              Game.Achievements.check('chapter2_clear');
+            }
             setState(Game.Config.STATE.ENDING);
             Game.Audio.stopBgm();
             Game.Audio.playSfx('victory');
@@ -166,48 +312,7 @@ Game.Main = (function() {
         var battleResult = Game.Battle.update();
         if (battleResult) {
           if (battleResult.result === 'victory') {
-            if (battleResult.goldReward) {
-              Game.Player.addGold(battleResult.goldReward);
-            }
-            if (battleResult.expReward) {
-              Game.Player.addExperience(battleResult.expReward);
-            }
-            if (battleResult.itemRewards && battleResult.itemRewards.length) {
-              for (var rewardIndex = 0; rewardIndex < battleResult.itemRewards.length; rewardIndex++) {
-                Game.Player.addItem(battleResult.itemRewards[rewardIndex]);
-              }
-            }
-            if (storyBattleContext) {
-              var resume = storyBattleContext;
-              storyBattleContext = null;
-              if (resume.afterBattle && resume.afterBattle.length) {
-                setState(Game.Config.STATE.EVENT);
-                Game.Story.startEvent(resume.afterBattle, resume.afterCallback || null);
-              } else if (resume.afterCallback) {
-                resume.afterCallback();
-              } else {
-                setState(Game.Config.STATE.EXPLORING);
-                Game.Audio.playBgm('field');
-              }
-            } else {
-              if (battleResult.npc) {
-                if (battleResult.npc.id === 'ruined_checkpoint' && Game.Story && Game.Story.setFlag) {
-                  Game.Story.setFlag('checkpoint_cleared');
-                }
-                if (battleResult.npc.id === 'darumaMaster' && Game.Story && Game.Story.setFlag) {
-                  Game.Story.setFlag('daruma_master_cleared_slice');
-                }
-                if (battleResult.npc.id === 'threadMaiden' && Game.Story && Game.Story.setFlag) {
-                  Game.Story.setFlag('thread_maiden_cleared_slice');
-                }
-                Game.NPC.showDefeatedDialog(battleResult.npc);
-                dialogText = Game.NPC.getCurrentDialog();
-                setState(Game.Config.STATE.DIALOG);
-              } else {
-                setState(Game.Config.STATE.EXPLORING);
-              }
-              Game.Audio.playBgm('field');
-            }
+            resolveBattleVictory(battleResult);
           } else if (battleResult.result === 'defeat') {
             storyBattleContext = null;
             setState(Game.Config.STATE.GAMEOVER);
@@ -230,6 +335,19 @@ Game.Main = (function() {
             storyBattleContext = null;
             setState(Game.Config.STATE.EXPLORING);
           }
+        }
+        break;
+
+      case Game.Config.STATE.SKILL_LEARN:
+        var skillLearnResult = Game.UI.updateSkillLearn ? Game.UI.updateSkillLearn() : null;
+        if (skillLearnResult) {
+          if (skillLearnResult.action === 'learn' && Game.Player && Game.Player.learnSkill) {
+            if (skillLearnResult.replaceId && Game.Player.forgetSkill) {
+              Game.Player.forgetSkill(skillLearnResult.replaceId);
+            }
+            Game.Player.learnSkill(skillLearnResult.skillId);
+          }
+          continuePendingSkillFlow();
         }
         break;
 
@@ -276,6 +394,9 @@ Game.Main = (function() {
         if (menuResult && menuResult.close) {
           setState(Game.Config.STATE.EXPLORING);
           Game.Audio.playSfx('cancel');
+        } else if (menuResult && menuResult.warp) {
+          Game.Audio.playSfx('confirm');
+          startTransition(menuResult.warp.mapId, menuResult.warp.spawnX, menuResult.warp.spawnY);
         }
         break;
 
@@ -324,6 +445,25 @@ Game.Main = (function() {
           setState(Game.Config.STATE.TITLE);
         }
         break;
+    }
+  }
+
+  function shouldPlaySpecialDiceIntro(itemIds) {
+    if (!itemIds || !itemIds.length || !Game.Story || !Game.Story.hasFlag) return false;
+    if (Game.Story.hasFlag('special_dice_intro_seen')) return false;
+    for (var i = 0; i < itemIds.length; i++) {
+      var item = Game.Items.get(itemIds[i]);
+      if (item && item.type === 'dice' && item.id !== 'normalDice') {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  function markSpecialDiceIntroSeen() {
+    if (Game.Story && Game.Story.setFlag) {
+      Game.Story.setFlag('special_dice_intro_seen');
+      if (Game.Story.saveFlags) Game.Story.saveFlags();
     }
   }
 
@@ -500,6 +640,40 @@ Game.Main = (function() {
           setState(Game.Config.STATE.ENDING);
         });
         break;
+      case 'event_special_dice_intro':
+        markSpecialDiceIntroSeen();
+        setState(Game.Config.STATE.EVENT);
+        Game.Event.start('special_dice_intro', function() {
+          setState(Game.Config.STATE.EXPLORING);
+          Game.Audio.playBgm('field');
+        });
+        break;
+      case 'event_gururin_network':
+        if (Game.Story && Game.Story.setFlag) {
+          Game.Story.setFlag('gururin_network_unlocked');
+          if (Game.Story.saveFlags) Game.Story.saveFlags();
+        }
+        if (Game.Player && Game.Player.addItem) {
+          Game.Player.addItem('gururinPass');
+        }
+        setState(Game.Config.STATE.EVENT);
+        Game.Event.start('gururin_network', function() {
+          setState(Game.Config.STATE.EXPLORING);
+          Game.Audio.playBgm('field');
+        });
+        break;
+      case 'event_gururin':
+        if (npc) npc.defeated = true;
+        if (Game.Story && Game.Story.setFlag) {
+          Game.Story.setFlag('gururin_seen');
+          if (Game.Story.saveFlags) Game.Story.saveFlags();
+        }
+        setState(Game.Config.STATE.EVENT);
+        Game.Event.start('gururin', function() {
+          setState(Game.Config.STATE.EXPLORING);
+          Game.Audio.playBgm('field');
+        });
+        break;
       case 'save_priest':
         if (Game.SaveMenu && Game.SaveMenu.open) {
           Game.SaveMenu.open({ context: 'field' });
@@ -514,8 +688,17 @@ Game.Main = (function() {
           var parts = action.substring(5).split('_');
           var shopName = parts[0];
           var shopItemIds = parts[1] ? parts[1].split(',') : [];
-          setState(Game.Config.STATE.SHOP);
-          Game.Shop.start(shopName, shopItemIds);
+          if (shouldPlaySpecialDiceIntro(shopItemIds)) {
+            markSpecialDiceIntroSeen();
+            setState(Game.Config.STATE.EVENT);
+            Game.Event.start('special_dice_intro', function() {
+              setState(Game.Config.STATE.SHOP);
+              Game.Shop.start(shopName, shopItemIds);
+            });
+          } else {
+            setState(Game.Config.STATE.SHOP);
+            Game.Shop.start(shopName, shopItemIds);
+          }
         } else {
           setState(Game.Config.STATE.EXPLORING);
         }
@@ -546,13 +729,21 @@ Game.Main = (function() {
     var pd = Game.Player.getData();
     pd.hp = 100;
     pd.maxHp = 100;
+    pd.attack = 12;
+    pd.defense = 5;
+    pd.experience = 0;
     pd.gold = 100;
     pd.chapter = 1;
     pd.diceSlots = 1;
     pd.equippedDice = ['normalDice'];
     pd.armor = null;
     pd.partyMembers = [];
+    pd.skillsKnown = [];
     pd.inventory = [];
+    if (Game.Player && Game.Player.clearPendingSkillChoices) {
+      Game.Player.clearPendingSkillChoices();
+    }
+    pendingAction = null;
 
     if (Game.Story && Game.Story.reset) {
       Game.Story.reset();
@@ -573,6 +764,9 @@ Game.Main = (function() {
   }
 
   function startChapter2() {
+    if (Game.Achievements && Game.Achievements.check) {
+      Game.Achievements.check('chapter1_clear');
+    }
     var pd = Game.Player.getData();
     pd.chapter = 2;
     // Keep current stats/gold/armor, but clear Ch1 keys
@@ -845,6 +1039,11 @@ Game.Main = (function() {
         Game.Event.draw();
         break;
 
+      case Game.Config.STATE.SKILL_LEARN:
+        renderExploring(true);
+        if (Game.UI.drawSkillLearn) Game.UI.drawSkillLearn();
+        break;
+
       case Game.Config.STATE.MENU:
         renderExploring(true);
         Game.UI.drawMenu();
@@ -872,6 +1071,14 @@ Game.Main = (function() {
       case Game.Config.STATE.ENDING:
         Game.UI.drawEnding();
         break;
+    }
+
+    if (state === Game.Config.STATE.TITLE && Game.UI.isAchievementListOpen && Game.UI.isAchievementListOpen() &&
+        Game.Achievements && Game.Achievements.drawList) {
+      Game.Achievements.drawList();
+    }
+    if (Game.Achievements && Game.Achievements.draw) {
+      Game.Achievements.draw();
     }
   }
 
@@ -944,12 +1151,18 @@ Game.Main = (function() {
         darumaCleared: !!storyFlags.daruma_master_cleared_slice,
         threadCleared: !!storyFlags.thread_maiden_cleared_slice
       },
+      continueSlot: Game.Save && Game.Save.getSlotInfo ? Game.Save.getSlotInfo(1) : null,
       hasAnySave: Game.Save && Game.Save.hasAnySave ? Game.Save.hasAnySave() : false,
       saveMenuContext: Game.SaveMenu && Game.SaveMenu.getContext ? Game.SaveMenu.getContext() : null
     };
     payload.ui = {
-      showJourneyBadge: Game.UI && Game.UI.isJourneyBadgeEnabled ? Game.UI.isJourneyBadgeEnabled() : true
+      showJourneyBadge: Game.UI && Game.UI.isJourneyBadgeEnabled ? Game.UI.isJourneyBadgeEnabled() : true,
+      eventTextSpeed: Game.UI && Game.UI.getEventTextSpeedLabel ? Game.UI.getEventTextSpeedLabel() : 'ふつう',
+      battleDialogueSpeed: Game.UI && Game.UI.getBattleDialogueSpeedLabel ? Game.UI.getBattleDialogueSpeedLabel() : 'ふつう'
     };
+    if (Game.UI && Game.UI.getTitlePresentationState) {
+      payload.title = Game.UI.getTitlePresentationState();
+    }
     if (state === Game.Config.STATE.MENU && Game.UI && Game.UI.getFieldMenuDebugState) {
       payload.menu = Game.UI.getFieldMenuDebugState();
     }
@@ -958,6 +1171,9 @@ Game.Main = (function() {
     }
     if (state === Game.Config.STATE.BATTLE && Game.Battle && Game.Battle.getStateSnapshot) {
       payload.battle = Game.Battle.getStateSnapshot();
+    }
+    if (state === Game.Config.STATE.EVENT && Game.Event && Game.Event.getStateSnapshot) {
+      payload.event = Game.Event.getStateSnapshot();
     }
     return JSON.stringify(payload);
   }
@@ -993,6 +1209,7 @@ Game.Main = (function() {
   return {
     init: init,
     setState: setState,
+    handleMapLoaded: markMapVisited,
     startStoryBattle: startStoryBattle,
     applyDebugLaunchOptions: applyDebugLaunchOptions
   };

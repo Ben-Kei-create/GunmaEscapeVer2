@@ -48,8 +48,8 @@ Game.Maps.minakami_valley = (function() {
       id: 'juke_minakami', x: 14, y: 4, name: 'ジューク（水上）',
       dialog: ['ここまで来るとは...予定外です。', 'ですが、国境は越えさせません。'],
       afterDialog: 'battle_juke_minakami', afterDefeat: 'event_ch9_ending',
-      defeatedDialog: ['まだ...終わらない...', '国境で待っている。'],
-      defeated: false, sprite: bossSprite, palette: { 1:'#ffccaa', 2:'#111166', 3:'#ffffff', 4:'#ff0000' }
+      defeatedDialog: ['まだ...終わらない...', '国境で待っている。', '砕けた足元から、最後のサイコロポーチが滑り落ちた。'],
+      defeated: false, giveDiceSlot: true, sprite: bossSprite, palette: { 1:'#ffccaa', 2:'#111166', 3:'#ffffff', 4:'#ff0000' }
     },
     {
       id: 'praying_woman', x: 8, y: 11, name: '祈る女',

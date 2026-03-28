@@ -12,6 +12,16 @@ Game.UI = (function() {
   var titleSelectionVisual = 0;
   var titleHighlightFlash = 0;
   var UI_SETTINGS_KEY = 'gunmaEscape_ui_settings_v1';
+  var EVENT_TEXT_SPEED_CHOICES = [
+    { id: 'fast', label: 'はやい', frames: 1, color: '#8fe0ff' },
+    { id: 'normal', label: 'ふつう', frames: 2, color: '#ffd66b' },
+    { id: 'slow', label: 'ゆっくり', frames: 4, color: '#cdb7ff' }
+  ];
+  var BATTLE_DIALOGUE_SPEED_CHOICES = [
+    { id: 'fast', label: 'はやい', frames: 46, color: '#8fe0ff' },
+    { id: 'normal', label: 'ふつう', frames: 70, color: '#ffd66b' },
+    { id: 'slow', label: 'ゆっくり', frames: 94, color: '#cdb7ff' }
+  ];
   var uiSettings = loadUiSettings();
   var areaBanner = {
     active: false,
@@ -32,9 +42,16 @@ Game.UI = (function() {
     diceEquipIndex: 0,
     diceEquipActive: false,
     armorIndex: 0,
+    busIndex: 0,
     settingIndex: 0,
     message: '',
     messageTimer: 0
+  };
+  var titleAchievementListOpen = false;
+  var skillLearnState = {
+    active: false,
+    skillId: null,
+    replaceIndex: 0
   };
 
   // Damage number popups
@@ -45,6 +62,22 @@ Game.UI = (function() {
     'あいことばで旅の続きへ戻る。',
     '実績と解放状況を確認する。'
   ];
+  var INTRO_MOVIE_SCENES = [
+    { id: 'highway', duration: 210, title: '深夜の関越道', subtitle: 'くだらない笑い声だけが、闇の道を滑っていく。', accent: '#8fe0ff' },
+    { id: 'signs', duration: 180, title: '群馬が近づく', subtitle: '見慣れた地名が、少しずつ異界の響きに変わる。', accent: '#ffd66b' },
+    { id: 'tunnel', duration: 210, title: '山の呼吸', subtitle: '稜線の向こうで、県境そのものが脈を打ちはじめる。', accent: '#c6d0ff' },
+    { id: 'gate', duration: 180, title: '境界の門', subtitle: 'この先から、群馬は旅人を離してくれない。', accent: '#ff9a6b' }
+  ];
+  var INTRO_SCENE_FADE_FRAMES = 24;
+  var INTRO_TITLE_FADE_FRAMES = 28;
+  var introMovie = {
+    active: false,
+    sceneIndex: 0,
+    sceneTimer: 0,
+    totalTimer: 0,
+    transitionTimer: 0,
+    titleRevealTimer: 0
+  };
   var minimapColors = {
     0: '#2a5a1f', 1: '#8a7a4a', 2: '#2244aa', 3: '#444',
     4: '#1a3a0e', 5: '#6699aa', 6: '#4a7a3a', 7: '#882222',
@@ -53,8 +86,40 @@ Game.UI = (function() {
 
   function getDefaultUiSettings() {
     return {
-      showJourneyBadge: true
+      showJourneyBadge: true,
+      eventTextSpeed: 'normal',
+      battleDialogueSpeed: 'normal'
     };
+  }
+
+  function normalizeEventTextSpeed(id) {
+    for (var i = 0; i < EVENT_TEXT_SPEED_CHOICES.length; i++) {
+      if (EVENT_TEXT_SPEED_CHOICES[i].id === id) return EVENT_TEXT_SPEED_CHOICES[i].id;
+    }
+    return 'normal';
+  }
+
+  function getEventTextSpeedChoice() {
+    var currentId = normalizeEventTextSpeed(uiSettings.eventTextSpeed);
+    for (var i = 0; i < EVENT_TEXT_SPEED_CHOICES.length; i++) {
+      if (EVENT_TEXT_SPEED_CHOICES[i].id === currentId) return EVENT_TEXT_SPEED_CHOICES[i];
+    }
+    return EVENT_TEXT_SPEED_CHOICES[1];
+  }
+
+  function normalizeBattleDialogueSpeed(id) {
+    for (var i = 0; i < BATTLE_DIALOGUE_SPEED_CHOICES.length; i++) {
+      if (BATTLE_DIALOGUE_SPEED_CHOICES[i].id === id) return BATTLE_DIALOGUE_SPEED_CHOICES[i].id;
+    }
+    return 'normal';
+  }
+
+  function getBattleDialogueSpeedChoice() {
+    var currentId = normalizeBattleDialogueSpeed(uiSettings.battleDialogueSpeed);
+    for (var i = 0; i < BATTLE_DIALOGUE_SPEED_CHOICES.length; i++) {
+      if (BATTLE_DIALOGUE_SPEED_CHOICES[i].id === currentId) return BATTLE_DIALOGUE_SPEED_CHOICES[i];
+    }
+    return BATTLE_DIALOGUE_SPEED_CHOICES[1];
   }
 
   function loadUiSettings() {
@@ -64,7 +129,9 @@ Game.UI = (function() {
       if (!raw) return defaults;
       var parsed = JSON.parse(raw);
       return {
-        showJourneyBadge: parsed.showJourneyBadge !== false
+        showJourneyBadge: parsed.showJourneyBadge !== false,
+        eventTextSpeed: normalizeEventTextSpeed(parsed.eventTextSpeed || defaults.eventTextSpeed),
+        battleDialogueSpeed: normalizeBattleDialogueSpeed(parsed.battleDialogueSpeed || defaults.battleDialogueSpeed)
       };
     } catch (err) {
       return defaults;
@@ -139,6 +206,7 @@ Game.UI = (function() {
 
   function getItemTypeLabel(type) {
     if (type === 'heal') return '回復';
+    if (type === 'battle') return '戦闘用';
     if (type === 'dice') return 'サイコロ';
     if (type === 'armor') return '防具';
     if (type === 'key') return 'だいじなもの';
@@ -155,6 +223,334 @@ Game.UI = (function() {
     ctx.lineTo(Game.Config.CANVAS_WIDTH, Game.Config.CANVAS_HEIGHT);
     ctx.closePath();
     ctx.fill();
+  }
+
+  function getCurrentIntroScene() {
+    var index = Math.max(0, Math.min(INTRO_MOVIE_SCENES.length - 1, introMovie.sceneIndex));
+    return INTRO_MOVIE_SCENES[index];
+  }
+
+  function startIntroMovie() {
+    introMovie.active = true;
+    introMovie.sceneIndex = 0;
+    introMovie.sceneTimer = 0;
+    introMovie.totalTimer = 0;
+    introMovie.transitionTimer = 0;
+    introMovie.titleRevealTimer = 0;
+    titleSelection = 0;
+    titleSelectionVisual = 0;
+    titleHighlightFlash = 0;
+    titleTimer = 0;
+  }
+
+  function finishIntroMovie() {
+    introMovie.active = false;
+    introMovie.transitionTimer = 0;
+    introMovie.titleRevealTimer = INTRO_TITLE_FADE_FRAMES;
+    introMovie.sceneTimer = 0;
+    introMovie.totalTimer = 0;
+    titleTimer = 0;
+    titleSelectionVisual = titleSelection;
+  }
+
+  function updateIntroMovie() {
+    if (!introMovie.active) {
+      if (introMovie.titleRevealTimer > 0) introMovie.titleRevealTimer--;
+      return introMovie.titleRevealTimer > 0;
+    }
+
+    if ((Game.Input.isPressed('confirm') || Game.Input.isPressed('cancel')) && introMovie.transitionTimer <= 0) {
+      introMovie.transitionTimer = INTRO_TITLE_FADE_FRAMES;
+      Game.Audio.playSfx('confirm');
+    }
+
+    introMovie.totalTimer++;
+
+    if (introMovie.transitionTimer > 0) {
+      introMovie.transitionTimer--;
+      if (introMovie.transitionTimer <= 0) {
+        finishIntroMovie();
+      }
+      return true;
+    }
+
+    introMovie.sceneTimer++;
+    if (introMovie.sceneTimer >= getCurrentIntroScene().duration) {
+      introMovie.sceneIndex++;
+      introMovie.sceneTimer = 0;
+      if (introMovie.sceneIndex >= INTRO_MOVIE_SCENES.length) {
+        introMovie.sceneIndex = INTRO_MOVIE_SCENES.length - 1;
+        introMovie.transitionTimer = INTRO_TITLE_FADE_FRAMES;
+      }
+    }
+    return true;
+  }
+
+  function isTitleIntroLocked() {
+    return introMovie.active || introMovie.titleRevealTimer > 0;
+  }
+
+  function getIntroFadeAlpha(scene) {
+    if (!scene) return 0;
+    var alpha = 0;
+    if (introMovie.sceneTimer < INTRO_SCENE_FADE_FRAMES) {
+      alpha = 1 - (introMovie.sceneTimer / INTRO_SCENE_FADE_FRAMES);
+    } else if ((scene.duration - introMovie.sceneTimer) < INTRO_SCENE_FADE_FRAMES) {
+      alpha = 1 - ((scene.duration - introMovie.sceneTimer) / INTRO_SCENE_FADE_FRAMES);
+    }
+    if (introMovie.transitionTimer > 0) {
+      alpha = Math.max(alpha, 1 - (introMovie.transitionTimer / INTRO_TITLE_FADE_FRAMES));
+    }
+    return Math.max(0, Math.min(1, alpha));
+  }
+
+  function drawIntroSkyGradient(ctx, topColor, midColor, bottomColor) {
+    var gradient = ctx.createLinearGradient(0, 0, 0, Game.Config.CANVAS_HEIGHT);
+    gradient.addColorStop(0, topColor);
+    gradient.addColorStop(0.58, midColor);
+    gradient.addColorStop(1, bottomColor);
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, Game.Config.CANVAS_WIDTH, Game.Config.CANVAS_HEIGHT);
+  }
+
+  function drawIntroStars(ctx, time, startY, endY, tint) {
+    ctx.fillStyle = tint || 'rgba(255,255,255,0.75)';
+    for (var i = 0; i < 28; i++) {
+      var x = (i * 37 + time * (0.1 + (i % 3) * 0.03)) % Game.Config.CANVAS_WIDTH;
+      var y = startY + ((i * 23) % Math.max(8, endY - startY));
+      var size = (i % 5 === 0) ? 2 : 1;
+      ctx.fillRect(x, y, size, size);
+    }
+  }
+
+  function drawIntroLetterbox(ctx) {
+    ctx.fillStyle = 'rgba(0,0,0,0.92)';
+    ctx.fillRect(0, 0, Game.Config.CANVAS_WIDTH, 18);
+    ctx.fillRect(0, Game.Config.CANVAS_HEIGHT - 28, Game.Config.CANVAS_WIDTH, 28);
+  }
+
+  function drawIntroCaption(scene) {
+    var R = Game.Renderer;
+    if (!scene) return;
+    var titleX = 24;
+    var titleY = 224;
+    R.drawRectAbsolute(18, 214, 282, 48, 'rgba(6, 10, 22, 0.58)');
+    R.drawRectAbsolute(18, 214, 282, 1, 'rgba(255,255,255,0.08)');
+    R.drawTextJP(scene.title, titleX + 1, titleY + 1, 'rgba(0,0,0,0.85)', 17);
+    R.drawTextJP(scene.title, titleX, titleY, scene.accent || '#fff', 17);
+    drawWrappedTextBlock(scene.subtitle, titleX, titleY + 18, 28, 2, 12, '#eef3ff', 9);
+    R.drawTextJP('クリック / Space / Z / Enter でタイトルへ', 458, 292, '#cdd6ee', 8, 'right');
+  }
+
+  function drawIntroHighwayScene(ctx, t) {
+    drawIntroSkyGradient(ctx, '#030611', '#10182f', '#080a12');
+    drawIntroStars(ctx, t, 16, 104, 'rgba(240,245,255,0.72)');
+    drawMountainLayer(ctx, [[0, 176], [74, 142], [132, 160], [210, 126], [288, 162], [362, 134], [480, 154]], '#0d1730');
+    drawMountainLayer(ctx, [[0, 210], [82, 184], [164, 198], [248, 176], [334, 206], [420, 190], [480, 202]], '#152447');
+    ctx.fillStyle = '#0a1020';
+    ctx.fillRect(0, 236, Game.Config.CANVAS_WIDTH, 84);
+    ctx.fillStyle = 'rgba(255,180,84,0.18)';
+    ctx.fillRect(0, 178, Game.Config.CANVAS_WIDTH, 10);
+    ctx.fillStyle = '#101726';
+    ctx.beginPath();
+    ctx.moveTo(100, 320);
+    ctx.lineTo(380, 320);
+    ctx.lineTo(272, 148);
+    ctx.lineTo(208, 148);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = '#f4d574';
+    for (var i = 0; i < 6; i++) {
+      var p = ((i / 6) + ((t * 0.02) % 1)) % 1;
+      var y = 152 + p * 150;
+      var w = 2 + p * 10;
+      var h = 3 + p * 8;
+      ctx.fillRect(240 - Math.floor(w / 2), y, w, h);
+    }
+    ctx.fillStyle = '#1c2436';
+    ctx.fillRect(132, 268, 46, 16);
+    ctx.fillRect(142, 262, 22, 10);
+    ctx.fillStyle = '#b9434d';
+    ctx.fillRect(136, 280, 5, 3);
+    ctx.fillRect(168, 280, 5, 3);
+    ctx.fillStyle = 'rgba(255,236,176,0.25)';
+    for (var light = 0; light < 10; light++) {
+      ctx.fillRect(light * 48 + ((t * 0.7 + light * 11) % 8), 182 + (light % 2), 4, 2);
+    }
+  }
+
+  function drawIntroSignsScene(ctx, t) {
+    drawIntroSkyGradient(ctx, '#070713', '#23122b', '#12070d');
+    drawMountainLayer(ctx, [[0, 194], [92, 154], [176, 176], [250, 142], [336, 186], [420, 154], [480, 164]], '#180f27');
+    drawMountainLayer(ctx, [[0, 224], [68, 198], [138, 216], [220, 186], [300, 226], [386, 202], [480, 214]], '#221539');
+    ctx.fillStyle = '#0d0e16';
+    ctx.fillRect(0, 242, Game.Config.CANVAS_WIDTH, 78);
+    ctx.fillStyle = '#161c2c';
+    ctx.beginPath();
+    ctx.moveTo(76, 320);
+    ctx.lineTo(354, 320);
+    ctx.lineTo(268, 162);
+    ctx.lineTo(196, 162);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = '#65b2ff';
+    ctx.fillRect(350, 86, 84, 42);
+    ctx.fillStyle = '#16374f';
+    ctx.fillRect(354, 90, 76, 34);
+    ctx.fillStyle = '#dceeff';
+    ctx.fillRect(350, 128, 5, 52);
+    ctx.fillRect(430, 128, 5, 52);
+    Game.Renderer.drawTextJP('前橋   53', 392, 97, '#eef6ff', 10, 'center');
+    Game.Renderer.drawTextJP('高崎   28', 392, 110, '#eef6ff', 10, 'center');
+    for (var lamp = 0; lamp < 7; lamp++) {
+      var glow = 0.45 + Math.sin(t / 12 + lamp) * 0.25;
+      ctx.fillStyle = 'rgba(255,96,88,' + glow.toFixed(3) + ')';
+      ctx.fillRect(64 + lamp * 24, 210 + (lamp % 2) * 8, 8, 8);
+      ctx.fillStyle = 'rgba(255,218,120,0.25)';
+      ctx.fillRect(62 + lamp * 24, 218 + (lamp % 2) * 8, 12, 14);
+    }
+    ctx.fillStyle = 'rgba(255,208,112,0.85)';
+    for (var streak = 0; streak < 5; streak++) {
+      var p = ((streak / 5) + ((t * 0.018) % 1)) % 1;
+      var y = 174 + p * 128;
+      var w = 3 + p * 8;
+      ctx.fillRect(235 - Math.floor(w / 2), y, w, 5 + p * 6);
+    }
+  }
+
+  function drawIntroTunnelScene(ctx, t) {
+    drawIntroSkyGradient(ctx, '#03050b', '#0b1426', '#091019');
+    ctx.fillStyle = 'rgba(221,232,255,0.84)';
+    ctx.beginPath();
+    ctx.arc(356, 72, 18, 0, Math.PI * 2);
+    ctx.fill();
+    drawMountainLayer(ctx, [[0, 176], [74, 118], [138, 154], [222, 98], [294, 168], [364, 108], [480, 148]], '#0b1324');
+    drawMountainLayer(ctx, [[0, 214], [88, 174], [160, 198], [240, 148], [318, 214], [394, 166], [480, 190]], '#132241');
+    drawMountainLayer(ctx, [[0, 246], [66, 220], [138, 236], [216, 196], [296, 250], [388, 210], [480, 228]], '#1b3057');
+    ctx.fillStyle = '#0b0d14';
+    ctx.fillRect(0, 244, Game.Config.CANVAS_WIDTH, 76);
+    ctx.fillStyle = '#0c1018';
+    ctx.beginPath();
+    ctx.moveTo(154, 320);
+    ctx.lineTo(326, 320);
+    ctx.lineTo(270, 164);
+    ctx.lineTo(210, 164);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = '#1c2231';
+    ctx.beginPath();
+    ctx.moveTo(178, 190);
+    ctx.quadraticCurveTo(240, 110, 302, 190);
+    ctx.lineTo(302, 246);
+    ctx.lineTo(178, 246);
+    ctx.closePath();
+    ctx.fill();
+    var tunnelGlow = 0.25 + Math.sin(t / 10) * 0.12;
+    ctx.fillStyle = 'rgba(255,188,96,' + tunnelGlow.toFixed(3) + ')';
+    ctx.fillRect(196, 156, 88, 74);
+    ctx.fillStyle = 'rgba(255,244,200,0.18)';
+    ctx.fillRect(212, 170, 56, 46);
+    ctx.strokeStyle = 'rgba(232,240,255,0.32)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(184, 320);
+    ctx.lineTo(218, 170);
+    ctx.moveTo(296, 320);
+    ctx.lineTo(262, 170);
+    ctx.stroke();
+    for (var mist = 0; mist < 4; mist++) {
+      ctx.fillStyle = 'rgba(196,218,255,0.08)';
+      ctx.fillRect(((mist * 126) + t * (0.3 + mist * 0.05)) % 560 - 80, 198 + mist * 16, 130, 10);
+    }
+  }
+
+  function drawIntroGateScene(ctx, t) {
+    drawIntroSkyGradient(ctx, '#040611', '#0d1224', '#0a0c12');
+    drawIntroStars(ctx, t, 12, 98, 'rgba(230,236,255,0.7)');
+    drawMountainLayer(ctx, [[0, 184], [84, 148], [166, 168], [238, 136], [322, 176], [398, 148], [480, 164]], '#0d1730');
+    drawMountainLayer(ctx, [[0, 220], [78, 194], [150, 212], [224, 184], [304, 220], [380, 198], [480, 212]], '#132146');
+    ctx.fillStyle = '#121728';
+    ctx.beginPath();
+    ctx.moveTo(154, 320);
+    ctx.lineTo(326, 320);
+    ctx.lineTo(270, 156);
+    ctx.lineTo(210, 156);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = '#f1d57a';
+    for (var mark = 0; mark < 6; mark++) {
+      var y = 292 - mark * 24 + Math.floor((t * 0.08) % 2);
+      var w = 12 + mark * 4;
+      ctx.fillRect(240 - Math.floor(w / 2), y, w, 6);
+    }
+    ctx.fillStyle = '#0a1020';
+    ctx.fillRect(176, 136, 128, 8);
+    ctx.fillRect(190, 138, 10, 48);
+    ctx.fillRect(280, 138, 10, 48);
+    ctx.fillRect(204, 150, 72, 22);
+    var lightOn = (Math.floor(t / 18) % 2) === 0;
+    ctx.fillStyle = lightOn ? '#ff6c7e' : '#842034';
+    ctx.fillRect(214, 156, 8, 8);
+    ctx.fillRect(258, 156, 8, 8);
+    ctx.fillStyle = '#ffdc82';
+    ctx.fillRect(198, 176, 84, 3);
+    var travelerProgress = 1 - Math.min(1, t / 160);
+    var travelerY = 196 + travelerProgress * 84;
+    var travelerScale = 1.4 - travelerProgress * 0.7;
+    ctx.fillStyle = '#dce6ff';
+    ctx.fillRect(238, travelerY, Math.max(2, Math.floor(4 * travelerScale)), Math.max(4, Math.floor(6 * travelerScale)));
+    ctx.fillRect(236, travelerY + Math.floor(6 * travelerScale), Math.max(6, Math.floor(8 * travelerScale)), Math.max(4, Math.floor(5 * travelerScale)));
+    ctx.fillStyle = 'rgba(255,196,110,0.14)';
+    ctx.fillRect(206, 150, 68, 40);
+  }
+
+  function drawIntroMovie() {
+    var R = Game.Renderer;
+    var ctx = R.getContext();
+    var scene = getCurrentIntroScene();
+    var sceneProgress = scene.duration ? (introMovie.sceneTimer / scene.duration) : 0;
+    var time = introMovie.totalTimer;
+
+    if (scene.id === 'highway') {
+      drawIntroHighwayScene(ctx, time);
+    } else if (scene.id === 'signs') {
+      drawIntroSignsScene(ctx, time);
+    } else if (scene.id === 'tunnel') {
+      drawIntroTunnelScene(ctx, time);
+    } else {
+      drawIntroGateScene(ctx, time);
+    }
+
+    ctx.fillStyle = 'rgba(255,255,255,0.025)';
+    for (var scan = 0; scan < Game.Config.CANVAS_HEIGHT; scan += 3) {
+      ctx.fillRect(0, scan + ((time / 9) % 3), Game.Config.CANVAS_WIDTH, 1);
+    }
+
+    drawIntroLetterbox(ctx);
+    drawIntroCaption(scene, sceneProgress);
+
+    var pulse = 0.38 + Math.sin(time / 10) * 0.18;
+    R.drawRectAbsolute(18, 22, 122, 16, 'rgba(4,7,18,0.58)');
+    R.drawTextJP('Gunma Prelude', 26, 26, 'rgba(255,255,255,' + pulse.toFixed(3) + ')', 8);
+    R.drawTextJP((introMovie.sceneIndex + 1) + '/' + INTRO_MOVIE_SCENES.length, 132, 26, '#8fa3d4', 8, 'right');
+
+    var fadeAlpha = getIntroFadeAlpha(scene);
+    if (fadeAlpha > 0) {
+      R.fadeOverlay(fadeAlpha);
+    }
+  }
+
+  function getTitlePresentationState() {
+    var scene = getCurrentIntroScene();
+    return {
+      mode: introMovie.active ? 'intro_movie' : (introMovie.titleRevealTimer > 0 ? 'title_reveal' : 'title_menu'),
+      sceneId: scene ? scene.id : null,
+      sceneTitle: scene ? scene.title : null,
+      sceneIndex: introMovie.sceneIndex,
+      sceneTimer: introMovie.sceneTimer,
+      totalTimer: introMovie.totalTimer,
+      revealTimer: introMovie.titleRevealTimer
+    };
   }
 
   function drawPanelAccent(x, y, w, h, accent) {
@@ -274,6 +670,11 @@ Game.UI = (function() {
     var C = Game.Config;
     var ctx = R.getContext();
 
+    if (introMovie.active) {
+      drawIntroMovie();
+      return;
+    }
+
     R.clear('#060813');
     titleTimer++;
     titleSelectionVisual += (titleSelection - titleSelectionVisual) * 0.24;
@@ -366,6 +767,7 @@ Game.UI = (function() {
     // Menu selection
     blinkTimer++;
     var menuOptions = ['はじめから', 'つづきから', 'あいことば', '実績'];
+    var continueInfo = Game.Save && Game.Save.getSlotInfo ? Game.Save.getSlotInfo(1) : null;
     var hasSave = Game.Save && Game.Save.hasAnySave && Game.Save.hasAnySave();
     var menuX = 148;
     var menuY = 176;
@@ -393,14 +795,26 @@ Game.UI = (function() {
         R.drawTextJP(menuOptions[mi], 240, myy + 1, 'rgba(12,18,36,0.9)', 13, 'center');
       }
       R.drawTextJP(menuOptions[mi], 240, myy, col, selected ? 14 : 13, 'center');
+      if (mi === 1 && continueInfo) {
+        R.drawTextJP(clampText(continueInfo.mapLabel || continueInfo.mapName || '記録あり', 8), menuX + 156, myy + 4, selected ? '#dbe5ff' : '#7684ab', 7, 'right');
+      }
     }
 
     R.drawDialogBox(108, 278, 264, 18);
     drawPanelAccent(108, 278, 264, 18, '#6e7ea7');
-    R.drawTextJP(titleDescriptions[titleSelection] || '', 240, 282, '#dbe5ff', 8, 'center');
+    var titleDescription = titleDescriptions[titleSelection] || '';
+    if (titleSelection === 1 && continueInfo) {
+      titleDescription = (continueInfo.mapLabel || continueInfo.mapName || '不明') + ' から旅を再開する。';
+    } else if (titleSelection === 1 && !hasSave) {
+      titleDescription = 'まだ記録がない。前橋の牧師で旅を記す。';
+    }
+    R.drawTextJP(titleDescription, 240, 282, '#dbe5ff', 8, 'center');
     R.drawTextJP('矢印/WASD: 移動  Z/Enter: 決定  X/Esc: メニュー', 240, 306, '#616c8a', 8, 'center');
 
     R.drawText('v2.1', 430, 318, '#444', 10);
+    if (introMovie.titleRevealTimer > 0) {
+      R.fadeOverlay(introMovie.titleRevealTimer / INTRO_TITLE_FADE_FRAMES);
+    }
   }
 
   function drawHUD() {
@@ -446,7 +860,9 @@ Game.UI = (function() {
   function drawDialog(text) {
     var R = Game.Renderer;
     var npc = Game.NPC.getCurrentNpc();
-    var speakerName = npc ? npc.name : '';
+    var speakerName = Game.NPC.getCurrentNpcDisplayName
+      ? Game.NPC.getCurrentNpcDisplayName()
+      : (npc ? npc.name : '');
     var chapterInfo = getChapterInfo();
     var accent = chapterInfo.accent || Game.Config.COLORS.GOLD;
     text = typeof text === 'string' ? text : '';
@@ -527,10 +943,11 @@ Game.UI = (function() {
     R.drawTextJP(pd.hp + '/' + pd.maxHp, leftCardX + 42, cardY + 18, '#ffffff', 13);
     R.drawRectAbsolute(leftCardX + 10, cardY + 36, 118, 8, '#273349');
     R.drawRectAbsolute(leftCardX + 11, cardY + 37, Math.max(0, Math.floor(116 * (pd.hp / pd.maxHp))), 6, pd.hp / pd.maxHp > 0.3 ? C.COLORS.HP_GREEN : C.COLORS.HP_RED);
+    var moneyValueX = leftCardX + cardW - 12;
     R.drawTextJP('防御', leftCardX + 10, cardY + 50, '#8fb8ff', 10);
     R.drawTextJP('' + Game.Player.getDefense(), leftCardX + 46, cardY + 48, '#ffffff', 11);
-    R.drawTextJP('所持金', leftCardX + 88, cardY + 50, '#ffdd44', 10);
-    R.drawTextJP(pd.gold + 'G', leftCardX + 126, cardY + 48, '#ffdd44', 11, 'right');
+    R.drawTextJP('所持金', moneyValueX, cardY + 14, '#d8c163', 8, 'right');
+    R.drawTextJP(pd.gold + 'G', moneyValueX, cardY + 24, '#ffdd44', 10, 'right');
 
     drawInsetPanel(rightCardX, cardY, cardW, cardH, '補助情報', '#8fe0ff', '#8fe0ff');
     R.drawTextJP('進行 ' + currentJourney + '/' + totalJourney, rightCardX + 148, cardY + 6, '#9ed7ff', 8, 'right');
@@ -550,7 +967,7 @@ Game.UI = (function() {
     drawWrappedTextBlock(getCurrentObjective(), infoX + 52, infoY + 29, 18, 3, 9, '#dce6ff', 9);
 
     // Tabs
-    var tabs = ['もちもの', 'サイコロ', 'ぼうぐ', 'せってい'];
+    var tabs = ['もちもの', 'サイコロ', 'ぼうぐ', 'ぐるりん', 'せってい'];
     for (var t = 0; t < tabs.length; t++) {
       var activeTab = (fieldMenuState.section === t);
       var tx = tabX + t * tabW;
@@ -573,11 +990,14 @@ Game.UI = (function() {
         drawArmorMenuSection(R, C, pd);
         break;
       case 3:
+        drawBusSection(R, C);
+        break;
+      case 4:
         drawSettingsSection(R, C);
         break;
     }
 
-    var sectionHints = ['使う・捨てるで持ち物を整理', '役目に応じてサイコロを組み替える', '防具で守りを整える', '表示の見え方を切り替える'];
+    var sectionHints = ['使う・捨てるで持ち物を整理', '役目に応じてサイコロを組み替える', '防具で守りを整える', '見つけた停留所へ高速移動する', '表示の見え方を切り替える'];
     var footerText = fieldMenuState.messageTimer > 0 && fieldMenuState.message
       ? clampText(fieldMenuState.message, 40)
       : sectionHints[fieldMenuState.section];
@@ -737,7 +1157,7 @@ Game.UI = (function() {
     var panelH = 62;
     var settingsOptions = getSettingsOptions();
 
-    drawInsetPanel(listX, panelY, listW, panelH, '表示設定', C.COLORS.GOLD, C.COLORS.GOLD);
+    drawInsetPanel(listX, panelY, listW, panelH, '表示と演出', C.COLORS.GOLD, C.COLORS.GOLD);
     drawInsetPanel(detailX, panelY, detailW, panelH, '項目詳細', '#8fb8ff', '#8fb8ff');
 
     for (var i = 0; i < settingsOptions.length; i++) {
@@ -758,6 +1178,85 @@ Game.UI = (function() {
     drawWrappedTextBlock(current.description, detailX + 10, panelY + 32, 19, 2, 10, '#b7c3e3', 9);
   }
 
+  function drawBusSection(R, C) {
+    var destinations = getBusDestinations();
+    var listX = 70;
+    var detailX = 222;
+    var panelY = 222;
+    var listW = 142;
+    var detailW = 186;
+    var panelH = 62;
+
+    drawInsetPanel(listX, panelY, listW, panelH, 'ぐるりん路線', C.COLORS.GOLD, C.COLORS.GOLD);
+    drawInsetPanel(detailX, panelY, detailW, panelH, '案内', '#8fe0ff', '#8fe0ff');
+
+    if (!isBusUnlocked()) {
+      R.drawTextJP('（未開通）', listX + 36, panelY + 26, '#888', 11);
+      R.drawTextJP('中ボス級の怪異を越えると、', detailX + 10, panelY + 18, '#dbe3ff', 10);
+      R.drawTextJP('ぐるりんの回送網が開く。', detailX + 10, panelY + 30, '#dbe3ff', 10);
+      return;
+    }
+
+    if (!destinations.length) {
+      R.drawTextJP('（停留所なし）', listX + 28, panelY + 26, '#888', 11);
+      R.drawTextJP('一度訪れた町が停留所になる。', detailX + 10, panelY + 24, '#dbe3ff', 10);
+      return;
+    }
+
+    for (var i = 0; i < Math.min(4, destinations.length); i++) {
+      var destination = destinations[i];
+      var selected = (i === fieldMenuState.busIndex);
+      var lineY = panelY + 18 + i * 11;
+      if (selected) {
+        R.drawRectAbsolute(listX + 6, lineY - 1, listW - 12, 11, 'rgba(255,204,0,0.12)');
+      }
+      R.drawTextJP((selected ? '▶ ' : '  ') + clampText(destination.label, 9), listX + 10, lineY, selected ? C.COLORS.GOLD : '#fff', 10);
+    }
+
+    var current = destinations[fieldMenuState.busIndex];
+    if (!current) return;
+    R.drawTextJP(current.label, detailX + 10, panelY + 18, '#ffffff', 11);
+    R.drawTextJP('Zで乗る / Xで閉じる', detailX + 10, panelY + 30, '#8fe0ff', 9);
+    R.drawTextJP('ぐるりんは高崎専用ではない。', detailX + 10, panelY + 42, '#dbe3ff', 9);
+    R.drawTextJP('見つけた停留所へ一気に跳ぶ。', detailX + 10, panelY + 52, '#dbe3ff', 9);
+  }
+
+  function drawSkillLearn() {
+    if (!skillLearnState.active || !skillLearnState.skillId) return;
+    var R = Game.Renderer;
+    var C = Game.Config;
+    var skill = Game.Skills && Game.Skills.get ? Game.Skills.get(skillLearnState.skillId) : null;
+    var knownSkills = Game.Player && Game.Player.getSkills ? Game.Player.getSkills() : [];
+    var replaceMode = knownSkills.length >= 6;
+
+    R.drawRectAbsolute(0, 0, C.CANVAS_WIDTH, C.CANVAS_HEIGHT, 'rgba(4, 6, 18, 0.58)');
+    R.drawDialogBox(74, 56, 332, 186);
+    drawPanelAccent(74, 56, 332, 186, skill ? skill.color : '#cdb7ff');
+    R.drawTextJP('とくぎ習得', 92, 68, skill ? skill.color : '#cdb7ff', 12);
+    if (skill) {
+      R.drawTextJP(skill.name, 92, 92, '#ffffff', 14);
+      drawWrappedTextBlock(skill.desc, 92, 112, 24, 3, 12, '#dce6ff', 10);
+    }
+
+    if (!replaceMode) {
+      R.drawTextJP('Z: おぼえる', 92, 186, '#ffd66b', 10);
+      R.drawTextJP('X: みおくる', 238, 186, '#9aa7c9', 10);
+      return;
+    }
+
+    R.drawTextJP('6つまでしか持てない。置き換える技を選ぶ。', 92, 158, '#ffcf9d', 9);
+    for (var i = 0; i < knownSkills.length; i++) {
+      var known = Game.Skills.get(knownSkills[i]);
+      var selected = (i === skillLearnState.replaceIndex);
+      var rowY = 174 + i * 10;
+      if (selected) {
+        R.drawRectAbsolute(90, rowY - 1, 220, 9, 'rgba(255,204,0,0.10)');
+      }
+      R.drawTextJP((selected ? '▶ ' : '  ') + (known ? known.name : knownSkills[i]), 94, rowY, selected ? C.COLORS.GOLD : '#dce6ff', 8);
+    }
+    R.drawTextJP('Z: 入れ替え  X: 覚えない', 92, 230, '#9aa7c9', 9);
+  }
+
   function clampFieldMenuSelection() {
     var pd = Game.Player.getData();
     var inventory = pd.inventory;
@@ -775,6 +1274,13 @@ Game.UI = (function() {
     if (fieldMenuState.diceSlotIndex < 0) fieldMenuState.diceSlotIndex = 0;
     if (fieldMenuState.armorIndex >= armorOptions.length) fieldMenuState.armorIndex = armorOptions.length - 1;
     if (fieldMenuState.armorIndex < 0) fieldMenuState.armorIndex = 0;
+    var busDestinations = getBusDestinations();
+    if (busDestinations.length <= 0) {
+      fieldMenuState.busIndex = 0;
+    } else {
+      if (fieldMenuState.busIndex >= busDestinations.length) fieldMenuState.busIndex = busDestinations.length - 1;
+      if (fieldMenuState.busIndex < 0) fieldMenuState.busIndex = 0;
+    }
     if (fieldMenuState.settingIndex >= settingsOptions.length) fieldMenuState.settingIndex = settingsOptions.length - 1;
     if (fieldMenuState.settingIndex < 0) fieldMenuState.settingIndex = 0;
   }
@@ -815,7 +1321,47 @@ Game.UI = (function() {
     return options;
   }
 
+  function getBusDestinationCatalog() {
+    return [
+      { mapId: 'maebashi', label: '前橋', spawnX: 14, spawnY: 8 },
+      { mapId: 'takasaki', label: '高崎だるま街', spawnX: 14, spawnY: 8 },
+      { mapId: 'shimonita', label: '下仁田宿', spawnX: 14, spawnY: 10 },
+      { mapId: 'kusatsu', label: '草津温泉', spawnX: 14, spawnY: 8 },
+      { mapId: 'ikaho', label: '伊香保石段', spawnX: 14, spawnY: 10 },
+      { mapId: 'tomioka', label: '富岡製糸場', spawnX: 14, spawnY: 8 },
+      { mapId: 'tsumagoi', label: '嬬恋高原', spawnX: 14, spawnY: 8 },
+      { mapId: 'tamura', label: '田村村', spawnX: 14, spawnY: 16 },
+      { mapId: 'forest', label: '赤城の森', spawnX: 10, spawnY: 10 },
+      { mapId: 'konuma', label: '小沼', spawnX: 14, spawnY: 10 },
+      { mapId: 'onuma', label: '大沼', spawnX: 14, spawnY: 10 },
+      { mapId: 'akagi_ranch', label: '赤城ランチ', spawnX: 14, spawnY: 16 },
+      { mapId: 'akagi_shrine', label: '赤城神社', spawnX: 14, spawnY: 16 },
+      { mapId: 'shirane_trail', label: '白根山道', spawnX: 14, spawnY: 18 },
+      { mapId: 'kusatsu_deep', label: '湯畑深部', spawnX: 14, spawnY: 18 },
+      { mapId: 'jomo_gakuen', label: '上毛学園', spawnX: 14, spawnY: 18 },
+      { mapId: 'tanigawa_tunnel', label: '谷川トンネル', spawnX: 14, spawnY: 18 },
+      { mapId: 'haruna_lake', label: '榛名湖', spawnX: 14, spawnY: 18 },
+      { mapId: 'oze_marsh', label: '尾瀬湿原', spawnX: 14, spawnY: 18 },
+      { mapId: 'minakami_valley', label: '水上峡谷', spawnX: 14, spawnY: 18 },
+      { mapId: 'border_tunnel', label: '国境トンネル', spawnX: 14, spawnY: 18 }
+    ];
+  }
+
+  function isBusUnlocked() {
+    return !!(Game.Story && Game.Story.hasFlag && Game.Story.hasFlag('gururin_network_unlocked'));
+  }
+
+  function getBusDestinations() {
+    var catalog = getBusDestinationCatalog();
+    if (!isBusUnlocked()) return [];
+    return catalog.filter(function(destination) {
+      return Game.Story && Game.Story.hasFlag && Game.Story.hasFlag('visited_' + destination.mapId);
+    });
+  }
+
   function getSettingsOptions() {
+    var eventTextSpeed = getEventTextSpeedChoice();
+    var battleDialogueSpeed = getBattleDialogueSpeedChoice();
     return [
       {
         id: 'showJourneyBadge',
@@ -824,12 +1370,60 @@ Game.UI = (function() {
         valueLabel: uiSettings.showJourneyBadge ? 'ON' : 'OFF',
         valueColor: uiSettings.showJourneyBadge ? '#8fe08f' : '#ff9b7d',
         description: '探索HUDの上部にある進行バッジの表示を切り替える。'
+      },
+      {
+        id: 'eventTextSpeed',
+        label: '文字速度',
+        value: eventTextSpeed.id,
+        valueLabel: eventTextSpeed.label,
+        valueColor: eventTextSpeed.color,
+        description: 'オープニングや章イベントの文字表示速度を切り替える。'
+      },
+      {
+        id: 'battleDialogueSpeed',
+        label: '戦闘会話',
+        value: battleDialogueSpeed.id,
+        valueLabel: battleDialogueSpeed.label,
+        valueColor: battleDialogueSpeed.color,
+        description: 'ボス演出や戦闘中の語りの表示テンポを切り替える。'
       }
     ];
   }
 
+  function cycleEventTextSpeed(dir) {
+    var current = getEventTextSpeedChoice();
+    var currentIndex = 0;
+    for (var i = 0; i < EVENT_TEXT_SPEED_CHOICES.length; i++) {
+      if (EVENT_TEXT_SPEED_CHOICES[i].id === current.id) {
+        currentIndex = i;
+        break;
+      }
+    }
+    var nextIndex = (currentIndex + dir + EVENT_TEXT_SPEED_CHOICES.length) % EVENT_TEXT_SPEED_CHOICES.length;
+    var nextChoice = EVENT_TEXT_SPEED_CHOICES[nextIndex];
+    uiSettings.eventTextSpeed = nextChoice.id;
+    saveUiSettings();
+    return nextChoice;
+  }
+
+  function cycleBattleDialogueSpeed(dir) {
+    var current = getBattleDialogueSpeedChoice();
+    var currentIndex = 0;
+    for (var i = 0; i < BATTLE_DIALOGUE_SPEED_CHOICES.length; i++) {
+      if (BATTLE_DIALOGUE_SPEED_CHOICES[i].id === current.id) {
+        currentIndex = i;
+        break;
+      }
+    }
+    var nextIndex = (currentIndex + dir + BATTLE_DIALOGUE_SPEED_CHOICES.length) % BATTLE_DIALOGUE_SPEED_CHOICES.length;
+    var nextChoice = BATTLE_DIALOGUE_SPEED_CHOICES[nextIndex];
+    uiSettings.battleDialogueSpeed = nextChoice.id;
+    saveUiSettings();
+    return nextChoice;
+  }
+
   function changeFieldMenuSection(dir) {
-    fieldMenuState.section = (fieldMenuState.section + dir + 4) % 4;
+    fieldMenuState.section = (fieldMenuState.section + dir + 5) % 5;
     fieldMenuState.commandActive = false;
     fieldMenuState.commandIndex = 0;
     fieldMenuState.diceEquipActive = false;
@@ -844,6 +1438,7 @@ Game.UI = (function() {
     fieldMenuState.commandIndex = 0;
     fieldMenuState.diceEquipActive = false;
     fieldMenuState.diceEquipIndex = 0;
+    fieldMenuState.busIndex = 0;
     fieldMenuState.settingIndex = 0;
     fieldMenuState.message = '';
     fieldMenuState.messageTimer = 0;
@@ -881,6 +1476,9 @@ Game.UI = (function() {
       return updateArmorMenu();
     }
     if (fieldMenuState.section === 3) {
+      return updateBusMenu();
+    }
+    if (fieldMenuState.section === 4) {
       return updateSettingsMenu();
     }
 
@@ -1047,6 +1645,35 @@ Game.UI = (function() {
     return null;
   }
 
+  function updateBusMenu() {
+    var destinations = getBusDestinations();
+    if (Game.Input.isPressed('cancel')) {
+      return { close: true };
+    }
+    if (!destinations.length) return null;
+
+    if (Game.Input.isPressed('up')) {
+      fieldMenuState.busIndex = (fieldMenuState.busIndex - 1 + destinations.length) % destinations.length;
+      Game.Audio.playSfx('confirm');
+    }
+    if (Game.Input.isPressed('down')) {
+      fieldMenuState.busIndex = (fieldMenuState.busIndex + 1) % destinations.length;
+      Game.Audio.playSfx('confirm');
+    }
+    if (!Game.Input.isPressed('confirm')) return null;
+
+    var selected = destinations[fieldMenuState.busIndex];
+    if (!selected) return null;
+    return {
+      warp: {
+        mapId: selected.mapId,
+        spawnX: selected.spawnX,
+        spawnY: selected.spawnY,
+        label: selected.label
+      }
+    };
+  }
+
   function updateSettingsMenu() {
     var settingsOptions = getSettingsOptions();
     if (Game.Input.isPressed('up')) {
@@ -1071,19 +1698,42 @@ Game.UI = (function() {
       saveUiSettings();
       setFieldMenuMessage('進行バッジを' + (uiSettings.showJourneyBadge ? '表示' : '非表示') + 'にした。', 45);
       Game.Audio.playSfx('confirm');
+    } else if (current.id === 'eventTextSpeed') {
+      var direction = Game.Input.isPressed('left') ? -1 : 1;
+      var nextChoice = cycleEventTextSpeed(direction);
+      setFieldMenuMessage('文字速度を「' + nextChoice.label + '」にした。', 45);
+      Game.Audio.playSfx('confirm');
+    } else if (current.id === 'battleDialogueSpeed') {
+      var battleDirection = Game.Input.isPressed('left') ? -1 : 1;
+      var nextBattleChoice = cycleBattleDialogueSpeed(battleDirection);
+      setFieldMenuMessage('戦闘会話を「' + nextBattleChoice.label + '」にした。', 45);
+      Game.Audio.playSfx('confirm');
     }
     return null;
   }
 
   function drawGameOver() {
     var R = Game.Renderer;
+    var continueInfo = Game.Save && Game.Save.getSlotInfo ? Game.Save.getSlotInfo(1) : null;
     R.clear('#0a0000');
     R.drawTextJP('GAME OVER', 155, 120, '#cc0000', 28);
     R.drawTextJP('群馬県に飲み込まれた...', 140, 170, '#888', 14);
 
+    R.drawDialogBox(74, 188, 332, 56);
+    drawPanelAccent(74, 188, 332, 56, '#8fe0ff');
+    R.drawTextJP('戻り方', 88, 194, '#8fe0ff', 10);
+    if (continueInfo) {
+      var continueLabel = (continueInfo.mapLabel || continueInfo.mapName || '不明') + '  HP ' + continueInfo.hp + '/' + continueInfo.maxHp;
+      R.drawTextJP('つづきから用: ' + clampText(continueLabel, 24), 88, 210, '#ffffff', 10);
+      R.drawTextJP('同じPCなら「つづきから」。別のPCなら牧師のあいことば。', 88, 224, '#aeb8d4', 8);
+    } else {
+      R.drawTextJP('まだ記録がない。前橋の牧師で記録帳を開ける。', 88, 210, '#ffffff', 10);
+      R.drawTextJP('持ち運ぶなら、あいことばを必ずメモすること。', 88, 224, '#aeb8d4', 8);
+    }
+
     blinkTimer++;
     if (blinkTimer % 60 < 40) {
-      R.drawTextJP('Zキーでタイトルに戻る', 150, 230, '#fff', 14);
+      R.drawTextJP('Zキーでタイトルに戻る', 150, 258, '#fff', 14);
     }
   }
 
@@ -1247,6 +1897,13 @@ Game.UI = (function() {
   // Title menu input
   function getTitleSelection() { return titleSelection; }
   function updateTitleMenu() {
+    if (titleAchievementListOpen) {
+      if (Game.Input.isPressed('confirm') || Game.Input.isPressed('cancel')) {
+        titleAchievementListOpen = false;
+        Game.Audio.playSfx('cancel');
+      }
+      return;
+    }
     if (Game.Input.isPressed('up')) {
       titleSelection = (titleSelection - 1 + 4) % 4;
       titleHighlightFlash = 8;
@@ -1257,6 +1914,65 @@ Game.UI = (function() {
       titleHighlightFlash = 8;
       Game.Audio.playSfx('confirm');
     }
+  }
+
+  function isAchievementListOpen() {
+    return titleAchievementListOpen;
+  }
+
+  function openAchievementList() {
+    titleAchievementListOpen = true;
+  }
+
+  function closeAchievementList() {
+    titleAchievementListOpen = false;
+  }
+
+  function openSkillLearn(skillId) {
+    skillLearnState.active = true;
+    skillLearnState.skillId = skillId || null;
+    skillLearnState.replaceIndex = 0;
+  }
+
+  function closeSkillLearn() {
+    skillLearnState.active = false;
+    skillLearnState.skillId = null;
+    skillLearnState.replaceIndex = 0;
+  }
+
+  function updateSkillLearn() {
+    if (!skillLearnState.active || !skillLearnState.skillId) return null;
+    var knownSkills = Game.Player && Game.Player.getSkills ? Game.Player.getSkills() : [];
+    var replaceMode = knownSkills.length >= 6;
+
+    if (replaceMode) {
+      if (Game.Input.isPressed('up')) {
+        skillLearnState.replaceIndex = (skillLearnState.replaceIndex - 1 + knownSkills.length) % knownSkills.length;
+        Game.Audio.playSfx('confirm');
+      }
+      if (Game.Input.isPressed('down')) {
+        skillLearnState.replaceIndex = (skillLearnState.replaceIndex + 1) % knownSkills.length;
+        Game.Audio.playSfx('confirm');
+      }
+    }
+
+    if (Game.Input.isPressed('cancel')) {
+      var skippedSkillId = skillLearnState.skillId;
+      closeSkillLearn();
+      Game.Audio.playSfx('cancel');
+      return { action: 'skip', skillId: skippedSkillId };
+    }
+
+    if (!Game.Input.isPressed('confirm')) return null;
+
+    var payload = {
+      action: 'learn',
+      skillId: skillLearnState.skillId,
+      replaceId: replaceMode ? knownSkills[skillLearnState.replaceIndex] : null
+    };
+    closeSkillLearn();
+    Game.Audio.playSfx('item');
+    return payload;
   }
 
   function toggleMinimap() {
@@ -1272,15 +1988,34 @@ Game.UI = (function() {
     saveUiSettings();
   }
 
+  function getEventTextSpeedFrames() {
+    return getEventTextSpeedChoice().frames;
+  }
+
+  function getEventTextSpeedLabel() {
+    return getEventTextSpeedChoice().label;
+  }
+
+  function getBattleDialogueSpeedFrames() {
+    return getBattleDialogueSpeedChoice().frames;
+  }
+
+  function getBattleDialogueSpeedLabel() {
+    return getBattleDialogueSpeedChoice().label;
+  }
+
   function getFieldMenuDebugState() {
     return {
       section: fieldMenuState.section,
-      settingIndex: fieldMenuState.settingIndex
+      busIndex: fieldMenuState.busIndex,
+      settingIndex: fieldMenuState.settingIndex,
+      eventTextSpeed: uiSettings.eventTextSpeed,
+      battleDialogueSpeed: uiSettings.battleDialogueSpeed
     };
   }
 
   function setFieldMenuSectionForDebug(section) {
-    fieldMenuState.section = Math.max(0, Math.min(3, section | 0));
+    fieldMenuState.section = Math.max(0, Math.min(4, section | 0));
     clampFieldMenuSelection();
   }
 
@@ -1299,14 +2034,28 @@ Game.UI = (function() {
     showAreaBanner: showAreaBanner,
     updateAreaBanner: updateAreaBanner,
     drawAreaBanner: drawAreaBanner,
+    startIntroMovie: startIntroMovie,
+    updateIntroMovie: updateIntroMovie,
+    isTitleIntroLocked: isTitleIntroLocked,
+    getTitlePresentationState: getTitlePresentationState,
     getTitleSelection: getTitleSelection,
     updateTitleMenu: updateTitleMenu,
+    isAchievementListOpen: isAchievementListOpen,
+    openAchievementList: openAchievementList,
+    closeAchievementList: closeAchievementList,
     toggleMinimap: toggleMinimap,
     openFieldMenu: openFieldMenu,
     updateFieldMenu: updateFieldMenu,
+    openSkillLearn: openSkillLearn,
+    updateSkillLearn: updateSkillLearn,
+    drawSkillLearn: drawSkillLearn,
     paginateDialogText: paginateDialogText,
     isJourneyBadgeEnabled: isJourneyBadgeEnabled,
     setJourneyBadgeEnabled: setJourneyBadgeEnabled,
+    getEventTextSpeedFrames: getEventTextSpeedFrames,
+    getEventTextSpeedLabel: getEventTextSpeedLabel,
+    getBattleDialogueSpeedFrames: getBattleDialogueSpeedFrames,
+    getBattleDialogueSpeedLabel: getBattleDialogueSpeedLabel,
     getFieldMenuDebugState: getFieldMenuDebugState,
     setFieldMenuSectionForDebug: setFieldMenuSectionForDebug
   };

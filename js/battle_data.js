@@ -3,7 +3,7 @@ Game.BattleData = (function() {
   var enemies = {
     ruined_checkpoint: {
       name: '朽ちた関所',
-      hp: 15, maxHp: 15,
+      hp: 45, maxHp: 45,
       attack: 0, defense: 0, goldReward: 0,
       sprite: [
         [0,0,0,1,1,1,1,1,1,1,1,1,0,0,0,0],
@@ -690,8 +690,123 @@ Game.BattleData = (function() {
       boss_id: 'ruined_checkpoint',
       passive: {
         id: 'sturdy_gate',
-        description: '無言の壁。ダイスを振り、関所に重ねて突破のエネルギーを注ぐ必要がある。',
+        description: '止められた旅人たちの残響が門の形を保っている。ダイスを重ねて境界を越えるしかない。',
         apply: function(enemy) {}
+      },
+      phase_change: {
+        condition: function(enemy) {
+          return enemy.hp <= enemy.maxHp * 0.34 && !enemy._memoryCracked;
+        },
+        action: function(enemy) {
+          enemy._memoryCracked = true;
+          return '瓦礫の奥で、通れなかった旅人たちの声がきしんだ。';
+        }
+      },
+      dialogue: {
+        phase_change: [
+          { speaker: '主人公', text: 'ただの瓦礫じゃない。止められた気配が門の形を保ってる。' },
+          { speaker: 'アカギ', text: '壊すな。越えるための数を、あいつに重ねろ。' }
+        ]
+      }
+    },
+
+    darumaMaster: {
+      boss_id: 'darumaMaster',
+      passive: {
+        id: 'hollow_vow',
+        description: '欠けた願いが片目のまま脈打ち、満ちない祈りを見返してくる。',
+        apply: function(enemy, turnCount, playerEffects, enemyEffects, runtime) {
+          if (runtime && runtime.ritualState && runtime.ritualState.hpZeroReached && !runtime.ritualState.eyeRepaired) {
+            return '欠けた願いが、目のない窪みでまだ息をしている。';
+          }
+          return null;
+        }
+      },
+      phase_change: {
+        condition: function(enemy) {
+          return enemy.hp <= enemy.maxHp * 0.5 && !enemy._hollowOpened;
+        },
+        action: function(enemy) {
+          enemy._hollowOpened = true;
+          enemy.attack += 3;
+          return '欠け目のだるまが、片目だけでこちらを見据えた。';
+        }
+      },
+      special_move: {
+        id: 'vacant_glare',
+        name: '空願の凝視',
+        description: '空っぽの願いを突き返す視線で、旅人の芯を揺さぶる。',
+        trigger: function(turnCount, enemy) {
+          return enemy.hp > 0 && (turnCount === 2 || turnCount === 5);
+        },
+        damage: function(enemy) {
+          return Math.floor(enemy.attack * 1.45);
+        },
+        self_stun: 1,
+        message: '欠け目のだるまが、願いの抜け殻を押し返してきた！'
+      },
+      sfx: { phase_change: 'reality_glitch', special_move: 'dice_roll_heavy' },
+      dialogue: {
+        phase_change: [
+          { speaker: '欠け目のだるま', text: 'ミル…まだ片方しか、見えぬ。' },
+          { speaker: 'アカギ', text: '目を逸らすな。空洞で値踏みされるぞ。' }
+        ],
+        special_move: [
+          { speaker: '欠け目のだるま', text: '願イノ殻…返ソウ。' },
+          { speaker: '主人公', text: '胸の奥の空っぽを、見透かされた…！' }
+        ],
+        victory: [
+          { speaker: '欠け目のだるま', text: '…見エタ。これで、待テる。' },
+          { speaker: '主人公', text: '目を入れてやっと、願いが閉じたんだな。' }
+        ]
+      }
+    },
+
+    threadMaiden: {
+      boss_id: 'threadMaiden',
+      passive: {
+        id: 'loom_tension',
+        description: '細い目は糸の節をほどくが、高い目は逆に絡まりを締めてしまう。',
+        apply: function(enemy, turnCount, playerEffects, enemyEffects, runtime) {
+          if (!runtime) return null;
+          if (runtime.ritualState.lastLowDiceHit) {
+            return '細い目が糸目をほぐしている。今の手つきだ。';
+          }
+          if (runtime.ritualHintState >= 2) {
+            return '太い目ほど、逆に糸が食い込んでいく。';
+          }
+          return null;
+        }
+      },
+      special_move: {
+        id: 'snare_reel',
+        name: '絡糸返し',
+        description: '乱暴な手繰りに応じ、糸束がこちらの腕へ食い込んでくる。',
+        trigger: function(turnCount) {
+          return turnCount === 3 || turnCount === 6 || turnCount === 9;
+        },
+        damage: function(enemy) {
+          return Math.floor(enemy.attack * 1.2);
+        },
+        effect: function(playerEffects, addEffectFn, enemyEffects, runtime, enemy) {
+          var maxTangle = enemy && enemy.ritualParams ? (enemy.ritualParams.maxTangle || 12) : 12;
+          if (runtime) {
+            runtime.ritualGauge = Math.min(maxTangle + 3, runtime.ritualGauge + 2);
+          }
+          addEffectFn(playerEffects, 'slow', 2, 0);
+        },
+        message: '絡糸の機女が、引いたぶんだけ糸を締め返した！'
+      },
+      sfx: { special_move: 'train_echo' },
+      dialogue: {
+        special_move: [
+          { speaker: '絡糸の機女', text: '引クナ…結ベル速サデ、触レヨ。' },
+          { speaker: '主人公', text: '強く引くほど、逆に絡まりが増える…！' }
+        ],
+        victory: [
+          { speaker: '絡糸の機女', text: '…やっと、止マレる。' },
+          { speaker: '主人公', text: 'ほどくって、切ることじゃなかったんだな。' }
+        ]
       }
     },
 

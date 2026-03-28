@@ -13,6 +13,8 @@ Game.Event = (function() {
   var onComplete = null;
   var textComplete = false;
   var autoAdvanceTimer = 0;
+  var MAX_EVENT_CHARS_PER_LINE = 23;
+  var TRAILING_PUNCTUATION = '、。！？…）)]」』】';
 
   // Scene format:
   // {
@@ -38,7 +40,7 @@ Game.Event = (function() {
           '深夜の関越道。ワゴン車は、群馬へ向かっていた。',
           'くだらない笑い声と、見慣れた横顔だけが、暗闇の中で揺れている。'
         ],
-        autoAdvance: 30
+        autoAdvance: 150
       },
       {
         bg: '#0b0f1b',
@@ -48,7 +50,7 @@ Game.Event = (function() {
           'サトウ、フルヤ、ヤマカワ――',
           '名前だけが、ヘッドライトの残像みたいに浮かんでは消えていく。'
         ],
-        autoAdvance: 30
+        autoAdvance: 150
       },
       {
         bg: '#101420',
@@ -60,7 +62,7 @@ Game.Event = (function() {
           '県境を越えた瞬間、景色がノイズ混じりに裂けた。',
           '白線もガードレールも、群馬の闇に飲み込まれていく。'
         ],
-        autoAdvance: 34
+        autoAdvance: 165
       },
       {
         bg: '#0b1510',
@@ -70,7 +72,7 @@ Game.Event = (function() {
           '気がつくと、朽ちた森の地面にひとりで倒れていた。',
           '空には、鶴の形に裂けた赤いひびだけが残っている。'
         ],
-        autoAdvance: 34
+        autoAdvance: 165
       },
       {
         bg: '#161326',
@@ -79,10 +81,253 @@ Game.Event = (function() {
         speakerColor: '#88aaff',
         lines: [
           '……ここは前橋？ どうして、ひとりなんだ。',
+          '喉の奥に、知らない地名ばかりが引っかかっている。'
+        ],
+        effect: 'fade',
+        autoAdvance: 180
+      },
+      {
+        bg: '#101726',
+        motion: 'dawn_frontier',
+        speaker: null,
+        lines: [
+          '道の向こうで、青い上着の男がじっとこちらを見ていた。',
           '群馬の誇りと悲哀を辿る旅が、静かに始まる。'
         ],
         effect: 'fade',
-        autoAdvance: 48
+        autoAdvance: 210
+      }
+    ],
+
+    special_dice_intro: [
+      {
+        bg: '#17121f',
+        speaker: null,
+        lines: [
+          '手のひらのだるまサイコロが、白い熱を帯びて脈打った。',
+          'ただ目が強いだけじゃない。',
+          'この土地の願い癖そのものが、出目に染みついている。'
+        ],
+        effect: 'fade'
+      },
+      {
+        bg: '#141824',
+        speaker: 'アカギ',
+        speakerColor: '#44aaff',
+        lines: [
+          'それが特殊サイコロだ。',
+          '群馬の誇りや未練が、道具のかたちで固まったもんだと思え。',
+          '強いぶん癖も強い。土地の気分に合わせて持ち替えろ。'
+        ]
+      },
+      {
+        bg: '#100f1c',
+        speaker: '主人公',
+        speakerColor: '#88aaff',
+        lines: [
+          '武器じゃなく、場所の性格を借りる感じか……。',
+          'なら数を増やすより、今の枠で何を持つかのほうが大事だ。'
+        ]
+      }
+    ],
+
+    gururin: [
+      {
+        bg: '#0f1420',
+        motion: 'gururin_stop',
+        speaker: null,
+        lines: [
+          '高崎の交差点に、緑の車体が音もなく滑り込んできた。',
+          'フロントガラスの行き先表示には、丸い文字で「ぐるりん」と浮かんでいる。'
+        ],
+        effect: 'fade'
+      },
+      {
+        bg: '#111926',
+        motion: 'gururin_loop',
+        speaker: '車内アナウンス',
+        speakerColor: '#8fd7a1',
+        lines: [
+          'まもなく、もてなし広場前。高崎中心市街地を巡回します。',
+          '外へ向かうように見えて、路線図は町の内側を円でなぞるばかりだった。'
+        ]
+      },
+      {
+        bg: '#12101d',
+        motion: 'gururin_loop',
+        speaker: '主人公',
+        speakerColor: '#88aaff',
+        lines: [
+          '逃げ道かと思ったのに、ここでも円を描くのか……。',
+          '群馬は、出ていく道まで土地の記憶に巻き取ってくる。'
+        ]
+      },
+      {
+        bg: '#0d1320',
+        motion: 'gururin_stop',
+        speaker: null,
+        lines: [
+          'ぐるりんは交差点をひと回りすると、同じ停留所へ静かに戻ってきた。',
+          '閉まりかけた扉のすきまから、町の鼓動みたいな灯だけが漏れている。'
+        ],
+        effect: 'fade'
+      }
+    ],
+
+    arrival_takasaki_auto: [
+      {
+        bg: '#111726',
+        motion: 'akagi_approach',
+        speaker: null,
+        lines: [
+          '高崎の路地へ足を踏み入れた瞬間、青い上着が横切った。',
+          'アカギは二、三歩先で振り返り、だるま棚のほうへ顎をしゃくる。'
+        ]
+      },
+      {
+        bg: '#151120',
+        speaker: 'アカギ',
+        speakerColor: '#44aaff',
+        lines: [
+          'この町は願掛けの抜け殻が多い。しゃべる前に、先に見ろ。',
+          '赤い殻が多いほど、空っぽの祈りも多いってことだ。'
+        ]
+      }
+    ],
+
+    arrival_shimonita_auto: [
+      {
+        bg: '#151216',
+        motion: 'akagi_approach',
+        speaker: null,
+        lines: [
+          '山あいの荷札を眺めていると、アカギが無言で木箱を蹴って止めた。',
+          '箱の継ぎ目から、積み残された誇りみたいな息が白く漏れる。'
+        ]
+      },
+      {
+        bg: '#131823',
+        speaker: 'アカギ',
+        speakerColor: '#44aaff',
+        lines: [
+          'ここは化け物が先にいたわけじゃない。',
+          '止まった荷が、怒りより先に未練になった土地だ。'
+        ]
+      }
+    ],
+
+    arrival_tomioka_auto: [
+      {
+        bg: '#10131d',
+        motion: 'akagi_approach',
+        speaker: null,
+        lines: [
+          '製糸場の影へ入ると、アカギが前へ出て手をひらいた。',
+          '止まらない糸の音だけが、先へ行くなと細く鳴っている。'
+        ]
+      },
+      {
+        bg: '#17121e',
+        speaker: 'アカギ',
+        speakerColor: '#44aaff',
+        lines: [
+          'ここは切るより、ほどく土地だ。',
+          '強く引いたら負ける。手つきで覚えろ。'
+        ]
+      }
+    ],
+
+    arrival_kusatsu_auto: [
+      {
+        bg: '#11181b',
+        motion: 'akagi_approach',
+        speaker: null,
+        lines: [
+          '湯気の切れ目へ踏み込んだ瞬間、白い幕の向こうからアカギが現れた。',
+          '長い板を肩に担いだまま、湯畑の縁を指でとんとん叩いてくる。'
+        ]
+      },
+      {
+        bg: '#16111e',
+        speaker: 'アカギ',
+        speakerColor: '#44aaff',
+        lines: [
+          'ここは熱さを力で越える土地じゃない。少しずつ冷まして、飲み込め。',
+          '急いだ奴から、湯気の向こうへ置いていかれる。'
+        ]
+      }
+    ],
+
+    arrival_ikaho_auto: [
+      {
+        bg: '#16131a',
+        motion: 'akagi_approach',
+        speaker: null,
+        lines: [
+          '石段を見上げたところで、アカギが一段上から靴音を鳴らした。',
+          '追い抜かせる気のない歩幅で、先の暗がりだけを顎で示している。'
+        ]
+      },
+      {
+        bg: '#18121a',
+        speaker: 'アカギ',
+        speakerColor: '#44aaff',
+        lines: [
+          'この町は上へ行くほど息が切れる。見えてる段数より、心のほうが先に試される。',
+          '焦って駆けるな。石は急いだ足をちゃんと覚える。'
+        ]
+      }
+    ],
+
+    arrival_akagi_ranch_auto: [
+      {
+        bg: '#10171a',
+        motion: 'akagi_approach',
+        speaker: null,
+        lines: [
+          '牧柵の影が伸びたあたりで、アカギが前へ回り込んできた。',
+          '山の風だけが強く、言葉より先にこの先の冷たさを知らせてくる。'
+        ]
+      },
+      {
+        bg: '#14131e',
+        speaker: 'アカギ',
+        speakerColor: '#44aaff',
+        lines: [
+          '赤城の奥は、景色が広いほど逃げ場がない。',
+          '足を止めたら飲まれる。見るなら遠くより、まず足元だ。'
+        ]
+      }
+    ],
+
+    gururin_network: [
+      {
+        bg: '#0f1522',
+        motion: 'gururin_stop',
+        speaker: null,
+        lines: [
+          '製糸場の外で、見覚えのある緑の車体が静かに停まっていた。',
+          '行き先表示は高崎ではなく、群馬じゅうの地名を順番に滲ませている。'
+        ]
+      },
+      {
+        bg: '#111926',
+        motion: 'gururin_loop',
+        speaker: '車内アナウンス',
+        speakerColor: '#8fd7a1',
+        lines: [
+          'ぐるりん回送網、開通しました。',
+          '一度たどった停留所へ、循環便が順次お連れします。'
+        ]
+      },
+      {
+        bg: '#13131f',
+        speaker: '主人公',
+        speakerColor: '#88aaff',
+        lines: [
+          '高崎だけの足じゃなかったのか。',
+          'これなら後半の町も、一気に行き来できる。'
+        ]
       }
     ],
 
@@ -468,6 +713,7 @@ Game.Event = (function() {
     waitTimer = 0;
     textComplete = false;
     autoAdvanceTimer = 0;
+    charSpeed = getConfiguredCharSpeed();
     onComplete = callback || null;
 
     var firstScene = scenes[0];
@@ -501,6 +747,9 @@ Game.Event = (function() {
           }
         }
         if (splitAt <= 0) splitAt = maxChars;
+        if (splitAt === maxChars && splitAt < remaining.length && TRAILING_PUNCTUATION.indexOf(remaining.charAt(splitAt)) >= 0) {
+          splitAt++;
+        }
         lines.push(remaining.substring(0, splitAt));
         remaining = remaining.substring(splitAt);
       }
@@ -511,6 +760,7 @@ Game.Event = (function() {
 
   function update() {
     if (!active) return null;
+    charSpeed = getConfiguredCharSpeed();
 
     // Handle fade
     if (fadeDir !== 0) {
@@ -627,7 +877,7 @@ Game.Event = (function() {
     var textStartY = 80;
     var lineHeight = 24;
     var maxDisplayLines = 7;
-    var maxCharsPerLine = 22;
+    var maxCharsPerLine = MAX_EVENT_CHARS_PER_LINE;
     var visualLines = [];
 
     for (var i = 0; i <= lineIndex && i < scene.lines.length; i++) {
@@ -653,10 +903,14 @@ Game.Event = (function() {
     R.drawRectAbsolute(20, C.CANVAS_HEIGHT - 60, C.CANVAS_WIDTH - 40, 1, '#334');
 
     // Advance prompt
-    if (textComplete && !scene.autoAdvance) {
+    if (textComplete) {
       var blinkT = Date.now() / 400;
-      if (Math.sin(blinkT) > 0) {
-        R.drawTextJP('▼', C.CANVAS_WIDTH - 45, C.CANVAS_HEIGHT - 50, '#aaa', 14);
+      var promptColor = Math.sin(blinkT) > 0 ? '#d7dced' : '#939db8';
+      R.drawTextJP('Z / Enterで進む', C.CANVAS_WIDTH - 132, C.CANVAS_HEIGHT - 50, promptColor, 9);
+      if (scene.autoAdvance) {
+        var remainingFrames = autoAdvanceTimer > 0 ? autoAdvanceTimer : scene.autoAdvance;
+        var remainingSeconds = Math.max(0, remainingFrames / 60);
+        R.drawTextJP('Auto ' + remainingSeconds.toFixed(1) + 's', C.CANVAS_WIDTH - 92, C.CANVAS_HEIGHT - 37, '#707a98', 8);
       }
     }
 
@@ -835,7 +1089,166 @@ Game.Event = (function() {
           ctx.stroke();
         }
         break;
+
+      case 'akagi_approach':
+        ctx.fillStyle = 'rgba(18,24,34,0.78)';
+        ctx.fillRect(0, h * 0.6, w, h * 0.4);
+        ctx.strokeStyle = 'rgba(132,152,190,0.18)';
+        ctx.lineWidth = 1;
+        for (i = 0; i < 6; i++) {
+          ctx.beginPath();
+          ctx.moveTo(18, h * (0.28 + i * 0.08));
+          ctx.lineTo(w - 18, h * (0.28 + i * 0.08));
+          ctx.stroke();
+        }
+
+        var horizonY = h * 0.63;
+        ctx.fillStyle = '#0b0f18';
+        ctx.beginPath();
+        ctx.moveTo(0, h);
+        ctx.lineTo(w * 0.22, horizonY);
+        ctx.lineTo(w * 0.78, horizonY);
+        ctx.lineTo(w, h);
+        ctx.closePath();
+        ctx.fill();
+
+        var playerX = w * 0.68;
+        var playerY = h * 0.56;
+        ctx.fillStyle = '#d8dde7';
+        ctx.fillRect(playerX - 6, playerY - 22, 12, 12);
+        ctx.fillStyle = '#242a37';
+        ctx.fillRect(playerX - 8, playerY - 8, 16, 24);
+        ctx.fillStyle = '#1a202b';
+        ctx.fillRect(playerX - 5, playerY + 16, 4, 14);
+        ctx.fillRect(playerX + 1, playerY + 16, 4, 14);
+
+        var approachT = (Math.sin(t * 1.6) * 0.5 + 0.5);
+        var akagiX = w * 0.16 + approachT * (w * 0.34);
+        var akagiY = h * 0.55 + Math.sin(t * 4.2) * 2;
+        ctx.fillStyle = '#d0bfab';
+        ctx.fillRect(akagiX - 6, akagiY - 22, 12, 12);
+        ctx.fillStyle = '#4a6e9b';
+        ctx.fillRect(akagiX - 8, akagiY - 8, 16, 24);
+        ctx.fillStyle = '#6d432e';
+        ctx.fillRect(akagiX - 10, akagiY - 4, 3, 16);
+        ctx.fillRect(akagiX + 7, akagiY - 4, 3, 16);
+        ctx.fillStyle = '#2d241e';
+        ctx.fillRect(akagiX - 5, akagiY + 16, 4, 14);
+        ctx.fillRect(akagiX + 1, akagiY + 16, 4, 14);
+
+        var gestureY = akagiY + 2;
+        ctx.strokeStyle = '#c9d8ef';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(akagiX + 10, gestureY);
+        ctx.lineTo(akagiX + 24, gestureY - 4);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(akagiX + 22, gestureY - 8);
+        ctx.lineTo(akagiX + 30, gestureY - 4);
+        ctx.lineTo(akagiX + 22, gestureY);
+        ctx.stroke();
+
+        ctx.fillStyle = 'rgba(255,255,255,0.05)';
+        for (i = 0; i < 5; i++) {
+          var driftX = ((t * 28) + i * 68) % (w + 36) - 18;
+          ctx.fillRect(driftX, h * 0.34 + i * 22, 28, 2);
+        }
+        break;
+
+      case 'gururin_stop':
+        ctx.fillStyle = '#0f1525';
+        ctx.fillRect(0, h * 0.6, w, h * 0.4);
+        ctx.fillStyle = '#1f2a40';
+        ctx.fillRect(0, h * 0.44, w, h * 0.16);
+        ctx.fillStyle = '#f2c96d';
+        for (i = 0; i < 5; i++) {
+          ctx.fillRect(36 + i * 62, h * 0.515, 24, 3);
+        }
+        ctx.strokeStyle = '#6d725b';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(w * 0.18, h * 0.38);
+        ctx.lineTo(w * 0.18, h * 0.75);
+        ctx.stroke();
+        ctx.fillStyle = '#2d6e4b';
+        ctx.fillRect(w * 0.14, h * 0.36, 28, 18);
+        ctx.fillStyle = '#dceccf';
+        ctx.fillRect(w * 0.147, h * 0.39, 14, 3);
+        var arrivalX = w + 40 - ((t * 90) % (w + 120));
+        ctx.fillStyle = '#2a8d63';
+        ctx.fillRect(arrivalX, h * 0.47, 88, 34);
+        ctx.fillStyle = '#dceccf';
+        ctx.fillRect(arrivalX + 8, h * 0.49, 20, 11);
+        ctx.fillRect(arrivalX + 33, h * 0.49, 20, 11);
+        ctx.fillRect(arrivalX + 58, h * 0.49, 18, 11);
+        ctx.fillStyle = '#f0c86a';
+        ctx.fillRect(arrivalX + 10, h * 0.474, 52, 6);
+        ctx.fillStyle = '#243a33';
+        ctx.fillRect(arrivalX + 68, h * 0.48, 10, 22);
+        ctx.fillStyle = '#101726';
+        ctx.fillRect(arrivalX + 10, h * 0.55, 15, 8);
+        ctx.fillRect(arrivalX + 30, h * 0.55, 15, 8);
+        ctx.fillRect(arrivalX + 50, h * 0.55, 15, 8);
+        break;
+
+      case 'gururin_loop':
+        ctx.fillStyle = '#101726';
+        ctx.fillRect(0, h * 0.55, w, h * 0.45);
+        ctx.strokeStyle = '#315f52';
+        ctx.lineWidth = 18;
+        ctx.beginPath();
+        ctx.arc(w * 0.5, h * 0.58, 74, Math.PI * 0.12, Math.PI * 1.88);
+        ctx.stroke();
+        ctx.strokeStyle = '#6fcf97';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.arc(w * 0.5, h * 0.58, 74, Math.PI * 0.12, Math.PI * 1.88);
+        ctx.stroke();
+        var loopAngle = (t * 1.35) % (Math.PI * 2);
+        var busX = w * 0.5 + Math.cos(loopAngle - Math.PI * 0.5) * 74;
+        var busY = h * 0.58 + Math.sin(loopAngle - Math.PI * 0.5) * 74;
+        ctx.fillStyle = '#2a8d63';
+        ctx.fillRect(busX - 16, busY - 9, 32, 18);
+        ctx.fillStyle = '#dceccf';
+        ctx.fillRect(busX - 11, busY - 6, 8, 5);
+        ctx.fillRect(busX, busY - 6, 8, 5);
+        ctx.fillRect(busX + 9, busY - 6, 5, 5);
+        ctx.fillStyle = '#f0c86a';
+        ctx.fillRect(busX - 10, busY - 12, 18, 3);
+        ctx.fillStyle = '#1d2b24';
+        ctx.fillRect(busX + 9, busY - 4, 4, 9);
+        ctx.fillStyle = 'rgba(143,215,161,0.12)';
+        for (i = 0; i < 4; i++) {
+          ctx.beginPath();
+          ctx.arc(w * 0.5, h * 0.58, 34 + i * 18, 0, Math.PI * 2);
+          ctx.strokeStyle = 'rgba(143,215,161,' + (0.18 - i * 0.03) + ')';
+          ctx.lineWidth = 1;
+          ctx.stroke();
+        }
+        break;
     }
+  }
+
+  function getConfiguredCharSpeed() {
+    return Game.UI && Game.UI.getEventTextSpeedFrames ? Game.UI.getEventTextSpeedFrames() : 2;
+  }
+
+  function getStateSnapshot() {
+    var scene = scenes[sceneIndex];
+    return {
+      active: active,
+      sceneIndex: sceneIndex,
+      sceneCount: scenes.length,
+      lineIndex: lineIndex,
+      charIndex: charIndex,
+      charSpeed: charSpeed,
+      textComplete: textComplete,
+      autoAdvanceTimer: autoAdvanceTimer,
+      speaker: scene ? scene.speaker : null,
+      lines: scene && scene.lines ? scene.lines.slice() : [],
+      autoAdvance: scene ? (scene.autoAdvance || 0) : 0
+    };
   }
 
   function isActive() { return active; }
@@ -855,6 +1268,7 @@ Game.Event = (function() {
     draw: draw,
     isActive: isActive,
     addEvent: addEvent,
-    hasEvent: hasEvent
+    hasEvent: hasEvent,
+    getStateSnapshot: getStateSnapshot
   };
 })();

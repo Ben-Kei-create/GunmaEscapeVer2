@@ -45,6 +45,7 @@ Game.Player = (function() {
     equippedDice: ['normalDice'], // array of dice item IDs
     armor: null,    // equipped armor item ID
     partyMembers: [],
+    skillsKnown: [],
     inventory: [],
     moving: false,
     moveTimer: 0,
@@ -53,6 +54,7 @@ Game.Player = (function() {
     walkSfxTimer: 0
   };
   var lastCompletedStep = null;
+  var pendingSkillChoices = [];
 
   var sprites = {
     down: [
@@ -139,6 +141,18 @@ Game.Player = (function() {
       if (result.indexOf(id) >= 0) continue;
       result.push(id);
       if (result.length >= MAX_PARTY_MEMBERS) break;
+    }
+    return result;
+  }
+
+  function normalizeSkills(ids) {
+    var result = [];
+    for (var i = 0; i < (ids || []).length; i++) {
+      var id = ids[i];
+      if (!Game.Skills || !Game.Skills.get || !Game.Skills.get(id)) continue;
+      if (result.indexOf(id) >= 0) continue;
+      result.push(id);
+      if (result.length >= 6) break;
     }
     return result;
   }
@@ -233,7 +247,7 @@ Game.Player = (function() {
 
   function addItem(id) {
     var item = Game.Items && Game.Items.get ? Game.Items.get(id) : null;
-    var allowDuplicates = item && item.type === 'heal';
+    var allowDuplicates = item && (item.type === 'heal' || item.type === 'battle');
     if (!allowDuplicates && hasItem(id)) return;
     data.inventory.push(id);
     registerCatalystIfNeeded(id);
@@ -374,9 +388,57 @@ Game.Player = (function() {
     data.gold = Math.max(0, data.gold + amount);
   }
 
+  function getLevelUpGains() {
+    return { hp: 12, attack: 2, defense: 1 };
+  }
+
+  function queueSkillChoice(skillId) {
+    if (!skillId || hasSkill(skillId)) return false;
+    if (pendingSkillChoices.indexOf(skillId) >= 0) return false;
+    pendingSkillChoices.push(skillId);
+    return true;
+  }
+
   function addExperience(amount) {
-    data.experience = Math.max(0, (data.experience || 0) + Math.max(0, amount || 0));
-    return data.experience;
+    var gained = Math.max(0, amount || 0);
+    var previousRank = getJourneyRank();
+    var levelUps = [];
+    var skillChoices = [];
+
+    data.experience = Math.max(0, (data.experience || 0) + gained);
+
+    var nextRank = getJourneyRank();
+    if (nextRank > previousRank) {
+      var gains = getLevelUpGains();
+      for (var rank = previousRank + 1; rank <= nextRank; rank++) {
+        data.maxHp += gains.hp;
+        data.hp = Math.min(data.maxHp, data.hp + gains.hp);
+        data.attack += gains.attack;
+        data.defense += gains.defense;
+        levelUps.push({
+          rank: rank,
+          hpGain: gains.hp,
+          attackGain: gains.attack,
+          defenseGain: gains.defense
+        });
+        if (Game.Skills && Game.Skills.getLearnableSkillForRank) {
+          var skillId = Game.Skills.getLearnableSkillForRank(rank);
+          if (skillId && !hasSkill(skillId)) {
+            queueSkillChoice(skillId);
+            skillChoices.push(skillId);
+          }
+        }
+      }
+    }
+
+    return {
+      experience: data.experience,
+      gained: gained,
+      previousRank: previousRank,
+      newRank: nextRank,
+      levelUps: levelUps,
+      skillChoices: skillChoices
+    };
   }
 
   function getJourneyRank() {
@@ -387,6 +449,46 @@ Game.Player = (function() {
     for (var i = 0; i < data.inventory.length; i++) {
       registerCatalystIfNeeded(data.inventory[i]);
     }
+  }
+
+  function getSkills() {
+    data.skillsKnown = normalizeSkills(data.skillsKnown);
+    return data.skillsKnown.slice();
+  }
+
+  function hasSkill(id) {
+    return getSkills().indexOf(id) >= 0;
+  }
+
+  function learnSkill(id, replaceId) {
+    if (!Game.Skills || !Game.Skills.get || !Game.Skills.get(id)) return false;
+    data.skillsKnown = normalizeSkills(data.skillsKnown);
+    if (data.skillsKnown.indexOf(id) >= 0) return true;
+    if (replaceId) {
+      var replaceIndex = data.skillsKnown.indexOf(replaceId);
+      if (replaceIndex >= 0) {
+        data.skillsKnown.splice(replaceIndex, 1);
+      }
+    }
+    if (data.skillsKnown.length >= 6) return false;
+    data.skillsKnown.push(id);
+    return true;
+  }
+
+  function forgetSkill(id) {
+    data.skillsKnown = normalizeSkills(data.skillsKnown);
+    var index = data.skillsKnown.indexOf(id);
+    if (index < 0) return false;
+    data.skillsKnown.splice(index, 1);
+    return true;
+  }
+
+  function consumePendingSkillChoice() {
+    return pendingSkillChoices.length ? pendingSkillChoices.shift() : null;
+  }
+
+  function clearPendingSkillChoices() {
+    pendingSkillChoices = [];
   }
 
   function getData() { return data; }
@@ -411,6 +513,12 @@ Game.Player = (function() {
     addGold: addGold,
     addExperience: addExperience,
     getJourneyRank: getJourneyRank,
+    getSkills: getSkills,
+    hasSkill: hasSkill,
+    learnSkill: learnSkill,
+    forgetSkill: forgetSkill,
+    consumePendingSkillChoice: consumePendingSkillChoice,
+    clearPendingSkillChoices: clearPendingSkillChoices,
     addPartyMember: addPartyMember,
     removePartyMember: removePartyMember,
     setPartyMembers: setPartyMembers,

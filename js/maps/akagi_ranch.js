@@ -34,7 +34,8 @@ Game.Maps.akagi_ranch = (function() {
         'わしはかつて上州の刀鍛冶だった。',
         '今は最強のサイコロを鍛えておる。',
         '上州雷（じょうしゅうかみなり）の力...お前には必要だろう。',
-        'アングラのボスは並の出目じゃ倒せんぞ。覚悟して買え。'
+        'アングラのボスは並の出目じゃ倒せんぞ。覚悟して買え。',
+        'それと、サイコロポーチは鍛冶場の奥に一つだけ残っておる。次はない。'
       ],
       afterDialog: 'shop_伝説の鍛冶_gunmaDice,fireDice,cabbageDice,onsenArmor,superYakimanju,diceSlot',
       sprite: [

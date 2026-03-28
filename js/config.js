@@ -52,6 +52,7 @@ Game.Config = {
     SHOP: 'shop',
     SAVE: 'save',
     EVENT: 'event',
+    SKILL_LEARN: 'skill_learn',
     ENDING: 'ending',
     GAMEOVER: 'gameover'
   },

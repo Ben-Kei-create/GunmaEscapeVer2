@@ -20,6 +20,9 @@ Game.Map = (function() {
     if (Game.Audio && Game.Audio.refreshFieldBgm) {
       Game.Audio.refreshFieldBgm();
     }
+    if (Game.Main && Game.Main.handleMapLoaded) {
+      Game.Main.handleMapLoaded(currentMapId);
+    }
   }
 
   function getCurrentMap() {

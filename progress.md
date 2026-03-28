@@ -381,3 +381,152 @@ Original prompt: そうだね。セーブできる村役場みたいなところ
   - Playwright evaluate で通常戦闘を reward phase まで進め、`supportLogs` が3件入り、リザルト画面に `同行支援` が表示されることを確認。
   - Playwright evaluate で `temperature` 儀式戦を reward phase まで進め、`afterglowText` と `同行支援` が同時に表示されることを確認。
   - 新規の console error はなく、既知の `favicon.ico` 404 のみ。
+- 2026-03-27: 前橋右側の `朽ちた関所` を倒した直後、戦果画面を閉じても探索へ戻れない不具合を修正。
+  - 原因は `js/battle.js` の `update()` が phase handler の返り値を捨てていたこと。`handleRewardPhase()` が返す `{ result: 'victory', ... }` が `js/main.js` に届かず、報酬付与・状態遷移・撃破後会話が発火していなかった。
+  - `update()` を `phaseResult` 経由で返すよう直し、`victory / defeat / ritual_fail / flee` を呼び出し元へ伝播するよう更新。
+  - あわせて `index.html` にインライン favicon を追加し、静的サーバー実行時の `favicon.ico` 404 を解消。
+- 2026-03-27: 前橋右側関所の再検証結果
+  - `node --check js/battle.js` 通過。
+  - `curl http://127.0.0.1:4173/js/battle.js` で、サーバー配信内容が更新済みであることを確認。
+  - Playwright evaluate で `maebashi` の `ruined_checkpoint` 戦を開始し、`reward` まで進行させたあと戦果を閉じる流れを再現。
+  - 戦果クローズ後、`mode: 'dialog'`, `storyFlags.checkpointCleared === true`, `player.experience: 0 -> 6`, `npc.defeated === true` を確認。
+  - console error は `0` 件。残る warning は headless Chrome の `AudioContext was not allowed to start` のみ。
+- 2026-03-27: 高崎 -> 下仁田のマップ接続が左右逆になっていた不具合を修正。
+  - `js/maps/takasaki.js` の東出口が `shimonita` の右端付近 (`spawnX: 28`) にスポーンしており、到着後に右を押すとそのまま高崎へ巻き戻る状態だった。
+  - `js/maps/shimonita.js` でも `takasaki` 戻り出口が右側に置かれており、地理的な接続と逆向きになっていた。
+  - 高崎から下仁田へ入るスポーン位置を `x: 2` 側へ変更し、下仁田の高崎戻り出口を西側 (`x: 1`) へ移設して往復導線を揃えた。
+- 2026-03-27: 高崎/下仁田の再検証結果
+  - `node --check js/maps/takasaki.js js/maps/shimonita.js` 相当で両ファイルの構文チェックを通過。
+  - Playwright evaluate で `takasaki (28,10)` から右移動し、`shimonita (2,10)` に入ることを確認。
+  - その直後にもう一度右を押しても `shimonita (3,10)` へ進むだけで、高崎へ巻き戻らないことを確認。
+  - さらに `shimonita (2,10)` から左移動すると `takasaki (28,10)` へ自然に戻ることを確認。
+- 2026-03-27: オープニング演出の文字組みと進行テンポを調整。
+  - `js/event.js` の折り返し幅を 22 -> 23 相当に広げ、さらに句読点が行頭へ落ちるときは 1 文字だけ前行へぶら下げるよう修正。
+  - オープニングの `autoAdvance` を 30〜48f から 150〜210f へ延長し、読み切る前に流れにくくした。
+  - 文字が出切ったら `Z / Enterで進む` を常時表示し、auto 進行中もボタン送りできることが画面上で分かるよう更新。
+  - `Game.Event.getStateSnapshot()` を追加し、イベント中の `charSpeed / autoAdvanceTimer / lineIndex` を追えるようにした。
+- 2026-03-27: 設定にイベント文字速度を追加。
+  - `js/ui.js` の `gunmaEscape_ui_settings_v1` に `eventTextSpeed` (`fast / normal / slow`) を追加し、既存データは `normal` へ後方互換。
+  - フィールドメニュー `せってい` タブに `文字速度` 項目を追加。`はやい / ふつう / ゆっくり` を決定キーで循環できる。
+  - `Game.UI.getEventTextSpeedFrames()` / `getEventTextSpeedLabel()` を追加し、`js/main.js` の `render_game_to_text` にも `ui.eventTextSpeed` と `event` snapshot を載せた。
+- 2026-03-27: オープニング調整の検証結果
+  - `node --check js/ui.js js/event.js js/main.js` 通過。
+  - `WEB_GAME_CLIENT` で最新オープニングのスクリーンショットを取得し、手動送り案内と auto 表示が出ることを確認。
+  - Playwright で実際の `opening` を開始し、1行目の表示完了後に 60f 待っても自動で送られず、`autoAdvanceTimer: 145 -> 87` と十分余裕があることを確認。
+  - 一時イベント `opening_wrap_check` で 1枚目の長文を固定表示し、`。` だけが次行へ落ちないことをスクリーンショットで目視確認。
+  - 設定タブで `文字速度` を `ふつう -> ゆっくり` に切り替えた結果、`Game.UI.getEventTextSpeedFrames(): 2 -> 4` へ変化することを確認。
+- 2026-03-27: ステータス画面の `所持金` 表示重なりを修正。
+  - 原因は `js/ui.js` の左上ステータスカード下段に `防御` と `所持金` を同じ行で詰め込み、金額の桁が増えると `所持金` ラベルと `1234G` が衝突していたこと。
+  - `所持金` ブロックをカード右上の空きへ移し、下段は `防御` だけに整理。
+  - `node --check js/ui.js` 通過。
+  - Playwright で `takasaki` のメニューを直接開き、`gold = 1234` の状態でも `所持金` と金額が重ならないことをスクリーンショットで確認。
+- 2026-03-27: 起動時の導入ムービーを追加。
+  - `js/ui.js` に 4 カット構成の `intro_movie` を追加。関越道 -> 群馬の地名看板 -> 山の呼吸 -> 境界の門 と進み、約 13〜14 秒で自動的にタイトルへフェードする。
+  - `Space / Z / Enter / 左クリック` で任意のタイミングからタイトルへスキップできるようにし、タイトル突入時は黒フェードを挟む構成にした。
+  - `js/main.js` のタイトル更新を、ムービー再生中はメニュー操作を受け付けないよう調整。
+  - `render_game_to_text` に `title` presentation 状態を追加し、`intro_movie / title_reveal / title_menu` を識別できるようにした。
+  - `js/input.js` に左クリック confirm、右クリック cancel のキュー入力を追加。
+- 2026-03-27: 導入ムービーの検証結果
+  - `node --check js/input.js js/ui.js js/main.js` 通過。
+  - `WEB_GAME_CLIENT` で `output/web-game/intro-check/shot-0.png` を取り、冒頭カットが表示されることを確認。
+  - `WEB_GAME_CLIENT` で `output/web-game/intro-skip/shot-0.png` を取り、`Space` でタイトルへ戻ることを確認。
+  - `WEB_GAME_CLIENT` で `output/web-game/intro-auto/shot-0.png` を取り、無入力でも自動でタイトルへ遷移することを確認。
+  - Playwright console message は `0` 件。
+- 2026-03-28: 開幕ストーリーの導線を補強し、アカギ初登場とダイス戦闘の説明不足を修正。
+  - `js/event.js` の `opening` 終盤を書き換え、主人公が状況を飲み込めていない独白を追加したうえで、最後は「青い上着の男が見ている」という予兆で締めるようにした。最初から固有名 `アカギ` を前面に出さず、正体は前橋で会話してから明かす流れへ変更。
+  - `js/maps/maebashi.js` の `akagiGuide` に `aliasName: '見知らぬ案内人'` と `nameRevealFlag: 'party_akagi'` を追加し、初対面では肩書きだけ表示、同行加入後に `アカギ` 名義へ切り替わるようにした。
+  - 同じく `akagiGuide` の会話文を差し替え、「赤城のふもとの案内役」「皆からアカギと呼ばれている」と自己紹介しつつ、高崎まで導く理由と群馬の作法を説明する口上へ再構成。
+  - 前橋右端 `ruined_checkpoint` の調査文へ「白いダイス」と「この土地ではサイコロが争いの作法」という気づきを追加し、戦闘前からダイス文化を匂わせるようにした。
+  - `js/npc.js` に `getNpcDisplayName()` / `getCurrentNpcDisplayName()` を追加し、`js/ui.js` の会話欄スピーカー名表示が別名と本名の切り替えに追従するよう更新。
+  - `js/battle.js` の `ruined_checkpoint` 初戦開始時だけ、主人公の心内モノローグとして「出したい目で止める」「Space / Enter で止める」説明を自動表示するようにし、説明済みフラグ `dice_battle_explained` を保存するようにした。
+- 2026-03-28: ストーリー導線修正の検証結果
+  - `node --check js/event.js js/maps/maebashi.js js/npc.js js/ui.js js/battle.js` 通過。
+  - Playwright evaluate で `maebashi` を直接読み込み、`akagiGuide` 初回会話の表示名が `見知らぬ案内人`、先頭台詞が県境から吐き出された旅人への呼びかけになっていることを確認。
+  - Playwright evaluate で `ruined_checkpoint` 戦を直接開始し、初戦開始直後に `dice_battle_explained === true` が立つことを確認。
+  - `WEB_GAME_CLIENT` を `http://127.0.0.1:4173/?storyfix=1` で実行し、`output/web-game/story-opening-check/shot-0.png` と `state-0.json` を確認。開幕イベント 1 枚目が正常表示され、`autoAdvanceTimer` が十分残っていること、console error 生成ファイルが出ていないことを確認。
+- 2026-03-28: 細かな磨き込み課題を `docs/polish_todo.md` として整理。
+  - 「土地への敬意」「切なさに裏打ちされた群馬ネタ」「メタすぎないルール説明」を方針に固定し、物語導線 / 戦闘余韻 / 環境物 / UI / 音 / 整頓の観点で大量の改善候補をリスト化。
+  - 今回着手済み項目にはチェックを付け、次ターン以降も開発TODOとして追跡できる形にした。
+- 2026-03-28: 戦闘の余韻と読みやすさを追加で磨き込み。
+  - `js/battle.js` の `buildRewardSummary()` に `enemyEchoText` を追加し、敵撃破後の `戦果` 画面へ「残響」を表示するよう更新。通常戦でも、その土地に染まった悲哀や誇りが一言だけ残る構成にした。
+  - `roadsideBandit` や `strayDaruma` を含む通常敵、`darumaMaster` `konnyakuKing` `threadMaiden` `juke_final` など主要敵に個別の残響文を用意し、該当がない場合はマップ単位の共通残響へフォールバックするようにした。
+  - 戦闘会話オーバーレイは `confirm / cancel` で早送りできるようにしつつ、閉じた直後に同じ入力で `たたかう` が暴発しないよう `dialogueInputCooldown` を挟んだ。
+  - 勝利会話は `update()` 先頭の一箇所だけで進行するよう整理し、`victory` フェーズで二重に `updateDialogue()` が走る状態を解消。
+  - `戦果` パネルは可変高さにして `余韻 / 残響 / 同行支援` をすべて収められるようにし、表示中は下の `戦況` メッセージ窓を隠して読みやすくした。
+  - `Game.Battle.getStateSnapshot()` に `dialogue` 情報を追加し、デバッグ時にスピーカー・文面・残りタイマー・キュー数を確認できるようにした。
+- 2026-03-28: GAME OVER とタイトルの復帰導線を強化。
+  - `js/ui.js` の GAME OVER 画面に `戻り方` パネルを追加し、`slot1` の最新記録から `つづきから用: <地名> HP <現在>/<最大>` を表示するようにした。
+  - 同じ PC / ブラウザなら `つづきから`、別 PC へ持ち出すなら牧師の `あいことば` と明示し、現状の復帰手段が画面だけで理解できるようにした。
+  - タイトル画面側でも `つづきから` の説明文を現在の保存地名ベースへ切り替え、さらに `render_game_to_text` に `continueSlot` を載せて検証しやすくした。
+  - あわせて `せってい` に `戦闘会話` 速度 (`はやい / ふつう / ゆっくり`) を追加し、ボス会話や戦闘語りのテンポを個別調整できるようにした。
+- 2026-03-28: 前橋 / 高崎 / 下仁田 / 富岡に環境ストーリーテリング用オブジェクトを追加。
+  - 前橋: `塗り直された白線` を追加し、県境そのものが引きずられてきたような不穏さと、白いダイスの気配を匂わせる独白を配置。
+  - 高崎: `願掛けだるま棚` を追加し、半端に残された願いが町全体へ澱んでいる感触を補強。
+  - 下仁田: `荷札まみれの木箱` を追加し、怪異が最初から怪異だったのではなく、止まった輸送の積み残しであることを示唆。
+  - 富岡: `止まらない繰糸機` を追加し、「壊す」より「ほどく」が正しい土地であることを環境物から先に伝えるようにした。
+- 2026-03-28: 細部磨き込みの検証結果
+  - `node --check js/battle.js js/ui.js js/main.js js/maps/maebashi.js js/maps/takasaki.js js/maps/shimonita.js js/maps/tomioka.js` 通過。
+  - `WEB_GAME_CLIENT` で `output/web-game/polish-battle-check/shot-0.png` と `output/web-game/reward-echo-check/` を出力し、戦闘画面の破綻がないことを確認。
+  - Playwright evaluate で `maebashi/takasaki/shimonita/tomioka` の追加オブジェクト台詞を直接読み、意図した文面が取れることを確認。
+  - Playwright evaluate で `roadsideBandit` 戦を強制進行させ、`phase: reward` 到達時の `rewardSummary.enemyEchoText` が `奪うしかなくなった運び屋...` になることを確認。
+  - Playwright screenshot で `戦果` パネルに `残響` が表示され、下の `戦況` 窓が隠れていることを確認。
+  - Playwright で `slot1` に `takasaki / HP 37/100` を保存した状態から GAME OVER を描画し、`戻り方` パネルが表示されることを確認。
+  - Playwright でタイトルを再読込し、`render_game_to_text` の `ui` に `battleDialogueSpeed: ふつう`、`continueSlot.mapLabel: 高崎` が載ることを確認。
+- 2026-03-28: サイコロ進行を終盤寄せに再調整し、特殊サイコロの導入イベントを追加。
+  - `js/items.js` の `diceSlot` を希少品扱いにし、`uniqueStock: true` を追加。`js/shop.js` では店ごとの売り切れ状態を持たせ、サイコロポーチを買うとその店では `売切` 表示になるようにした。
+  - 同じく `js/shop.js` で、既に持っている一点物装備や特殊サイコロを再購入しようとした時は課金せず `もう持っている` 系のキャンセルメッセージを返すよう整理。
+  - `js/npc.js` に `giveItems` / `giveDiceSlot` 報酬を追加し、会話イベントやボス撃破報酬で複数アイテムとサイコロポーチを配れるようにした。
+  - `js/maps/maebashi.js` の `ruined_checkpoint` で最初のサイコロポーチを支給し、第一章終盤でやっと 2 枠目が開く流れへ変更。
+  - `js/maps/takasaki.js` の `darumaMaster` は `darumaEye + darumaDice` をまとめて渡す構成に変更し、`afterDefeat: event_special_dice_intro` で特殊サイコロ説明イベントへつなぐようにした。
+  - `js/event.js` に `special_dice_intro` を追加し、「特殊サイコロは強い武器ではなく土地の性格を借りる道具」という説明をアカギと主人公の応酬で挿入。`js/main.js` は特殊サイコロ入りの店を開く前にも一度だけ同イベントを噛ませるようにした。
+  - `diceSlot` の販売店は `js/maps/tomioka.js` と `js/maps/akagi_ranch.js` の 2 箇所だけに絞り、`js/maps/maebashi.js` `js/maps/takasaki.js` `js/maps/shimonita.js` `js/maps/kusatsu.js` `js/maps/ikaho.js` `js/maps/konuma.js` `js/maps/tamura.js` からは撤去した。
+  - `js/maps/minakami_valley.js` の `juke_minakami` 撃破報酬に最後のサイコロポーチを設定し、最終章手前で 5 枠目へ届く配分に寄せた。
+- 2026-03-28: サイコロ進行調整の確認
+  - `node --check js/shop.js js/main.js js/event.js js/npc.js js/items.js js/maps/maebashi.js js/maps/takasaki.js js/maps/shimonita.js js/maps/tomioka.js js/maps/kusatsu.js js/maps/ikaho.js js/maps/konuma.js js/maps/tamura.js js/maps/akagi_ranch.js js/maps/minakami_valley.js` 通過。
+  - `rg -n "diceSlot" js/maps/*.js` で、販売中のサイコロポーチが `tomioka` と `akagi_ranch` の 2 店舗だけになっていることを確認。
+  - `rg -n "special_dice_intro|giveDiceSlot|giveItems|uniqueStock"` で、特殊サイコロ導入と報酬導線の差し込み箇所を確認。
+- 2026-03-28: 高崎に「ぐるりん」イベントを追加。
+  - `js/maps/takasaki.js` に一回限りの環境オブジェクト `ぐるりん停留所` を追加。初回会話後に `event_gururin` を発火し、その後は余韻テキストへ切り替わるようにした。
+  - `js/event.js` に 4 カットの `gururin` イベントを追加。高崎の循環バスが「外へ出る便に見えて、実は街の内側を巡るだけ」という演出で、町の閉じた鼓動と群馬異界のループ感を補強。
+  - `js/event.js` のモーション描画にも `gururin_stop` / `gururin_loop` を追加し、停留所へ滑り込む緑の車体と円環ルートのビジュアルを差し込んだ。
+  - `js/main.js` に `event_gururin` ハンドラを追加し、イベント開始時に停留所を既読状態へ切り替え、`gururin_seen` フラグを保存するようにした。
+- 2026-03-28: ぐるりんイベントの検証結果
+  - `node --check js/maps/takasaki.js js/event.js js/main.js` 通過。
+  - `WEB_GAME_CLIENT` を `output/web-game/gururin-smoke/` へ実行し、ゲーム起動とイベント系画面の基本描画が崩れていないことを確認。
+  - Playwright で高崎へ直接ロードし、`ぐるりん停留所` 初回会話の 2 行目が句点ぶら下がりなしで表示されることを確認。
+  - Playwright evaluate で `event_gururin` を発火させ、`render_game_to_text` 上で `mode: event`, `event.sceneCount: 4`, `event.lines[0]: 高崎の交差点に...` を確認。
+  - Playwright screenshot で `gururin_stop` モーションのイベント画面を目視確認。Playwright console error は `0` 件。
+- 2026-03-28: だるま儀式戦で `目を入れる` 行動が下段メッセージに隠れる不具合を修正し、戦闘メニュー全体へ横展開。
+  - 原因は `js/battle.js` の `行動` パネルが固定 `y=200`、下段メッセージ窓が固定 `y=278` で、4行目以降のコマンドがちょうどメッセージ窓に食い込むレイアウトだったこと。
+  - `getActionPanelY()` を追加し、`行動` / `もちもの` パネルが下段メッセージ窓の上へ自動退避するように変更。
+  - あわせて `isDialogueOverlayVisible()` を追加し、入力不能なボス会話オーバーレイ中は `行動` / `もちもの` パネルを描かないよう統一。
+  - `getItemMenuFooter()` を追加し、儀式アイテム選択時は `HP+undefined` のような回復用フッターを出さず、`欠け目に応える / まだ噛み合わない` の文言へ切り替えるようにした。
+- 2026-03-28: だるま儀式戦 UI 修正の検証結果
+  - `node --check js/battle.js` 通過。
+  - Playwright で `darumaMaster` 戦を直接開始し、主人公攻撃力を一時的に 100 にして 1ターンで `hpZeroReached` 状態を作成。
+  - `render_game_to_text` 上で `battle.phase: menu`, `menuEntries: [たたかう, アイテム, にげる, 目を入れる]`, `message: 暴力では、まだ満たせない。` を確認したうえでスクリーンショットを撮り、4行目 `目を入れる` がメッセージ窓に隠れず表示されることを確認。
+  - 続けて `目を入れる` から儀式アイテムメニューを開き、`だるまの目` の下に `欠け目に応える` が表示され、パネル自体も下段メッセージ窓へ重ならないことを確認。
+- 2026-03-28: 朽ちた関所の意味づけと、ボス必殺技の演出基盤を追加。
+  - `js/battle_data.js` で `ruined_checkpoint` の HP / maxHP を `15 -> 45` に引き上げ、戦闘が 1 回のダイスで終わりにくい耐久へ調整した。
+  - 同じく `ruined_checkpoint` にフェーズ変化台詞を追加し、ただの瓦礫ではなく「通せなかった旅人の残響が門の形を保っている」存在として読めるようにした。
+  - `js/maps/maebashi.js` の朽ちた関所会話も差し替え、道を塞いでいる理由と「ダイスを関所へ重ねて越える」という作法がマップ会話だけで伝わるよう補強した。
+  - `js/battle.js` では儀式戦でも `bossGimmicks` を有効化し、`phase_change / special_move` 発動時に専用の `bossActionOverlay` カットインを出す仕組みを追加。オーバーレイ中は下段メッセージや行動メニューを隠し、演出が UI に埋もれないようにした。
+  - 既存のボス技処理も整理し、`special_move.effect` と `special_move.debuff` を実際の戦闘へ反映するよう更新。あわせて `アイテム封印` が永続しないよう、必殺技が不発だったターンは自動で解除するようにした。
+  - 追加ボスとして `darumaMaster` に `空願の凝視`、`threadMaiden` に `絡糸返し` を実装。どちらも会話・効果・SFX を含む定義にし、序盤から「その土地ならではの必殺技」が見えるようにした。
+- 2026-03-28: 関所説明 / ボス演出基盤の検証結果
+  - `node --check js/battle.js js/battle_data.js js/maps/maebashi.js` 通過。
+  - Playwright はキャッシュの影響を避けるため、ワークスペース直下で `python3 -m http.server 4174` を立てた新しい静的サーバーに接続して検証。
+  - `ruined_checkpoint` 戦を直起動し、`render_game_to_text().battle.enemy.maxHp === 45`、導入メッセージが `止められた旅人の気配が、瓦礫を門の形に立たせている。`、初回会話に `ただの廃材じゃない...` が出ることを確認。
+  - `darumaMaster` 戦では必殺技トリガーを一時的に強制し、`battle.bossAction.title: 空願の凝視` と会話 `願イノ殻…返ソウ。` が同時に立つことを確認。
+  - `threadMaiden` 戦でも同様に `battle.bossAction.title: 絡糸返し`、`ritual.gauge: 14`、会話 `引クナ…結ベル速サデ、触レヨ。` が返ることを確認。
+  - `ruined_checkpoint` のフェーズ変化も条件を一時的に強制し、`battle.bossAction.kind: phase_change`, `title: 境界残響` が返ること、Playwright console error が `0` 件であることを確認。
+- 2026-03-28: 通常敵の攻撃にも、白い小ダイスがころころ転がる軽演出を追加。
+  - `js/battle.js` に `previewEnemyPartyAttack()` を追加し、通常敵の攻撃内容を先に確定してから演出へ渡す流れへ変更。演出後に同じ内容で実ダメージを適用するため、見た目と結果がずれないようにした。
+  - 同ファイルに `enemyRollAnimation` / `pendingEnemyAttack` を追加し、敵の通常攻撃前に短い `白い賽を転がす…` フェーズを挟むよう更新。
+  - 描画側では `drawMiniEnemyDie()` と `drawEnemyRollAnimation()` を追加し、小さな白い立方体がランダムな勢いで転がって跳ねる簡素なアニメーションを実装。出目そのものはゲームロジックへ使わず、手触り演出に限定した。
+  - `render_game_to_text` 用の `battle` スナップショットにも `enemyRoll` を追加し、Playwright から `timer / attackers / diceCount` を直接検証できるようにした。
+- 2026-03-28: 通常敵ダイス演出の検証結果
+  - `node --check js/battle.js` 通過。
+  - Playwright で `roadsideBandit` 戦を直起動し、1回攻撃後の `battle.enemyRoll` が `{ attackers: ['境界の追いはぎ'], diceCount: 3 }` になることを確認。
+  - そのまま 1.3 秒進めると `enemyRoll: null` へ戻り、`message: 境界の追いはぎの攻撃！ 6ダメージ！` に自然遷移することを確認。
+  - Playwright console error は `0` 件。

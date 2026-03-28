@@ -14,6 +14,35 @@ Game.Shop = (function() {
   var slotIndex = 0;
   var pendingDiceId = null;
 
+  function getSoldOutFlag(itemId) {
+    return 'shop_sold_' + shopName + '_' + itemId;
+  }
+
+  function isItemSoldOut(itemId) {
+    var item = Game.Items.get(itemId);
+    if (!item || !item.uniqueStock) return false;
+    return !!(Game.Story && Game.Story.hasFlag && Game.Story.hasFlag(getSoldOutFlag(itemId)));
+  }
+
+  function markItemSoldOut(itemId) {
+    var item = Game.Items.get(itemId);
+    if (!item || !item.uniqueStock) return;
+    if (Game.Story && Game.Story.setFlag) {
+      Game.Story.setFlag(getSoldOutFlag(itemId));
+      if (Game.Story.saveFlags) Game.Story.saveFlags();
+    }
+  }
+
+  function isAlreadyOwned(itemId, item, pd) {
+    if (!item || !pd) return false;
+    if (item.type === 'heal' || item.type === 'battle' || item.type === 'diceSlot') return false;
+    if (item.type === 'dice') {
+      if (pd.equippedDice && pd.equippedDice.indexOf(itemId) >= 0) return true;
+    }
+    if (item.type === 'armor' && pd.armor === itemId) return true;
+    return Game.Player && Game.Player.hasItem ? Game.Player.hasItem(itemId) : false;
+  }
+
   function start(name, items) {
     active = true;
     shopName = name || 'ショップ';
@@ -116,8 +145,21 @@ Game.Shop = (function() {
       if (!item) return null;
 
       var pd = Game.Player.getData();
+      var soldOut = isItemSoldOut(itemId);
 
       if (!confirmBuy) {
+        if (soldOut) {
+          message = item.name + 'はもう売り切れだ。';
+          messageTimer = 40;
+          Game.Audio.playSfx('cancel');
+          return null;
+        }
+        if (isAlreadyOwned(itemId, item, pd)) {
+          message = item.name + 'はもう旅の荷に入っている。';
+          messageTimer = 40;
+          Game.Audio.playSfx('cancel');
+          return null;
+        }
         confirmBuy = true;
         message = item.name + '（' + item.price + 'G）を買う？ Z:はい X:いいえ';
         Game.Audio.playSfx('confirm');
@@ -143,7 +185,8 @@ Game.Shop = (function() {
         }
         Game.Player.addGold(-item.price);
         Game.Player.addDiceSlot();
-        message = 'サイコロ枠が' + pd.diceSlots + '個になった！';
+        markItemSoldOut(itemId);
+        message = 'サイコロ枠が' + pd.diceSlots + '個になった！ この店の分は売り切れだ。';
         messageTimer = 50;
         confirmBuy = false;
         Game.Audio.playSfx('item');
@@ -233,7 +276,8 @@ Game.Shop = (function() {
 
       var y = listY + (i - scrollOffset) * lineH;
       var selected = (i === menuIndex);
-      var color = selected ? C.COLORS.GOLD : '#ccc';
+      var soldOut = isItemSoldOut(shopItems[i]);
+      var color = soldOut ? '#666' : (selected ? C.COLORS.GOLD : '#ccc');
       var prefix = selected ? '▶ ' : '  ';
 
       // Die color swatch for dice items
@@ -245,8 +289,12 @@ Game.Shop = (function() {
       }
 
       R.drawTextJP(prefix + item.name, listX + 10, y, color, 13);
-      R.drawTextJP(item.price + 'G', listX + 210, y, pd.gold >= item.price ? '#aaffaa' : '#ff6666', 12);
-      R.drawTextJP(item.desc, listX + 28, y + 16, '#888', 9);
+      if (soldOut) {
+        R.drawTextJP('売切', listX + 210, y, '#aa7777', 12);
+      } else {
+        R.drawTextJP(item.price + 'G', listX + 210, y, pd.gold >= item.price ? '#aaffaa' : '#ff6666', 12);
+      }
+      R.drawTextJP(soldOut ? 'この店ではもう手に入らない。' : item.desc, listX + 28, y + 16, soldOut ? '#665555' : '#888', 9);
     }
 
     // Exit option

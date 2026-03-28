@@ -128,10 +128,10 @@ Game.Maps.tamura = (function() {
       dialog: [
         'おお、冒険者か！わしは特殊なサイコロを作っておる！',
         'シュウオウのじいさんに教わった技でな。',
-        '普通のサイコロじゃ物足りないだろう？',
+        '普通のサイコロより癖は強いが、そのぶん土地の機嫌を読みやすい。',
         'ここにしかない逸品があるぜ！見ていきな！'
       ],
-      afterDialog: 'shop_サイコロ工房_powerDice,steadyDice,gamblerDice,darumaDice,healDice,diceSlot',
+      afterDialog: 'shop_サイコロ工房_powerDice,steadyDice,gamblerDice,healDice',
       sprite: [
         [0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0],
         [0,0,1,2,2,2,2,1,0,0,0,0,0,0,0,0],

@@ -78,7 +78,7 @@ Game.Maps.shimonita = (function() {
       '「こんにゃくパーク」は無料で食べ放題なんだ。',
       '上州の最強装備もあるよ！'
     ],
-    afterDialog: 'shop_こんにゃく商店_superYakimanju,onsenArmor,diceSlot',
+    afterDialog: 'shop_こんにゃく商店_superYakimanju,onsenArmor',
     sprite: [
       [0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0],
       [0,0,1,2,2,2,2,1,0,0,0,0,0,0,0,0],
@@ -133,13 +133,44 @@ Game.Maps.shimonita = (function() {
     palette: { 1:'#333', 2:'#ddbb88', 3:'#221100', 4:'#cc6666', 5:'#dd88aa', 6:'#443322' }
   });
 
+  npcs.push({
+    id: 'freightCrate',
+    x: 24, y: 14,
+    name: '荷札まみれの木箱',
+    dialog: [
+      '木箱には「東京」「高崎」「前橋」と、消えかけた荷札が何枚も打ち直されている。',
+      '届け先を失っても、運ぶ手つきだけが残ったのだと分かる。',
+      'この土地の怪異は、最初から怪物だったわけじゃない。'
+    ],
+    sprite: [
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0],
+      [0,0,1,2,2,2,2,2,2,2,2,1,0,0,0,0],
+      [0,0,1,2,3,2,2,2,3,2,2,1,0,0,0,0],
+      [0,0,1,2,2,2,2,2,2,2,2,1,0,0,0,0],
+      [0,0,1,2,2,2,2,2,2,2,2,1,0,0,0,0],
+      [0,0,1,4,4,4,4,4,4,4,4,1,0,0,0,0],
+      [0,0,1,2,2,2,2,2,2,2,2,1,0,0,0,0],
+      [0,0,1,2,2,2,3,2,2,2,2,1,0,0,0,0],
+      [0,0,1,2,2,2,2,2,2,2,2,1,0,0,0,0],
+      [0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0],
+      [0,0,0,0,0,5,0,0,5,0,0,0,0,0,0,0],
+      [0,0,0,0,0,5,0,0,5,0,0,0,0,0,0,0],
+      [0,0,0,0,0,5,0,0,5,0,0,0,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+    ],
+    palette: { 1:'#5c4630', 2:'#9d7a53', 3:'#e6d7b8', 4:'#7b6041', 5:'#6f5842' }
+  });
+
   var items = [
     { id: 'yakimanju', x: 2, y: 14, taken: false }
   ];
 
   var exits = [
-    { x: 29, y: 10, target: 'takasaki', spawnX: 1, spawnY: 10, dir: 'right' },
-    { x: 29, y: 11, target: 'takasaki', spawnX: 1, spawnY: 11, dir: 'right' },
+    // Takasaki lies to the west of Shimonita, so the return exit belongs on the left side.
+    { x: 1, y: 10, target: 'takasaki', spawnX: 28, spawnY: 10, dir: 'left' },
+    { x: 1, y: 11, target: 'takasaki', spawnX: 28, spawnY: 11, dir: 'left' },
     { x: 14, y: 1, target: 'tomioka', spawnX: 14, spawnY: 18, dir: 'up' },
     { x: 15, y: 1, target: 'tomioka', spawnX: 15, spawnY: 18, dir: 'up' }
   ];

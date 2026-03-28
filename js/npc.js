@@ -192,13 +192,28 @@ Game.NPC = (function() {
     if (!npc || !npc.defeatedDialog) return;
     currentNpc = npc;
     dialogIndex = 0;
-    dialogLines = npc.defeatedDialog;
+    npc.defeated = true;
+    dialogLines = npc.defeatedDialog.slice();
+
+    var rewardItems = [];
+    if (npc.giveItem) rewardItems.push(npc.giveItem);
+    if (npc.giveItems && npc.giveItems.length) {
+      for (var i = 0; i < npc.giveItems.length; i++) {
+        rewardItems.push(npc.giveItems[i]);
+      }
+    }
+    for (var r = 0; r < rewardItems.length; r++) {
+      Game.Player.addItem(rewardItems[r]);
+    }
+
+    if (npc.giveDiceSlot && Game.Player && Game.Player.addDiceSlot && Game.Player.getData) {
+      if (Game.Player.addDiceSlot()) {
+        var pd = Game.Player.getData();
+        dialogLines.push('「サイコロポーチ」を手に入れた。装備枠は' + pd.diceSlots + 'つになった。');
+      }
+    }
     setCurrentDialogPages();
     onDialogEnd = npc.afterDefeat || null;
-    npc.defeated = true;
-    if (npc.giveItem) {
-      Game.Player.addItem(npc.giveItem);
-    }
   }
 
   function getCurrentDialog() {
@@ -210,6 +225,25 @@ Game.NPC = (function() {
 
   function getCurrentNpc() {
     return currentNpc;
+  }
+
+  function getNpcDisplayName(npc) {
+    if (!npc) return '';
+    if (npc.aliasName) {
+      var revealed = false;
+      if (npc.nameRevealFlag && Game.Story && Game.Story.hasFlag) {
+        revealed = Game.Story.hasFlag(npc.nameRevealFlag);
+      }
+      if (revealed || (!npc.nameRevealFlag && npc.defeated)) {
+        return npc.name || '';
+      }
+      return npc.aliasName;
+    }
+    return npc.name || '';
+  }
+
+  function getCurrentNpcDisplayName() {
+    return getNpcDisplayName(currentNpc);
   }
 
   function canOccupyTile(npc, npcs, x, y) {
@@ -545,6 +579,7 @@ Game.NPC = (function() {
     showDefeatedDialog: showDefeatedDialog,
     getCurrentDialog: getCurrentDialog,
     getCurrentNpc: getCurrentNpc,
+    getCurrentNpcDisplayName: getCurrentNpcDisplayName,
     updateMovement: updateMovement,
     getNpcRenderPos: getNpcRenderPos,
     initMovement: initMovement

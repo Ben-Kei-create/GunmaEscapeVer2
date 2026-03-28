@@ -1,7 +1,7 @@
 // Save system using localStorage + passphrase export
 Game.Save = (function() {
   var MAX_SLOTS = 3;
-  var VERSION = 5;
+  var VERSION = 6;
   var PASSPHRASE_PREFIX = 'GM2';
   var BASE32_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
   var runtime = window.__gunmaSaveRuntime || {
@@ -62,7 +62,8 @@ Game.Save = (function() {
       armor: playerData.armor,
       diceSlots: playerData.diceSlots,
       chapter: playerData.chapter,
-      partyMembers: clone(playerData.partyMembers || [])
+      partyMembers: clone(playerData.partyMembers || []),
+      skillsKnown: clone(playerData.skillsKnown || [])
     };
   }
 
@@ -228,12 +229,16 @@ Game.Save = (function() {
     playerData.diceSlots = savedPlayer.diceSlots || 1;
     playerData.chapter = savedPlayer.chapter || 1;
     playerData.partyMembers = clone(savedPlayer.partyMembers || []);
+    playerData.skillsKnown = clone(savedPlayer.skillsKnown || []);
     playerData.moving = false;
     playerData.moveFrame = 0;
     playerData.moveTimer = 0;
 
     while (playerData.equippedDice.length < playerData.diceSlots) {
       playerData.equippedDice.push('normalDice');
+    }
+    if (Game.Player && Game.Player.clearPendingSkillChoices) {
+      Game.Player.clearPendingSkillChoices();
     }
   }
 
@@ -266,6 +271,13 @@ Game.Save = (function() {
   function getPartyCatalog() {
     if (Game.Player && Game.Player.getCompanionCatalog) {
       return Game.Player.getCompanionCatalog().sort();
+    }
+    return [];
+  }
+
+  function getSkillCatalog() {
+    if (Game.Skills && Game.Skills.getAll) {
+      return Object.keys(Game.Skills.getAll()).sort();
     }
     return [];
   }
@@ -440,6 +452,7 @@ Game.Save = (function() {
     var mapCatalog = getMapCatalog();
     var itemCatalog = getItemCatalog();
     var partyCatalog = getPartyCatalog();
+    var skillCatalog = getSkillCatalog();
     var directions = getDirectionCatalog();
     var player = data.player || {};
     var activeStoryFlags = [];
@@ -472,7 +485,8 @@ Game.Save = (function() {
         indexOfOr(itemCatalog, player.armor, -1),
         encodeIdList(player.equippedDice || [], itemCatalog),
         encodeIdList(player.inventory || [], itemCatalog),
-        encodeIdList(player.partyMembers || [], partyCatalog)
+        encodeIdList(player.partyMembers || [], partyCatalog),
+        encodeIdList(player.skillsKnown || [], skillCatalog)
       ],
       n: encodeNpcStatesCompact(data.npcStates || {}),
       i: encodeItemStatesCompact(data.itemStates || {}),
@@ -490,16 +504,20 @@ Game.Save = (function() {
     var mapCatalog = getMapCatalog();
     var itemCatalog = getItemCatalog();
     var partyCatalog = getPartyCatalog();
+    var skillCatalog = getSkillCatalog();
     var directions = getDirectionCatalog();
     var mapName = mapCatalog[compact.m];
     if (!mapName) return null;
 
     var playerData = compact.p;
+    var version = compact.v || VERSION;
     var legacyLayout = !compact.v || compact.v < 5;
+    var hasSkills = version >= 6;
     var equippedDice = decodeIdList(playerData[legacyLayout ? 11 : 12] || [], itemCatalog);
     if (!equippedDice.length) equippedDice = ['normalDice'];
     var inventory = decodeIdList(playerData[legacyLayout ? 12 : 13] || [], itemCatalog);
     var partyMembers = decodeIdList(playerData[legacyLayout ? 13 : 14] || [], partyCatalog);
+    var skillsKnown = hasSkills ? decodeIdList(playerData[15] || [], skillCatalog) : [];
     var journeyData = compact.j || [];
     var storyFlags = {};
     for (var i = 0; i < (compact.s || []).length; i++) {
@@ -533,7 +551,8 @@ Game.Save = (function() {
         equippedDice: equippedDice,
         inventory: inventory,
         keyItems: getKeyItemsFromInventory(inventory),
-        partyMembers: partyMembers
+        partyMembers: partyMembers,
+        skillsKnown: skillsKnown
       },
       npcStates: decodeNpcStatesCompact(compact.n || ''),
       itemStates: decodeItemStatesCompact(compact.i || ''),

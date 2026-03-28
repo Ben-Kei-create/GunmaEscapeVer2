@@ -685,3 +685,21 @@ Original prompt: そうだね。セーブできる村役場みたいなところ
   - Playwright MCP では最新 `battle.js` / `main.js` を読み直したうえで、あえて `inventory = []` の状態から `Game.Battle.start('darumaMaster', null)` を起動。
   - `ritualState.hpZeroReached = true` を立てたあと、メニューの `目を入れる` まで移動して `confirm` したところ、`phase = 'victory'`、`message = '欠け目のだるまを鎮めた。'`、`ritual.slots[0].filled = true`、`itemId = 'darumaEye'` になることを確認。
   - Playwright console error は 0 件。
+- 2026-03-28: レベル100までの成長曲線と、とくぎ永続回数制を導入。
+  - `js/player.js` にレベル帯のマイルストーン補間を追加し、旅路ランク 1〜100 まで `最大HP / 攻撃 / 防御` が段階的に伸びるようにした。初期値は `96 / 12 / 6`、ランク100では `999 / 87 / 52` に到達する。
+  - 経験値からのランク計算は 100 で打ち止めにし、`previewExperienceGain()` もランク100で正しく止まるよう調整した。
+  - とくぎは `戦闘ごとの使用回数` ではなく、`skillCharges` を持つ永続ストック制へ変更。重複習得時はその型の残回数だけ増え、未所持なら 6 枠の空きへ追加、7種目以降は置き換えか見送りになる。
+  - `js/ui.js` の習得画面は、既習得時に `残り回数 -> 補充後回数` を見せる表示へ更新した。
+  - `js/battle.js` のとくぎメニューはプレイヤー所持回数を直接参照するよう変更し、`湯の花小瓶` は状態回復に加えて全とくぎの残回数を1だけ戻すようにした。
+  - `js/save.js` を version 7 に上げ、通常セーブと合言葉の両方へ `skillCharges` を保存するよう拡張した。旧セーブ読込時は既存とくぎへ初期回数を補う。
+  - `js/main.js` の新規開始・デバッグ起動も新しい成長/回数制へ同期するようにした。
+  - `js/battle.js` と `js/battle_data.js` の敵数値を全体的に引き上げ、序盤雑魚でも 1 回で溶けにくい HP・防御帯へ再設定した。
+- 2026-03-28: 成長曲線 / とくぎ回数制 / 戦闘再調整の検証結果
+  - `node --check js/player.js js/skills.js js/main.js js/save.js js/ui.js js/battle.js js/battle_data.js js/items.js` 通過。
+  - `develop-web-game` の Playwright client を `output/web-game/skill-charge-balance-smoke` で実行し、初期ステータスが `96/96`、`roadsideBandit` が `66/66` で表示されることをスクリーンショットと `state-0.json` で確認。
+  - Playwright MCP では最新 `skills/player/items/battle_data/battle/ui/save` を読み直したうえで、`mikiashi(2) / kasanekan(1)` の状態から `見切り足` 使用後に `mikiashi: 2 -> 1` へ減ること、`湯の花小瓶` 使用後に `mikiashi: 1 -> 2`, `kasanekan: 0 -> 1` へ戻ることを確認。
+  - 習得UIロジックでは、既習得 `mikiashi` の再習得が `currentCharges: 1, incomingCharges: 3` を返し、確定後 `mikiashi: 1 -> 4` になることを確認。
+  - 6枠満杯状態では `sokomiki` 習得時に `replaceMode: true` となり、3番目の `migamae` を選んで置き換えると、枠が維持されたまま `sokomiki` が `2回` で追加されることを確認。
+  - 通常攻撃の実戦確認では、ランク1主人公が `roadsideBandit(66HP)` に与えるダメージが `7` となり、序盤敵が即死しないことを確認。
+  - ランク上限確認では `experience = 99999` でも `journeyRank = 100`、`maxHp = 999`, `attack = 87`, `defense = 52` で止まることを確認。
+  - Playwright console error は 0 件。AudioContext の警告のみ。

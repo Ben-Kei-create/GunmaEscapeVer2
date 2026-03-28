@@ -544,6 +544,7 @@ Game.Player = (function() {
 
   function queueSkillChoice(skillId, sourceText) {
     if (!skillId || !Game.Skills || !Game.Skills.get || !Game.Skills.get(skillId)) return false;
+    if (hasSkill(skillId) && getSkillCharges(skillId) >= getSkillStockCap(skillId)) return false;
     pendingSkillChoices.push({
       skillId: skillId,
       sourceText: sourceText || '',

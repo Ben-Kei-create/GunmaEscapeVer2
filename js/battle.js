@@ -87,8 +87,8 @@ Game.Battle = (function() {
   // 佐藤テスト戦の敵データ（ch1_boss_sato_test用）
   enemies.satoTest = {
     name: '佐藤（確認戦）',
-    hp: 40, maxHp: 40,
-    attack: 8, defense: 3, goldReward: 0,
+    hp: 68, maxHp: 68,
+    attack: 14, defense: 6, goldReward: 0, expReward: 24,
     sprite: [
       [0,0,0,1,1,1,1,1,0,0,0,0,0,0,0,0],
       [0,0,1,2,2,2,2,2,1,0,0,0,0,0,0,0],
@@ -112,8 +112,8 @@ Game.Battle = (function() {
 
   enemies.darumaMaster = {
     name: '欠け目のだるま',
-    hp: 40, maxHp: 40,
-    attack: 9, defense: 4, goldReward: 0,
+    hp: 84, maxHp: 84,
+    attack: 16, defense: 6, goldReward: 0, expReward: 36,
     ritualMode: 'repair_eye',
     ritualItemRequirement: 'darumaEye',
     ritualFailStyle: {
@@ -146,16 +146,16 @@ Game.Battle = (function() {
 
   enemies.konnyakuKing = {
     name: 'こんにゃく大王',
-    hp: 72, maxHp: 72,
-    attack: 14, defense: 6, goldReward: 90,
+    hp: 124, maxHp: 124,
+    attack: 22, defense: 10, goldReward: 70, expReward: 58,
     sprite: enemies.ishidanGuard.sprite,
     palette: { 1:'#5a5a5a', 2:'#b0b0b0', 3:'#111111', 4:'#d8d8d8', 5:'#6d6d6d', 6:'#484848', 7:'#303030' }
   };
 
   enemies.cabbageGuardian = {
     name: 'キャベツ番人',
-    hp: 90, maxHp: 90,
-    attack: 17, defense: 6, goldReward: 110,
+    hp: 146, maxHp: 146,
+    attack: 24, defense: 12, goldReward: 80, expReward: 64,
     sprite: enemies.cabbage.sprite,
     palette: enemies.cabbage.palette
   };
@@ -163,7 +163,7 @@ Game.Battle = (function() {
   enemies.threadMaiden = {
     name: '絡糸の機女',
     hp: 1, maxHp: 1,
-    attack: 15, defense: 999, goldReward: 140,
+    attack: 18, defense: 999, goldReward: 90, expReward: 74,
     ritualMode: 'untangle',
     ritualFailStyle: {
       text: '強引に引いた糸が切れ、記憶が絡まり直していく。',
@@ -197,72 +197,72 @@ Game.Battle = (function() {
 
   enemies.strayDaruma = {
     name: 'さまようだるま',
-    hp: 28, maxHp: 28,
-    attack: 9, defense: 2, goldReward: 24, expReward: 12, dropItem: 'yakimanju', dropRate: 0.18,
+    hp: 52, maxHp: 52,
+    attack: 14, defense: 4, goldReward: 18, expReward: 18, dropItem: 'yakimanju', dropRate: 0.18,
     sprite: enemies.darumaMaster.sprite,
     palette: { 1:'#5e1018', 2:'#c93039', 3:'#111111', 4:'#e7d2a6' }
   };
 
   enemies.roadsideBandit = {
     name: '境界の追いはぎ',
-    hp: 36, maxHp: 36,
-    attack: 11, defense: 4, goldReward: 32, expReward: 14, dropItem: 'tempoCharm', dropRate: 0.2,
+    hp: 66, maxHp: 66,
+    attack: 16, defense: 6, goldReward: 22, expReward: 20, dropItem: 'tempoCharm', dropRate: 0.2,
     sprite: enemies.anguraGuard.sprite,
     palette: { 1:'#35363f', 3:'#ff6666', 4:'#2b2d36', 5:'#1f2028', 6:'#13141a' }
   };
 
   enemies.steamMonkey = {
     name: '湯煙ざる',
-    hp: 34, maxHp: 34,
-    attack: 10, defense: 3, goldReward: 28, expReward: 16, dropItem: 'emberIncense', dropRate: 0.18,
+    hp: 60, maxHp: 60,
+    attack: 15, defense: 5, goldReward: 20, expReward: 22, dropItem: 'emberIncense', dropRate: 0.18,
     sprite: enemies.onsenMonkey.sprite,
     palette: { 1:'#553322', 2:'#b17a49', 3:'#111111', 4:'#d8907a' }
   };
 
   enemies.konnyakuCrawler = {
     name: '蒟蒻うごめき',
-    hp: 42, maxHp: 42,
-    attack: 10, defense: 5, goldReward: 30, expReward: 15, dropItem: 'guardChalk', dropRate: 0.18,
+    hp: 74, maxHp: 74,
+    attack: 17, defense: 7, goldReward: 22, expReward: 24, dropItem: 'guardChalk', dropRate: 0.18,
     sprite: enemies.konnyakuKing.sprite,
     palette: enemies.konnyakuKing.palette
   };
 
   enemies.silkShade = {
     name: '白糸の影',
-    hp: 40, maxHp: 40,
-    attack: 12, defense: 4, goldReward: 34, expReward: 17, dropItem: 'silkWeight', dropRate: 0.17,
+    hp: 82, maxHp: 82,
+    attack: 19, defense: 8, goldReward: 24, expReward: 28, dropItem: 'silkWeight', dropRate: 0.17,
     sprite: enemies.threadMaiden.sprite,
     palette: { 1:'#312f3b', 2:'#d8d2c8', 3:'#1e1d24', 4:'#c48690', 5:'#e8e6e0', 6:'#857a6d' }
   };
 
   enemies.cabbageWisp = {
     name: '葉影のざわめき',
-    hp: 38, maxHp: 38,
-    attack: 11, defense: 4, goldReward: 30, expReward: 16, dropItem: 'measureLens', dropRate: 0.16,
+    hp: 76, maxHp: 76,
+    attack: 18, defense: 8, goldReward: 22, expReward: 26, dropItem: 'measureLens', dropRate: 0.16,
     sprite: enemies.cabbageGuardian.sprite,
     palette: enemies.cabbageGuardian.palette
   };
 
   enemies.echoShard = {
     name: '返り声の欠片',
-    hp: 44, maxHp: 44,
-    attack: 13, defense: 5, goldReward: 38, expReward: 18, dropItem: 'loadedSand', dropRate: 0.16,
+    hp: 94, maxHp: 94,
+    attack: 22, defense: 10, goldReward: 26, expReward: 34, dropItem: 'loadedSand', dropRate: 0.16,
     sprite: enemies.echo_guardian.sprite,
     palette: enemies.echo_guardian.palette
   };
 
   enemies.mistBeastling = {
     name: '霧獣の幼影',
-    hp: 48, maxHp: 48,
-    attack: 14, defense: 5, goldReward: 42, expReward: 20, dropItem: 'kaeshiOmamori', dropRate: 0.14,
+    hp: 108, maxHp: 108,
+    attack: 24, defense: 12, goldReward: 28, expReward: 38, dropItem: 'kaeshiOmamori', dropRate: 0.14,
     sprite: enemies.haruna_lake_beast.sprite,
     palette: enemies.haruna_lake_beast.palette
   };
 
   enemies.mudWisp = {
     name: '泥の囁き',
-    hp: 46, maxHp: 46,
-    attack: 14, defense: 5, goldReward: 40, expReward: 22, dropItem: 'yakimanju', dropRate: 0.16,
+    hp: 118, maxHp: 118,
+    attack: 26, defense: 14, goldReward: 30, expReward: 42, dropItem: 'yakimanju', dropRate: 0.16,
     sprite: enemies.oze_mud_wraith.sprite,
     palette: enemies.oze_mud_wraith.palette
   };
@@ -343,7 +343,7 @@ Game.Battle = (function() {
     for (var i = 0; i < knownSkills.length; i++) {
       var skill = Game.Skills && Game.Skills.get ? Game.Skills.get(knownSkills[i]) : null;
       if (!skill) continue;
-      var remaining = Math.max(0, (skill.usesPerBattle || 1) - (skillUses[skill.id] || 0));
+      var remaining = Game.Player && Game.Player.getSkillCharges ? Game.Player.getSkillCharges(skill.id) : 0;
       entries.push({
         id: skill.id,
         skill: skill,
@@ -1972,9 +1972,16 @@ Game.Battle = (function() {
         var soothed = removeEffect(playerEffects, 'slow');
         soothed = removeEffect(playerEffects, 'heal_seal') || soothed;
         addEffect(playerEffects, 'onsen_heal', selected.item.turns || 2, selected.item.value || 4);
-        message = soothed
-          ? selected.item.name + 'を開いた。鈍りと封じが湯気にほどけた。'
-          : selected.item.name + 'を開いた。湯気がまとわり、息が整う。';
+        var restoredCharges = Game.Player && Game.Player.restoreAllSkillCharges ? Game.Player.restoreAllSkillCharges(1) : 0;
+        if (soothed && restoredCharges > 0) {
+          message = selected.item.name + 'を開いた。鈍りがほどけ、型の記憶も少し戻った。';
+        } else if (soothed) {
+          message = selected.item.name + 'を開いた。鈍りと封じが湯気にほどけた。';
+        } else if (restoredCharges > 0) {
+          message = selected.item.name + 'を開いた。湯気がまとわり、型の息遣いを思い出す。';
+        } else {
+          message = selected.item.name + 'を開いた。湯気がまとわり、息が整う。';
+        }
       } else if (selected.item.effect === 'ward') {
         addEffect(playerEffects, 'ward', 1, selected.item.value || 8);
         message = selected.item.name + 'を使った！ 返しの余白が足元に宿る。';
@@ -2026,7 +2033,13 @@ Game.Battle = (function() {
     }
 
     var skill = selected.skill;
-    skillUses[skill.id] = (skillUses[skill.id] || 0) + 1;
+    if (!Game.Player || !Game.Player.consumeSkillCharge || !Game.Player.consumeSkillCharge(skill.id, 1)) {
+      message = skill.name + 'はもう使い切った。';
+      messageTimer = 40;
+      Game.Audio.playSfx('cancel');
+      phase = 'menu';
+      return;
+    }
     if (skill.id === 'mikiashi') {
       addEffect(playerEffects, 'slow_roll', 1, 1);
       message = '見切り足。白い目の動きがゆるむ。';

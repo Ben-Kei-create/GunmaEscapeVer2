@@ -304,7 +304,7 @@ Game.Items = (function() {
     yunohanaVial: {
       id: 'yunohanaVial',
       name: '湯の花小瓶',
-      desc: '戦闘用。鈍りや封じをほどき、湯気の回復をまとう',
+      desc: '戦闘用。鈍りや封じをほどき、覚えたとくぎの回数も少し戻す',
       type: 'battle',
       effect: 'steam_reset',
       turns: 2,

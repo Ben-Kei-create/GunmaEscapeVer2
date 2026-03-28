@@ -43,6 +43,9 @@ Game.Save = (function() {
   }
 
   function getPlayerSnapshot() {
+    if (Game.Player && Game.Player.syncSkillState) {
+      Game.Player.syncSkillState(true);
+    }
     var playerData = Game.Player.getData();
     return {
       hp: playerData.hp,

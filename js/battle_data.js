@@ -3,8 +3,8 @@ Game.BattleData = (function() {
   var enemies = {
     ruined_checkpoint: {
       name: '朽ちた関所',
-      hp: 45, maxHp: 45,
-      attack: 0, defense: 0, goldReward: 0,
+      hp: 90, maxHp: 90,
+      attack: 0, defense: 4, goldReward: 0, expReward: 28,
       sprite: [
         [0,0,0,1,1,1,1,1,1,1,1,1,0,0,0,0],
         [0,0,1,2,2,2,3,3,3,2,2,1,0,0,0,0],
@@ -36,8 +36,8 @@ Game.BattleData = (function() {
         '右腕が鋭く機械的な形状になっている',
         '足元がほつれた布のようにボロボロになっている'
       ],
-      hp: 42, maxHp: 42,
-      attack: 14, defense: 8, goldReward: 25, expReward: 15,
+      hp: 82, maxHp: 82,
+      attack: 18, defense: 8, goldReward: 22, expReward: 24,
       dropItem: 'silk_scrap', dropRate: 0.2,
       sprite: [
         [0,0,0,0,0,0,0,5,5,0,0,0,0,0,0,0],
@@ -77,8 +77,8 @@ Game.BattleData = (function() {
         '右目だけが糸の隙間から覗いている',
         '裾が地面に広がり、根を張っている'
       ],
-      hp: 48, maxHp: 48,
-      attack: 12, defense: 12, goldReward: 28, expReward: 18,
+      hp: 96, maxHp: 96,
+      attack: 18, defense: 10, goldReward: 24, expReward: 28,
       dropItem: 'tangled_thread', dropRate: 0.25,
       sprite: [
         [0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0],
@@ -117,8 +117,8 @@ Game.BattleData = (function() {
         '両腕が異様に長く、地面につきそう',
         '顔に目や口が一切ないのっぺらぼう'
       ],
-      hp: 40, maxHp: 40,
-      attack: 16, defense: 6, goldReward: 22, expReward: 14,
+      hp: 74, maxHp: 74,
+      attack: 18, defense: 6, goldReward: 20, expReward: 22,
       dropItem: 'empty_box', dropRate: 0.15,
       sprite: [
         [0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0],
@@ -157,8 +157,8 @@ Game.BattleData = (function() {
         '右手に細く長い検査杖を持っている',
         '左目が赤く鋭く光っている'
       ],
-      hp: 52, maxHp: 52,
-      attack: 18, defense: 10, goldReward: 35, expReward: 22,
+      hp: 112, maxHp: 112,
+      attack: 22, defense: 12, goldReward: 28, expReward: 34,
       dropItem: 'inspector_lens', dropRate: 0.18,
       sprite: [
         [0,0,0,0,1,1,1,1,1,1,1,0,0,0,0,0],
@@ -198,8 +198,8 @@ Game.BattleData = (function() {
         '左目だけが虚ろに開眼している',
         '髭がだらしなく下へ垂れ下がっている'
       ],
-      hp: 50, maxHp: 50,
-      attack: 10, defense: 15, goldReward: 20, expReward: 12,
+      hp: 88, maxHp: 88,
+      attack: 16, defense: 12, goldReward: 18, expReward: 24,
       dropItem: 'sooty_charm', dropRate: 0.12,
       sprite: [
         [0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0],
@@ -239,8 +239,8 @@ Game.BattleData = (function() {
         '頭頂部から不定形の染料が垂れている',
         '右半身が不自然に肥大化している'
       ],
-      hp: 45, maxHp: 45,
-      attack: 15, defense: 6, goldReward: 26, expReward: 16,
+      hp: 82, maxHp: 82,
+      attack: 19, defense: 7, goldReward: 22, expReward: 26,
       dropItem: 'toxic_dye', dropRate: 0.28,
       sprite: [
         [0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0],
@@ -270,8 +270,8 @@ Game.BattleData = (function() {
     },
     onsenMonkey: {
       name: '温泉猿',
-      hp: 50, maxHp: 50,
-      attack: 12, defense: 3, goldReward: 60,
+      hp: 96, maxHp: 96,
+      attack: 18, defense: 8, goldReward: 42, expReward: 40,
       sprite: [
         [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
         [0,0,0,0,0,1,1,1,1,1,0,0,0,0,0,0],
@@ -294,8 +294,8 @@ Game.BattleData = (function() {
     },
     ishidanGuard: {
       name: '石段番人',
-      hp: 55, maxHp: 55,
-      attack: 14, defense: 5, goldReward: 80,
+      hp: 104, maxHp: 104,
+      attack: 19, defense: 9, goldReward: 48, expReward: 42,
       sprite: [
         [0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0],
         [0,0,0,1,2,2,2,2,2,2,1,0,0,0,0,0],
@@ -318,8 +318,8 @@ Game.BattleData = (function() {
     },
     cabbage: {
       name: '巨大キャベツ',
-      hp: 60, maxHp: 60,
-      attack: 15, defense: 4, goldReward: 100,
+      hp: 118, maxHp: 118,
+      attack: 20, defense: 9, goldReward: 54, expReward: 48,
       sprite: [
         [0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0],
         [0,0,0,0,0,0,1,2,1,0,0,0,0,0,0,0],
@@ -343,8 +343,8 @@ Game.BattleData = (function() {
     // Chapter 2 enemies
     anguraGuard: {
       name: 'アングラの見張り',
-      hp: 80, maxHp: 80,
-      attack: 18, defense: 6, goldReward: 120,
+      hp: 150, maxHp: 150,
+      attack: 25, defense: 12, goldReward: 64, expReward: 58,
       sprite: [
         [0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0],
         [0,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0],
@@ -367,8 +367,8 @@ Game.BattleData = (function() {
     },
     chuji: {
       name: '国定忠治',
-      hp: 120, maxHp: 120,
-      attack: 22, defense: 8, goldReward: 200,
+      hp: 220, maxHp: 220,
+      attack: 31, defense: 16, goldReward: 82, expReward: 90,
       battleTheme: 'melancholy_battle',
       victoryTheme: 'melancholy_victory',
       battleBackdrop: 'field_requiem',
@@ -396,8 +396,8 @@ Game.BattleData = (function() {
     },
     anguraBoss: {
       name: 'ナンバー12-グンマ',
-      hp: 180, maxHp: 180,
-      attack: 28, defense: 10, goldReward: 500,
+      hp: 320, maxHp: 320,
+      attack: 42, defense: 22, goldReward: 120, expReward: 140,
       sprite: [
         [0,0,1,1,1,1,1,1,1,0,0,0,0,0,0,0],
         [0,1,2,2,2,2,2,2,2,1,0,0,0,0,0,0],
@@ -422,8 +422,8 @@ Game.BattleData = (function() {
     // ── ch3 boss ──
     kumako_steam: {
       name: '熊子・湯煙形態',
-      hp: 110, maxHp: 110,
-      attack: 18, defense: 8, goldReward: 150,
+      hp: 210, maxHp: 210,
+      attack: 34, defense: 20, goldReward: 76, expReward: 110,
       sprite: [
         [0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0],
         [0,0,0,0,1,1,2,2,1,1,0,0,0,0,0,0],
@@ -448,8 +448,8 @@ Game.BattleData = (function() {
     // ── ch4 boss ──
     yubatake_guardian: {
       name: '湯畑の守護者',
-      hp: 140, maxHp: 140,
-      attack: 22, defense: 12, goldReward: 200,
+      hp: 260, maxHp: 260,
+      attack: 38, defense: 24, goldReward: 92, expReward: 130,
       ritualMode: 'temperature',
       ritualFailStyle: {
         text: '熱情が沸騰し、濁流となってあなたを押し流した。',
@@ -487,8 +487,8 @@ Game.BattleData = (function() {
     // ── ch5 boss ──
     juke_gakuen: {
       name: 'ジューク（学園）',
-      hp: 160, maxHp: 160,
-      attack: 25, defense: 14, goldReward: 250,
+      hp: 300, maxHp: 300,
+      attack: 44, defense: 28, goldReward: 104, expReward: 150,
       sprite: [
         [0,0,0,0,0,0,2,2,2,2,0,0,0,0,0,0],
         [0,0,0,0,0,2,2,2,2,2,2,0,0,0,0,0],
@@ -513,8 +513,8 @@ Game.BattleData = (function() {
     // ── ch6 mid-boss ──
     echo_guardian: {
       name: '返声の番',
-      hp: 130, maxHp: 130,
-      attack: 20, defense: 10, goldReward: 180,
+      hp: 240, maxHp: 240,
+      attack: 36, defense: 22, goldReward: 86, expReward: 120,
       sprite: [
         [0,0,0,0,0,0,0,2,2,0,0,0,0,0,0,0],
         [0,0,0,0,0,0,2,1,1,2,0,0,0,0,0,0],
@@ -539,8 +539,8 @@ Game.BattleData = (function() {
     // ── ch6 boss ──
     sato_kumako_tunnel: {
       name: '佐藤＆熊子',
-      hp: 200, maxHp: 200,
-      attack: 28, defense: 15, goldReward: 300,
+      hp: 360, maxHp: 360,
+      attack: 48, defense: 30, goldReward: 112, expReward: 170,
       sprite: [
         [0,0,0,0,4,4,4,0,0,4,4,4,0,0,0,0],
         [0,0,0,4,4,4,4,4,4,4,4,4,4,0,0,0],
@@ -565,8 +565,8 @@ Game.BattleData = (function() {
     // ── ch7 boss ──
     haruna_lake_beast: {
       name: '榛名の湖獣',
-      hp: 120, maxHp: 120,
-      attack: 18, defense: 10, goldReward: 150,
+      hp: 250, maxHp: 250,
+      attack: 36, defense: 24, goldReward: 88, expReward: 120,
       sprite: [
         [0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0],
         [0,0,0,0,1,2,1,1,1,1,2,1,0,0,0,0],
@@ -591,8 +591,8 @@ Game.BattleData = (function() {
     // ── ch8 boss ──
     oze_mud_wraith: {
       name: '尾瀬の泥異形',
-      hp: 150, maxHp: 150,
-      attack: 22, defense: 15, goldReward: 200,
+      hp: 320, maxHp: 320,
+      attack: 44, defense: 30, goldReward: 98, expReward: 150,
       sprite: [
         [0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0],
         [0,0,0,0,0,1,2,2,2,2,1,0,0,0,0,0],
@@ -617,8 +617,8 @@ Game.BattleData = (function() {
     // ── ch9 boss ──
     juke_minakami: {
       name: 'ジューク（水上）',
-      hp: 180, maxHp: 180,
-      attack: 28, defense: 18, goldReward: 300,
+      hp: 420, maxHp: 420,
+      attack: 56, defense: 36, goldReward: 120, expReward: 190,
       sprite: [
         [0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0],
         [0,0,0,0,0,1,2,2,2,2,1,0,0,0,0,0],
@@ -643,8 +643,8 @@ Game.BattleData = (function() {
     // ── ch10 final boss ──
     juke_final: {
       name: '真・ジューク',
-      hp: 280, maxHp: 280,
-      attack: 38, defense: 22, goldReward: 0,
+      hp: 620, maxHp: 620,
+      attack: 72, defense: 46, goldReward: 0, expReward: 320,
       sprite: [
         [0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0],
         [0,0,0,0,1,2,2,2,2,2,2,1,0,0,0,0],

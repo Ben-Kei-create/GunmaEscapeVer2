@@ -36,7 +36,7 @@ Game.Maps.konuma = (function() {
         '俺は裏ルートで仕入れた特殊サイコロを売ってる。',
         'アングラを倒したいなら、買っておけ。損はしねえよ。'
       ],
-      afterDialog: 'shop_闇サイコロ屋_fireDice,onsenDice,konnyakuDice,cabbageDice,superYakimanju,gamblerDice',
+      afterDialog: 'shop_闇サイコロ屋_superYakimanju,gamblerDice,cabbageDice',
       sprite: [
         [0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0],
         [0,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0],

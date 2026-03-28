@@ -409,6 +409,37 @@ Game.Battle = (function() {
     }
   }
 
+  function resolveRepairEyeAction() {
+    var ritualDefinition = getRitualDefinition();
+    var ritualItemId = ritualRuntime && ritualRuntime.ritualItemRequirement ? ritualRuntime.ritualItemRequirement : null;
+    if (!ritualDefinition || !ritualRuntime || ritualRuntime.ritualMode !== 'repair_eye') return false;
+    if (!ritualRuntime.ritualState.hpZeroReached) {
+      message = '欠け目が、まだこちらを見返してこない。';
+      messageTimer = 35;
+      Game.Audio.playSfx('cancel');
+      return false;
+    }
+
+    if (ritualDefinition.onActionResolved) {
+      ritualDefinition.onActionResolved(
+        ritualRuntime,
+        enemy,
+        Game.Player.getData(),
+        { id: 'drop_item_to_eye_slot', itemId: ritualItemId },
+        { damage: 0, heal: 0 }
+      );
+    }
+
+    var ritualOutcome = evaluateRitualOutcome();
+    if (!ritualOutcome) {
+      message = '欠けた目へ、そっと願いを戻した。';
+      messageTimer = 45;
+      phase = 'menu';
+    }
+    Game.Audio.playSfx(ritualRuntime && ritualRuntime.ritualState && ritualRuntime.ritualState.eyeRepaired ? 'ritual_chime' : 'confirm');
+    return ritualOutcome || true;
+  }
+
   function evaluateRitualOutcome() {
     var ritualDefinition = getRitualDefinition();
     if (!ritualDefinition || !ritualRuntime) return null;
@@ -1861,7 +1892,11 @@ Game.Battle = (function() {
         }
         break;
       case 'drop_item_to_eye_slot':
-        openRitualItemMenu(entry.id);
+        if (ritualRuntime && ritualRuntime.ritualMode === 'repair_eye') {
+          resolveRepairEyeAction();
+        } else {
+          openRitualItemMenu(entry.id);
+        }
         break;
     }
   }

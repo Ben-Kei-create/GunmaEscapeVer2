@@ -1235,11 +1235,15 @@ Game.UI = (function() {
     var C = Game.Config;
     var skill = Game.Skills && Game.Skills.get ? Game.Skills.get(skillLearnState.skillId) : null;
     var knownSkills = Game.Player && Game.Player.getSkills ? Game.Player.getSkills() : [];
-    var replaceMode = knownSkills.length >= 6;
+    var alreadyKnown = Game.Player && Game.Player.hasSkill ? Game.Player.hasSkill(skillLearnState.skillId) : false;
+    var currentCharges = Game.Player && Game.Player.getSkillCharges ? Game.Player.getSkillCharges(skillLearnState.skillId) : 0;
+    var incomingCharges = Game.Skills && Game.Skills.getStockGain ? Game.Skills.getStockGain(skillLearnState.skillId) : 1;
+    var stockCap = Game.Skills && Game.Skills.getStockCap ? Game.Skills.getStockCap(skillLearnState.skillId) : incomingCharges;
+    var replaceMode = !alreadyKnown && knownSkills.length >= 6;
     var panelX = 64;
     var panelY = 42;
     var panelW = 352;
-    var panelH = replaceMode ? 238 : 190;
+    var panelH = replaceMode ? 238 : 198;
 
     R.drawRectAbsolute(0, 0, C.CANVAS_WIDTH, C.CANVAS_HEIGHT, 'rgba(4, 6, 18, 0.58)');
     R.drawDialogBox(panelX, panelY, panelW, panelH);
@@ -1250,13 +1254,20 @@ Game.UI = (function() {
       R.drawTextJP(skill.name, 82, 76, '#ffffff', 14);
       drawWrappedTextBlock(skill.desc, 82, 94, 26, 3, 12, '#dce6ff', 10);
       R.drawTextJP('用途: ' + (skill.shortDesc || skill.desc), 82, 132, '#b9c8eb', 9);
-      R.drawTextJP('戦闘ごと ' + (skill.usesPerBattle || 1) + '回', 82, 144, '#b9c8eb', 9);
+      if (alreadyKnown) {
+        R.drawTextJP('残り回数 ' + currentCharges + '/' + stockCap + '  ->  ' + Math.min(stockCap, currentCharges + incomingCharges) + '/' + stockCap, 82, 144, '#b9c8eb', 9);
+      } else {
+        R.drawTextJP('初期回数 ' + incomingCharges + ' / 上限 ' + stockCap, 82, 144, '#b9c8eb', 9);
+      }
     }
     if (skillLearnState.sourceText) {
       drawWrappedTextBlock(skillLearnState.sourceText, 82, 158, 28, 2, 12, '#ffddb0', 9);
     }
 
     if (!replaceMode) {
+      if (alreadyKnown) {
+        R.drawTextJP('重ねて覚えると残り回数が増える。', 82, 182, '#ffcf9d', 9);
+      }
       R.drawTextJP('Z: おぼえる', 82, panelY + panelH - 18, '#ffd66b', 10);
       R.drawTextJP('X: みおくる', 238, panelY + panelH - 18, '#9aa7c9', 10);
       return;
@@ -1980,7 +1991,8 @@ Game.UI = (function() {
   function updateSkillLearn() {
     if (!skillLearnState.active || !skillLearnState.skillId) return null;
     var knownSkills = Game.Player && Game.Player.getSkills ? Game.Player.getSkills() : [];
-    var replaceMode = knownSkills.length >= 6;
+    var alreadyKnown = Game.Player && Game.Player.hasSkill ? Game.Player.hasSkill(skillLearnState.skillId) : false;
+    var replaceMode = !alreadyKnown && knownSkills.length >= 6;
 
     if (replaceMode) {
       if (Game.Input.isPressed('up')) {
@@ -2015,13 +2027,17 @@ Game.UI = (function() {
   function getSkillLearnDebugState() {
     if (!skillLearnState.active || !skillLearnState.skillId) return null;
     var knownSkills = Game.Player && Game.Player.getSkills ? Game.Player.getSkills() : [];
+    var alreadyKnown = Game.Player && Game.Player.hasSkill ? Game.Player.hasSkill(skillLearnState.skillId) : false;
     return {
       skillId: skillLearnState.skillId,
       skillName: Game.Skills && Game.Skills.get && Game.Skills.get(skillLearnState.skillId)
         ? Game.Skills.get(skillLearnState.skillId).name
         : skillLearnState.skillId,
       sourceText: skillLearnState.sourceText || '',
-      replaceMode: knownSkills.length >= 6,
+      replaceMode: !alreadyKnown && knownSkills.length >= 6,
+      alreadyKnown: alreadyKnown,
+      currentCharges: Game.Player && Game.Player.getSkillCharges ? Game.Player.getSkillCharges(skillLearnState.skillId) : 0,
+      incomingCharges: Game.Skills && Game.Skills.getStockGain ? Game.Skills.getStockGain(skillLearnState.skillId) : 1,
       replaceIndex: skillLearnState.replaceIndex,
       knownSkills: knownSkills.slice()
     };

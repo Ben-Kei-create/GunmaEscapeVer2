@@ -455,10 +455,7 @@ Game.Main = (function() {
         var skillLearnResult = Game.UI.updateSkillLearn ? Game.UI.updateSkillLearn() : null;
         if (skillLearnResult) {
           if (skillLearnResult.action === 'learn' && Game.Player && Game.Player.learnSkill) {
-            if (skillLearnResult.replaceId && Game.Player.forgetSkill) {
-              Game.Player.forgetSkill(skillLearnResult.replaceId);
-            }
-            Game.Player.learnSkill(skillLearnResult.skillId);
+            Game.Player.learnSkill(skillLearnResult.skillId, skillLearnResult.replaceId);
           }
           continuePendingSkillFlow();
         }
@@ -642,6 +639,9 @@ Game.Main = (function() {
         }
         break;
       case 'battle_daruma_master':
+        if (Game.Player && Game.Player.hasItem && Game.Player.addItem && !Game.Player.hasItem('darumaEye')) {
+          Game.Player.addItem('darumaEye');
+        }
         setState(Game.Config.STATE.BATTLE);
         Game.Battle.start('darumaMaster', npc);
         break;
@@ -878,10 +878,10 @@ Game.Main = (function() {
 
     // Reset player
     var pd = Game.Player.getData();
-    pd.hp = 100;
-    pd.maxHp = 100;
+    pd.hp = 96;
+    pd.maxHp = 96;
     pd.attack = 12;
-    pd.defense = 5;
+    pd.defense = 6;
     pd.experience = 0;
     pd.gold = 100;
     pd.chapter = 1;
@@ -890,7 +890,14 @@ Game.Main = (function() {
     pd.armor = null;
     pd.partyMembers = [];
     pd.skillsKnown = [];
+    pd.skillCharges = {};
     pd.inventory = [];
+    if (Game.Player && Game.Player.syncGrowthStats) {
+      Game.Player.syncGrowthStats('full');
+    }
+    if (Game.Player && Game.Player.syncSkillState) {
+      Game.Player.syncSkillState(false);
+    }
     if (Game.Player && Game.Player.clearPendingSkillChoices) {
       Game.Player.clearPendingSkillChoices();
     }
@@ -1304,6 +1311,7 @@ Game.Main = (function() {
         gold: pd.gold,
         chapter: pd.chapter,
         skillsKnown: Game.Player.getSkills ? Game.Player.getSkills() : [],
+        skillCharges: Game.Player.getAllSkillCharges ? Game.Player.getAllSkillCharges() : {},
         inventory: (pd.inventory || []).slice()
       },
       journeyLabel: chapterInfo ? chapterInfo.displayLabel : '',
@@ -1375,13 +1383,31 @@ Game.Main = (function() {
     var pd = Game.Player.getData();
     var debugInventory = params.get('debugInventory');
     var debugSkills = params.get('debugSkills');
+    var debugSkillCharges = params.get('debugSkillCharges');
     var debugExp = parseInt(params.get('debugExp') || '', 10);
     var debugAttack = parseInt(params.get('debugAttack') || '', 10);
     var debugMaxHp = parseInt(params.get('debugMaxHp') || '', 10);
     pd.inventory = debugInventory ? debugInventory.split(',').filter(Boolean) : [];
     pd.skillsKnown = debugSkills ? debugSkills.split(',').filter(Boolean) : [];
+    pd.skillCharges = {};
+    if (debugSkillCharges) {
+      var skillChargeValues = debugSkillCharges.split(',').map(function(value) {
+        return parseInt(value, 10);
+      });
+      for (var s = 0; s < pd.skillsKnown.length; s++) {
+        if (!isNaN(skillChargeValues[s])) {
+          pd.skillCharges[pd.skillsKnown[s]] = Math.max(0, skillChargeValues[s]);
+        }
+      }
+    }
     if (!isNaN(debugExp)) {
       pd.experience = Math.max(0, debugExp);
+    }
+    if (Game.Player && Game.Player.syncGrowthStats) {
+      Game.Player.syncGrowthStats('full');
+    }
+    if (Game.Player && Game.Player.syncSkillState) {
+      Game.Player.syncSkillState(true);
     }
     if (!isNaN(debugAttack)) {
       pd.attack = Math.max(1, debugAttack);

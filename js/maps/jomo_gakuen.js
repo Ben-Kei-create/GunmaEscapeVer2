@@ -68,6 +68,23 @@ Game.Maps.jomo_gakuen = (function() {
       dialog: ['本を破らないでくださいね。', '返却日は永遠ですが。', '記憶は大切に扱いましょう。'],
       defeatedDialog: ['本棚が空っぽになったわ。', '皆さん、卒業したのね。'],
       defeated: false, sprite: humanSprite, palette: { 1:'#ddbbcc', 2:'#cc3333', 3:'#222222' }
+    },
+    {
+      id: 'school_kiosk',
+      x: 24, y: 5,
+      name: '購買の残り火',
+      dialog: [
+        'チャイムは止まっても、腹は減るよねえ。',
+        'ここじゃ品数を欲張るより、効くものだけ残すのが正解さ。'
+      ],
+      afterDialog: 'shop_学園購買_healHerb,measureLens,guardChalk',
+      defeatedDialog: [
+        '売れ筋だけ置いてるんだ。',
+        '迷う時間まで補習に食われたくないだろ？'
+      ],
+      defeated: false,
+      sprite: humanSprite,
+      palette: { 1:'#f0d6b8', 2:'#6ea0d6', 3:'#3d2f28' }
     }
   ];
   var items = [

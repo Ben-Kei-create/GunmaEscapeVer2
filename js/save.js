@@ -1,7 +1,7 @@
 // Save system using localStorage + passphrase export
 Game.Save = (function() {
   var MAX_SLOTS = 3;
-  var VERSION = 6;
+  var VERSION = 7;
   var PASSPHRASE_PREFIX = 'GM2';
   var BASE32_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
   var runtime = window.__gunmaSaveRuntime || {
@@ -63,7 +63,8 @@ Game.Save = (function() {
       diceSlots: playerData.diceSlots,
       chapter: playerData.chapter,
       partyMembers: clone(playerData.partyMembers || []),
-      skillsKnown: clone(playerData.skillsKnown || [])
+      skillsKnown: clone(playerData.skillsKnown || []),
+      skillCharges: clone(playerData.skillCharges || {})
     };
   }
 
@@ -249,12 +250,19 @@ Game.Save = (function() {
     playerData.chapter = savedPlayer.chapter || 1;
     playerData.partyMembers = clone(savedPlayer.partyMembers || []);
     playerData.skillsKnown = clone(savedPlayer.skillsKnown || []);
+    playerData.skillCharges = clone(savedPlayer.skillCharges || {});
     playerData.moving = false;
     playerData.moveFrame = 0;
     playerData.moveTimer = 0;
 
     while (playerData.equippedDice.length < playerData.diceSlots) {
       playerData.equippedDice.push('normalDice');
+    }
+    if (Game.Player && Game.Player.syncGrowthStats) {
+      Game.Player.syncGrowthStats('ratio');
+    }
+    if (Game.Player && Game.Player.syncSkillState) {
+      Game.Player.syncSkillState(true);
     }
     if (Game.Player && Game.Player.clearPendingSkillChoices) {
       Game.Player.clearPendingSkillChoices();
@@ -286,6 +294,26 @@ Game.Save = (function() {
 
   function getItemCatalog() {
     return Object.keys(Game.Items.getAll ? Game.Items.getAll() : {}).sort();
+  }
+
+  function getSkillChargeList(skillsKnown, skillCharges) {
+    var list = [];
+    var known = skillsKnown || [];
+    var charges = skillCharges || {};
+    for (var i = 0; i < known.length; i++) {
+      list.push(Math.max(0, Math.floor(charges[known[i]] || 0)));
+    }
+    return list;
+  }
+
+  function decodeSkillChargeMap(skillsKnown, chargeList) {
+    var result = {};
+    var known = skillsKnown || [];
+    var values = chargeList || [];
+    for (var i = 0; i < known.length; i++) {
+      result[known[i]] = Math.max(0, Math.floor(values[i] || 0));
+    }
+    return result;
   }
 
   function getPartyCatalog() {
@@ -506,7 +534,8 @@ Game.Save = (function() {
         encodeIdList(player.equippedDice || [], itemCatalog),
         encodeIdList(player.inventory || [], itemCatalog),
         encodeIdList(player.partyMembers || [], partyCatalog),
-        encodeIdList(player.skillsKnown || [], skillCatalog)
+        encodeIdList(player.skillsKnown || [], skillCatalog),
+        getSkillChargeList(player.skillsKnown || [], player.skillCharges || {})
       ],
       n: encodeNpcStatesCompact(data.npcStates || {}),
       i: encodeItemStatesCompact(data.itemStates || {}),
@@ -533,11 +562,13 @@ Game.Save = (function() {
     var version = compact.v || VERSION;
     var legacyLayout = !compact.v || compact.v < 5;
     var hasSkills = version >= 6;
+    var hasSkillCharges = version >= 7;
     var equippedDice = decodeIdList(playerData[legacyLayout ? 11 : 12] || [], itemCatalog);
     if (!equippedDice.length) equippedDice = ['normalDice'];
     var inventory = decodeIdList(playerData[legacyLayout ? 12 : 13] || [], itemCatalog);
     var partyMembers = decodeIdList(playerData[legacyLayout ? 13 : 14] || [], partyCatalog);
     var skillsKnown = hasSkills ? decodeIdList(playerData[15] || [], skillCatalog) : [];
+    var skillCharges = hasSkillCharges ? decodeSkillChargeMap(skillsKnown, playerData[16] || []) : {};
     var journeyData = compact.j || [];
     var storyFlags = {};
     for (var i = 0; i < (compact.s || []).length; i++) {
@@ -572,7 +603,8 @@ Game.Save = (function() {
         inventory: inventory,
         keyItems: getKeyItemsFromInventory(inventory),
         partyMembers: partyMembers,
-        skillsKnown: skillsKnown
+        skillsKnown: skillsKnown,
+        skillCharges: skillCharges
       },
       npcStates: decodeNpcStatesCompact(compact.n || ''),
       itemStates: decodeItemStatesCompact(compact.i || ''),

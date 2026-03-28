@@ -27,6 +27,21 @@ Game.Player = (function() {
       color: '#ffb36b'
     }
   };
+  var MAX_LEVEL = 100;
+  var EXP_PER_LEVEL = 80;
+  var LEVEL_MILESTONES = {
+    1: { maxHp: 96, attack: 12, defense: 6 },
+    10: { maxHp: 168, attack: 18, defense: 10 },
+    20: { maxHp: 260, attack: 24, defense: 14 },
+    30: { maxHp: 360, attack: 31, defense: 19 },
+    40: { maxHp: 470, attack: 39, defense: 24 },
+    50: { maxHp: 580, attack: 47, defense: 29 },
+    60: { maxHp: 680, attack: 55, defense: 34 },
+    70: { maxHp: 780, attack: 63, defense: 38 },
+    80: { maxHp: 870, attack: 71, defense: 42 },
+    90: { maxHp: 940, attack: 79, defense: 47 },
+    100: { maxHp: 999, attack: 87, defense: 52 }
+  };
 
   var data = {
     tileX: 14,
@@ -34,10 +49,10 @@ Game.Player = (function() {
     x: 0,
     y: 0,
     direction: 'down',
-    hp: 100,
-    maxHp: 100,
+    hp: 96,
+    maxHp: 96,
     attack: 12,
-    defense: 5,
+    defense: 6,
     experience: 0,
     gold: 100,
     chapter: 1,                  // current chapter (1 or 2)
@@ -46,6 +61,7 @@ Game.Player = (function() {
     armor: null,    // equipped armor item ID
     partyMembers: [],
     skillsKnown: [],
+    skillCharges: {},
     inventory: [],
     moving: false,
     moveTimer: 0,
@@ -167,6 +183,98 @@ Game.Player = (function() {
       if (result.length >= 6) break;
     }
     return result;
+  }
+
+  function getMilestoneLevels() {
+    return Object.keys(LEVEL_MILESTONES).map(function(key) {
+      return parseInt(key, 10);
+    }).sort(function(a, b) {
+      return a - b;
+    });
+  }
+
+  function clampLevel(level) {
+    return Math.max(1, Math.min(MAX_LEVEL, level | 0));
+  }
+
+  function getJourneyRankFromExperience(experience) {
+    return clampLevel(1 + Math.floor(Math.max(0, experience || 0) / EXP_PER_LEVEL));
+  }
+
+  function getLevelStats(level) {
+    var safeLevel = clampLevel(level);
+    var milestones = getMilestoneLevels();
+    var lowerLevel = milestones[0];
+    var upperLevel = milestones[milestones.length - 1];
+
+    for (var i = 0; i < milestones.length; i++) {
+      if (milestones[i] <= safeLevel) lowerLevel = milestones[i];
+      if (milestones[i] >= safeLevel) {
+        upperLevel = milestones[i];
+        break;
+      }
+    }
+
+    if (lowerLevel === upperLevel) {
+      return {
+        maxHp: LEVEL_MILESTONES[lowerLevel].maxHp,
+        attack: LEVEL_MILESTONES[lowerLevel].attack,
+        defense: LEVEL_MILESTONES[lowerLevel].defense
+      };
+    }
+
+    var lowerStats = LEVEL_MILESTONES[lowerLevel];
+    var upperStats = LEVEL_MILESTONES[upperLevel];
+    var progress = (safeLevel - lowerLevel) / Math.max(1, upperLevel - lowerLevel);
+    return {
+      maxHp: Math.min(999, Math.round(lowerStats.maxHp + (upperStats.maxHp - lowerStats.maxHp) * progress)),
+      attack: Math.round(lowerStats.attack + (upperStats.attack - lowerStats.attack) * progress),
+      defense: Math.round(lowerStats.defense + (upperStats.defense - lowerStats.defense) * progress)
+    };
+  }
+
+  function getSkillStockGain(skillId) {
+    if (!Game.Skills || !Game.Skills.getStockGain) return 1;
+    return Math.max(1, Game.Skills.getStockGain(skillId));
+  }
+
+  function getSkillStockCap(skillId) {
+    if (!Game.Skills || !Game.Skills.getStockCap) return getSkillStockGain(skillId);
+    return Math.max(getSkillStockGain(skillId), Game.Skills.getStockCap(skillId));
+  }
+
+  function normalizeSkillCharges(charges, skills, fillMissing) {
+    var knownSkills = normalizeSkills(skills || []);
+    var source = charges || {};
+    var result = {};
+    for (var i = 0; i < knownSkills.length; i++) {
+      var skillId = knownSkills[i];
+      var value = typeof source[skillId] === 'number' ? source[skillId] : NaN;
+      if (isNaN(value)) {
+        value = fillMissing ? getSkillStockGain(skillId) : 0;
+      }
+      result[skillId] = Math.max(0, Math.min(getSkillStockCap(skillId), Math.floor(value)));
+    }
+    return result;
+  }
+
+  function syncSkillState(fillMissingCharges) {
+    data.skillsKnown = normalizeSkills(data.skillsKnown);
+    data.skillCharges = normalizeSkillCharges(data.skillCharges, data.skillsKnown, !!fillMissingCharges);
+  }
+
+  function syncGrowthStats(mode) {
+    var stats = getLevelStats(getJourneyRank());
+    var previousMaxHp = Math.max(1, data.maxHp || stats.maxHp);
+    var hpRatio = Math.max(0, Math.min(1, (data.hp || previousMaxHp) / previousMaxHp));
+    data.maxHp = stats.maxHp;
+    data.attack = stats.attack;
+    data.defense = stats.defense;
+    if (mode === 'full') {
+      data.hp = data.maxHp;
+    } else {
+      data.hp = Math.max(1, Math.min(data.maxHp, Math.round(data.maxHp * hpRatio)));
+    }
   }
 
   function update() {
@@ -424,29 +532,22 @@ Game.Player = (function() {
   }
 
   function getLevelUpGains(rank) {
-    var currentRank = Math.max(2, rank || 2);
+    var currentRank = clampLevel(rank || 1);
+    var previousStats = getLevelStats(Math.max(1, currentRank - 1));
+    var currentStats = getLevelStats(currentRank);
     return {
-      hp: 12 + Math.floor((currentRank - 2) / 4) * 2,
-      attack: 2 + ((currentRank >= 6 && currentRank % 3 === 0) ? 1 : 0),
-      defense: 1 + ((currentRank >= 5 && currentRank % 4 === 1) ? 1 : 0)
+      hp: Math.max(0, currentStats.maxHp - previousStats.maxHp),
+      attack: Math.max(0, currentStats.attack - previousStats.attack),
+      defense: Math.max(0, currentStats.defense - previousStats.defense)
     };
   }
 
-  function hasPendingSkillChoice(skillId) {
-    for (var i = 0; i < pendingSkillChoices.length; i++) {
-      var entry = pendingSkillChoices[i];
-      var queuedId = (typeof entry === 'string') ? entry : entry && entry.skillId;
-      if (queuedId === skillId) return true;
-    }
-    return false;
-  }
-
   function queueSkillChoice(skillId, sourceText) {
-    if (!skillId || hasSkill(skillId)) return false;
-    if (hasPendingSkillChoice(skillId)) return false;
+    if (!skillId || !Game.Skills || !Game.Skills.get || !Game.Skills.get(skillId)) return false;
     pendingSkillChoices.push({
       skillId: skillId,
-      sourceText: sourceText || ''
+      sourceText: sourceText || '',
+      stockGain: getSkillStockGain(skillId)
     });
     return true;
   }
@@ -497,7 +598,7 @@ Game.Player = (function() {
     var gained = Math.max(0, amount || 0);
     var previousRank = getJourneyRank();
     var projectedExp = Math.max(0, (data.experience || 0) + gained);
-    var nextRank = 1 + Math.floor(projectedExp / 80);
+    var nextRank = getJourneyRankFromExperience(projectedExp);
     var levelUps = [];
     var totalGains = { hp: 0, attack: 0, defense: 0 };
 
@@ -521,15 +622,15 @@ Game.Player = (function() {
       gained: gained,
       previousRank: previousRank,
       newRank: nextRank,
-      nextRankExperience: nextRank * 80,
-      remainingToNextRank: Math.max(0, nextRank * 80 - projectedExp),
+      nextRankExperience: nextRank >= MAX_LEVEL ? projectedExp : nextRank * EXP_PER_LEVEL,
+      remainingToNextRank: nextRank >= MAX_LEVEL ? 0 : Math.max(0, nextRank * EXP_PER_LEVEL - projectedExp),
       levelUps: levelUps,
       totalGains: totalGains
     };
   }
 
   function getJourneyRank() {
-    return 1 + Math.floor((data.experience || 0) / 80);
+    return getJourneyRankFromExperience(data.experience || 0);
   }
 
   function syncCatalystsFromInventory() {
@@ -539,7 +640,7 @@ Game.Player = (function() {
   }
 
   function getSkills() {
-    data.skillsKnown = normalizeSkills(data.skillsKnown);
+    syncSkillState(false);
     return data.skillsKnown.slice();
   }
 
@@ -547,26 +648,73 @@ Game.Player = (function() {
     return getSkills().indexOf(id) >= 0;
   }
 
+  function getSkillCharges(skillId) {
+    syncSkillState(false);
+    return Math.max(0, data.skillCharges[skillId] || 0);
+  }
+
+  function getAllSkillCharges() {
+    syncSkillState(false);
+    return JSON.parse(JSON.stringify(data.skillCharges || {}));
+  }
+
+  function addSkillCharges(skillId, amount) {
+    if (!skillId || amount <= 0) return 0;
+    syncSkillState(false);
+    if (data.skillsKnown.indexOf(skillId) < 0) return 0;
+    var current = data.skillCharges[skillId] || 0;
+    var next = Math.min(getSkillStockCap(skillId), current + Math.max(0, amount | 0));
+    data.skillCharges[skillId] = next;
+    return next - current;
+  }
+
+  function restoreAllSkillCharges(amount) {
+    syncSkillState(false);
+    var total = 0;
+    var skills = data.skillsKnown.slice();
+    for (var i = 0; i < skills.length; i++) {
+      total += addSkillCharges(skills[i], amount);
+    }
+    return total;
+  }
+
+  function consumeSkillCharge(skillId, amount) {
+    if (!skillId) return false;
+    syncSkillState(false);
+    var spend = Math.max(1, amount | 0);
+    if ((data.skillCharges[skillId] || 0) < spend) return false;
+    data.skillCharges[skillId] -= spend;
+    return true;
+  }
+
   function learnSkill(id, replaceId) {
     if (!Game.Skills || !Game.Skills.get || !Game.Skills.get(id)) return false;
-    data.skillsKnown = normalizeSkills(data.skillsKnown);
-    if (data.skillsKnown.indexOf(id) >= 0) return true;
-    if (replaceId) {
+    syncSkillState(false);
+    if (data.skillsKnown.indexOf(id) >= 0) {
+      addSkillCharges(id, getSkillStockGain(id));
+      return true;
+    }
+    if (replaceId && data.skillsKnown.length >= 6) {
       var replaceIndex = data.skillsKnown.indexOf(replaceId);
       if (replaceIndex >= 0) {
         data.skillsKnown.splice(replaceIndex, 1);
+        delete data.skillCharges[replaceId];
       }
     }
     if (data.skillsKnown.length >= 6) return false;
     data.skillsKnown.push(id);
+    syncSkillState(false);
+    data.skillCharges[id] = 0;
+    addSkillCharges(id, getSkillStockGain(id));
     return true;
   }
 
   function forgetSkill(id) {
-    data.skillsKnown = normalizeSkills(data.skillsKnown);
+    syncSkillState(false);
     var index = data.skillsKnown.indexOf(id);
     if (index < 0) return false;
     data.skillsKnown.splice(index, 1);
+    delete data.skillCharges[id];
     return true;
   }
 
@@ -613,8 +761,16 @@ Game.Player = (function() {
     addExperience: addExperience,
     previewExperienceGain: previewExperienceGain,
     getJourneyRank: getJourneyRank,
+    getLevelStats: getLevelStats,
+    syncGrowthStats: syncGrowthStats,
     getSkills: getSkills,
     hasSkill: hasSkill,
+    getSkillCharges: getSkillCharges,
+    getAllSkillCharges: getAllSkillCharges,
+    addSkillCharges: addSkillCharges,
+    restoreAllSkillCharges: restoreAllSkillCharges,
+    consumeSkillCharge: consumeSkillCharge,
+    syncSkillState: syncSkillState,
     learnSkill: learnSkill,
     forgetSkill: forgetSkill,
     offerSkillChoice: offerSkillChoice,

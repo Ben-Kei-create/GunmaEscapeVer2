@@ -44,7 +44,8 @@ Game.Skills = (function() {
       name: '見切り足',
       desc: '次のダイスがゆっくり回る。落ち着いて止めやすくなる。',
       shortDesc: '次のダイス速度を遅くする',
-      usesPerBattle: 2,
+      stockGain: 3,
+      stockCap: 9,
       color: '#8fe0ff'
     },
     kasanekan: {
@@ -52,7 +53,8 @@ Game.Skills = (function() {
       name: '重ね勘',
       desc: '次の出目へ勘を重ね、ダメージへ補正を足す。',
       shortDesc: '次のダイス補正+2',
-      usesPerBattle: 2,
+      stockGain: 3,
+      stockCap: 9,
       color: '#ffd66b'
     },
     migamae: {
@@ -60,7 +62,8 @@ Game.Skills = (function() {
       name: '身構え',
       desc: '肩を落として構え直し、しばらく受けを固める。',
       shortDesc: '2ターン防御アップ',
-      usesPerBattle: 2,
+      stockGain: 3,
+      stockCap: 8,
       color: '#8fdca0'
     },
     hibashiri: {
@@ -68,7 +71,8 @@ Game.Skills = (function() {
       name: '火走り',
       desc: '次の一投に熱を帯びさせ、当たれば燃え移らせる。',
       shortDesc: '次の一投で火傷付与',
-      usesPerBattle: 1,
+      stockGain: 2,
+      stockCap: 6,
       color: '#ff9b6b'
     },
     shirosenyomi: {
@@ -76,7 +80,8 @@ Game.Skills = (function() {
       name: '白線読み',
       desc: '境界の綻びを見切り、相手の動き出しをひと拍子遅らせる。',
       shortDesc: '敵を1ターン足止め',
-      usesPerBattle: 1,
+      stockGain: 2,
+      stockCap: 6,
       color: '#c6d0ff'
     },
     tsumugibreathe: {
@@ -84,7 +89,8 @@ Game.Skills = (function() {
       name: '紡ぎ息',
       desc: '乱れた呼吸を整え、鈍りや封印をほどく。',
       shortDesc: '鈍りと回復封印を解除',
-      usesPerBattle: 1,
+      stockGain: 2,
+      stockCap: 6,
       color: '#f1ece4'
     },
     kaminariyobi: {
@@ -92,7 +98,8 @@ Game.Skills = (function() {
       name: '雷呼び',
       desc: '上州の空気をまとい、しばらく攻め筋を鋭くする。',
       shortDesc: '攻撃上昇と賽補正',
-      usesPerBattle: 1,
+      stockGain: 2,
+      stockCap: 6,
       color: '#ffe066'
     },
     kaeriashi: {
@@ -100,7 +107,8 @@ Game.Skills = (function() {
       name: '返り足',
       desc: '踏み込みを残して退き、次の被害をやわらげる。',
       shortDesc: '次の被ダメージを軽減',
-      usesPerBattle: 1,
+      stockGain: 2,
+      stockCap: 6,
       color: '#d8bfff'
     },
     sokomiki: {
@@ -108,7 +116,8 @@ Game.Skills = (function() {
       name: '底見切り',
       desc: '低い目を拾い上げ、次の一投の最低値を引き上げる。返しの余白も少し残る。',
       shortDesc: '次のダメージ目を底上げし、軽い返しを得る',
-      usesPerBattle: 1,
+      stockGain: 2,
+      stockCap: 5,
       color: '#dfe6ff'
     },
     yunomatoi: {
@@ -116,7 +125,8 @@ Game.Skills = (function() {
       name: '湯まとい',
       desc: '湯気をまとって鈍りをほどき、守りと再生を静かに残す。',
       shortDesc: '鈍り解除、防御アップ、継続回復',
-      usesPerBattle: 1,
+      stockGain: 2,
+      stockCap: 5,
       color: '#9be4ff'
     },
     hakokuzushi: {
@@ -124,7 +134,8 @@ Game.Skills = (function() {
       name: '荷崩し',
       desc: '相手の重心を崩し、次の一投で弱い綻びを拾いやすくする。',
       shortDesc: '相手を痺れさせ、次の賽補正+1',
-      usesPerBattle: 1,
+      stockGain: 2,
+      stockCap: 5,
       color: '#ffcb8f'
     },
     karakaze: {
@@ -132,7 +143,8 @@ Game.Skills = (function() {
       name: '空っ風',
       desc: 'からっ風を背に受け、次の一投を見切りやすくしながら攻め筋を鋭くする。',
       shortDesc: '次の一投を見切りやすくし、攻撃上昇',
-      usesPerBattle: 1,
+      stockGain: 2,
+      stockCap: 5,
       color: '#c6f08f'
     },
     itoyurai: {
@@ -140,7 +152,8 @@ Game.Skills = (function() {
       name: '糸ゆらい',
       desc: '白糸の揺れを写し、相手の白い賽をしばらく鈍らせる。',
       shortDesc: '敵の白い賽を2ターン鈍らせる',
-      usesPerBattle: 1,
+      stockGain: 2,
+      stockCap: 5,
       color: '#f0f2ff'
     }
   };
@@ -185,11 +198,23 @@ Game.Skills = (function() {
     return offers;
   }
 
+  function getStockGain(id) {
+    var skill = get(id);
+    return skill ? Math.max(1, skill.stockGain || 1) : 1;
+  }
+
+  function getStockCap(id) {
+    var skill = get(id);
+    return skill ? Math.max(getStockGain(id), skill.stockCap || getStockGain(id)) : 1;
+  }
+
   return {
     get: get,
     getAll: getAll,
     getLearnableSkillForRank: getLearnableSkillForRank,
     getLearnOrder: getLearnOrder,
-    getBattleVictoryOffers: getBattleVictoryOffers
+    getBattleVictoryOffers: getBattleVictoryOffers,
+    getStockGain: getStockGain,
+    getStockCap: getStockCap
   };
 })();

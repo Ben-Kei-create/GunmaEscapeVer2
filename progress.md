@@ -654,3 +654,34 @@ Original prompt: そうだね。セーブできる村役場みたいなところ
   - Playwright MCP で `debugBattle=anguraBoss` を開き、`Game.Battle.debugForceBossCue('special_move')` 実行時に `battle.bossAction.lines = ['ドドド…']`、`title/subtitle = ''`、`battle.dialogue.waitingConfirm = true`、`battle.dialogue.text = 'ナンバー12は荷車ごと突っ込んできた！'` を確認。
   - 同じく `debugForceBossCue('phase_change')` で `battle.bossAction.lines = ['ガタン']` と、本文説明が確認送りダイアログへ回ることを確認。
   - 表示確認では Playwright スクリーンショットに `Space / Z / Enter` の案内が出ることを目視した。
+- 2026-03-28: 街や道の「進めない」地点に理由メッセージを追加。
+  - `js/map.js` に blocked passage 判定を追加し、将来的に `minChapter / requiresFlag / requiresItem / blockedMessage` を持つ出口も扱えるようにした。
+  - `js/player.js` では移動失敗時に「単なる壁」ではなく、境界の道路や未開通ルートだけを `consumeBlockedMove()` で返すようにした。押しっぱなしでダイアログが連打されないよう方向ラッチも追加。
+  - `js/main.js` は blocked move を拾って `DIALOG` へ遷移するようにし、探索中でもそのまま理由を読めるようにした。
+  - `js/maps/maebashi.js` `js/maps/shimonita.js` `js/maps/ikaho.js` `js/maps/akagi_shrine.js` `js/maps/kusatsu_deep.js` に `blockedPassages` を追加し、各地点に合わせた文言を設定した。
+- 2026-03-28: 進めない地点メッセージの検証結果
+  - `node --check js/map.js js/player.js js/main.js js/maps/maebashi.js js/maps/shimonita.js js/maps/ikaho.js js/maps/akagi_shrine.js js/maps/kusatsu_deep.js` 通過。
+  - `develop-web-game` の Playwright client を `output/web-game/blocked-passage-west` で実行し、ローカル実行スモーク自体は通した。タイトル導入が長く、client 単体では今回の境界地点までは到達できていない。
+  - Playwright MCP では最新スクリプトを読み直したうえで `simulateBlockedMove('maebashi', 0, 10, 'left')` が `西口の道は、まだ霞の向こうで途切れている。今は高崎側へ向かおう。` を返すこと、`simulateBlockedMove('shimonita', 29, 10, 'right')` が `東の山道は崩れていて...` を返すことを確認した。
+  - 比較用に `simulateBlockedMove('maebashi', 10, 3, 'right')` では `null` になり、普通の壁へぶつかった時には余計なメッセージが出ないことも確認した。
+  - Playwright console error は 0 件。
+- 2026-03-28: ショップ方針を「品数は最小限、補給地点は要所に残す」へ調整。
+  - 既存ショップは基本 3〜4 品へ整理した。前橋/高崎/下仁田/草津/伊香保/富岡/タムラ/赤城牧場/小沼の品揃えを絞り、各店の役割が見える構成にした。
+  - 後半の補給切れを防ぐため、`js/maps/jomo_gakuen.js` に `学園購買`、`js/maps/minakami_valley.js` に `峠の行商` を追加した。どちらも 3 品だけの小型ショップ。
+  - `学園購買` は `healHerb / measureLens / guardChalk`、`峠の行商` は `superYakimanju / kaeshiOmamori / silkWeight` にして、終盤の準備を短時間で済ませられるようにした。
+- 2026-03-28: ショップ整理の検証結果
+  - `node --check` で今回触った全マップ定義ファイルを通過。
+  - スクリプトで全ショップの品数を再集計し、すべて `3〜4 品` に収まっていることを確認。
+  - `jomo_gakuen` の `school_kiosk` は床タイル `9`、`minakami_valley` の `ridge_peddler` は道タイル `1` 上にあり、他NPCとも座標競合していないことを確認。
+  - `develop-web-game` の Playwright client を `output/web-game/shop-trim-smoke` で実行し、ビルドのスモークを通過。
+  - Playwright MCP で最新マップ定義を読み直し、各 `shop_*` の item 配列が想定どおりになっていることを確認。console error は 0 件。
+- 2026-03-28: だるま戦の「目を入れる」正規ルートを簡略化。
+  - `js/battle.js` に `resolveRepairEyeAction()` を追加し、`repair_eye` では `目を入れる` を押した時点でそのまま儀式成功判定へ進むよう変更した。もうアイテム選択画面を経由しない。
+  - 内部的には `ritualItemRequirement = darumaEye` をそのままスロット表示へ使うが、戦闘中の成立条件は `HP 0 到達 + コマンド実行` に寄せた。
+  - `js/main.js` の `battle_daruma_master` 導線でも、もし `darumaEye` を持っていなければ戦闘開始前に補うようにした。
+- 2026-03-28: だるま戦ルート修正の検証結果
+  - `node --check js/battle.js js/main.js` 通過。
+  - `develop-web-game` の Playwright client を `output/web-game/daruma-eye-fix-smoke` で実行し、変更後ビルドのスモークを確認。
+  - Playwright MCP では最新 `battle.js` / `main.js` を読み直したうえで、あえて `inventory = []` の状態から `Game.Battle.start('darumaMaster', null)` を起動。
+  - `ritualState.hpZeroReached = true` を立てたあと、メニューの `目を入れる` まで移動して `confirm` したところ、`phase = 'victory'`、`message = '欠け目のだるまを鎮めた。'`、`ritual.slots[0].filled = true`、`itemId = 'darumaEye'` になることを確認。
+  - Playwright console error は 0 件。

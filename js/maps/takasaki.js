@@ -76,7 +76,7 @@ Game.Maps.takasaki = (function() {
       '昔、高崎は中山道の宿場町として栄えたんだ。',
       '旅人に必要な道具ならなんでもあるぜ！'
     ],
-    afterDialog: 'shop_高崎鍛冶屋_healHerb,yakimanju,darumaSuzu,loadedSand,kiseiFuda,ironArmor',
+    afterDialog: 'shop_高崎鍛冶屋_yakimanju,darumaSuzu,loadedSand,ironArmor',
     sprite: [
       [0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0],
       [0,0,1,2,2,2,2,1,0,0,0,0,0,0,0,0],

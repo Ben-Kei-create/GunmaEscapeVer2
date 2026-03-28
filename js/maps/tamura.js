@@ -131,7 +131,7 @@ Game.Maps.tamura = (function() {
         '普通のサイコロより癖は強いが、そのぶん土地の機嫌を読みやすい。',
         'ここにしかない逸品があるぜ！見ていきな！'
       ],
-      afterDialog: 'shop_サイコロ工房_powerDice,steadyDice,gamblerDice,healDice',
+      afterDialog: 'shop_サイコロ工房_powerDice,steadyDice,healDice',
       sprite: [
         [0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0],
         [0,0,1,2,2,2,2,1,0,0,0,0,0,0,0,0],

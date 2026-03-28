@@ -68,6 +68,23 @@ Game.Maps.minakami_valley = (function() {
       dialog: ['左目は虚無の証だ。', '他人の欲望に飲まれるな。', '祈りは時に呪いとなるぞ。'],
       defeatedDialog: ['空っぽのままでいいさ。', 'それが、この土地の姿だ。'],
       defeated: false, sprite: humanSprite, palette: { 1:'#ddbb88', 2:'#8866aa', 3:'#888888' }
+    },
+    {
+      id: 'ridge_peddler',
+      x: 16, y: 9,
+      name: '峠の行商',
+      dialog: [
+        '水上まで来る客は少ないからね。',
+        'だから荷は軽く、役に立つものだけ選んで背負ってる。'
+      ],
+      afterDialog: 'shop_峠の行商_superYakimanju,kaeshiOmamori,silkWeight',
+      defeatedDialog: [
+        '谷を越えるなら、手数より保ち方だ。',
+        '最後の境界は、軽装じゃもたないよ。'
+      ],
+      defeated: false,
+      sprite: humanSprite,
+      palette: { 1:'#efd8be', 2:'#6f8f58', 3:'#43362c' }
     }
   ];
   var items = [{ id: 'healHerb', x: 25, y: 12, taken: false }];

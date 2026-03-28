@@ -592,3 +592,42 @@ Original prompt: そうだね。セーブできる村役場みたいなところ
   - `見切り鏡` 使用後は `playerEffects = [{ type: 'steady_floor', value: 3 }]` を確認。
   - `fetch('/js/maps/*.js?ts=...')` で各店の `afterDialog` が新しい品揃えへ更新されていること、`fetch('/js/items.js')` と `fetch('/js/battle.js')` で新アイテムIDと戦闘ロジックが配信ファイルにも載っていることを確認。
   - Playwright console error は `0` 件。AudioContext 警告のみ継続。
+- 2026-03-28: 実在する群馬みやげを、世界観寄りの消耗品として全体に追加。
+  - `js/items.js` に `鶏めし弁当 / 石段せんべい / 水沢うどん包み / 赤城ミルク飴 / だるま鈴守 / 下仁田ねぎ味噌 / 湯の花小瓶 / 富岡シルク栞` を追加。
+  - 回復みやげは `heal`、護符や小瓶系みやげは `battle` として実装し、土地の気配に沿った効果へ寄せた。
+  - `だるま鈴守` は `slow_roll + steady_floor`、`湯の花小瓶` は `slow / heal_seal` をほどいて `onsen_heal` を付ける、`富岡シルク栞` は `slow_roll + dice_bonus` を付ける構成にした。
+  - 各町のショップへ実在みやげを混ぜ、前橋・高崎・下仁田・草津・伊香保・富岡・赤城牧場でそれぞれ土地らしい買い物ができるようにした。
+- 2026-03-28: 郷土みやげ追加の検証結果
+  - `node --check js/items.js js/battle.js js/maps/maebashi.js js/maps/takasaki.js js/maps/shimonita.js js/maps/kusatsu.js js/maps/ikaho.js js/maps/tomioka.js js/maps/akagi_ranch.js` 通過。
+  - `develop-web-game` の Playwright client を `?debugBattle=roadsideBandit&debugInventory=darumaSuzu,yunohanaVial,torimeshiBento` つきで再実行し、最新ビルドの戦闘画面を更新。
+  - Playwright で `fetch('/js/maps/*.js?ts=...')` を使い、各店の `afterDialog` に新しいみやげが入っていることを確認。
+  - `だるま鈴守` 使用後は `playerEffects = [{ type: 'slow_roll' }, { type: 'steady_floor', value: 4 }]` を確認。
+  - `湯の花小瓶` 使用後は `playerEffects = [{ type: 'onsen_heal', turnsLeft: 2, value: 4 }]` を確認。
+  - `鶏めし弁当` 使用時は `hp: 30 -> 100`、`inventory` から消費され、メッセージが `HPが70回復` になることを確認。
+  - Playwright console error は引き続き `0` 件。AudioContext 警告のみ継続。
+- 2026-03-28: 実績・戦闘報酬・レベル成長の磨き込みを実施。
+  - `js/achievements.js` の `全マップ制覇` を固定11マップではなく `Game.Maps` から動的集計へ変更し、`getDebugState()` を追加して `render_game_to_text` からも確認できるようにした。
+  - `js/battle.js` の通常戦ゴールド報酬を `floor(total * 0.55)` へ絞り、報酬パネルに `成長` / `つぎの目安` を追加した。
+  - `js/player.js` ではランクごとの `最大HP / 攻撃 / 防御` 伸び幅を関数化し、`previewExperienceGain()` で事前表示できるようにした。
+  - `js/main.js` の `render_game_to_text` に `player.attack / defense / nextRankExperience` と `achievements` を追加した。
+- 2026-03-28: 実績・経済・成長まわりの検証結果
+  - `node --check js/achievements.js js/player.js js/battle.js js/main.js` 通過。
+  - `develop-web-game` の Playwright client を `output/web-game/achievements-economy-smoke` で実行し、最新ビルドの戦闘スモークと `render_game_to_text` 出力を確認。
+  - Playwright では最新 `achievements.js` を読み込んだ状態で `Game.Map.load('maebashi', 14, 10)` を実行し、`first_step` 解放、`trackedMapCount: 21`、`visitedTrackedMapCount: 1`、`all_maps.description = '21マップすべてを訪れた。'` を確認。
+  - 同じく debug battle で `roadsideBandit` を撃破し、報酬画面に `+17G / +14EXP / 旅路ランク 1 -> 2 / 成長 最大HP +12 / 攻撃 +2 / 防御 +1` が表示されることを確認。
+  - 報酬確定後は `gold: 100 -> 117`、`experience: 70 -> 84`、`maxHp: 100 -> 112`、`attack: 99 -> 101`、`defense: 5 -> 6` を確認。
+  - 生成物として `output/web-game/achievements-economy-smoke/` と `output/web-game/achievement-economy-verification/` を残した。console error は `0` 件、AudioContext 警告のみ継続。
+- 2026-03-28: 特技システムを本実装寄りに拡張。
+  - `js/skills.js` にボス戦会得用の `底見切り / 湯まとい / 荷崩し / 空っ風 / 糸ゆらい` を追加し、`ruined_checkpoint / onsenMonkey / darumaMaster / konnyakuKing / cabbageGuardian / threadMaiden` 勝利時の会得候補を返すようにした。
+  - `js/player.js` の pending skill queue を `{ skillId, sourceText }` 形式へ拡張し、通常ランクアップとボス会得の両方で `SKILL_LEARN` に流せるようにした。
+  - `js/main.js` では勝利後に戦闘由来の特技候補を積み、`render_game_to_text` に `player.skillsKnown` と `skillLearn` を追加。debug URL から `debugSkills` / `debugExp` も注入できるようにした。
+  - `js/ui.js` の習得画面は `所持 N/6`、会得理由、用途、戦闘ごとの使用回数を表示するように拡張し、6枠時の置き換えリストも収まる高さへ調整した。
+  - `js/battle.js` では新特技効果を追加し、勝利 payload に `enemyId / enemyIds` を載せた。スキル一覧の短文説明表示で使っていた未定義 `clampText` は `clampBattleText` をローカル追加して解消。
+- 2026-03-28: 特技システム拡張の検証結果
+  - `node --check js/skills.js js/player.js js/ui.js js/main.js js/battle.js` 通過。
+  - `develop-web-game` の Playwright client を `output/web-game/skills-smoke` で実行し、`debugBattle=roadsideBandit&debugSkills=...` から `とくぎ` メニューが6件表示され、`render_game_to_text().battle.skillMenu` に `id / shortDesc / remaining` が出ることを確認。
+  - スモーク中に `clampText is not defined` を検出し、その場で修正後に再実行して解消した。
+  - Playwright で `debugBattle=onsenMonkey&debugSkills=6件` を撃破し、報酬確定後に `mode: skill_learn`、`skillLearn.skillId = yunomatoi`、`replaceMode = true`、`knownSkills.length = 6` を確認。
+  - 同画面で `Z` 決定後、`skillsKnown` が `見切り足 -> 湯まとい` へ置き換わって探索へ戻ることを確認。
+  - `debugBattle=roadsideBandit&debugSkills=yunomatoi` では実戦使用後に `playerEffects = [defense_up, onsen_heal]` が付くことまで確認。
+  - 生成物として `output/web-game/skills-smoke/` を残した。Playwright console error は `0` 件、AudioContext 警告のみ継続。

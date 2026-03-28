@@ -51,6 +51,7 @@ Game.UI = (function() {
   var skillLearnState = {
     active: false,
     skillId: null,
+    sourceText: '',
     replaceIndex: 0
   };
 
@@ -1235,33 +1236,43 @@ Game.UI = (function() {
     var skill = Game.Skills && Game.Skills.get ? Game.Skills.get(skillLearnState.skillId) : null;
     var knownSkills = Game.Player && Game.Player.getSkills ? Game.Player.getSkills() : [];
     var replaceMode = knownSkills.length >= 6;
+    var panelX = 64;
+    var panelY = 42;
+    var panelW = 352;
+    var panelH = replaceMode ? 238 : 190;
 
     R.drawRectAbsolute(0, 0, C.CANVAS_WIDTH, C.CANVAS_HEIGHT, 'rgba(4, 6, 18, 0.58)');
-    R.drawDialogBox(74, 56, 332, 186);
-    drawPanelAccent(74, 56, 332, 186, skill ? skill.color : '#cdb7ff');
-    R.drawTextJP('とくぎ習得', 92, 68, skill ? skill.color : '#cdb7ff', 12);
+    R.drawDialogBox(panelX, panelY, panelW, panelH);
+    drawPanelAccent(panelX, panelY, panelW, panelH, skill ? skill.color : '#cdb7ff');
+    R.drawTextJP('とくぎ習得', 82, 54, skill ? skill.color : '#cdb7ff', 12);
+    R.drawTextJP('所持 ' + knownSkills.length + '/6', 394, 54, '#9fb6dc', 9, 'right');
     if (skill) {
-      R.drawTextJP(skill.name, 92, 92, '#ffffff', 14);
-      drawWrappedTextBlock(skill.desc, 92, 112, 24, 3, 12, '#dce6ff', 10);
+      R.drawTextJP(skill.name, 82, 76, '#ffffff', 14);
+      drawWrappedTextBlock(skill.desc, 82, 94, 26, 3, 12, '#dce6ff', 10);
+      R.drawTextJP('用途: ' + (skill.shortDesc || skill.desc), 82, 132, '#b9c8eb', 9);
+      R.drawTextJP('戦闘ごと ' + (skill.usesPerBattle || 1) + '回', 82, 144, '#b9c8eb', 9);
+    }
+    if (skillLearnState.sourceText) {
+      drawWrappedTextBlock(skillLearnState.sourceText, 82, 158, 28, 2, 12, '#ffddb0', 9);
     }
 
     if (!replaceMode) {
-      R.drawTextJP('Z: おぼえる', 92, 186, '#ffd66b', 10);
-      R.drawTextJP('X: みおくる', 238, 186, '#9aa7c9', 10);
+      R.drawTextJP('Z: おぼえる', 82, panelY + panelH - 18, '#ffd66b', 10);
+      R.drawTextJP('X: みおくる', 238, panelY + panelH - 18, '#9aa7c9', 10);
       return;
     }
 
-    R.drawTextJP('6つまでしか持てない。置き換える技を選ぶ。', 92, 158, '#ffcf9d', 9);
+    R.drawTextJP('6つまでしか持てない。置き換える技を選ぶ。', 82, 184, '#ffcf9d', 9);
     for (var i = 0; i < knownSkills.length; i++) {
       var known = Game.Skills.get(knownSkills[i]);
       var selected = (i === skillLearnState.replaceIndex);
-      var rowY = 174 + i * 10;
+      var rowY = 198 + i * 10;
       if (selected) {
-        R.drawRectAbsolute(90, rowY - 1, 220, 9, 'rgba(255,204,0,0.10)');
+        R.drawRectAbsolute(80, rowY - 1, 250, 9, 'rgba(255,204,0,0.10)');
       }
-      R.drawTextJP((selected ? '▶ ' : '  ') + (known ? known.name : knownSkills[i]), 94, rowY, selected ? C.COLORS.GOLD : '#dce6ff', 8);
+      R.drawTextJP((selected ? '▶ ' : '  ') + (known ? known.name : knownSkills[i]), 84, rowY, selected ? C.COLORS.GOLD : '#dce6ff', 8);
     }
-    R.drawTextJP('Z: 入れ替え  X: 覚えない', 92, 230, '#9aa7c9', 9);
+    R.drawTextJP('Z: 入れ替え  X: 覚えない', 82, panelY + panelH - 14, '#9aa7c9', 9);
   }
 
   function clampFieldMenuSelection() {
@@ -1952,15 +1963,17 @@ Game.UI = (function() {
     titleAchievementListOpen = false;
   }
 
-  function openSkillLearn(skillId) {
+  function openSkillLearn(skillId, sourceText) {
     skillLearnState.active = true;
     skillLearnState.skillId = skillId || null;
+    skillLearnState.sourceText = sourceText || '';
     skillLearnState.replaceIndex = 0;
   }
 
   function closeSkillLearn() {
     skillLearnState.active = false;
     skillLearnState.skillId = null;
+    skillLearnState.sourceText = '';
     skillLearnState.replaceIndex = 0;
   }
 
@@ -1997,6 +2010,21 @@ Game.UI = (function() {
     closeSkillLearn();
     Game.Audio.playSfx('item');
     return payload;
+  }
+
+  function getSkillLearnDebugState() {
+    if (!skillLearnState.active || !skillLearnState.skillId) return null;
+    var knownSkills = Game.Player && Game.Player.getSkills ? Game.Player.getSkills() : [];
+    return {
+      skillId: skillLearnState.skillId,
+      skillName: Game.Skills && Game.Skills.get && Game.Skills.get(skillLearnState.skillId)
+        ? Game.Skills.get(skillLearnState.skillId).name
+        : skillLearnState.skillId,
+      sourceText: skillLearnState.sourceText || '',
+      replaceMode: knownSkills.length >= 6,
+      replaceIndex: skillLearnState.replaceIndex,
+      knownSkills: knownSkills.slice()
+    };
   }
 
   function toggleMinimap() {
@@ -2077,6 +2105,7 @@ Game.UI = (function() {
     openSkillLearn: openSkillLearn,
     updateSkillLearn: updateSkillLearn,
     drawSkillLearn: drawSkillLearn,
+    getSkillLearnDebugState: getSkillLearnDebugState,
     paginateDialogText: paginateDialogText,
     isJourneyBadgeEnabled: isJourneyBadgeEnabled,
     setJourneyBadgeEnabled: setJourneyBadgeEnabled,

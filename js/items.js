@@ -177,6 +177,38 @@ Game.Items = (function() {
       healAmount: 100,
       price: 80
     },
+    torimeshiBento: {
+      id: 'torimeshiBento',
+      name: '鶏めし弁当',
+      desc: '前橋の名残が香る弁当。HPを70回復する',
+      type: 'heal',
+      healAmount: 70,
+      price: 46
+    },
+    ishidanSenbei: {
+      id: 'ishidanSenbei',
+      name: '石段せんべい',
+      desc: '伊香保みやげの堅焼き。HPを45回復する',
+      type: 'heal',
+      healAmount: 45,
+      price: 28
+    },
+    mizusawaUdon: {
+      id: 'mizusawaUdon',
+      name: '水沢うどん包み',
+      desc: 'つるりと喉に落ちる名物。HPを85回復する',
+      type: 'heal',
+      healAmount: 85,
+      price: 68
+    },
+    akagiMilkCandy: {
+      id: 'akagiMilkCandy',
+      name: '赤城ミルク飴',
+      desc: '高原の甘みがほどける。HPを35回復する',
+      type: 'heal',
+      healAmount: 35,
+      price: 22
+    },
 
     tempoCharm: {
       id: 'tempoCharm',
@@ -249,6 +281,44 @@ Game.Items = (function() {
       effect: 'ward',
       value: 8,
       price: 50
+    },
+    darumaSuzu: {
+      id: 'darumaSuzu',
+      name: 'だるま鈴守',
+      desc: '戦闘用。鈴の余韻で次のダイスを見切りやすくする',
+      type: 'battle',
+      effect: 'focus_bundle',
+      value: 4,
+      price: 60
+    },
+    negiMisoJar: {
+      id: 'negiMisoJar',
+      name: '下仁田ねぎ味噌',
+      desc: '戦闘用。2ターン攻撃力を上げる山の香り',
+      type: 'battle',
+      effect: 'attack_up',
+      turns: 2,
+      value: 4,
+      price: 52
+    },
+    yunohanaVial: {
+      id: 'yunohanaVial',
+      name: '湯の花小瓶',
+      desc: '戦闘用。鈍りや封じをほどき、湯気の回復をまとう',
+      type: 'battle',
+      effect: 'steam_reset',
+      turns: 2,
+      value: 4,
+      price: 58
+    },
+    silkBookmark: {
+      id: 'silkBookmark',
+      name: '富岡シルク栞',
+      desc: '戦闘用。白糸の目印で次の一投を導く',
+      type: 'battle',
+      effect: 'silk_focus',
+      value: 2,
+      price: 56
     },
 
     // === Armor ===

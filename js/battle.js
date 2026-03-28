@@ -60,6 +60,7 @@ Game.Battle = (function() {
   var bossActionOverlay = null;
   var enemyRollAnimation = null;
   var pendingEnemyAttack = null;
+  var battleEnemyIds = [];
 
   // Atmosphere foreground effects
   var atmosParticles = [];
@@ -521,7 +522,8 @@ Game.Battle = (function() {
     for (var i = 0; i < enemyParty.length; i++) {
       total += enemyParty[i] && enemyParty[i].goldReward ? enemyParty[i].goldReward : 0;
     }
-    return Math.max(2, Math.floor(total * 0.68));
+    if (total <= 0) return 0;
+    return Math.max(1, Math.floor(total * 0.55));
   }
 
   function getEnemyExperienceReward(foe) {
@@ -730,6 +732,12 @@ Game.Battle = (function() {
       lines[lines.length - 1] = lines[lines.length - 1].substring(0, Math.max(0, maxChars - 1)) + '…';
     }
     return lines;
+  }
+
+  function clampBattleText(text, maxChars) {
+    var source = '' + (text || '');
+    if (source.length <= maxChars) return source;
+    return source.substring(0, Math.max(0, maxChars - 1)) + '…';
   }
 
   function syncCurrentEnemy() {
@@ -1075,6 +1083,7 @@ Game.Battle = (function() {
     active = true;
     npcRef = npc;
     var enemyIds = Array.isArray(enemyId) ? enemyId.slice() : [enemyId];
+    battleEnemyIds = enemyIds.slice();
     enemyParty = [];
     for (var ei = 0; ei < enemyIds.length; ei++) {
       var enemyClone = cloneEnemy(enemyIds[ei]);
@@ -1719,6 +1728,8 @@ Game.Battle = (function() {
           var victoryPayload = {
             result: 'victory',
             npc: npcRef,
+            enemyId: battleEnemyIds.length ? battleEnemyIds[0] : null,
+            enemyIds: battleEnemyIds.slice(),
             goldReward: rewardSummary ? rewardSummary.gold : victoryGoldReward,
             expReward: rewardSummary ? rewardSummary.exp : 0,
             itemRewards: rewardSummary ? rewardSummary.items.slice() : []
@@ -1860,12 +1871,20 @@ Game.Battle = (function() {
       if (selected.item.effect === 'slow_roll') {
         addEffect(playerEffects, 'slow_roll', 1, 1);
         message = selected.item.name + 'を使った！ 手元の景色がゆっくり見える。';
+      } else if (selected.item.effect === 'focus_bundle') {
+        addEffect(playerEffects, 'slow_roll', 1, 1);
+        addEffect(playerEffects, 'steady_floor', 1, selected.item.value || 4);
+        message = selected.item.name + 'を鳴らした。次の一投へ心拍が揃う。';
       } else if (selected.item.effect === 'steady_floor') {
         addEffect(playerEffects, 'steady_floor', 1, selected.item.value || 3);
         message = selected.item.name + 'を使った！ 低い目を見切る備えが整った。';
       } else if (selected.item.effect === 'dice_bonus') {
         addEffect(playerEffects, 'dice_bonus', 1, selected.item.value || 2);
         message = selected.item.name + 'を使った！ 次の出目に勘が乗る。';
+      } else if (selected.item.effect === 'silk_focus') {
+        addEffect(playerEffects, 'slow_roll', 1, 1);
+        addEffect(playerEffects, 'dice_bonus', 1, selected.item.value || 2);
+        message = selected.item.name + 'をしおり代わりにかざした。白糸が目を導く。';
       } else if (selected.item.effect === 'enemy_roll_slow') {
         addEffectToLivingEnemies('enemy_roll_slow', 1, selected.item.value || 6);
         message = selected.item.name + 'を使った！ 敵の白い賽が重く鈍る。';
@@ -1875,6 +1894,13 @@ Game.Battle = (function() {
       } else if (selected.item.effect === 'attack_up') {
         addEffect(playerEffects, 'attack_up', selected.item.turns || 2, selected.item.value || 5);
         message = selected.item.name + 'を使った！ 攻めの気配が研ぎ澄まされた。';
+      } else if (selected.item.effect === 'steam_reset') {
+        var soothed = removeEffect(playerEffects, 'slow');
+        soothed = removeEffect(playerEffects, 'heal_seal') || soothed;
+        addEffect(playerEffects, 'onsen_heal', selected.item.turns || 2, selected.item.value || 4);
+        message = soothed
+          ? selected.item.name + 'を開いた。鈍りと封じが湯気にほどけた。'
+          : selected.item.name + 'を開いた。湯気がまとわり、息が整う。';
       } else if (selected.item.effect === 'ward') {
         addEffect(playerEffects, 'ward', 1, selected.item.value || 8);
         message = selected.item.name + 'を使った！ 返しの余白が足元に宿る。';
@@ -1954,6 +1980,28 @@ Game.Battle = (function() {
     } else if (skill.id === 'kaeriashi') {
       addEffect(playerEffects, 'ward', 1, 8);
       message = '返り足。受け流す余白を足元に残した。';
+    } else if (skill.id === 'sokomiki') {
+      addEffect(playerEffects, 'steady_floor', 1, 4);
+      addEffect(playerEffects, 'ward', 1, 6);
+      message = '底見切り。低い目でも崩れない芯を作った。';
+    } else if (skill.id === 'yunomatoi') {
+      var soothed = removeEffect(playerEffects, 'slow');
+      soothed = removeEffect(playerEffects, 'heal_seal') || soothed;
+      addEffect(playerEffects, 'defense_up', 2, 3);
+      addEffect(playerEffects, 'onsen_heal', 2, 3);
+      message = soothed ? '湯まとい。鈍りがほどけ、守りに湯気が残る。' : '湯まとい。薄い湯気が体を包み、守りが整う。';
+    } else if (skill.id === 'hakokuzushi') {
+      addEffect(enemyEffects, 'stun', 1, 0);
+      addEffect(playerEffects, 'dice_bonus', 1, 1);
+      message = '荷崩し。相手の重心がわずかに浮いた。';
+    } else if (skill.id === 'karakaze') {
+      addEffect(playerEffects, 'slow_roll', 1, 1);
+      addEffect(playerEffects, 'attack_up', 2, 4);
+      message = '空っ風。呼吸が研がれ、踏み込みが軽くなる。';
+    } else if (skill.id === 'itoyurai') {
+      addEffectToLivingEnemies('enemy_roll_slow', 2, 6);
+      addEffect(playerEffects, 'dice_bonus', 1, 1);
+      message = '糸ゆらい。敵の白い賽が細く揺れて鈍る。';
     } else {
       message = skill.name + 'を放った。';
     }
@@ -2753,7 +2801,9 @@ Game.Battle = (function() {
       }) : null,
       skillMenu: phase === 'skillMenu' ? skillMenuEntries.map(function(entry, index) {
         return {
+          id: entry.id,
           name: entry.skill.name,
+          shortDesc: entry.skill.shortDesc || entry.skill.desc,
           remaining: entry.remaining,
           selected: index === skillMenuIndex,
           disabled: entry.disabled
@@ -3047,21 +3097,32 @@ Game.Battle = (function() {
       }
       if (skillMenuEntries[skillMenuIndex]) {
         var selectedSkill = skillMenuEntries[skillMenuIndex].skill;
-        R.drawTextJP(clampText(selectedSkill.shortDesc || selectedSkill.desc, 21), 274, skillMenuY + 84, '#dbe3ff', 9);
+        R.drawTextJP(clampBattleText(selectedSkill.shortDesc || selectedSkill.desc, 21), 274, skillMenuY + 84, '#dbe3ff', 9);
       }
     }
 
     if (phase === 'reward' && rewardSummary) {
       var currentExp = Game.Player.getData().experience || 0;
-      var nextExp = currentExp + (rewardSummary.exp || 0);
-      var currentRank = Game.Player.getJourneyRank ? Game.Player.getJourneyRank() : 1;
-      var nextRank = 1 + Math.floor(nextExp / 80);
+      var previewExp = Game.Player.previewExperienceGain
+        ? Game.Player.previewExperienceGain(rewardSummary.exp || 0)
+        : null;
+      var nextExp = previewExp ? previewExp.experience : (currentExp + (rewardSummary.exp || 0));
+      var currentRank = previewExp ? previewExp.previousRank : (Game.Player.getJourneyRank ? Game.Player.getJourneyRank() : 1);
+      var nextRank = previewExp ? previewExp.newRank : (1 + Math.floor(nextExp / 80));
       var rewardItems = getRewardItemLabels(rewardSummary.items || []);
       var supportLogs = rewardSummary.supportLogs || [];
       var afterglowLines = rewardSummary.afterglowText ? wrapBattleText(rewardSummary.afterglowText, 24, 2) : [];
       var enemyEchoLines = rewardSummary.enemyEchoText ? wrapBattleText(rewardSummary.enemyEchoText, 24, 3) : [];
       var rewardItemLines = wrapBattleText(rewardItems.length ? rewardItems.join(' / ') : 'なし', 22, 2);
+      var growthLines = [];
+      if (previewExp && previewExp.levelUps && previewExp.levelUps.length) {
+        growthLines.push('最大HP +' + previewExp.totalGains.hp);
+        growthLines.push('攻撃 +' + previewExp.totalGains.attack + ' / 防御 +' + previewExp.totalGains.defense);
+      } else if (previewExp) {
+        growthLines.push('次のランクまで あと' + previewExp.remainingToNextRank);
+      }
       var panelH = 140 +
+        (growthLines.length ? 18 + growthLines.length * 12 : 0) +
         (afterglowLines.length ? 28 + afterglowLines.length * 12 : 0) +
         (enemyEchoLines.length ? 18 + enemyEchoLines.length * 12 : 0) +
         (supportLogs.length ? 18 + supportLogs.length * 12 : 0);
@@ -3088,6 +3149,13 @@ Game.Battle = (function() {
       }
 
       var rewardY = panelY + 108 + rewardItemLines.length * 12 + 8;
+      if (growthLines.length) {
+        R.drawTextJP(nextRank > currentRank ? '成長' : 'つぎの目安', 106, rewardY, '#ffd66b', 11);
+        for (var gi = 0; gi < growthLines.length; gi++) {
+          R.drawTextJP(growthLines[gi], 146, rewardY + gi * 12, nextRank > currentRank ? '#fff4c6' : '#d9deeb', 10);
+        }
+        rewardY += 18 + growthLines.length * 12;
+      }
       if (afterglowLines.length) {
         R.drawTextJP('余韻', 106, rewardY, '#ffd66b', 11);
         for (var ai = 0; ai < afterglowLines.length; ai++) {

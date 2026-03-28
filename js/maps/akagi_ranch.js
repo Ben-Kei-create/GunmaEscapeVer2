@@ -37,7 +37,7 @@ Game.Maps.akagi_ranch = (function() {
         'アングラのボスは並の出目じゃ倒せんぞ。覚悟して買え。',
         'それと、サイコロポーチは鍛冶場の奥に一つだけ残っておる。次はない。'
       ],
-      afterDialog: 'shop_伝説の鍛冶_gunmaDice,fireDice,cabbageDice,onsenArmor,superYakimanju,diceSlot',
+      afterDialog: 'shop_伝説の鍛冶_gunmaDice,fireDice,cabbageDice,akagiMilkCandy,onsenArmor,superYakimanju,diceSlot',
       sprite: [
         [0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0],
         [0,0,1,2,2,2,2,1,0,0,0,0,0,0,0,0],

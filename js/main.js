@@ -90,7 +90,9 @@ Game.Main = (function() {
   function continuePendingSkillFlow() {
     var nextSkill = Game.Player && Game.Player.consumePendingSkillChoice ? Game.Player.consumePendingSkillChoice() : null;
     if (nextSkill && Game.UI && Game.UI.openSkillLearn) {
-      Game.UI.openSkillLearn(nextSkill);
+      var skillId = typeof nextSkill === 'string' ? nextSkill : nextSkill.skillId;
+      var sourceText = typeof nextSkill === 'string' ? '' : (nextSkill.sourceText || '');
+      Game.UI.openSkillLearn(skillId, sourceText);
       setState(Game.Config.STATE.SKILL_LEARN);
       return true;
     }
@@ -192,6 +194,12 @@ Game.Main = (function() {
     }
     if (Game.Achievements && Game.Achievements.check) {
       Game.Achievements.check({ type: 'battle_win' });
+    }
+    if (Game.Skills && Game.Skills.getBattleVictoryOffers && Game.Player && Game.Player.offerSkillChoice) {
+      var skillOffers = Game.Skills.getBattleVictoryOffers(battleResult);
+      for (var offerIndex = 0; offerIndex < skillOffers.length; offerIndex++) {
+        Game.Player.offerSkillChoice(skillOffers[offerIndex].skillId, skillOffers[offerIndex].sourceText);
+      }
     }
 
     var finishVictory = function() {
@@ -1280,10 +1288,14 @@ Game.Main = (function() {
         direction: pd.direction,
         hp: pd.hp,
         maxHp: pd.maxHp,
+        attack: pd.attack,
+        defense: pd.defense,
         experience: pd.experience || 0,
         journeyRank: Game.Player.getJourneyRank ? Game.Player.getJourneyRank() : 1,
+        nextRankExperience: Game.Player.previewExperienceGain ? Game.Player.previewExperienceGain(0).nextRankExperience : 80,
         gold: pd.gold,
         chapter: pd.chapter,
+        skillsKnown: Game.Player.getSkills ? Game.Player.getSkills() : [],
         inventory: (pd.inventory || []).slice()
       },
       journeyLabel: chapterInfo ? chapterInfo.displayLabel : '',
@@ -1331,11 +1343,17 @@ Game.Main = (function() {
     if (Game.Encounters && Game.Encounters.getState) {
       payload.encounters = Game.Encounters.getState();
     }
+    if (Game.Achievements && Game.Achievements.getDebugState) {
+      payload.achievements = Game.Achievements.getDebugState();
+    }
     if (state === Game.Config.STATE.BATTLE && Game.Battle && Game.Battle.getStateSnapshot) {
       payload.battle = Game.Battle.getStateSnapshot();
     }
     if (state === Game.Config.STATE.EVENT && Game.Event && Game.Event.getStateSnapshot) {
       payload.event = Game.Event.getStateSnapshot();
+    }
+    if (state === Game.Config.STATE.SKILL_LEARN && Game.UI && Game.UI.getSkillLearnDebugState) {
+      payload.skillLearn = Game.UI.getSkillLearnDebugState();
     }
     return JSON.stringify(payload);
   }
@@ -1348,7 +1366,13 @@ Game.Main = (function() {
 
     var pd = Game.Player.getData();
     var debugInventory = params.get('debugInventory');
+    var debugSkills = params.get('debugSkills');
+    var debugExp = parseInt(params.get('debugExp') || '', 10);
     pd.inventory = debugInventory ? debugInventory.split(',').filter(Boolean) : [];
+    pd.skillsKnown = debugSkills ? debugSkills.split(',').filter(Boolean) : [];
+    if (!isNaN(debugExp)) {
+      pd.experience = Math.max(0, debugExp);
+    }
     pd.equippedDice = ['normalDice'];
     pd.hp = pd.maxHp;
 

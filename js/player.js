@@ -391,14 +391,31 @@ Game.Player = (function() {
     data.gold = Math.max(0, data.gold + amount);
   }
 
-  function getLevelUpGains() {
-    return { hp: 12, attack: 2, defense: 1 };
+  function getLevelUpGains(rank) {
+    var currentRank = Math.max(2, rank || 2);
+    return {
+      hp: 12 + Math.floor((currentRank - 2) / 4) * 2,
+      attack: 2 + ((currentRank >= 6 && currentRank % 3 === 0) ? 1 : 0),
+      defense: 1 + ((currentRank >= 5 && currentRank % 4 === 1) ? 1 : 0)
+    };
   }
 
-  function queueSkillChoice(skillId) {
+  function hasPendingSkillChoice(skillId) {
+    for (var i = 0; i < pendingSkillChoices.length; i++) {
+      var entry = pendingSkillChoices[i];
+      var queuedId = (typeof entry === 'string') ? entry : entry && entry.skillId;
+      if (queuedId === skillId) return true;
+    }
+    return false;
+  }
+
+  function queueSkillChoice(skillId, sourceText) {
     if (!skillId || hasSkill(skillId)) return false;
-    if (pendingSkillChoices.indexOf(skillId) >= 0) return false;
-    pendingSkillChoices.push(skillId);
+    if (hasPendingSkillChoice(skillId)) return false;
+    pendingSkillChoices.push({
+      skillId: skillId,
+      sourceText: sourceText || ''
+    });
     return true;
   }
 
@@ -412,8 +429,8 @@ Game.Player = (function() {
 
     var nextRank = getJourneyRank();
     if (nextRank > previousRank) {
-      var gains = getLevelUpGains();
       for (var rank = previousRank + 1; rank <= nextRank; rank++) {
+        var gains = getLevelUpGains(rank);
         data.maxHp += gains.hp;
         data.hp = Math.min(data.maxHp, data.hp + gains.hp);
         data.attack += gains.attack;
@@ -427,7 +444,7 @@ Game.Player = (function() {
         if (Game.Skills && Game.Skills.getLearnableSkillForRank) {
           var skillId = Game.Skills.getLearnableSkillForRank(rank);
           if (skillId && !hasSkill(skillId)) {
-            queueSkillChoice(skillId);
+            queueSkillChoice(skillId, '旅路ランク' + rank + 'の戦いで、新しい型の気配を掴んだ。');
             skillChoices.push(skillId);
           }
         }
@@ -441,6 +458,41 @@ Game.Player = (function() {
       newRank: nextRank,
       levelUps: levelUps,
       skillChoices: skillChoices
+    };
+  }
+
+  function previewExperienceGain(amount) {
+    var gained = Math.max(0, amount || 0);
+    var previousRank = getJourneyRank();
+    var projectedExp = Math.max(0, (data.experience || 0) + gained);
+    var nextRank = 1 + Math.floor(projectedExp / 80);
+    var levelUps = [];
+    var totalGains = { hp: 0, attack: 0, defense: 0 };
+
+    if (nextRank > previousRank) {
+      for (var rank = previousRank + 1; rank <= nextRank; rank++) {
+        var gains = getLevelUpGains(rank);
+        totalGains.hp += gains.hp;
+        totalGains.attack += gains.attack;
+        totalGains.defense += gains.defense;
+        levelUps.push({
+          rank: rank,
+          hpGain: gains.hp,
+          attackGain: gains.attack,
+          defenseGain: gains.defense
+        });
+      }
+    }
+
+    return {
+      experience: projectedExp,
+      gained: gained,
+      previousRank: previousRank,
+      newRank: nextRank,
+      nextRankExperience: nextRank * 80,
+      remainingToNextRank: Math.max(0, nextRank * 80 - projectedExp),
+      levelUps: levelUps,
+      totalGains: totalGains
     };
   }
 
@@ -487,11 +539,23 @@ Game.Player = (function() {
   }
 
   function consumePendingSkillChoice() {
-    return pendingSkillChoices.length ? pendingSkillChoices.shift() : null;
+    if (!pendingSkillChoices.length) return null;
+    var next = pendingSkillChoices.shift();
+    if (typeof next === 'string') {
+      return {
+        skillId: next,
+        sourceText: ''
+      };
+    }
+    return next;
   }
 
   function clearPendingSkillChoices() {
     pendingSkillChoices = [];
+  }
+
+  function offerSkillChoice(skillId, sourceText) {
+    return queueSkillChoice(skillId, sourceText);
   }
 
   function getData() { return data; }
@@ -515,11 +579,13 @@ Game.Player = (function() {
     unequipArmor: unequipArmor,
     addGold: addGold,
     addExperience: addExperience,
+    previewExperienceGain: previewExperienceGain,
     getJourneyRank: getJourneyRank,
     getSkills: getSkills,
     hasSkill: hasSkill,
     learnSkill: learnSkill,
     forgetSkill: forgetSkill,
+    offerSkillChoice: offerSkillChoice,
     consumePendingSkillChoice: consumePendingSkillChoice,
     clearPendingSkillChoices: clearPendingSkillChoices,
     addPartyMember: addPartyMember,

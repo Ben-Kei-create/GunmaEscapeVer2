@@ -78,7 +78,7 @@ Game.Maps.shimonita = (function() {
       '「こんにゃくパーク」は無料で食べ放題なんだ。',
       '上州の最強装備もあるよ！'
     ],
-    afterDialog: 'shop_こんにゃく商店_superYakimanju,guardChalk,kaeshiOmamori,onsenArmor',
+    afterDialog: 'shop_こんにゃく商店_superYakimanju,negiMisoJar,guardChalk,kaeshiOmamori,onsenArmor',
     sprite: [
       [0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0],
       [0,0,1,2,2,2,2,1,0,0,0,0,0,0,0,0],

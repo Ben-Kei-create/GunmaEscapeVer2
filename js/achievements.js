@@ -34,10 +34,6 @@ Game.Achievements = (function() {
   var currentNotification = null;
   var notificationQueue = [];
   var achievementById = {};
-  var allMapsList = [
-    'maebashi', 'takasaki', 'kusatsu', 'shimonita', 'tsumagoi',
-    'tamura', 'forest', 'konuma', 'onuma', 'akagi_ranch', 'akagi_shrine'
-  ];
 
   buildAchievementIndex();
   load();
@@ -50,6 +46,25 @@ Game.Achievements = (function() {
 
   function clone(value) {
     return JSON.parse(JSON.stringify(value));
+  }
+
+  function getTrackedMaps() {
+    var tracked = [];
+    if (!Game.Maps) return tracked;
+    for (var mapId in Game.Maps) {
+      if (!Game.Maps.hasOwnProperty(mapId)) continue;
+      if (!Game.Maps[mapId] || !Game.Maps[mapId].tiles) continue;
+      tracked.push(mapId);
+    }
+    tracked.sort();
+    return tracked;
+  }
+
+  function refreshDynamicAchievementText() {
+    var allMapsAchievement = achievementById.all_maps;
+    if (allMapsAchievement) {
+      allMapsAchievement.description = getTrackedMaps().length + 'マップすべてを訪れた。';
+    }
   }
 
   function persist() {
@@ -70,6 +85,7 @@ Game.Achievements = (function() {
   }
 
   function load() {
+    refreshDynamicAchievementText();
     try {
       var raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return;
@@ -126,6 +142,7 @@ Game.Achievements = (function() {
   function markMapVisited(mapId) {
     if (!mapId) return;
     progress.visitedMaps[mapId] = true;
+    refreshDynamicAchievementText();
 
     var mapAchievementMap = {
       maebashi: 'first_step',
@@ -140,9 +157,10 @@ Game.Achievements = (function() {
       unlock(mapAchievementMap[mapId]);
     }
 
-    var visitedAll = true;
-    for (var i = 0; i < allMapsList.length; i++) {
-      if (!progress.visitedMaps[allMapsList[i]]) {
+    var trackedMaps = getTrackedMaps();
+    var visitedAll = trackedMaps.length > 0;
+    for (var i = 0; i < trackedMaps.length; i++) {
+      if (!progress.visitedMaps[trackedMaps[i]]) {
         visitedAll = false;
         break;
       }
@@ -238,7 +256,7 @@ Game.Achievements = (function() {
         unlock('gunma_expert');
       } else if (payload === 'daruma_perfect') {
         unlock('daruma_master');
-      } else if (allMapsList.indexOf(payload) >= 0) {
+      } else if (getTrackedMaps().indexOf(payload) >= 0) {
         markMapVisited(payload);
       }
 
@@ -281,6 +299,20 @@ Game.Achievements = (function() {
     return clone(achievements.filter(function(achievement) {
       return achievement.unlocked;
     }));
+  }
+
+  function getDebugState() {
+    var trackedMaps = getTrackedMaps();
+    var visitedCount = 0;
+    for (var i = 0; i < trackedMaps.length; i++) {
+      if (progress.visitedMaps[trackedMaps[i]]) visitedCount++;
+    }
+    return {
+      unlockedCount: getUnlocked().length,
+      totalCount: achievements.length,
+      trackedMapCount: trackedMaps.length,
+      visitedTrackedMapCount: visitedCount
+    };
   }
 
   function update() {
@@ -342,6 +374,7 @@ Game.Achievements = (function() {
     isUnlocked: isUnlocked,
     getAll: getAll,
     getUnlocked: getUnlocked,
+    getDebugState: getDebugState,
     update: update,
     draw: draw,
     drawList: drawList

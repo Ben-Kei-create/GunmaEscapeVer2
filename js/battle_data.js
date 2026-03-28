@@ -871,6 +871,67 @@ Game.BattleData = (function() {
       victory_flag: 'angura_boss_defeated'
     },
 
+    chuji: {
+      boss_id: 'chuji',
+      passive: {
+        id: 'lingering_regret',
+        description: '霧のため息。偶数ターンごとに忠治の間合いが澄み、次の一太刀が少し重くなる',
+        apply: function(enemy, turnCount) {
+          if (!enemy || !turnCount || turnCount % 2 !== 0) return '';
+          enemy._chujiMourning = Math.min(3, (enemy._chujiMourning || 0) + 1);
+          return '霧が低く沈み、忠治の足取りだけが静かに近づく。';
+        }
+      },
+      phase_change: {
+        condition: function(enemy) {
+          return enemy.hp <= enemy.maxHp * 0.45 && !enemy._requiemOpened;
+        },
+        action: function(enemy) {
+          enemy._requiemOpened = true;
+          enemy.attack += 6;
+          enemy.defense = Math.max(10, enemy.defense - 4);
+          enemy._chujiMourning = Math.max(enemy._chujiMourning || 0, 2);
+          return '忠治は笑いを消し、抜き身の気配だけを残した。';
+        }
+      },
+      special_move: {
+        id: 'midnight_draw',
+        name: '夜半の抜き打ち',
+        description: '霧を裂く一閃。中ダメージを与え、こちらの呼吸を少し鈍らせる',
+        trigger: function(turnCount, enemy) {
+          return turnCount > 0 && turnCount % 3 === 0 && enemy.hp > 0;
+        },
+        damage: function(enemy) {
+          var mourning = enemy && enemy._chujiMourning ? enemy._chujiMourning : 0;
+          return Math.floor((enemy.attack || 0) * 1.15) + mourning * 2;
+        },
+        effect: function(playerEffects, addEffectFn, enemyEffects, ritualRuntime, enemy) {
+          addEffectFn(playerEffects, 'slow', 1, 0);
+          if (enemy) {
+            enemy._chujiMourning = Math.max(0, (enemy._chujiMourning || 0) - 1);
+          }
+        },
+        message: '忠治の刃が、霧の音だけを残して走った。'
+      },
+      victory_flag: 'chuji_defeated',
+      bgm: 'melancholy_battle',
+      victory_bgm: 'melancholy_victory',
+      dialogue: {
+        phase_change: [
+          { speaker: '国定忠治', text: '情けは抜く。だが、心まで殺す気はねぇ。' },
+          { speaker: '主人公', text: '哀しいのに、刃だけは冴えていく…！' }
+        ],
+        special_move: [
+          { speaker: '国定忠治', text: '見ろ。生き残るってのは、こういう音だ。' },
+          { speaker: 'アカギ', text: '来るぞ。霧の切れ目だけ見ろ。' }
+        ],
+        victory: [
+          { speaker: '国定忠治', text: '負けても、ようやく胸のつかえが落ちた気がする。' },
+          { speaker: '主人公', text: 'あなたの悔い、少しは受け取れた気がする。' }
+        ]
+      }
+    },
+
     // ── 第2章 ──────────────────────────────
 
     // ゴボウ牙主（爆根の長）

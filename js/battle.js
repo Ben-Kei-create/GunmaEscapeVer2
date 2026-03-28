@@ -1087,6 +1087,9 @@ Game.Battle = (function() {
   }
 
   function getBattleIntroProfile() {
+    if (enemy && enemy.battleTheme === 'melancholy_battle') {
+      return { duration: 72, bgmTriggerFrame: 10, bgmOptions: { startDelay: 0.1 } };
+    }
     if (isSpecialRitualBattle()) {
       return { duration: 58, bgmTriggerFrame: 8, bgmOptions: { startDelay: 0.08 } };
     }
@@ -1272,6 +1275,13 @@ Game.Battle = (function() {
         veil: 'rgba(12,10,18,0.60)',
         trail: 'rgba(242,232,220,0.18)',
         label: '糸場反応'
+      },
+      chuji: {
+        accent: '#d7c29a',
+        shadow: 'rgba(28,22,30,0.95)',
+        veil: 'rgba(8,8,14,0.62)',
+        trail: 'rgba(215,194,154,0.16)',
+        label: '残侠追憶'
       }
     };
     if (themes[bossId]) return themes[bossId];
@@ -1298,6 +1308,7 @@ Game.Battle = (function() {
       ruined_checkpoint: { phase_change: 'ギ…ギギ…', special_move: 'ゴォン…' },
       darumaMaster: { phase_change: 'ギロ…', special_move: 'ゾワッ' },
       threadMaiden: { phase_change: 'キ…', special_move: 'シュルル…' },
+      chuji: { phase_change: 'ス…', special_move: 'ヒュン' },
       yubatake_guardian: { phase_change: 'ボコ…', special_move: 'ボワァッ' },
       kumako_steam: { phase_change: 'とろ…', special_move: 'じゅわっ' },
       juke_gakuen: { phase_change: 'キィン', special_move: 'ザラッ' },

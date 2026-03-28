@@ -703,3 +703,15 @@ Original prompt: そうだね。セーブできる村役場みたいなところ
   - 通常攻撃の実戦確認では、ランク1主人公が `roadsideBandit(66HP)` に与えるダメージが `7` となり、序盤敵が即死しないことを確認。
   - ランク上限確認では `experience = 99999` でも `journeyRank = 100`、`maxHp = 999`, `attack = 87`, `defense = 52` で止まることを確認。
   - Playwright console error は 0 件。AudioContext の警告のみ。
+- 2026-03-28: 哀愁バトルとして国定忠治戦を再演出。
+  - `js/audio.js` に `melancholy_intro` を追加し、`melancholy_battle / melancholy_victory` もフレーズを伸ばして余韻が残る進行に調整した。
+  - `js/event.js` の `preChuji` は汎用 `sad` ではなく `melancholy_intro` を使うよう変更した。
+  - `js/battle_data.js` に `chuji` の固有ギミックを追加。霧が深まる偶数ターンの受け身、HP45%以下での追憶フェーズ、専用技 `夜半の抜き打ち`、専用台詞を持つようにした。
+  - `js/battle.js` 側では `melancholy_battle` 用の長めのイントロプロファイル、`chuji` 専用の boss action theme、専用オノマトペ `ス… / ヒュン` を追加した。
+- 2026-03-28: 哀愁バトル刷新の検証結果
+  - `node --check js/audio.js js/event.js js/battle_data.js js/battle.js` 通過。
+  - `develop-web-game` の Playwright client を `output/web-game/melancholy-battle-refresh` で実行し、`state-0.json` 上で `requestedBgm/currentBgm = melancholy_battle`、`battle.backdropId = field_requiem`、敵が `国定忠治 220/220` で表示されることを確認した。
+  - スクリーンショット `output/web-game/melancholy-battle-refresh/shot-0.png` を目視し、牧場跡の暗い戦場に切り替わっていることを確認。
+  - Playwright MCP では最新 `audio/event/battle_data/battle` を読み直したうえで、`Game.Battle.getBossGimmick('chuji')` が存在し、専用技名が `夜半の抜き打ち` であることを確認。
+  - 同じく `Game.Battle.debugForceBossCue('special_move')` で `bossAction.lines = ['ヒュン']`、中央ダイアログが `見ろ。生き残るってのは、こういう音だ。` になることを確認。
+  - 念のため `debugBattle=chuji` を攻撃999で倒し切り、`rewardSummary.exp = 90` と `enemyEchoText` が返るところまで見た。Playwright console error は 0 件。

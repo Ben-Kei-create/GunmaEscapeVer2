@@ -769,3 +769,19 @@ Original prompt: そうだね。セーブできる村役場みたいなところ
   - 同じく `output/web-game/battle-live-feel-heal-item/shot-0.png` で、回復アイテム使用後にも敵ロール演出が入ることを確認した。
   - Playwright MCP では `debugBattle=roadsideBandit` を直接進め、`render_game_to_text` 上で `battle.phase = enemyAttack`、`battle.enemyRoll.timer = 65` を確認。ロール中状態がテキスト出力にも反映される。
   - Playwright の console error は 0 件。AudioContext の autoplay 警告のみ発生した。
+- 2026-03-29: とくぎの持ち越しバフが敵ターン突入で消える不具合を修正。
+  - `js/battle.js` の状態効果に `delayTick` を追加し、ターンまたぎ前提の効果だけ 1 回ぶん減衰を猶予できるようにした。
+  - `addCarryPlayerEffect()` を追加し、`slow_roll / dice_bonus / steady_floor / ignite_next` のような「次の自分の一投」で効く効果は、敵ターンをまたいでも消えないようにした。
+  - 同じ原因で食い潰れていた戦闘用アイテム側の `slow_roll / steady_floor / dice_bonus / silk_focus / focus_bundle` もあわせて持ち越し対象へ統一した。
+- 2026-03-29: とくぎ持ち越し修正の検証結果
+  - `node --check js/battle.js` 通過。
+  - `develop-web-game` の Playwright client を `output/web-game/skill-carry-fix` で実行し、`debugSkills=mikiashi&debugSkillCharges=1` の通常戦で `見切り足` 使用後、敵攻撃を受けたあとも `battle.playerEffects = [{ type: 'slow_roll', turnsLeft: 1, value: 1 }]` が残ることを確認した。
+  - 同スクリーンショットでは、敵攻撃後にメニューへ戻ってもプレイヤー側ステータス欄に `緩` アイコンが残っている。
+  - Playwright MCP の console error は 0 件。AudioContext の autoplay 警告のみ発生した。
+- 2026-03-29: 戦果画面の `つぎの目安` 表示が本文と重なる不具合を修正。
+  - `js/battle.js` の報酬描画で、成長/目安の見出しと本文を同じ行に重ねるのをやめ、本文は 1 段下に描画するようにした。
+  - これにより `つぎの目安` と `次のランクまで あと...` が重ならず、レベルアップ時の `成長` セクションも同じレイアウト規則で揃う。
+- 2026-03-29: 戦果UI重なり修正の検証結果
+  - `node --check js/battle.js` 通過。
+  - `develop-web-game` の Playwright client を `output/web-game/reward-growth-ui-fix` で実行し、`debugBattle=roadsideBandit&debugAttack=999&debugExp=258` の戦果画面で `つぎの目安` が見出し、`次のランクまで あと42` がその下に独立表示されることを確認した。
+  - Playwright console error は 0 件。AudioContext の autoplay 警告のみ発生した。

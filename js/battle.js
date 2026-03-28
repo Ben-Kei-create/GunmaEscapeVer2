@@ -31,7 +31,7 @@ Game.Battle = (function() {
   var healTotal = 0;       // total healing from heal dice
 
   // Status effects system
-  var playerEffects = [];  // { type, turnsLeft, value }
+  var playerEffects = [];  // { type, turnsLeft, value, delayTick }
   var enemyEffects = [];
   var comboText = '';
   var comboTimer = 0;
@@ -529,16 +529,22 @@ Game.Battle = (function() {
   }
 
   // Status effect helpers
-  function addEffect(list, type, turnsLeft, value) {
+  function addEffect(list, type, turnsLeft, value, options) {
+    var delayTick = options && options.delayTick ? Math.max(0, options.delayTick | 0) : 0;
     // Don't stack same type, refresh instead
     for (var i = 0; i < list.length; i++) {
       if (list[i].type === type) {
         list[i].turnsLeft = turnsLeft;
         list[i].value = value;
+        list[i].delayTick = delayTick;
         return;
       }
     }
-    list.push({ type: type, turnsLeft: turnsLeft, value: value });
+    list.push({ type: type, turnsLeft: turnsLeft, value: value, delayTick: delayTick });
+  }
+
+  function addCarryPlayerEffect(type, turnsLeft, value) {
+    addEffect(playerEffects, type, turnsLeft, value, { delayTick: 1 });
   }
 
   function removeEffect(list, type) {
@@ -554,6 +560,10 @@ Game.Battle = (function() {
 
   function tickEffects(list) {
     for (var i = list.length - 1; i >= 0; i--) {
+      if (list[i].delayTick > 0) {
+        list[i].delayTick--;
+        continue;
+      }
       list[i].turnsLeft--;
       if (list[i].turnsLeft <= 0) list.splice(i, 1);
     }
@@ -2085,21 +2095,21 @@ Game.Battle = (function() {
     if (selected.item.type === 'battle') {
       Game.Player.removeItem(selected.id);
       if (selected.item.effect === 'slow_roll') {
-        addEffect(playerEffects, 'slow_roll', 1, 1);
+        addCarryPlayerEffect('slow_roll', 1, 1);
         message = selected.item.name + 'を使った！ 手元の景色がゆっくり見える。';
       } else if (selected.item.effect === 'focus_bundle') {
-        addEffect(playerEffects, 'slow_roll', 1, 1);
-        addEffect(playerEffects, 'steady_floor', 1, selected.item.value || 4);
+        addCarryPlayerEffect('slow_roll', 1, 1);
+        addCarryPlayerEffect('steady_floor', 1, selected.item.value || 4);
         message = selected.item.name + 'を鳴らした。次の一投へ心拍が揃う。';
       } else if (selected.item.effect === 'steady_floor') {
-        addEffect(playerEffects, 'steady_floor', 1, selected.item.value || 3);
+        addCarryPlayerEffect('steady_floor', 1, selected.item.value || 3);
         message = selected.item.name + 'を使った！ 低い目を見切る備えが整った。';
       } else if (selected.item.effect === 'dice_bonus') {
-        addEffect(playerEffects, 'dice_bonus', 1, selected.item.value || 2);
+        addCarryPlayerEffect('dice_bonus', 1, selected.item.value || 2);
         message = selected.item.name + 'を使った！ 次の出目に勘が乗る。';
       } else if (selected.item.effect === 'silk_focus') {
-        addEffect(playerEffects, 'slow_roll', 1, 1);
-        addEffect(playerEffects, 'dice_bonus', 1, selected.item.value || 2);
+        addCarryPlayerEffect('slow_roll', 1, 1);
+        addCarryPlayerEffect('dice_bonus', 1, selected.item.value || 2);
         message = selected.item.name + 'をしおり代わりにかざした。白糸が目を導く。';
       } else if (selected.item.effect === 'enemy_roll_slow') {
         addEffectToLivingEnemies('enemy_roll_slow', 1, selected.item.value || 6);
@@ -2183,16 +2193,16 @@ Game.Battle = (function() {
       return;
     }
     if (skill.id === 'mikiashi') {
-      addEffect(playerEffects, 'slow_roll', 1, 1);
+      addCarryPlayerEffect('slow_roll', 1, 1);
       message = '見切り足。白い目の動きがゆるむ。';
     } else if (skill.id === 'kasanekan') {
-      addEffect(playerEffects, 'dice_bonus', 1, 2);
+      addCarryPlayerEffect('dice_bonus', 1, 2);
       message = '重ね勘。次の目に手応えが乗る。';
     } else if (skill.id === 'migamae') {
       addEffect(playerEffects, 'defense_up', 2, 4);
       message = '身構え。肩の力を抜いて守りを作る。';
     } else if (skill.id === 'hibashiri') {
-      addEffect(playerEffects, 'ignite_next', 1, 5);
+      addCarryPlayerEffect('ignite_next', 1, 5);
       message = '火走り。賽の縁がほの赤く灯る。';
     } else if (skill.id === 'shirosenyomi') {
       addEffect(enemyEffects, 'stun', 1, 0);
@@ -2204,13 +2214,13 @@ Game.Battle = (function() {
       message = cleared ? '紡ぎ息。鈍りと封じがほどけた。' : '紡ぎ息。呼吸が整い、体が軽い。';
     } else if (skill.id === 'kaminariyobi') {
       addEffect(playerEffects, 'attack_up', 2, 6);
-      addEffect(playerEffects, 'dice_bonus', 1, 1);
+      addCarryPlayerEffect('dice_bonus', 1, 1);
       message = '雷呼び。空気がぴりりと尖る。';
     } else if (skill.id === 'kaeriashi') {
       addEffect(playerEffects, 'ward', 1, 8);
       message = '返り足。受け流す余白を足元に残した。';
     } else if (skill.id === 'sokomiki') {
-      addEffect(playerEffects, 'steady_floor', 1, 4);
+      addCarryPlayerEffect('steady_floor', 1, 4);
       addEffect(playerEffects, 'ward', 1, 6);
       message = '底見切り。低い目でも崩れない芯を作った。';
     } else if (skill.id === 'yunomatoi') {
@@ -2221,15 +2231,15 @@ Game.Battle = (function() {
       message = soothed ? '湯まとい。鈍りがほどけ、守りに湯気が残る。' : '湯まとい。薄い湯気が体を包み、守りが整う。';
     } else if (skill.id === 'hakokuzushi') {
       addEffect(enemyEffects, 'stun', 1, 0);
-      addEffect(playerEffects, 'dice_bonus', 1, 1);
+      addCarryPlayerEffect('dice_bonus', 1, 1);
       message = '荷崩し。相手の重心がわずかに浮いた。';
     } else if (skill.id === 'karakaze') {
-      addEffect(playerEffects, 'slow_roll', 1, 1);
+      addCarryPlayerEffect('slow_roll', 1, 1);
       addEffect(playerEffects, 'attack_up', 2, 4);
       message = '空っ風。呼吸が研がれ、踏み込みが軽くなる。';
     } else if (skill.id === 'itoyurai') {
       addEffectToLivingEnemies('enemy_roll_slow', 2, 6);
-      addEffect(playerEffects, 'dice_bonus', 1, 1);
+      addCarryPlayerEffect('dice_bonus', 1, 1);
       message = '糸ゆらい。敵の白い賽が細く揺れて鈍る。';
     } else {
       message = skill.name + 'を放った。';
@@ -3497,7 +3507,7 @@ Game.Battle = (function() {
       if (growthLines.length) {
         R.drawTextJP(nextRank > currentRank ? '成長' : 'つぎの目安', 106, rewardY, '#ffd66b', 11);
         for (var gi = 0; gi < growthLines.length; gi++) {
-          R.drawTextJP(growthLines[gi], 146, rewardY + gi * 12, nextRank > currentRank ? '#fff4c6' : '#d9deeb', 10);
+          R.drawTextJP(growthLines[gi], 142, rewardY + 12 + gi * 12, nextRank > currentRank ? '#fff4c6' : '#d9deeb', 10);
         }
         rewardY += 18 + growthLines.length * 12;
       }

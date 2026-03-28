@@ -61,6 +61,12 @@ Game.Battle = (function() {
   var enemyRollAnimation = null;
   var pendingEnemyAttack = null;
   var battleEnemyIds = [];
+  var ENEMY_ROLL_WINDUP_FRAMES = 18;
+  var ENEMY_ROLL_ACTIVE_FRAMES = 48;
+  var ENEMY_ROLL_SETTLE_FRAMES = 18;
+  var ENEMY_ROLL_SLOW_BONUS_FRAMES = 18;
+  var PLAYER_DICE_RESULT_FRAMES = 38;
+  var PLAYER_ACTION_RECOVERY_FRAMES = 14;
 
   // Atmosphere foreground effects
   var atmosParticles = [];
@@ -958,9 +964,13 @@ Game.Battle = (function() {
     var factor = typeof slowFactor === 'number' ? slowFactor : 1;
     var size = 8 + Math.floor(Math.random() * 6);
     var laneRatio = total > 1 ? index / (total - 1) : 0.5;
+    var startX = 292 + Math.random() * 92;
+    var startY = 88 + laneRatio * 56 + (Math.random() * 16 - 8);
     return {
-      x: 292 + Math.random() * 92,
-      y: 88 + laneRatio * 56 + (Math.random() * 16 - 8),
+      x: startX,
+      y: startY,
+      homeX: startX,
+      homeY: startY,
       vx: -(2.4 + Math.random() * 1.7) * factor,
       vy: -(0.9 + Math.random() * 1.1) * factor,
       gravity: (0.08 + Math.random() * 0.04) * (0.8 + factor * 0.2),
@@ -970,8 +980,18 @@ Game.Battle = (function() {
       size: size,
       face: 1 + Math.floor(Math.random() * 6),
       delay: Math.floor(Math.random() * 4),
-      settled: false
+      settled: false,
+      wobblePhase: Math.random() * Math.PI * 2,
+      wobbleRange: 0.6 + Math.random() * 0.8
     };
+  }
+
+  function getEnemyRollStage(animation) {
+    if (!animation) return 'idle';
+    var elapsed = animation.maxTimer - animation.timer;
+    if (elapsed < animation.windupFrames) return 'windup';
+    if (animation.timer <= animation.settleFrames) return 'settle';
+    return 'roll';
   }
 
   function startEnemyRollAnimation(attackPreview) {
@@ -979,7 +999,10 @@ Game.Battle = (function() {
     var diceCount = Math.max(2, Math.min(7, attackerCount * 2 + Math.floor(Math.random() * 2)));
     var slowed = !!(attackPreview && attackPreview.slowedNames && attackPreview.slowedNames.length);
     var speedFactor = slowed ? 0.58 : 1;
-    var timer = slowed ? 38 : 26;
+    var windupFrames = slowed ? ENEMY_ROLL_WINDUP_FRAMES + 6 : ENEMY_ROLL_WINDUP_FRAMES;
+    var activeFrames = ENEMY_ROLL_ACTIVE_FRAMES + Math.min(10, attackerCount * 3) + (slowed ? ENEMY_ROLL_SLOW_BONUS_FRAMES : 0);
+    var settleFrames = slowed ? ENEMY_ROLL_SETTLE_FRAMES + 4 : ENEMY_ROLL_SETTLE_FRAMES;
+    var timer = windupFrames + activeFrames + settleFrames;
     var dice = [];
     for (var i = 0; i < diceCount; i++) {
       dice.push(createEnemyRollDie(i, diceCount, speedFactor));
@@ -989,23 +1012,44 @@ Game.Battle = (function() {
       maxTimer: timer,
       attackers: attackPreview.activeAttackers.slice(),
       slowed: slowed,
-      dice: dice
+      dice: dice,
+      windupFrames: windupFrames,
+      settleFrames: settleFrames,
+      rollSfxPlayed: false
     };
-    message = attackPreview.activeAttackers.join(' / ') + (slowed ? 'が重い白い賽を転がす…' : 'が白い賽を転がす…');
+    message = attackPreview.activeAttackers.join(' / ') + (slowed ? 'が重い賽を鳴らす…' : 'が白い賽を鳴らす…');
     messageTimer = 0;
   }
 
   function updateEnemyRollAnimation() {
     if (!enemyRollAnimation || enemyRollAnimation.timer <= 0) return false;
-    if (Game.Input && (Game.Input.isPressed('confirm') || Game.Input.isPressed('cancel'))) {
-      enemyRollAnimation.timer = Math.min(enemyRollAnimation.timer, 5);
+    var elapsed = enemyRollAnimation.maxTimer - enemyRollAnimation.timer;
+    var stage = getEnemyRollStage(enemyRollAnimation);
+    if (Game.Input && elapsed >= enemyRollAnimation.windupFrames + 16 &&
+        (Game.Input.isPressed('confirm') || Game.Input.isPressed('cancel'))) {
+      enemyRollAnimation.timer = Math.min(enemyRollAnimation.timer, enemyRollAnimation.settleFrames + 10);
     }
 
     for (var i = 0; i < enemyRollAnimation.dice.length; i++) {
       var die = enemyRollAnimation.dice[i];
+      if (stage === 'windup') {
+        var charge = enemyRollAnimation.windupFrames > 0 ? Math.min(1, elapsed / enemyRollAnimation.windupFrames) : 1;
+        die.face = 1 + ((Math.floor(elapsed / 2) + i) % 6);
+        die.x = die.homeX + Math.sin(elapsed * 0.28 + die.wobblePhase) * die.wobbleRange * charge;
+        die.y = die.homeY + Math.cos(elapsed * 0.32 + die.wobblePhase) * die.wobbleRange * 0.6 * charge;
+        die.rotation += die.rotSpeed * (0.16 + charge * 0.2);
+        continue;
+      }
+      if (!enemyRollAnimation.rollSfxPlayed) {
+        Game.Audio.playSfx(enemyRollAnimation.slowed ? 'dice_roll_heavy' : 'dice_stop');
+        enemyRollAnimation.rollSfxPlayed = true;
+      }
       if (die.delay > 0) {
         die.delay--;
         continue;
+      }
+      if ((enemyRollAnimation.timer + i) % 4 === 0) {
+        die.face = 1 + Math.floor(Math.random() * 6);
       }
       if (!die.settled) {
         die.x += die.vx;
@@ -1025,6 +1069,10 @@ Game.Battle = (function() {
       } else {
         die.rotation += die.rotSpeed;
         die.rotSpeed *= 0.92;
+      }
+      if (stage === 'settle') {
+        die.vx *= 0.9;
+        die.rotSpeed *= 0.88;
       }
     }
 
@@ -1047,7 +1095,7 @@ Game.Battle = (function() {
 
     if (!activeAttackers.length) {
       message = stunnedNames.length ? (stunnedNames.join(' / ') + 'は痺れて動けない！') : '敵の群れは様子をうかがっている。';
-      messageTimer = 45;
+      messageTimer = 48;
       return false;
     }
 
@@ -1064,7 +1112,7 @@ Game.Battle = (function() {
       if (stunnedNames.length) {
         message += ' ' + stunnedNames.join(' / ') + 'は動けない。';
       }
-      messageTimer = 45;
+      messageTimer = 54;
       Game.Audio.playSfx('enemy_strike');
       return false;
     }
@@ -1077,7 +1125,7 @@ Game.Battle = (function() {
     if (stunnedNames.length) {
       message += ' ' + stunnedNames.join(' / ') + 'は動けない。';
     }
-    messageTimer = 45;
+    messageTimer = 54;
     Game.Audio.playSfx(activeAttackers.length >= 2 || totalDamage >= 20 ? 'enemy_strike_heavy' : 'enemy_strike');
     shakeX = 5 + activeAttackers.length;
     if (Game.Particles) Game.Particles.emit('damage', 100, 220, { count: 6 + activeAttackers.length });
@@ -1720,7 +1768,7 @@ Game.Battle = (function() {
             enterVictoryPhase(message);
           } else {
             phase = 'playerAttack';
-            animTimer = 5;
+            animTimer = PLAYER_ACTION_RECOVERY_FRAMES;
           }
         }
 
@@ -1928,8 +1976,15 @@ Game.Battle = (function() {
   }
 
   function handleUseItemPhase() {
+        var attackPreview = previewEnemyPartyAttack();
         phase = 'enemyAttack';
-        applyEnemyPartyAttack();
+        if (attackPreview.activeAttackers.length > 0) {
+          pendingEnemyAttack = attackPreview;
+          startEnemyRollAnimation(attackPreview);
+        } else {
+          pendingEnemyAttack = null;
+          applyEnemyPartyAttack(attackPreview);
+        }
 
   }
 
@@ -1975,7 +2030,7 @@ Game.Battle = (function() {
           message = '逃げられなかった！';
           messageTimer = 30;
           phase = 'playerAttack';
-          animTimer = 5;
+          animTimer = PLAYER_ACTION_RECOVERY_FRAMES;
         }
         break;
       case 'drop_item_to_eye_slot':
@@ -2085,7 +2140,7 @@ Game.Battle = (function() {
       itemMenuMode = 'heal';
       ritualMenuActionId = null;
       phase = 'playerAttack';
-      animTimer = 5;
+      animTimer = PLAYER_ACTION_RECOVERY_FRAMES;
       return;
     }
 
@@ -2182,7 +2237,7 @@ Game.Battle = (function() {
 
     messageTimer = 45;
     phase = 'playerAttack';
-    animTimer = 5;
+    animTimer = PLAYER_ACTION_RECOVERY_FRAMES;
     Game.Audio.playSfx('confirm');
   }
 
@@ -2272,10 +2327,12 @@ Game.Battle = (function() {
     var pipRadius = Math.max(1.4, die.size * 0.08);
     var pipGap = die.size * 0.2;
     var dots = dotPositions[die.face] || dotPositions[1];
+    var scale = die.scale || 1;
 
     ctx.save();
     ctx.translate(die.x, die.y);
     ctx.rotate(die.rotation);
+    ctx.scale(scale, scale);
     ctx.fillStyle = 'rgba(20, 24, 34, 0.28)';
     ctx.fillRect(-half + 2, -half + 2, die.size, die.size);
     ctx.fillStyle = '#f8fbff';
@@ -2294,15 +2351,41 @@ Game.Battle = (function() {
 
   function drawEnemyRollAnimation(R, ctx, C) {
     if (!enemyRollAnimation || !enemyRollAnimation.dice || !enemyRollAnimation.dice.length) return;
-    ctx.fillStyle = 'rgba(244, 248, 255, 0.05)';
-    ctx.fillRect(110, 104, 280, 92);
+    var stage = getEnemyRollStage(enemyRollAnimation);
+    var elapsed = enemyRollAnimation.maxTimer - enemyRollAnimation.timer;
+    var charge = enemyRollAnimation.windupFrames > 0 ? Math.min(1, elapsed / enemyRollAnimation.windupFrames) : 1;
+    var panelAlpha = stage === 'windup' ? (0.08 + charge * 0.08) : 0.16;
+    ctx.fillStyle = 'rgba(244, 248, 255, ' + panelAlpha.toFixed(3) + ')';
+    ctx.fillRect(104, 100, 292, 100);
+    ctx.strokeStyle = 'rgba(220, 232, 255, 0.15)';
+    ctx.strokeRect(104.5, 100.5, 291, 99);
+    ctx.fillStyle = 'rgba(255, 232, 182, 0.10)';
+    ctx.fillRect(116, 190, 268 * (stage === 'windup' ? charge : 1), 2);
     for (var i = 0; i < enemyRollAnimation.dice.length; i++) {
       var die = enemyRollAnimation.dice[i];
       if (die.delay > 0) continue;
+      if (stage !== 'windup') {
+        ctx.strokeStyle = 'rgba(226, 236, 255, 0.14)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(die.x - die.vx * 2.2, die.y - die.vy * 0.6);
+        ctx.lineTo(die.x, die.y);
+        ctx.stroke();
+      } else {
+        die.scale = 0.88 + charge * 0.18;
+      }
+      if (stage !== 'windup') die.scale = 1;
       drawMiniEnemyDie(ctx, die);
     }
     if (enemyRollAnimation.attackers && enemyRollAnimation.attackers.length) {
-      R.drawTextJP('ころころ…', 346, 104, '#dfe7f7', 9);
+      var attackerLabel = clampBattleText(enemyRollAnimation.attackers.join(' / '), 18);
+      var cue = stage === 'windup'
+        ? (enemyRollAnimation.slowed ? '…ゴト' : '…コト')
+        : (stage === 'settle'
+          ? (enemyRollAnimation.slowed ? 'ゴロン…' : 'コロン…')
+          : (enemyRollAnimation.slowed ? 'ゴロゴロ…' : 'コロコロ…'));
+      R.drawTextJP(attackerLabel, 116, 106, '#aebcd8', 8);
+      R.drawTextJP(cue, 346, 104, '#dfe7f7', 9);
     }
   }
 
@@ -3519,7 +3602,7 @@ Game.Battle = (function() {
             var enemyDefReduction = hasEffect(enemyEffects, 'stun') ? Math.floor(enemy.defense / 2) : 0;
 
             phase = 'diceResult';
-            animTimer = 30;
+            animTimer = PLAYER_DICE_RESULT_FRAMES;
 
             // Apply damage with combo multiplier
             var baseDmg = damageTotal + diceBonus + Game.Player.getAttack() + atkBonus - (enemy.defense - enemyDefReduction);

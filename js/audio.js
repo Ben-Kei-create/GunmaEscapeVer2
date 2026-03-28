@@ -208,6 +208,16 @@ Game.Audio = (function() {
       [392, 0.55], [349, 0.55], [330, 0.55], [294, 0.55],
       [262, 0.7], [247, 0.55], [220, 0.8], [196, 0.9]
     ],
+    melancholy_battle: [ // 霧の牧場に残った義賊の哀愁
+      [220, 0.36], [0, 0.12], [262, 0.24], [294, 0.42],
+      [330, 0.28], [294, 0.18], [262, 0.24], [220, 0.52],
+      [196, 0.34], [0, 0.12], [220, 0.24], [262, 0.38],
+      [294, 0.26], [262, 0.18], [220, 0.3], [196, 0.58]
+    ],
+    melancholy_victory: [ // 勝っても胸の奥に重さだけ残る後奏
+      [262, 0.22], [294, 0.22], [330, 0.3], [294, 0.18],
+      [262, 0.18], [220, 0.34], [196, 0.5], [220, 0.52]
+    ],
     kusatsu_bushi: [
       [392, 0.2], [440, 0.2], [392, 0.2], [349, 0.2],
       [294, 0.25], [262, 0.25], [294, 0.2], [349, 0.2],
@@ -333,6 +343,7 @@ Game.Audio = (function() {
 
   var oneShotBgm = {
     victory_fanfare: true,
+    melancholy_victory: true,
     ch4_victory: true,
     ch5_victory: true,
     ch6_victory: true,
@@ -471,6 +482,15 @@ Game.Audio = (function() {
         [174, 0.42], [0, 0.26], [165, 0.52], [0, 0.18],
         [196, 0.26], [208, 0.22], [196, 0.44], [0, 0.32]
       ]
+    ],
+    melancholy_battle: [
+      melodies.melancholy_battle,
+      [
+        [196, 0.34], [0, 0.14], [220, 0.24], [262, 0.36],
+        [294, 0.24], [262, 0.2], [220, 0.26], [196, 0.54],
+        [175, 0.32], [0, 0.12], [196, 0.22], [220, 0.34],
+        [262, 0.22], [220, 0.18], [196, 0.28], [175, 0.6]
+      ]
     ]
   };
 
@@ -491,7 +511,9 @@ Game.Audio = (function() {
     ch7_haruna: { wave: 'triangle', gain: 0.078 },
     ch8_oze: { wave: 'sawtooth', gain: 0.068 },
     ch9_minakami: { wave: 'triangle', gain: 0.076 },
-    ch10_border: { wave: 'square', gain: 0.07 }
+    ch10_border: { wave: 'square', gain: 0.07 },
+    melancholy_battle: { wave: 'triangle', gain: 0.082 },
+    melancholy_victory: { wave: 'triangle', gain: 0.078 }
   };
 
   var fieldBgmByMap = {

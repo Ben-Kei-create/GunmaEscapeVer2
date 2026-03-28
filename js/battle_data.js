@@ -369,6 +369,11 @@ Game.BattleData = (function() {
       name: '国定忠治',
       hp: 120, maxHp: 120,
       attack: 22, defense: 8, goldReward: 200,
+      battleTheme: 'melancholy_battle',
+      victoryTheme: 'melancholy_victory',
+      battleBackdrop: 'field_requiem',
+      battleLabel: '追憶対峙',
+      battleAccent: '#d7c29a',
       sprite: [
         [0,0,0,1,1,1,1,1,0,0,0,0,0,0,0,0],
         [0,0,1,1,1,1,1,1,1,0,0,0,0,0,0,0],

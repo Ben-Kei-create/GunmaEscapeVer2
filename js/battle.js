@@ -1003,6 +1003,7 @@ Game.Battle = (function() {
   function getBattleHeaderLabel() {
     if (isSpecialRitualBattle()) return '儀式開始';
     if (isGroupBattle()) return '群れ遭遇';
+    if (enemy && enemy.battleLabel) return enemy.battleLabel;
     if (currentGimmick) return '異形接触';
     return '敵影接近';
   }
@@ -1010,6 +1011,7 @@ Game.Battle = (function() {
   function getBattleAccentColor() {
     if (isSpecialRitualBattle()) return '#ffd66b';
     if (isGroupBattle()) return '#8fe0ff';
+    if (enemy && enemy.battleAccent) return enemy.battleAccent;
     if (enemy && enemy.palette && enemy.palette[1]) return enemy.palette[1];
     return '#8fb8ff';
   }
@@ -1706,7 +1708,14 @@ Game.Battle = (function() {
           messageTimer = 0;
           phase = 'reward';
           Game.Audio.stopBgm();
-          var victoryBgm = (currentGimmick && currentGimmick.victory_bgm) ? currentGimmick.victory_bgm : null;
+          var victoryBgm = null;
+          if (enemy && enemy.victoryTheme) {
+            victoryBgm = enemy.victoryTheme;
+          } else if (npcRef && npcRef.victoryTheme) {
+            victoryBgm = npcRef.victoryTheme;
+          } else if (currentGimmick && currentGimmick.victory_bgm) {
+            victoryBgm = currentGimmick.victory_bgm;
+          }
           if (victoryBgm) {
             Game.Audio.playBgm(victoryBgm);
           } else {
@@ -2292,6 +2301,7 @@ Game.Battle = (function() {
   function getBattleBackdropId() {
     var mapId = getBattleMapId();
     if (isSpecialRitualBattle()) return 'boss_ritual';
+    if (enemy && enemy.battleBackdrop) return enemy.battleBackdrop;
     if (isBossBattle()) return 'boss_omen';
     if (isBackdropMap(mapId, ['maebashi', 'takasaki', 'shimonita', 'tomioka', 'tsumagoi', 'kusatsu'])) {
       return 'field_roadside';
@@ -2478,6 +2488,67 @@ Game.Battle = (function() {
     }
   }
 
+  function drawRequiemBackdrop(R, ctx, C) {
+    ctx.fillStyle = '#08070d';
+    ctx.fillRect(0, 0, C.CANVAS_WIDTH, C.CANVAS_HEIGHT);
+    ctx.fillStyle = '#16131f';
+    ctx.fillRect(0, 0, C.CANVAS_WIDTH, 88);
+    ctx.fillStyle = '#4b3342';
+    ctx.fillRect(0, 88, C.CANVAS_WIDTH, 14);
+
+    ctx.fillStyle = '#0d0e17';
+    ctx.beginPath();
+    ctx.moveTo(0, 136);
+    ctx.lineTo(72, 114);
+    ctx.lineTo(140, 122);
+    ctx.lineTo(214, 102);
+    ctx.lineTo(300, 128);
+    ctx.lineTo(370, 108);
+    ctx.lineTo(480, 120);
+    ctx.lineTo(480, 320);
+    ctx.lineTo(0, 320);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = '#15141d';
+    ctx.fillRect(0, 172, C.CANVAS_WIDTH, 148);
+    ctx.fillStyle = '#0e1018';
+    for (var fence = 0; fence < 7; fence++) {
+      var fx = 32 + fence * 62;
+      ctx.fillRect(fx, 154, 5, 54);
+      ctx.fillRect(fx - 12, 166, 30, 4);
+      ctx.fillRect(fx - 8, 188, 22, 3);
+    }
+
+    ctx.fillStyle = 'rgba(216,198,156,0.08)';
+    for (var rail = 0; rail < 6; rail++) {
+      ctx.fillRect(0, 148 + rail * 18, C.CANVAS_WIDTH, 1);
+    }
+
+    ctx.fillStyle = 'rgba(214, 198, 154, 0.16)';
+    ctx.beginPath();
+    ctx.moveTo(118, 320);
+    ctx.lineTo(186, 186);
+    ctx.lineTo(292, 186);
+    ctx.lineTo(362, 320);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = '#d9c39a';
+    for (var mote = 0; mote < 18; mote++) {
+      var mx = (mote * 31 + turnCount * 1.5) % C.CANVAS_WIDTH;
+      var my = 24 + (mote * 13 % 92);
+      ctx.fillRect(mx, my, 2, 2);
+    }
+
+    ctx.fillStyle = 'rgba(255,255,255,0.05)';
+    for (var drift = 0; drift < 8; drift++) {
+      var dx = ((drift * 70) - turnCount * 2) % (C.CANVAS_WIDTH + 120);
+      if (dx < -120) dx += C.CANVAS_WIDTH + 120;
+      ctx.fillRect(dx - 40, 106 + drift * 14, 110, 6);
+    }
+  }
+
   function drawBossRitualBackdrop(R, ctx, C) {
     ctx.fillStyle = '#100f1e';
     ctx.fillRect(0, 0, C.CANVAS_WIDTH, C.CANVAS_HEIGHT);
@@ -2562,6 +2633,8 @@ Game.Battle = (function() {
       drawWoodlandBackdrop(R, ctx, C);
     } else if (backdropId === 'field_wetland') {
       drawWetlandBackdrop(R, ctx, C);
+    } else if (backdropId === 'field_requiem') {
+      drawRequiemBackdrop(R, ctx, C);
     } else if (backdropId === 'boss_ritual') {
       drawBossRitualBackdrop(R, ctx, C);
     } else if (backdropId === 'boss_omen') {
@@ -2615,6 +2688,17 @@ Game.Battle = (function() {
           life: 100 + Math.random() * 120
         });
       }
+    } else if (bg === 'field_requiem') {
+      for (var j = 0; j < 34; j++) {
+        atmosParticles.push({
+          x: Math.random() * Game.Config.CANVAS_WIDTH,
+          y: Math.random() * Game.Config.CANVAS_HEIGHT,
+          vx: -(1.2 + Math.random() * 1.4),
+          vy: 0.15 + Math.random() * 0.35,
+          size: 1 + Math.random() * 2,
+          life: 80 + Math.random() * 120
+        });
+      }
     }
   }
 
@@ -2665,6 +2749,23 @@ Game.Battle = (function() {
         var alpha = Math.max(0, p.life / 220) * 0.3;
         ctx.fillStyle = 'rgba(220, 240, 255, ' + alpha + ')';
         ctx.fillRect(Math.floor(p.x), Math.floor(p.y), p.size, p.size);
+      }
+    } else if (bg === 'field_requiem') {
+      ctx.fillStyle = 'rgba(255, 244, 220, 0.04)';
+      ctx.fillRect(0, 0, C.CANVAS_WIDTH, C.CANVAS_HEIGHT);
+      for (var j = 0; j < atmosParticles.length; j++) {
+        var mote = atmosParticles[j];
+        mote.x += mote.vx;
+        mote.y += mote.vy;
+        mote.life--;
+        if (mote.x < -12 || mote.y > C.CANVAS_HEIGHT + 8 || mote.life <= 0) {
+          mote.x = C.CANVAS_WIDTH + Math.random() * 40;
+          mote.y = Math.random() * 120;
+          mote.life = 80 + Math.random() * 120;
+        }
+        var glowAlpha = Math.max(0, mote.life / 200) * 0.24;
+        ctx.fillStyle = 'rgba(223, 206, 171, ' + glowAlpha.toFixed(3) + ')';
+        ctx.fillRect(Math.floor(mote.x), Math.floor(mote.y), mote.size + 1, 1);
       }
     } else if (bg === 'boss_ritual' || bg === 'boss_omen') {
       // Assuming atmosNoiseOffset is defined elsewhere or needs to be defined.

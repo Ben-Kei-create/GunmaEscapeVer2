@@ -131,6 +131,27 @@ Game.Items = (function() {
       palette: { 1: '#2d5e41', 2: '#7fd39f', 3: '#0e1520', 4: '#f3e9b8' }
     },
 
+    konnyakuParcel: {
+      id: 'konnyakuParcel',
+      name: 'こんにゃく包み',
+      desc: '下仁田から前橋へ託された、ひんやり重い荷包み',
+      type: 'key'
+    },
+
+    silkBraid: {
+      id: 'silkBraid',
+      name: '結い糸の束',
+      desc: '富岡から高崎へ運ぶ、だるま紐用の白い結い糸',
+      type: 'key'
+    },
+
+    yumomiLetter: {
+      id: 'yumomiLetter',
+      name: '湯もみ口上の文',
+      desc: '草津の節回しが書き留められた、伊香保宛ての手紙',
+      type: 'key'
+    },
+
     // === Heal Items ===
     healHerb: {
       id: 'healHerb',
@@ -191,6 +212,43 @@ Game.Items = (function() {
       type: 'battle',
       effect: 'ignite_next',
       price: 48
+    },
+    measureLens: {
+      id: 'measureLens',
+      name: '見切り鏡',
+      desc: '戦闘用。次のダイスの低い目を3まで見切る',
+      type: 'battle',
+      effect: 'steady_floor',
+      value: 3,
+      price: 44
+    },
+    silkWeight: {
+      id: 'silkWeight',
+      name: '白糸おもり',
+      desc: '戦闘用。次の敵の白い賽を重くし、攻撃を6鈍らせる',
+      type: 'battle',
+      effect: 'enemy_roll_slow',
+      value: 6,
+      price: 52
+    },
+    kiseiFuda: {
+      id: 'kiseiFuda',
+      name: '気勢札',
+      desc: '戦闘用。2ターン攻撃力を上げる',
+      type: 'battle',
+      effect: 'attack_up',
+      turns: 2,
+      value: 5,
+      price: 46
+    },
+    kaeshiOmamori: {
+      id: 'kaeshiOmamori',
+      name: '返し守',
+      desc: '戦闘用。次の被ダメージを8軽減する',
+      type: 'battle',
+      effect: 'ward',
+      value: 8,
+      price: 50
     },
 
     // === Armor ===

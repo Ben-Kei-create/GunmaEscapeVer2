@@ -16,14 +16,39 @@ Game.Quests = (function() {
     },
     {
       id: 'konnyaku_delivery',
-      name: 'こんにゃく配達',
-      description: '下仁田のこんにゃくを前橋のおばあちゃんに届けよう',
-      status: 'active',
+      name: '灰こんにゃく便',
+      description: '下仁田のこんにゃく包みを前橋の煮しめ屋へ届けよう',
+      status: 'locked',
       progress: 0,
       target: 2,
-      reward: { type: 'item', value: 'superYakimanju' },
+      reward: { type: 'item', value: 'guardChalk' },
       chapter: 1,
-      rewardClaimed: false
+      rewardClaimed: false,
+      manualStart: true
+    },
+    {
+      id: 'silk_braid_delivery',
+      name: '白糸の結び目',
+      description: '富岡の結い糸を高崎の縁結び職人へ届けよう',
+      status: 'locked',
+      progress: 0,
+      target: 2,
+      reward: { type: 'item', value: 'loadedSand' },
+      chapter: 1,
+      rewardClaimed: false,
+      manualStart: true
+    },
+    {
+      id: 'yumomi_letter_delivery',
+      name: '湯けむり文通',
+      description: '草津の湯もみ口上を伊香保の湯番へ届けよう',
+      status: 'locked',
+      progress: 0,
+      target: 2,
+      reward: { type: 'item', value: 'tempoCharm' },
+      chapter: 1,
+      rewardClaimed: false,
+      manualStart: true
     },
     {
       id: 'joumo_karuta_collection',
@@ -128,7 +153,8 @@ Game.Quests = (function() {
     ownedDice: {},
     logOpen: false,
     selectedIndex: 0,
-    scrollOffset: 0
+    scrollOffset: 0,
+    trackedQuestId: ''
   };
 
   var karutaLocations = [
@@ -198,7 +224,8 @@ Game.Quests = (function() {
           blacksmithMaterials: runtime.blacksmithMaterials,
           fishingSpots: runtime.fishingSpots,
           anguraTalks: runtime.anguraTalks,
-          ownedDice: runtime.ownedDice
+          ownedDice: runtime.ownedDice,
+          trackedQuestId: runtime.trackedQuestId || ''
         }
       }));
     } catch (err) {
@@ -231,10 +258,85 @@ Game.Quests = (function() {
         runtime.fishingSpots = saved.runtime.fishingSpots || {};
         runtime.anguraTalks = saved.runtime.anguraTalks || {};
         runtime.ownedDice = saved.runtime.ownedDice || {};
+        runtime.trackedQuestId = saved.runtime.trackedQuestId || '';
       }
     } catch (err) {
       // Ignore malformed values.
     }
+  }
+
+  function exportState() {
+    return clone({
+      quests: questOrder.map(function(quest) {
+        return {
+          id: quest.id,
+          status: quest.status,
+          progress: quest.progress,
+          rewardClaimed: !!quest.rewardClaimed
+        };
+      }),
+      runtime: {
+        visitedMaps: runtime.visitedMaps,
+        onsenMaps: runtime.onsenMaps,
+        deliveryFlags: runtime.deliveryFlags,
+        karutaCards: runtime.karutaCards,
+        talkedNpcs: runtime.talkedNpcs,
+        blacksmithMaterials: runtime.blacksmithMaterials,
+        fishingSpots: runtime.fishingSpots,
+        anguraTalks: runtime.anguraTalks,
+        ownedDice: runtime.ownedDice,
+        trackedQuestId: runtime.trackedQuestId || ''
+      }
+    });
+  }
+
+  function importState(state) {
+    if (!state) return false;
+
+    for (var i = 0; i < questOrder.length; i++) {
+      questOrder[i].status = (questOrder[i].chapter === 1 && !questOrder[i].manualStart) ? 'active' : 'locked';
+      questOrder[i].progress = 0;
+      questOrder[i].rewardClaimed = false;
+    }
+
+    if (state.quests && state.quests.length) {
+      for (var questIndex = 0; questIndex < state.quests.length; questIndex++) {
+        var savedQuest = state.quests[questIndex];
+        var quest = questById[savedQuest.id];
+        if (!quest) continue;
+        quest.status = savedQuest.status || quest.status;
+        quest.progress = typeof savedQuest.progress === 'number' ? savedQuest.progress : quest.progress;
+        quest.rewardClaimed = !!savedQuest.rewardClaimed;
+      }
+    }
+
+    runtime.visitedMaps = {};
+    runtime.onsenMaps = {};
+    runtime.deliveryFlags = {};
+    runtime.karutaCards = {};
+    runtime.talkedNpcs = {};
+    runtime.blacksmithMaterials = {};
+    runtime.fishingSpots = {};
+    runtime.anguraTalks = {};
+    runtime.ownedDice = {};
+    runtime.trackedQuestId = '';
+
+    if (state.runtime) {
+      runtime.visitedMaps = state.runtime.visitedMaps || {};
+      runtime.onsenMaps = state.runtime.onsenMaps || {};
+      runtime.deliveryFlags = state.runtime.deliveryFlags || {};
+      runtime.karutaCards = state.runtime.karutaCards || {};
+      runtime.talkedNpcs = state.runtime.talkedNpcs || {};
+      runtime.blacksmithMaterials = state.runtime.blacksmithMaterials || {};
+      runtime.fishingSpots = state.runtime.fishingSpots || {};
+      runtime.anguraTalks = state.runtime.anguraTalks || {};
+      runtime.ownedDice = state.runtime.ownedDice || {};
+      runtime.trackedQuestId = state.runtime.trackedQuestId || '';
+    }
+
+    normalizeIndex();
+    persist();
+    return true;
   }
 
   function countKeys(object) {
@@ -266,17 +368,97 @@ Game.Quests = (function() {
     return !!(quest && quest.status !== 'locked');
   }
 
+  function setTrackedQuest(questId, skipPersist) {
+    runtime.trackedQuestId = questId || '';
+    if (!skipPersist) persist();
+  }
+
+  function getTrackedQuestInternal() {
+    var tracked = getQuestInternal(runtime.trackedQuestId);
+    if (tracked && tracked.status === 'active') return tracked;
+    return null;
+  }
+
+  function notifyQuest(kind, quest, rewardText) {
+    if (!quest || !Game.UI || !Game.UI.addDamagePopup) return;
+    if (kind === 'start') {
+      Game.UI.addDamagePopup('依頼開始', 84, 244, '#8fe0ff');
+      Game.UI.addDamagePopup(quest.name, 176, 244, '#ffdd66');
+      return;
+    }
+    if (kind === 'complete') {
+      Game.UI.addDamagePopup('依頼達成', 84, 244, '#ffcc44');
+      Game.UI.addDamagePopup(quest.name, 176, 244, '#ffffff');
+      if (rewardText) {
+        Game.UI.addDamagePopup('報酬 ' + rewardText, 186, 228, '#8fe08f');
+      }
+    }
+  }
+
+  function grantReward(quest) {
+    if (!quest || !quest.reward || quest.rewardClaimed) return '';
+
+    if (quest.reward.type === 'gold') {
+      if (Game.Player && Game.Player.addGold) {
+        Game.Player.addGold(quest.reward.value);
+      }
+      quest.rewardClaimed = true;
+      return quest.reward.value + 'G';
+    }
+
+    if (quest.reward.type === 'item') {
+      if (quest.reward.value === 'storyProgress') {
+        quest.rewardClaimed = true;
+        return '';
+      }
+      if (Game.Player && Game.Player.addItem) {
+        Game.Player.addItem(quest.reward.value);
+      }
+      quest.rewardClaimed = true;
+      return getRewardText(quest);
+    }
+
+    return '';
+  }
+
+  function finalizeQuest(quest) {
+    if (!quest) return false;
+    quest.status = 'completed';
+    quest.progress = quest.target;
+    var rewardText = grantReward(quest);
+    if (runtime.trackedQuestId === quest.id) {
+      runtime.trackedQuestId = '';
+    }
+    persist();
+    notifyQuest('complete', quest, rewardText);
+    return true;
+  }
+
   function activate(questId) {
     var quest = getQuestInternal(questId);
     if (!quest || quest.status !== 'locked') return false;
     quest.status = 'active';
+    setTrackedQuest(quest.id, true);
     persist();
+    return true;
+  }
+
+  function startQuest(questId) {
+    var quest = getQuestInternal(questId);
+    if (!quest || quest.status === 'completed') return false;
+    if (quest.status === 'locked') {
+      quest.status = 'active';
+    }
+    setTrackedQuest(quest.id, true);
+    persist();
+    notifyQuest('start', quest);
     return true;
   }
 
   function activateChapter(chapter) {
     var changed = false;
     for (var i = 0; i < questOrder.length; i++) {
+      if (questOrder[i].manualStart) continue;
       if (questOrder[i].chapter <= chapter && questOrder[i].status === 'locked') {
         questOrder[i].status = 'active';
         changed = true;
@@ -293,9 +475,9 @@ Game.Quests = (function() {
     if (next === quest.progress) return false;
     quest.progress = next;
     if (quest.progress >= quest.target) {
-      quest.status = 'completed';
-      quest.progress = quest.target;
+      return finalizeQuest(quest);
     }
+    setTrackedQuest(quest.id, true);
     persist();
     return true;
   }
@@ -303,10 +485,7 @@ Game.Quests = (function() {
   function complete(questId) {
     var quest = getQuestInternal(questId);
     if (!quest || quest.status === 'completed') return false;
-    quest.status = 'completed';
-    quest.progress = quest.target;
-    persist();
-    return true;
+    return finalizeQuest(quest);
   }
 
   function getQuest(questId) {
@@ -334,31 +513,9 @@ Game.Quests = (function() {
   function claimReward(questId) {
     var quest = getQuestInternal(questId);
     if (!quest || quest.status !== 'completed' || quest.rewardClaimed) return false;
-
-    if (quest.reward.type === 'gold') {
-      if (Game.Player && Game.Player.addGold) {
-        Game.Player.addGold(quest.reward.value);
-      }
-      quest.rewardClaimed = true;
-      persist();
-      return true;
-    }
-
-    if (quest.reward.type === 'item') {
-      if (quest.reward.value === 'storyProgress') {
-        quest.rewardClaimed = true;
-        persist();
-        return true;
-      }
-      if (Game.Player && Game.Player.addItem) {
-        Game.Player.addItem(quest.reward.value);
-        quest.rewardClaimed = true;
-        persist();
-        return true;
-      }
-    }
-
-    return false;
+    grantReward(quest);
+    persist();
+    return true;
   }
 
   function visitMap(mapId) {
@@ -385,9 +542,9 @@ Game.Quests = (function() {
     if (next === quest.progress) return false;
     quest.progress = next;
     if (quest.progress >= quest.target) {
-      quest.status = 'completed';
-      quest.progress = quest.target;
+      return finalizeQuest(quest);
     }
+    setTrackedQuest(quest.id, true);
     persist();
     return true;
   }
@@ -431,14 +588,6 @@ Game.Quests = (function() {
   function talkToNpc(npcId, mapId) {
     if (!npcId) return false;
     var changed = false;
-
-    if (npcId === 'shimonitaShop' && !runtime.deliveryFlags.pickedUp) {
-      runtime.deliveryFlags.pickedUp = true;
-      changed = syncProgress('konnyaku_delivery', 1) || changed;
-    } else if (npcId === 'grandma' && runtime.deliveryFlags.pickedUp) {
-      runtime.deliveryFlags.delivered = true;
-      changed = complete('konnyaku_delivery') || changed;
-    }
 
     if (!runtime.talkedNpcs[npcId]) {
       runtime.talkedNpcs[npcId] = mapId || true;
@@ -509,6 +658,9 @@ Game.Quests = (function() {
       case 'chapter_change':
       case 'chapter':
         return activateChapter(payload.chapter || payload.value || 1);
+      case 'start_quest':
+      case 'quest_start':
+        return startQuest(payload.questId || payload.id);
       case 'visit_map':
       case 'map_visit':
         return visitMap(payload.mapId || payload.id || payload.mapName);
@@ -567,6 +719,13 @@ Game.Quests = (function() {
       close();
       return true;
     }
+    if (Game.Input.isPressed('confirm')) {
+      var selectedQuest = questOrder[runtime.selectedIndex];
+      if (selectedQuest && selectedQuest.status === 'active') {
+        setTrackedQuest(selectedQuest.id);
+        return true;
+      }
+    }
     return false;
   }
 
@@ -605,7 +764,7 @@ Game.Quests = (function() {
 
     R.drawRectAbsolute(0, 0, C.CANVAS_WIDTH, C.CANVAS_HEIGHT, 'rgba(6,10,22,0.98)');
     R.drawTextJP(TITLE, 170, 10, '#ffcc44', 20);
-    R.drawTextJP('↑↓ スクロール  X 閉じる', 150, 32, '#99a3c8', 10);
+    R.drawTextJP('↑↓ スクロール  Z 追跡  X 閉じる', 120, 32, '#99a3c8', 10);
 
     for (i = 0; i < visibleRows; i++) {
       var questIndex = runtime.scrollOffset + i;
@@ -624,6 +783,9 @@ Game.Quests = (function() {
       if (quest.status === 'active') {
         drawProgressBar(300, y + 26, 140, 8, quest);
         R.drawTextJP(quest.progress + '/' + quest.target, 392, y + 37, '#d9f7ee', 9);
+        if (runtime.trackedQuestId === quest.id) {
+          R.drawTextJP('追跡中', 246, y + 37, '#8fe0ff', 9);
+        }
       } else if (quest.status === 'completed') {
         R.drawTextJP('達成済み', 364, y + 26, '#ffcc44', 11);
       } else {
@@ -636,21 +798,25 @@ Game.Quests = (function() {
   }
 
   function drawTracker() {
-    var active = getActive();
-    if (!active.length) return false;
-
-    var quest = active[0];
+    var quest = getTrackedQuestInternal();
+    if (!quest) {
+      var active = getActive();
+      if (!active.length) return false;
+      quest = getQuestInternal(active[0].id);
+      if (!quest) return false;
+    }
     var R = Game.Renderer;
-    R.drawRectAbsolute(8, 286, 220, 28, 'rgba(0,0,0,0.72)');
+    R.drawRectAbsolute(8, 282, 238, 32, 'rgba(0,0,0,0.72)');
     R.drawTextJP(quest.name, 14, 291, '#ffcc44', 10);
     drawProgressBar(120, 295, 90, 6, quest);
     R.drawTextJP(quest.progress + '/' + quest.target, 182, 289, '#ffffff', 9);
+    R.drawTextJP('Q 依頼帳', 238, 291, '#8fe0ff', 8, 'right');
     return true;
   }
 
   function reset() {
     for (var i = 0; i < questOrder.length; i++) {
-      questOrder[i].status = questOrder[i].chapter === 1 ? 'active' : 'locked';
+      questOrder[i].status = (questOrder[i].chapter === 1 && !questOrder[i].manualStart) ? 'active' : 'locked';
       questOrder[i].progress = 0;
       questOrder[i].rewardClaimed = false;
     }
@@ -663,6 +829,7 @@ Game.Quests = (function() {
     runtime.fishingSpots = {};
     runtime.anguraTalks = {};
     runtime.ownedDice = {};
+    runtime.trackedQuestId = '';
     runtime.selectedIndex = 0;
     runtime.scrollOffset = 0;
     runtime.logOpen = false;
@@ -683,6 +850,7 @@ Game.Quests = (function() {
     activate: activate,
     updateProgress: updateProgress,
     complete: complete,
+    startQuest: startQuest,
     getQuest: getQuest,
     getActive: getActive,
     getAll: getAll,
@@ -699,6 +867,8 @@ Game.Quests = (function() {
     obtainItem: obtainItem,
     syncInventory: syncInventory,
     syncFromGame: syncFromGame,
+    exportState: exportState,
+    importState: importState,
     open: open,
     close: close,
     toggle: toggle,

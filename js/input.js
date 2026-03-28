@@ -101,6 +101,7 @@ Game.Input = (function() {
       case 'right': return keysDown['ArrowRight'] || keysDown['KeyD'] || touchDir === 'right';
       case 'confirm': return keysDown['KeyZ'] || keysDown['Enter'] || keysDown['Space'];
       case 'cancel':  return keysDown['KeyX'] || keysDown['Escape'];
+      case 'journal': return keysDown['KeyQ'];
     }
     return false;
   }
@@ -113,6 +114,7 @@ Game.Input = (function() {
       case 'right': return keysPressed['ArrowRight'] || keysPressed['KeyD'];
       case 'confirm': return keysPressed['KeyZ'] || keysPressed['Enter'] || keysPressed['Space'] || keysPressed.MouseConfirm || touchConfirm;
       case 'cancel':  return keysPressed['KeyX'] || keysPressed['Escape'] || keysPressed.MouseCancel || touchCancel;
+      case 'journal': return keysPressed['KeyQ'];
     }
     return false;
   }

@@ -1,0 +1,211 @@
+{
+  "konnyakuStart": {
+    "startAction": "quest_start_konnyaku_delivery",
+    "quest": {
+      "id": "konnyaku_delivery",
+      "name": "灰こんにゃく便",
+      "description": "下仁田のこんにゃく包みを前橋の煮しめ屋へ届けよう",
+      "status": "active",
+      "progress": 1,
+      "target": 2,
+      "reward": {
+        "type": "item",
+        "value": "guardChalk"
+      },
+      "chapter": 1,
+      "rewardClaimed": false,
+      "manualStart": true
+    },
+    "hasParcel": true
+  },
+  "konnyakuDone": {
+    "receiverAction": "quest_turnin_konnyaku_delivery",
+    "quest": {
+      "id": "konnyaku_delivery",
+      "name": "灰こんにゃく便",
+      "description": "下仁田のこんにゃく包みを前橋の煮しめ屋へ届けよう",
+      "status": "completed",
+      "progress": 2,
+      "target": 2,
+      "reward": {
+        "type": "item",
+        "value": "guardChalk"
+      },
+      "chapter": 1,
+      "rewardClaimed": true,
+      "manualStart": true
+    },
+    "hasItem": false,
+    "hasReward": true
+  },
+  "silkStart": {
+    "startAction": "quest_start_silk_braid_delivery",
+    "quest": {
+      "id": "silk_braid_delivery",
+      "name": "白糸の結び目",
+      "description": "富岡の結い糸を高崎の縁結び職人へ届けよう",
+      "status": "active",
+      "progress": 1,
+      "target": 2,
+      "reward": {
+        "type": "item",
+        "value": "loadedSand"
+      },
+      "chapter": 1,
+      "rewardClaimed": false,
+      "manualStart": true
+    },
+    "hasItem": true
+  },
+  "silkDone": {
+    "receiverAction": "quest_turnin_silk_braid_delivery",
+    "quest": {
+      "id": "silk_braid_delivery",
+      "name": "白糸の結び目",
+      "description": "富岡の結い糸を高崎の縁結び職人へ届けよう",
+      "status": "completed",
+      "progress": 2,
+      "target": 2,
+      "reward": {
+        "type": "item",
+        "value": "loadedSand"
+      },
+      "chapter": 1,
+      "rewardClaimed": true,
+      "manualStart": true
+    },
+    "hasItem": false,
+    "hasReward": true
+  },
+  "yumomiStart": {
+    "startAction": "quest_start_yumomi_letter_delivery",
+    "quest": {
+      "id": "yumomi_letter_delivery",
+      "name": "湯けむり文通",
+      "description": "草津の湯もみ口上を伊香保の湯番へ届けよう",
+      "status": "active",
+      "progress": 1,
+      "target": 2,
+      "reward": {
+        "type": "item",
+        "value": "tempoCharm"
+      },
+      "chapter": 1,
+      "rewardClaimed": false,
+      "manualStart": true
+    },
+    "hasItem": true
+  },
+  "yumomiDone": {
+    "receiverAction": "quest_turnin_yumomi_letter_delivery",
+    "quest": {
+      "id": "yumomi_letter_delivery",
+      "name": "湯けむり文通",
+      "description": "草津の湯もみ口上を伊香保の湯番へ届けよう",
+      "status": "completed",
+      "progress": 2,
+      "target": 2,
+      "reward": {
+        "type": "item",
+        "value": "tempoCharm"
+      },
+      "chapter": 1,
+      "rewardClaimed": true,
+      "manualStart": true
+    },
+    "hasItem": false,
+    "hasReward": true
+  },
+  "questLogOpen": false,
+  "render": {
+    "mode": "exploring",
+    "titleSelection": 0,
+    "map": "kusatsu",
+    "mapLabel": "草津温泉郷",
+    "audio": {
+      "requestedBgm": null,
+      "currentBgm": null
+    },
+    "player": {
+      "tileX": 14,
+      "tileY": 10,
+      "direction": "down",
+      "hp": 100,
+      "maxHp": 100,
+      "experience": 0,
+      "journeyRank": 1,
+      "gold": 100,
+      "chapter": 1,
+      "inventory": [
+        "tempoCharm"
+      ]
+    },
+    "journeyLabel": "第二章",
+    "journeyIndex": 2,
+    "chapterTitle": "路線の町と最初の敬意",
+    "objective": "湯の作法を学び、次の路線へ抜けるための通行鍵を手に入れる。",
+    "respectGauge": 0,
+    "catalystCount": 0,
+    "party": [],
+    "storyFlags": {
+      "checkpointFailedOnce": false,
+      "checkpointCleared": false,
+      "akagiJoinedSlice": false,
+      "darumaCleared": false,
+      "threadCleared": false
+    },
+    "continueSlot": null,
+    "hasAnySave": false,
+    "saveMenuContext": "field",
+    "quests": {
+      "open": false,
+      "active": [
+        {
+          "id": "onsen_tour",
+          "name": "温泉巡り",
+          "progress": 1,
+          "target": 3
+        },
+        {
+          "id": "joumo_karuta_collection",
+          "name": "上毛かるた収集",
+          "progress": 0,
+          "target": 5
+        },
+        {
+          "id": "daruma_perseverance",
+          "name": "だるま七転び八起き",
+          "progress": 0,
+          "target": 3
+        },
+        {
+          "id": "gunma_dialect_master",
+          "name": "群馬弁マスター",
+          "progress": 0,
+          "target": 5
+        }
+      ]
+    },
+    "ui": {
+      "showJourneyBadge": true,
+      "eventTextSpeed": "ふつう",
+      "battleDialogueSpeed": "ふつう"
+    },
+    "title": {
+      "mode": "intro_movie",
+      "sceneId": "highway",
+      "sceneTitle": "深夜の関越道",
+      "sceneIndex": 0,
+      "sceneTimer": 19,
+      "totalTimer": 19,
+      "revealTimer": 0
+    },
+    "encounters": {
+      "mapId": "kusatsu",
+      "eligibleSteps": 0,
+      "cooldown": 3,
+      "cycleIndex": 0
+    }
+  },
+  "consoleErrors": []
+}

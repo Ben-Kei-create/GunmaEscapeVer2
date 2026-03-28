@@ -45,6 +45,9 @@ Game.Main = (function() {
     if (Game.Achievements && Game.Achievements.check) {
       Game.Achievements.check(mapId);
     }
+    if (Game.Quests && Game.Quests.visitMap) {
+      Game.Quests.visitMap(mapId);
+    }
   }
 
   function startForcedEvent(eventId, onComplete) {
@@ -99,6 +102,79 @@ Game.Main = (function() {
     }
     pendingAction = null;
     return false;
+  }
+
+  function unlockGururinNetwork() {
+    if (Game.Story && Game.Story.setFlag) {
+      Game.Story.setFlag('gururin_network_unlocked');
+      if (Game.Story.saveFlags) Game.Story.saveFlags();
+    }
+    if (Game.Player && Game.Player.addItem) {
+      var hasPass = Game.Player.hasItem ? Game.Player.hasItem('gururinPass') : false;
+      if (!hasPass) {
+        Game.Player.addItem('gururinPass');
+      }
+    }
+  }
+
+  function beginDeliveryQuest(questId, itemId, npc) {
+    var quest = Game.Quests && Game.Quests.getQuest ? Game.Quests.getQuest(questId) : null;
+    if (!quest || quest.status === 'completed') {
+      setState(Game.Config.STATE.EXPLORING);
+      return;
+    }
+
+    if (Game.Quests && Game.Quests.startQuest) {
+      Game.Quests.startQuest(questId);
+    }
+    if (quest.progress < 1 && Game.Quests && Game.Quests.updateProgress) {
+      Game.Quests.updateProgress(questId, 1);
+    }
+    if (Game.Player && Game.Player.hasItem && Game.Player.addItem && !Game.Player.hasItem(itemId)) {
+      Game.Player.addItem(itemId);
+    }
+    if (npc) {
+      npc.defeated = true;
+      if (Game.NPC && Game.NPC.showDefeatedDialog && npc.defeatedDialog) {
+        Game.NPC.showDefeatedDialog(npc);
+        dialogText = Game.NPC.getCurrentDialog();
+        setState(Game.Config.STATE.DIALOG);
+        Game.Audio.playSfx('item');
+        return;
+      }
+    }
+    setState(Game.Config.STATE.EXPLORING);
+    Game.Audio.playSfx('item');
+  }
+
+  function turnInDeliveryQuest(questId, itemId, npc) {
+    var quest = Game.Quests && Game.Quests.getQuest ? Game.Quests.getQuest(questId) : null;
+    var hasItem = Game.Player && Game.Player.hasItem ? Game.Player.hasItem(itemId) : false;
+    if (!quest || quest.status !== 'active' || !hasItem) {
+      setState(Game.Config.STATE.EXPLORING);
+      return;
+    }
+
+    if (Game.Player && Game.Player.removeItem) {
+      Game.Player.removeItem(itemId);
+    }
+    if (Game.Quests && Game.Quests.updateProgress) {
+      Game.Quests.updateProgress(questId, Math.max(1, (quest.target || 2) - (quest.progress || 0)));
+    } else if (Game.Quests && Game.Quests.complete) {
+      Game.Quests.complete(questId);
+    }
+    if (npc) {
+      npc.defeated = true;
+      if (Game.NPC && Game.NPC.showDefeatedDialog && npc.defeatedDialog) {
+        Game.NPC.showDefeatedDialog(npc);
+        dialogText = Game.NPC.getCurrentDialog();
+        setState(Game.Config.STATE.DIALOG);
+        Game.Audio.playSfx('item');
+        return;
+      }
+    }
+    setState(Game.Config.STATE.EXPLORING);
+    Game.Audio.playSfx('item');
   }
 
   function resolveBattleVictory(battleResult) {
@@ -218,6 +294,15 @@ Game.Main = (function() {
         if (maybeStartArrivalEvent()) {
           break;
         }
+        if (Game.Quests && Game.Quests.isOpen && Game.Quests.isOpen()) {
+          Game.Quests.update();
+          break;
+        }
+        if (Game.Input.isPressed('journal') && Game.Quests && Game.Quests.open) {
+          Game.Quests.open();
+          Game.Audio.playSfx('confirm');
+          break;
+        }
         Game.Player.update();
         var stepInfo = Game.Player.consumeCompletedStep ? Game.Player.consumeCompletedStep() : null;
 
@@ -263,6 +348,15 @@ Game.Main = (function() {
           break;
         }
 
+        if (stepInfo && Game.Quests && Game.Quests.visitTile) {
+          Game.Quests.visitTile(
+            Game.Map.getCurrentMapId(),
+            stepInfo.tileX,
+            stepInfo.tileY,
+            Game.Map.getTile(stepInfo.tileX, stepInfo.tileY)
+          );
+        }
+
         if (stepInfo && Game.Encounters && Game.Encounters.consumeStep) {
           var encounterEnemy = Game.Encounters.consumeStep(Game.Map.getCurrentMapId(), tile);
           if (encounterEnemy) {
@@ -279,6 +373,9 @@ Game.Main = (function() {
           if (npc) {
             Game.Audio.playSfx('confirm');
             dialogText = Game.NPC.interact(npc);
+            if (Game.Quests && Game.Quests.talkToNpc) {
+              Game.Quests.talkToNpc(npc.id, Game.Map.getCurrentMapId());
+            }
             setState(Game.Config.STATE.DIALOG);
           }
         }
@@ -397,12 +494,22 @@ Game.Main = (function() {
         } else if (menuResult && menuResult.warp) {
           Game.Audio.playSfx('confirm');
           startTransition(menuResult.warp.mapId, menuResult.warp.spawnX, menuResult.warp.spawnY);
+        } else if (menuResult && menuResult.openQuestLog && Game.Quests && Game.Quests.open) {
+          setState(Game.Config.STATE.EXPLORING);
+          Game.Quests.open();
+          Game.Audio.playSfx('confirm');
         }
         break;
 
       case Game.Config.STATE.SAVE:
         var saveResult = Game.SaveMenu.update ? Game.SaveMenu.update() : null;
         if (saveResult && saveResult.closeTo) {
+          if (saveResult.loaded && Game.Quests && Game.Quests.syncFromGame) {
+            Game.Quests.syncFromGame();
+            if (Game.Player && Game.Player.getData && Game.Quests.activateChapter) {
+              Game.Quests.activateChapter(Game.Player.getData().chapter || 1);
+            }
+          }
           setState(saveResult.closeTo);
           if (saveResult.loaded && saveResult.closeTo === Game.Config.STATE.EXPLORING) {
             Game.Audio.playBgm('field');
@@ -649,17 +756,27 @@ Game.Main = (function() {
         });
         break;
       case 'event_gururin_network':
-        if (Game.Story && Game.Story.setFlag) {
-          Game.Story.setFlag('gururin_network_unlocked');
-          if (Game.Story.saveFlags) Game.Story.saveFlags();
-        }
-        if (Game.Player && Game.Player.addItem) {
-          Game.Player.addItem('gururinPass');
-        }
+        unlockGururinNetwork();
         setState(Game.Config.STATE.EVENT);
         Game.Event.start('gururin_network', function() {
           setState(Game.Config.STATE.EXPLORING);
           Game.Audio.playBgm('field');
+        });
+        break;
+      case 'event_gururin_network_midgame':
+        if (Game.Story && Game.Story.hasFlag && Game.Story.hasFlag('gururin_network_unlocked')) {
+          setState(Game.Config.STATE.EVENT);
+          Game.Event.start('ch5_ending', function() {
+            startChapter6();
+          });
+          break;
+        }
+        unlockGururinNetwork();
+        setState(Game.Config.STATE.EVENT);
+        Game.Event.start('gururin_network', function() {
+          Game.Event.start('ch5_ending', function() {
+            startChapter6();
+          });
         });
         break;
       case 'event_gururin':
@@ -681,6 +798,24 @@ Game.Main = (function() {
         } else {
           setState(Game.Config.STATE.EXPLORING);
         }
+        break;
+      case 'quest_start_konnyaku_delivery':
+        beginDeliveryQuest('konnyaku_delivery', 'konnyakuParcel', npc);
+        break;
+      case 'quest_turnin_konnyaku_delivery':
+        turnInDeliveryQuest('konnyaku_delivery', 'konnyakuParcel', npc);
+        break;
+      case 'quest_start_silk_braid_delivery':
+        beginDeliveryQuest('silk_braid_delivery', 'silkBraid', npc);
+        break;
+      case 'quest_turnin_silk_braid_delivery':
+        turnInDeliveryQuest('silk_braid_delivery', 'silkBraid', npc);
+        break;
+      case 'quest_start_yumomi_letter_delivery':
+        beginDeliveryQuest('yumomi_letter_delivery', 'yumomiLetter', npc);
+        break;
+      case 'quest_turnin_yumomi_letter_delivery':
+        turnInDeliveryQuest('yumomi_letter_delivery', 'yumomiLetter', npc);
         break;
       default:
         // Check for shop actions: shop_<shopName>_<item1>,<item2>,...
@@ -749,6 +884,9 @@ Game.Main = (function() {
       Game.Story.reset();
       if (Game.Story.saveFlags) Game.Story.saveFlags();
     }
+    if (Game.Quests && Game.Quests.reset) {
+      Game.Quests.reset();
+    }
   }
 
   function startGame() {
@@ -769,6 +907,7 @@ Game.Main = (function() {
     }
     var pd = Game.Player.getData();
     pd.chapter = 2;
+    if (Game.Quests && Game.Quests.activateChapter) Game.Quests.activateChapter(2);
     // Keep current stats/gold/armor, but clear Ch1 keys
     pd.inventory = pd.inventory.filter(function(id) {
       var item = Game.Items.get(id);
@@ -801,6 +940,7 @@ Game.Main = (function() {
   function startChapter3() {
     var pd = Game.Player.getData();
     pd.chapter = 3;
+    if (Game.Quests && Game.Quests.activateChapter) Game.Quests.activateChapter(3);
     pd.inventory = pd.inventory.filter(function(id) {
       var item = Game.Items.get(id);
       return !item || item.type !== 'key';
@@ -826,6 +966,7 @@ Game.Main = (function() {
   function startChapter4() {
     var pd = Game.Player.getData();
     pd.chapter = 4;
+    if (Game.Quests && Game.Quests.activateChapter) Game.Quests.activateChapter(4);
     pd.inventory = pd.inventory.filter(function(id) {
       var item = Game.Items.get(id);
       return !item || item.type !== 'key';
@@ -851,6 +992,7 @@ Game.Main = (function() {
   function startChapter5() {
     var pd = Game.Player.getData();
     pd.chapter = 5;
+    if (Game.Quests && Game.Quests.activateChapter) Game.Quests.activateChapter(5);
     pd.inventory = pd.inventory.filter(function(id) {
       var item = Game.Items.get(id);
       return !item || item.type !== 'key';
@@ -876,6 +1018,7 @@ Game.Main = (function() {
   function startChapter6() {
     var pd = Game.Player.getData();
     pd.chapter = 6;
+    if (Game.Quests && Game.Quests.activateChapter) Game.Quests.activateChapter(6);
     pd.inventory = pd.inventory.filter(function(id) {
       var item = Game.Items.get(id);
       return !item || item.type !== 'key';
@@ -901,6 +1044,7 @@ Game.Main = (function() {
   function startChapter7() {
     var pd = Game.Player.getData();
     pd.chapter = 7;
+    if (Game.Quests && Game.Quests.activateChapter) Game.Quests.activateChapter(7);
     pd.inventory = pd.inventory.filter(function(id) {
       var item = Game.Items.get(id);
       return !item || item.type !== 'key';
@@ -926,6 +1070,7 @@ Game.Main = (function() {
   function startChapter8() {
     var pd = Game.Player.getData();
     pd.chapter = 8;
+    if (Game.Quests && Game.Quests.activateChapter) Game.Quests.activateChapter(8);
     pd.inventory = pd.inventory.filter(function(id) {
       var item = Game.Items.get(id);
       return !item || item.type !== 'key';
@@ -951,6 +1096,7 @@ Game.Main = (function() {
   function startChapter9() {
     var pd = Game.Player.getData();
     pd.chapter = 9;
+    if (Game.Quests && Game.Quests.activateChapter) Game.Quests.activateChapter(9);
     pd.inventory = pd.inventory.filter(function(id) {
       var item = Game.Items.get(id);
       return !item || item.type !== 'key';
@@ -976,6 +1122,7 @@ Game.Main = (function() {
   function startChapter10() {
     var pd = Game.Player.getData();
     pd.chapter = 10;
+    if (Game.Quests && Game.Quests.activateChapter) Game.Quests.activateChapter(10);
     pd.inventory = pd.inventory.filter(function(id) {
       var item = Game.Items.get(id);
       return !item || item.type !== 'key';
@@ -1095,8 +1242,10 @@ Game.Main = (function() {
       Game.UI.drawHUD();
       if (Game.UI.drawMinimap) Game.UI.drawMinimap();
       if (Game.UI.drawAreaBanner) Game.UI.drawAreaBanner();
+      if (Game.Quests && Game.Quests.drawTracker) Game.Quests.drawTracker();
     }
     if (Game.UI.drawPopups) Game.UI.drawPopups();
+    if (Game.Quests && Game.Quests.draw) Game.Quests.draw();
   }
 
   function advanceTime(ms) {
@@ -1155,6 +1304,19 @@ Game.Main = (function() {
       hasAnySave: Game.Save && Game.Save.hasAnySave ? Game.Save.hasAnySave() : false,
       saveMenuContext: Game.SaveMenu && Game.SaveMenu.getContext ? Game.SaveMenu.getContext() : null
     };
+    if (Game.Quests) {
+      payload.quests = {
+        open: Game.Quests.isOpen ? Game.Quests.isOpen() : false,
+        active: Game.Quests.getActive ? Game.Quests.getActive().map(function(quest) {
+          return {
+            id: quest.id,
+            name: quest.name,
+            progress: quest.progress,
+            target: quest.target
+          };
+        }) : []
+      };
+    }
     payload.ui = {
       showJourneyBadge: Game.UI && Game.UI.isJourneyBadgeEnabled ? Game.UI.isJourneyBadgeEnabled() : true,
       eventTextSpeed: Game.UI && Game.UI.getEventTextSpeedLabel ? Game.UI.getEventTextSpeedLabel() : 'ふつう',

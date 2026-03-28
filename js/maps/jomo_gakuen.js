@@ -47,7 +47,7 @@ Game.Maps.jomo_gakuen = (function() {
     {
       id: 'juke_gakuen', x: 14, y: 3, name: 'ジューク',
       dialog: ['おや、転校生ですか？', 'この学園の「ルール」を教えてあげましょう。'],
-      afterDialog: 'battle_juke_gakuen', afterDefeat: 'event_ch5_ending',
+      afterDialog: 'battle_juke_gakuen', afterDefeat: 'event_gururin_network_midgame',
       defeatedDialog: ['ルールを...書き換え損ねたか...', 'だが次は...ない。'],
       defeated: false, sprite: bossSprite, palette: { 1:'#ffccaa', 2:'#111111', 3:'#ffffff', 4:'#ff0000' }
     },

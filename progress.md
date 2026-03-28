@@ -530,3 +530,65 @@ Original prompt: そうだね。セーブできる村役場みたいなところ
   - Playwright で `roadsideBandit` 戦を直起動し、1回攻撃後の `battle.enemyRoll` が `{ attackers: ['境界の追いはぎ'], diceCount: 3 }` になることを確認。
   - そのまま 1.3 秒進めると `enemyRoll: null` へ戻り、`message: 境界の追いはぎの攻撃！ 6ダメージ！` に自然遷移することを確認。
   - Playwright console error は `0` 件。
+- 2026-03-28: ユーザー操作なしで始まる到着イベントを増やし、アカギが歩み寄って話す専用演出を追加。
+  - `js/event.js` に `akagi_approach` モーションを追加し、プレイヤーとアカギの簡易シルエット、顎で先を示す仕草、流れる空気線で「近づいてくる感覚」が伝わるようにした。
+  - 同ファイルに初訪問時専用イベント `arrival_kusatsu_auto` / `arrival_ikaho_auto` / `arrival_akagi_ranch_auto` を追加。既存の `arrival_takasaki_auto` / `arrival_shimonita_auto` / `arrival_tomioka_auto` と合わせて、複数の町で強制会話が走る構成へ広げた。
+  - `js/main.js` の到着イベント判定も更新し、対象マップへ入った最初の1回だけ自動でイベントが始まり、以後は同じ町に入り直しても通常探索へ戻るようにした。
+- 2026-03-28: 強制到着イベント追加の検証結果
+  - `node --check js/event.js js/main.js` 通過。
+  - Playwright で高崎ロード直後に `mode: event`、`event.sceneCount: 2`、先頭行 `高崎の路地へ足を踏み入れた瞬間、青い上着が横切った。` が返ることを確認。
+  - Playwright screenshot で `akagi_approach` モーションの表示を目視確認し、アカギが歩み寄る簡易カットが会話の前景として機能していることを確認。
+  - あわせて `arrival_takasaki_auto` フラグを事前に立てた状態で同マップをロードし、`mode: exploring` のままになって再発火しないことを確認。
+  - 別マップ検証として `akagi_ranch` でも `mode: event`、先頭行 `牧柵の影が伸びたあたりで、アカギが前へ回り込んできた。` を確認。Playwright console error は `0` 件。
+- 2026-03-28: ぐるりんバスを後半用の高速移動として使いやすく調整。
+  - `js/ui.js` のフィールドメニューにある `ぐるりん` タブを5タブ構成でも収まる幅へ調整し、一覧が見切れにくいようにした。
+  - バス一覧は4件固定表示からスクロール対応へ変更し、全マップ分の停留所を順に辿れるようにした。
+  - 詳細欄には `停留所 n/N` と現在地表示を追加し、今どこからどこへ飛ぼうとしているか分かりやすくした。
+  - `render_game_to_text` 向けのメニュー状態にも `busUnlocked / busDestinationCount / busSelection` を追加し、ぐるりん開通や選択先の検証をしやすくした。
+- 2026-03-28: ぐるりんバス調整の検証結果
+  - `node --check js/ui.js js/main.js js/event.js js/items.js js/maps/tomioka.js` 通過。
+  - Playwright で未開通時の `ぐるりん` タブを開き、`menu.busUnlocked === false` とロック文言の表示を確認。
+  - 開通フラグと訪問フラグを複数立てた状態では `menu.busUnlocked === true`、`menu.busDestinationCount === 8` を確認し、一覧が下方の停留所までスクロールして `停留所 7/8` まで表示されることを目視確認。
+  - 同状態で前橋から `嬬恋高原` を選んで決定し、`mode: exploring`, `map: tsumagoi`, `player.tileX: 14`, `player.tileY: 8` へ即時遷移することを確認。
+  - ぐるりん開通条件は引き続き富岡の中ボス `threadMaiden` 撃破後の `event_gururin_network` で、ここで `gururin_network_unlocked` と `ぐるりん定期` を付与する構成のまま維持。
+- 2026-03-28: ぐるりんバスの解放時期を中盤へ後ろ倒しし、全マップ移動の格に合わせて再整理。
+  - 富岡の `threadMaiden` から `afterDefeat: event_gururin_network` を外し、序盤寄りの章でぐるりんが開いてしまう構成を解消した。
+  - 代わりに `js/maps/jomo_gakuen.js` の `juke_gakuen` 撃破後を `event_gururin_network_midgame` へ差し替え、上毛学園突破後にぐるりん開通と章終了演出が続くようにした。
+  - `js/main.js` には `unlockGururinNetwork()` を追加し、定期券重複なしで `gururin_network_unlocked` を付ける共通処理へ整理。
+  - 同時に `event_gururin_network` の演出文も製糸場前提から学園門前の描写へ差し替え、中盤開通の文脈に合わせた。
+- 2026-03-28: ぐるりん解放時期変更の検証結果
+  - `node --check js/main.js js/event.js js/maps/jomo_gakuen.js js/maps/tomioka.js` 通過。
+  - Playwright から `fetch('/js/maps/jomo_gakuen.js?ts=1')` を使って最新コードを確認し、`afterDefeat: 'event_gururin_network_midgame'` が含まれることを確認。
+  - 同様に `fetch('/js/maps/tomioka.js?ts=1')` では旧 `afterDefeat: 'event_gururin_network'` が存在しないことを確認。
+  - `fetch('/js/main.js?ts=2')` で `case 'event_gururin_network_midgame'` と `ch5_ending` への接続を確認し、中盤章進行に組み込まれていることを確認。
+  - `fetch('/js/event.js?ts=1')` では `学園の門前へ出ると、見覚えのある緑の車体が静かに停まっていた。` が含まれ、演出文言も中盤解放向けに更新されていることを確認。
+- 2026-03-28: 町をまたぐサブクエストを追加し、依頼帳を本稼働させた。
+  - `js/quests.js` に手動受注クエスト `灰こんにゃく便 / 白糸の結び目 / 湯けむり文通` を追加。
+  - 同ファイルへ `startQuest`, 追跡中クエスト, 達成時自動報酬, save export/import を追加し、`Q` で開く依頼帳と相性が出るようにした。
+  - `js/main.js` で `Game.Quests` を探索ループへ接続し、マップ訪問・NPC会話・歩行タイル・ロード時同期・メニューからの依頼帳遷移を実装。
+  - `js/ui.js` の設定タブへ `依頼帳` 導線を追加。探索HUD右下の追跡表示には `Q 依頼帳` ヒントも表示。
+  - `js/items.js` に `konnyakuParcel / silkBraid / yumomiLetter` を追加。
+  - `js/maps/maebashi.js`, `js/maps/takasaki.js`, `js/maps/ikaho.js` に納品役NPCを追加。
+  - `js/maps/shimonita.js`, `js/maps/tomioka.js`, `js/maps/kusatsu.js` では既存NPCを依頼主へ拡張した。
+  - `js/save.js` と `js/player.js` も合わせて更新し、ローカルセーブ時のクエスト状態保存と、所持品入手時のクエスト通知をつないだ。
+- 2026-03-28: サブクエスト実装の検証結果
+  - `node --check js/quests.js js/main.js js/ui.js js/items.js js/input.js js/player.js js/save.js js/maps/maebashi.js js/maps/shimonita.js js/maps/takasaki.js js/maps/tomioka.js js/maps/kusatsu.js js/maps/ikaho.js` 通過。
+  - `develop-web-game` の Playwright client を `output/web-game/sidequests-smoke` で実行し、最新ビルドの起動と `render_game_to_text` の出力を確認。
+  - Playwright で各依頼主の会話末尾アクションが `quest_start_*`、各納品役が `quest_turnin_*` を返すことを確認。
+  - 同時に `1/2` 受注状態、納品後 `2/2 + rewardClaimed: true`、報酬 `guardChalk / loadedSand / tempoCharm` の所持を確認。
+  - `KeyQ` 押下で `render_game_to_text().quests.open` が `false -> true` へ変わることも確認。
+  - 依頼帳の見た目は `output/web-game/sidequests-verification/quest-log-open.png`、詳細結果は `output/web-game/sidequests-verification/results.json` に保存。console error は `0` 件。
+- 2026-03-28: 回復偏重だった所持品に、戦況をいじる戦闘アイテムを追加。
+  - `js/items.js` に `見切り鏡 / 白糸おもり / 気勢札 / 返し守` を追加。
+  - `js/battle.js` では `steady_floor` と `enemy_roll_slow` を新設し、既存の `attack_up / ward` もアイテム経由で使えるよう拡張。
+  - 戦闘中の `アイテム` 一覧は回復より先に戦闘用アイテムを並べるよう整理し、`render_game_to_text` に `itemMenu / playerEffects / enemyEffects` も出すようにした。
+  - 通常敵のドロップも `healHerb` 偏重から見直し、土地ごとに `tempoCharm / emberIncense / guardChalk / silkWeight / measureLens / loadedSand / kaeshiOmamori` が落ちる構成へ変更。
+  - 各町のショップに戦闘アイテムを混ぜ、前橋から富岡まで段階的に補助札や賽補正アイテムへ触れられるようにした。
+- 2026-03-28: 戦闘アイテム拡張の検証結果
+  - `node --check js/items.js js/battle.js js/maps/maebashi.js js/maps/takasaki.js js/maps/shimonita.js js/maps/kusatsu.js js/maps/ikaho.js js/maps/tomioka.js` 通過。
+  - `develop-web-game` の Playwright client を再実行し、最新ビルドが起動して `output/web-game/shot-0.png` 〜 `shot-2.png` と `state-0.json` 〜 `state-2.json` が更新されることを確認。
+  - Playwright で `?debugBattle=roadsideBandit&debugInventory=...` を起動し、`itemMenu` に戦闘用アイテムが先頭から並ぶことを確認。
+  - 同テストで `白糸おもり` 使用後に `enemyEffects = [{ type: 'enemy_roll_slow', value: 6 }]`、敵ロール文言が `重い白い賽` へ変わり、最終メッセージも `2ダメージ / 賽は重く鈍っている` になることを確認。
+  - `見切り鏡` 使用後は `playerEffects = [{ type: 'steady_floor', value: 3 }]` を確認。
+  - `fetch('/js/maps/*.js?ts=...')` で各店の `afterDialog` が新しい品揃えへ更新されていること、`fetch('/js/items.js')` と `fetch('/js/battle.js')` で新アイテムIDと戦闘ロジックが配信ファイルにも載っていることを確認。
+  - Playwright console error は `0` 件。AudioContext 警告のみ継続。

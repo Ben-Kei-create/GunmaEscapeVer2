@@ -77,7 +77,7 @@ Game.Maps.kusatsu = (function() {
       '源泉は毎分三万リットル以上湧いてるんだ。',
       '温泉パワーの装備はいかがですか？'
     ],
-    afterDialog: 'shop_温泉土産屋_yakimanju,superYakimanju,konnyakuArmor',
+    afterDialog: 'shop_温泉土産屋_yakimanju,superYakimanju,emberIncense,silkWeight,konnyakuArmor',
     sprite: [
       [0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0],
       [0,0,1,2,2,2,2,1,0,0,0,0,0,0,0,0],
@@ -110,8 +110,16 @@ Game.Maps.kusatsu = (function() {
       'だから長い板でお湯をかき混ぜるの。',
       'それが「湯もみ」。♪草津よいとこ〜',
       '「恋の病以外なんでも治す」って言うのよ。',
-      'あなたの旅の疲れも癒えるといいわね。'
+      'あなたの旅の疲れも癒えるといいわね。',
+      'そうだ、伊香保の湯番に湯もみ口上を書き写した文を届けたいの。',
+      '足の早い旅人が見つからなくてね。お願いできる？'
     ],
+    afterDialog: 'quest_start_yumomi_letter_delivery',
+    defeatedDialog: [
+      '助かるわ。あの文は節回しまで真似できるように、書き込みが細かいの。',
+      '伊香保にも草津の湯気が届くと思うと、ちょっと誇らしいな。'
+    ],
+    defeated: false,
     sprite: [
       [0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0],
       [0,0,1,2,2,2,2,1,0,0,0,0,0,0,0,0],

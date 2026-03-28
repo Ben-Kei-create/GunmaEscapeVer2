@@ -102,8 +102,16 @@ Game.Maps.tomioka = (function() {
         'ここは繭の乾燥倉庫だ。',
         '蚕の繭からは1本の糸が約1,500メートルも取れるんだ。',
         '繭を煮て糸を引き出す...「繰糸」という技術さ。',
-        '良い絹は繭の品質で決まる。群馬の蚕は日本一だぞ。'
+        '良い絹は繭の品質で決まる。群馬の蚕は日本一だぞ。',
+        'ただ今は、高崎でだるまを吊るす結い糸が足りなくてな。',
+        'この白糸の束を、町はずれの縁結び職人に渡してくれないか。'
       ],
+      afterDialog: 'quest_start_silk_braid_delivery',
+      defeatedDialog: [
+        'その糸は張りすぎず、ゆるみすぎずが肝心だ。',
+        '高崎のだるまも、結び目ひとつで顔つきが変わるらしい。'
+      ],
+      defeated: false,
       sprite: [
         [0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0],
         [0,0,1,2,2,2,2,1,0,0,0,0,0,0,0,0],
@@ -134,7 +142,6 @@ Game.Maps.tomioka = (function() {
         'やさしくほどけるなら…ここを通してあげる。'
       ],
       afterDialog: 'battle_thread_maiden',
-      afterDefeat: 'event_gururin_network',
       defeatedDialog: [
         '……ほどけた。やっと、止まれる。',
         'この生糸を持って行って。いつか、旅の終わりで意味を持つ。'
@@ -172,7 +179,7 @@ Game.Maps.tomioka = (function() {
         '日本の近代化を支えた「絹の国」群馬の誇りです。',
         'お土産もありますよ。古いサイコロポーチがひとつだけ残っています。'
       ],
-      afterDialog: 'shop_富岡製糸場_healHerb,superYakimanju,diceSlot',
+      afterDialog: 'shop_富岡製糸場_healHerb,superYakimanju,measureLens,silkWeight,diceSlot',
       sprite: [
         [0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0],
         [0,0,1,2,2,2,2,1,0,0,0,0,0,0,0,0],

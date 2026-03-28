@@ -251,6 +251,9 @@ Game.Player = (function() {
     if (!allowDuplicates && hasItem(id)) return;
     data.inventory.push(id);
     registerCatalystIfNeeded(id);
+    if (Game.Quests && Game.Quests.obtainItem) {
+      Game.Quests.obtainItem(id);
+    }
   }
 
   function removeItem(id) {

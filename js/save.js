@@ -112,6 +112,13 @@ Game.Save = (function() {
     return { respectGauge: 0, catalysts: [] };
   }
 
+  function getQuestState() {
+    if (Game.Quests && Game.Quests.exportState) {
+      return Game.Quests.exportState();
+    }
+    return null;
+  }
+
   function buildSaveData() {
     var playerSnapshot = getPlayerSnapshot();
     var currentMapId = Game.Map.getCurrentMapId();
@@ -128,7 +135,8 @@ Game.Save = (function() {
       npcStates: getNpcStates(),
       itemStates: getItemStates(),
       storyFlags: getStoryFlags(),
-      journeyState: getJourneyState()
+      journeyState: getJourneyState(),
+      questState: getQuestState()
     };
   }
 
@@ -207,6 +215,17 @@ Game.Save = (function() {
     }
   }
 
+  function applyQuestState(questState, chapter) {
+    if (!Game.Quests) return;
+    if (questState && Game.Quests.importState) {
+      Game.Quests.importState(questState);
+      return;
+    }
+    if (Game.Quests.reset) Game.Quests.reset();
+    if (Game.Quests.activateChapter) Game.Quests.activateChapter(chapter || 1);
+    if (Game.Quests.syncFromGame) Game.Quests.syncFromGame();
+  }
+
   function applyPlayerData(savedPlayer) {
     if (!savedPlayer) return;
 
@@ -253,6 +272,7 @@ Game.Save = (function() {
     applyPlayerData(data.player);
     applyStoryFlags(data.storyFlags || {});
     applyJourneyState(data.journeyState || null);
+    applyQuestState(data.questState || null, data.player.chapter || 1);
     if (Game.Player && Game.Player.syncCatalystsFromInventory) {
       Game.Player.syncCatalystsFromInventory();
     }

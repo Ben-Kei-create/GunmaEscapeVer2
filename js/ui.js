@@ -915,7 +915,8 @@ Game.UI = (function() {
     var infoH = 56;
     var tabX = 70;
     var tabY = 194;
-    var tabW = 85;
+    var tabs = ['もちもの', 'サイコロ', 'ぼうぐ', 'ぐるりん', 'せってい'];
+    var tabW = Math.floor(infoW / tabs.length);
     var contentY = 222;
     var listX = 70;
     var listW = 142;
@@ -967,15 +968,14 @@ Game.UI = (function() {
     drawWrappedTextBlock(getCurrentObjective(), infoX + 52, infoY + 29, 18, 3, 9, '#dce6ff', 9);
 
     // Tabs
-    var tabs = ['もちもの', 'サイコロ', 'ぼうぐ', 'ぐるりん', 'せってい'];
     for (var t = 0; t < tabs.length; t++) {
       var activeTab = (fieldMenuState.section === t);
       var tx = tabX + t * tabW;
-      R.drawRectAbsolute(tx, tabY, tabW - 8, 20, activeTab ? 'rgba(255,204,0,0.16)' : 'rgba(255,255,255,0.06)');
+      R.drawRectAbsolute(tx, tabY, tabW - 4, 20, activeTab ? 'rgba(255,204,0,0.16)' : 'rgba(255,255,255,0.06)');
       if (activeTab) {
-        R.drawRectAbsolute(tx + 6, tabY + 3, tabW - 20, 1, accent);
+        R.drawRectAbsolute(tx + 5, tabY + 3, tabW - 14, 1, accent);
       }
-      R.drawTextJP(tabs[t], tx + 12, tabY + 5, activeTab ? C.COLORS.GOLD : '#b5bfd8', 11);
+      R.drawTextJP(tabs[t], tx + 8, tabY + 5, activeTab ? C.COLORS.GOLD : '#b5bfd8', 10);
     }
     R.drawRectAbsolute(70, 218, 338, 1, '#446');
 
@@ -1157,7 +1157,7 @@ Game.UI = (function() {
     var panelH = 62;
     var settingsOptions = getSettingsOptions();
 
-    drawInsetPanel(listX, panelY, listW, panelH, '表示と演出', C.COLORS.GOLD, C.COLORS.GOLD);
+    drawInsetPanel(listX, panelY, listW, panelH, '記録と設定', C.COLORS.GOLD, C.COLORS.GOLD);
     drawInsetPanel(detailX, panelY, detailW, panelH, '項目詳細', '#8fb8ff', '#8fb8ff');
 
     for (var i = 0; i < settingsOptions.length; i++) {
@@ -1186,6 +1186,10 @@ Game.UI = (function() {
     var listW = 142;
     var detailW = 186;
     var panelH = 62;
+    var visibleStops = 4;
+    var maxOffset = Math.max(0, destinations.length - visibleStops);
+    var scrollOffset = Math.min(maxOffset, Math.max(0, fieldMenuState.busIndex - visibleStops + 1));
+    var currentMapId = Game.Map && Game.Map.getCurrentMapId ? Game.Map.getCurrentMapId() : '';
 
     drawInsetPanel(listX, panelY, listW, panelH, 'ぐるりん路線', C.COLORS.GOLD, C.COLORS.GOLD);
     drawInsetPanel(detailX, panelY, detailW, panelH, '案内', '#8fe0ff', '#8fe0ff');
@@ -1203,22 +1207,25 @@ Game.UI = (function() {
       return;
     }
 
-    for (var i = 0; i < Math.min(4, destinations.length); i++) {
+    for (var i = scrollOffset; i < Math.min(destinations.length, scrollOffset + visibleStops); i++) {
       var destination = destinations[i];
       var selected = (i === fieldMenuState.busIndex);
-      var lineY = panelY + 18 + i * 11;
+      var lineY = panelY + 18 + (i - scrollOffset) * 11;
+      var prefix = selected ? '▶ ' : '  ';
+      if (destination.mapId === currentMapId) prefix = selected ? '● ' : '・ ';
       if (selected) {
         R.drawRectAbsolute(listX + 6, lineY - 1, listW - 12, 11, 'rgba(255,204,0,0.12)');
       }
-      R.drawTextJP((selected ? '▶ ' : '  ') + clampText(destination.label, 9), listX + 10, lineY, selected ? C.COLORS.GOLD : '#fff', 10);
+      R.drawTextJP(prefix + clampText(destination.label, 8), listX + 10, lineY, selected ? C.COLORS.GOLD : '#fff', 10);
     }
 
     var current = destinations[fieldMenuState.busIndex];
     if (!current) return;
     R.drawTextJP(current.label, detailX + 10, panelY + 18, '#ffffff', 11);
+    R.drawTextJP('停留所 ' + (fieldMenuState.busIndex + 1) + '/' + destinations.length, detailX + detailW - 10, panelY + 18, '#8fe0ff', 8, 'right');
     R.drawTextJP('Zで乗る / Xで閉じる', detailX + 10, panelY + 30, '#8fe0ff', 9);
-    R.drawTextJP('ぐるりんは高崎専用ではない。', detailX + 10, panelY + 42, '#dbe3ff', 9);
-    R.drawTextJP('見つけた停留所へ一気に跳ぶ。', detailX + 10, panelY + 52, '#dbe3ff', 9);
+    R.drawTextJP(current.mapId === currentMapId ? 'いまいる停留所' : 'ぐるりんは群馬じゅうを巡る。', detailX + 10, panelY + 42, '#dbe3ff', 9);
+    R.drawTextJP('訪れた停留所へ瞬時に移動できる。', detailX + 10, panelY + 52, '#dbe3ff', 9);
   }
 
   function drawSkillLearn() {
@@ -1363,6 +1370,14 @@ Game.UI = (function() {
     var eventTextSpeed = getEventTextSpeedChoice();
     var battleDialogueSpeed = getBattleDialogueSpeedChoice();
     return [
+      {
+        id: 'questLog',
+        label: '依頼帳',
+        value: 'open',
+        valueLabel: 'ひらく',
+        valueColor: '#8fe0ff',
+        description: '町で受けた依頼と達成状況をまとめて確認する。'
+      },
       {
         id: 'showJourneyBadge',
         label: '進行バッジ',
@@ -1690,6 +1705,15 @@ Game.UI = (function() {
 
     var current = settingsOptions[fieldMenuState.settingIndex];
     if (!current) return null;
+    if (current.id === 'questLog') {
+      if (Game.Input.isPressed('cancel')) {
+        return { close: true };
+      }
+      if (Game.Input.isPressed('confirm')) {
+        return { openQuestLog: true };
+      }
+      return null;
+    }
     var shouldToggle = Game.Input.isPressed('confirm') || Game.Input.isPressed('left') || Game.Input.isPressed('right');
     if (!shouldToggle) return null;
 
@@ -2005,9 +2029,13 @@ Game.UI = (function() {
   }
 
   function getFieldMenuDebugState() {
+    var busDestinations = getBusDestinations();
     return {
       section: fieldMenuState.section,
       busIndex: fieldMenuState.busIndex,
+      busUnlocked: isBusUnlocked(),
+      busDestinationCount: busDestinations.length,
+      busSelection: busDestinations[fieldMenuState.busIndex] ? busDestinations[fieldMenuState.busIndex].mapId : null,
       settingIndex: fieldMenuState.settingIndex,
       eventTextSpeed: uiSettings.eventTextSpeed,
       battleDialogueSpeed: uiSettings.battleDialogueSpeed

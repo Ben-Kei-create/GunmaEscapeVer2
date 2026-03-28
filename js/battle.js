@@ -205,7 +205,7 @@ Game.Battle = (function() {
   enemies.roadsideBandit = {
     name: '境界の追いはぎ',
     hp: 36, maxHp: 36,
-    attack: 11, defense: 4, goldReward: 32, expReward: 14, dropItem: 'healHerb', dropRate: 0.28,
+    attack: 11, defense: 4, goldReward: 32, expReward: 14, dropItem: 'tempoCharm', dropRate: 0.2,
     sprite: enemies.anguraGuard.sprite,
     palette: { 1:'#35363f', 3:'#ff6666', 4:'#2b2d36', 5:'#1f2028', 6:'#13141a' }
   };
@@ -213,7 +213,7 @@ Game.Battle = (function() {
   enemies.steamMonkey = {
     name: '湯煙ざる',
     hp: 34, maxHp: 34,
-    attack: 10, defense: 3, goldReward: 28, expReward: 16, dropItem: 'yakimanju', dropRate: 0.22,
+    attack: 10, defense: 3, goldReward: 28, expReward: 16, dropItem: 'emberIncense', dropRate: 0.18,
     sprite: enemies.onsenMonkey.sprite,
     palette: { 1:'#553322', 2:'#b17a49', 3:'#111111', 4:'#d8907a' }
   };
@@ -221,7 +221,7 @@ Game.Battle = (function() {
   enemies.konnyakuCrawler = {
     name: '蒟蒻うごめき',
     hp: 42, maxHp: 42,
-    attack: 10, defense: 5, goldReward: 30, expReward: 15, dropItem: 'healHerb', dropRate: 0.2,
+    attack: 10, defense: 5, goldReward: 30, expReward: 15, dropItem: 'guardChalk', dropRate: 0.18,
     sprite: enemies.konnyakuKing.sprite,
     palette: enemies.konnyakuKing.palette
   };
@@ -229,7 +229,7 @@ Game.Battle = (function() {
   enemies.silkShade = {
     name: '白糸の影',
     hp: 40, maxHp: 40,
-    attack: 12, defense: 4, goldReward: 34, expReward: 17, dropItem: 'healHerb', dropRate: 0.2,
+    attack: 12, defense: 4, goldReward: 34, expReward: 17, dropItem: 'silkWeight', dropRate: 0.17,
     sprite: enemies.threadMaiden.sprite,
     palette: { 1:'#312f3b', 2:'#d8d2c8', 3:'#1e1d24', 4:'#c48690', 5:'#e8e6e0', 6:'#857a6d' }
   };
@@ -237,7 +237,7 @@ Game.Battle = (function() {
   enemies.cabbageWisp = {
     name: '葉影のざわめき',
     hp: 38, maxHp: 38,
-    attack: 11, defense: 4, goldReward: 30, expReward: 16, dropItem: 'healHerb', dropRate: 0.18,
+    attack: 11, defense: 4, goldReward: 30, expReward: 16, dropItem: 'measureLens', dropRate: 0.16,
     sprite: enemies.cabbageGuardian.sprite,
     palette: enemies.cabbageGuardian.palette
   };
@@ -245,7 +245,7 @@ Game.Battle = (function() {
   enemies.echoShard = {
     name: '返り声の欠片',
     hp: 44, maxHp: 44,
-    attack: 13, defense: 5, goldReward: 38, expReward: 18,
+    attack: 13, defense: 5, goldReward: 38, expReward: 18, dropItem: 'loadedSand', dropRate: 0.16,
     sprite: enemies.echo_guardian.sprite,
     palette: enemies.echo_guardian.palette
   };
@@ -253,7 +253,7 @@ Game.Battle = (function() {
   enemies.mistBeastling = {
     name: '霧獣の幼影',
     hp: 48, maxHp: 48,
-    attack: 14, defense: 5, goldReward: 42, expReward: 20, dropItem: 'healHerb', dropRate: 0.15,
+    attack: 14, defense: 5, goldReward: 42, expReward: 20, dropItem: 'kaeshiOmamori', dropRate: 0.14,
     sprite: enemies.haruna_lake_beast.sprite,
     palette: enemies.haruna_lake_beast.palette
   };
@@ -304,19 +304,27 @@ Game.Battle = (function() {
 
   function openBattleItemMenu() {
     var inv = Game.Player.getData().inventory;
+    var battleEntries = [];
+    var healEntries = [];
     itemMenuItems = [];
     itemMenuIndex = 0;
     itemMenuMode = 'battle';
     ritualMenuActionId = null;
     for (var i = 0; i < inv.length; i++) {
       var item = Game.Items.get(inv[i]);
-      if (item && (item.type === 'heal' || item.type === 'battle')) {
-        itemMenuItems.push({
+      if (item && item.type === 'battle') {
+        battleEntries.push({
+          id: inv[i],
+          item: item
+        });
+      } else if (item && item.type === 'heal') {
+        healEntries.push({
           id: inv[i],
           item: item
         });
       }
     }
+    itemMenuItems = battleEntries.concat(healEntries);
     if (itemMenuItems.length > 0) {
       phase = 'itemMenu';
       message = '使うアイテムを選べ';
@@ -788,10 +796,21 @@ Game.Battle = (function() {
     syncCurrentEnemy();
   }
 
+  function addEffectToLivingEnemies(type, turnsLeft, value) {
+    for (var i = 0; i < enemyParty.length; i++) {
+      var foe = enemyParty[i];
+      if (!foe || foe.hp <= 0) continue;
+      if (!foe._effects) foe._effects = [];
+      addEffect(foe._effects, type, turnsLeft, value);
+    }
+    syncCurrentEnemy();
+  }
+
   function previewEnemyPartyAttack() {
     var defBonus = getEffectBonus(playerEffects, 'defense_up');
     var activeAttackers = [];
     var stunnedNames = [];
+    var slowedNames = [];
     var totalDamage = 0;
 
     for (var i = 0; i < enemyParty.length; i++) {
@@ -803,6 +822,11 @@ Game.Battle = (function() {
         continue;
       }
       var damage = Math.max(1, foe.attack - (Game.Player.getDefense() + defBonus) + Math.floor(Math.random() * 5));
+      var slowRoll = hasEffect(foeEffects, 'enemy_roll_slow');
+      if (slowRoll) {
+        damage = Math.max(0, damage - (slowRoll.value || 4));
+        slowedNames.push(foe.name);
+      }
       totalDamage += damage;
       activeAttackers.push(foe.name);
     }
@@ -810,21 +834,23 @@ Game.Battle = (function() {
     return {
       activeAttackers: activeAttackers,
       stunnedNames: stunnedNames,
+      slowedNames: slowedNames,
       totalDamage: totalDamage
     };
   }
 
-  function createEnemyRollDie(index, total) {
+  function createEnemyRollDie(index, total, slowFactor) {
+    var factor = typeof slowFactor === 'number' ? slowFactor : 1;
     var size = 8 + Math.floor(Math.random() * 6);
     var laneRatio = total > 1 ? index / (total - 1) : 0.5;
     return {
       x: 292 + Math.random() * 92,
       y: 88 + laneRatio * 56 + (Math.random() * 16 - 8),
-      vx: -(2.4 + Math.random() * 1.7),
-      vy: -(0.9 + Math.random() * 1.1),
-      gravity: 0.08 + Math.random() * 0.04,
+      vx: -(2.4 + Math.random() * 1.7) * factor,
+      vy: -(0.9 + Math.random() * 1.1) * factor,
+      gravity: (0.08 + Math.random() * 0.04) * (0.8 + factor * 0.2),
       rotation: Math.random() * Math.PI * 2,
-      rotSpeed: (Math.random() * 0.22 + 0.08) * (Math.random() > 0.5 ? 1 : -1),
+      rotSpeed: (Math.random() * 0.22 + 0.08) * factor * (Math.random() > 0.5 ? 1 : -1),
       floorY: 164 + Math.random() * 24,
       size: size,
       face: 1 + Math.floor(Math.random() * 6),
@@ -836,17 +862,21 @@ Game.Battle = (function() {
   function startEnemyRollAnimation(attackPreview) {
     var attackerCount = attackPreview && attackPreview.activeAttackers ? attackPreview.activeAttackers.length : 1;
     var diceCount = Math.max(2, Math.min(7, attackerCount * 2 + Math.floor(Math.random() * 2)));
+    var slowed = !!(attackPreview && attackPreview.slowedNames && attackPreview.slowedNames.length);
+    var speedFactor = slowed ? 0.58 : 1;
+    var timer = slowed ? 38 : 26;
     var dice = [];
     for (var i = 0; i < diceCount; i++) {
-      dice.push(createEnemyRollDie(i, diceCount));
+      dice.push(createEnemyRollDie(i, diceCount, speedFactor));
     }
     enemyRollAnimation = {
-      timer: 26,
-      maxTimer: 26,
+      timer: timer,
+      maxTimer: timer,
       attackers: attackPreview.activeAttackers.slice(),
+      slowed: slowed,
       dice: dice
     };
-    message = attackPreview.activeAttackers.join(' / ') + 'が白い賽を転がす…';
+    message = attackPreview.activeAttackers.join(' / ') + (slowed ? 'が重い白い賽を転がす…' : 'が白い賽を転がす…');
     messageTimer = 0;
   }
 
@@ -896,6 +926,7 @@ Game.Battle = (function() {
     var preview = attackPreview || previewEnemyPartyAttack();
     var activeAttackers = preview.activeAttackers;
     var stunnedNames = preview.stunnedNames;
+    var slowedNames = preview.slowedNames || [];
     var totalDamage = preview.totalDamage;
     var wardBonus = getEffectBonus(playerEffects, 'ward');
 
@@ -910,8 +941,24 @@ Game.Battle = (function() {
       removeEffect(playerEffects, 'ward');
     }
 
+    if (totalDamage <= 0) {
+      message = activeAttackers.join(' / ') + 'の攻撃！ だが勢いが出ない。';
+      if (slowedNames.length) {
+        message += ' ' + slowedNames.join(' / ') + 'の賽は重く鈍っている。';
+      }
+      if (stunnedNames.length) {
+        message += ' ' + stunnedNames.join(' / ') + 'は動けない。';
+      }
+      messageTimer = 45;
+      Game.Audio.playSfx('enemy_strike');
+      return false;
+    }
+
     playerData.hp -= totalDamage;
     message = activeAttackers.join(' / ') + 'の攻撃！ ' + totalDamage + 'ダメージ！';
+    if (slowedNames.length) {
+      message += ' ' + slowedNames.join(' / ') + 'の賽は重く鈍っている。';
+    }
     if (stunnedNames.length) {
       message += ' ' + stunnedNames.join(' / ') + 'は動けない。';
     }
@@ -1813,12 +1860,24 @@ Game.Battle = (function() {
       if (selected.item.effect === 'slow_roll') {
         addEffect(playerEffects, 'slow_roll', 1, 1);
         message = selected.item.name + 'を使った！ 手元の景色がゆっくり見える。';
+      } else if (selected.item.effect === 'steady_floor') {
+        addEffect(playerEffects, 'steady_floor', 1, selected.item.value || 3);
+        message = selected.item.name + 'を使った！ 低い目を見切る備えが整った。';
       } else if (selected.item.effect === 'dice_bonus') {
         addEffect(playerEffects, 'dice_bonus', 1, selected.item.value || 2);
         message = selected.item.name + 'を使った！ 次の出目に勘が乗る。';
+      } else if (selected.item.effect === 'enemy_roll_slow') {
+        addEffectToLivingEnemies('enemy_roll_slow', 1, selected.item.value || 6);
+        message = selected.item.name + 'を使った！ 敵の白い賽が重く鈍る。';
       } else if (selected.item.effect === 'defense_up') {
         addEffect(playerEffects, 'defense_up', selected.item.turns || 2, selected.item.value || 4);
         message = selected.item.name + 'を使った！ 守りの間合いが整った。';
+      } else if (selected.item.effect === 'attack_up') {
+        addEffect(playerEffects, 'attack_up', selected.item.turns || 2, selected.item.value || 5);
+        message = selected.item.name + 'を使った！ 攻めの気配が研ぎ澄まされた。';
+      } else if (selected.item.effect === 'ward') {
+        addEffect(playerEffects, 'ward', 1, selected.item.value || 8);
+        message = selected.item.name + 'を使った！ 返しの余白が足元に宿る。';
       } else if (selected.item.effect === 'ignite_next') {
         addEffect(playerEffects, 'ignite_next', 1, 5);
         message = selected.item.name + 'を使った！ 次の一投が熱を帯びる。';
@@ -2684,6 +2743,14 @@ Game.Battle = (function() {
         };
       }),
       menuEntries: getMenuEntries().map(function(entry) { return entry.label; }),
+      itemMenu: phase === 'itemMenu' ? itemMenuItems.map(function(entry, index) {
+        return {
+          id: entry.id,
+          name: entry.item.name,
+          type: entry.item.type,
+          selected: index === itemMenuIndex
+        };
+      }) : null,
       skillMenu: phase === 'skillMenu' ? skillMenuEntries.map(function(entry, index) {
         return {
           name: entry.skill.name,
@@ -2692,6 +2759,20 @@ Game.Battle = (function() {
           disabled: entry.disabled
         };
       }) : null,
+      playerEffects: playerEffects.map(function(effect) {
+        return {
+          type: effect.type,
+          turnsLeft: effect.turnsLeft,
+          value: effect.value
+        };
+      }),
+      enemyEffects: enemyEffects.map(function(effect) {
+        return {
+          type: effect.type,
+          turnsLeft: effect.turnsLeft,
+          value: effect.value
+        };
+      }),
       ritual: ritualRuntime ? {
         mode: ritualRuntime.ritualMode,
         gauge: ritualRuntime.ritualGauge,
@@ -2785,6 +2866,7 @@ Game.Battle = (function() {
         switch (enemyEffects[ei].type) {
           case 'burn': eLabel = '炎'; eCol = '#ff4422'; break;
           case 'stun': eLabel = '痺'; eCol = '#ffdd22'; break;
+          case 'enemy_roll_slow': eLabel = '鈍'; eCol = '#a6e7ff'; break;
         }
         if (eLabel) {
           R.drawRectAbsolute(esx, 148, 16, 14, 'rgba(0,0,0,0.6)');
@@ -2830,6 +2912,7 @@ Game.Battle = (function() {
         case 'slow': pLabel = '遅'; pCol = '#8888aa'; break;
         case 'dice_bonus': pLabel = '賽'; pCol = '#44aaff'; break;
         case 'slow_roll': pLabel = '緩'; pCol = '#8fe0ff'; break;
+        case 'steady_floor': pLabel = '底'; pCol = '#cdd7ff'; break;
         case 'ignite_next': pLabel = '火'; pCol = '#ff8855'; break;
         case 'ward': pLabel = '返'; pCol = '#d9b7ff'; break;
       }
@@ -3075,8 +3158,14 @@ Game.Battle = (function() {
             // All dice stopped — calculate results
             var damageTotal = 0;
             healTotal = 0;
+            var steadyFloor = getEffectBonus(playerEffects, 'steady_floor');
+            var steadyFloorBoosted = 0;
             for (var j = 0; j < diceResults.length; j++) {
               var parsed = parseFace(diceResults[j]);
+              if (parsed.type === 'damage' && parsed.value > 0 && steadyFloor > 0 && parsed.value < steadyFloor) {
+                parsed.value = steadyFloor;
+                steadyFloorBoosted++;
+              }
               if (parsed.type === 'damage') {
                 damageTotal += parsed.value;
               } else if (parsed.type === 'heal') {
@@ -3204,6 +3293,9 @@ Game.Battle = (function() {
             }
             if (healTotal > 0) {
               msgParts.push('HP' + healTotal + '回復');
+            }
+            if (steadyFloorBoosted > 0) {
+              msgParts.push('低い目を整えた');
             }
             if (comboText) {
               msgParts.push(comboText);

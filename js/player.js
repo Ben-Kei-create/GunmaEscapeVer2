@@ -8,7 +8,15 @@ Game.Player = (function() {
       role: '境界案内',
       attackBonus: 3,
       defenseBonus: 2,
-      color: '#5db8ff'
+      color: '#5db8ff',
+      supportCommand: {
+        id: 'boundary_call',
+        name: '境見の合図',
+        shortDesc: '敵の白い賽を鈍らせ、次の一投を見切りやすくする。',
+        overlayText: '境界の脈を合わせ、敵の白い賽を鈍らせる。',
+        slowTurns: 2,
+        slowValue: 5
+      }
     },
     yamakawa: {
       id: 'yamakawa',
@@ -16,7 +24,16 @@ Game.Player = (function() {
       role: '地形解析',
       attackBonus: 2,
       defenseBonus: 3,
-      color: '#8fe0a2'
+      color: '#8fe0a2',
+      supportCommand: {
+        id: 'terrain_guard',
+        name: '地脈の布陣',
+        shortDesc: '足場を読み、守りと返しの余白をまとめて作る。',
+        overlayText: '土地の癖を読み切り、守りの線を静かに引き直す。',
+        defenseTurns: 2,
+        defenseValue: 5,
+        wardValue: 8
+      }
     },
     furuya: {
       id: 'furuya',
@@ -24,7 +41,16 @@ Game.Player = (function() {
       role: '突破支援',
       attackBonus: 4,
       defenseBonus: 1,
-      color: '#ffb36b'
+      color: '#ffb36b',
+      supportCommand: {
+        id: 'breakthrough_sign',
+        name: '突破の号令',
+        shortDesc: '踏み込みの勢いを乗せ、次の一投を鋭く押し出す。',
+        overlayText: 'ためらいを断ち切り、突破の拍を前へ押し出す。',
+        attackTurns: 2,
+        attackValue: 6,
+        diceBonus: 2
+      }
     }
   };
   var MAX_LEVEL = 100;

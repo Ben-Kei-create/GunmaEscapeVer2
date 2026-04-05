@@ -504,6 +504,10 @@ Game.Main = (function() {
         if (menuResult && menuResult.close) {
           setState(Game.Config.STATE.EXPLORING);
           Game.Audio.playSfx('cancel');
+        } else if (menuResult && menuResult.openSave && Game.SaveMenu && Game.SaveMenu.open) {
+          Game.SaveMenu.open({ context: 'field' });
+          setState(Game.Config.STATE.SAVE);
+          Game.Audio.playSfx('confirm');
         } else if (menuResult && menuResult.warp) {
           Game.Audio.playSfx('confirm');
           startTransition(menuResult.warp.mapId, menuResult.warp.spawnX, menuResult.warp.spawnY);

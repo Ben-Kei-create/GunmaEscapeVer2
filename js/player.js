@@ -1,6 +1,9 @@
 // Player entity
 Game.Player = (function() {
   var MAX_PARTY_MEMBERS = 3;
+  var FOLLOWER_DELAY_FRAMES = 10;
+  var FOLLOWER_HISTORY_LIMIT = 96;
+  var FOLLOWER_BOB_PERIOD = 18;
   var companionDefs = {
     akagi: {
       id: 'akagi',
@@ -9,6 +12,11 @@ Game.Player = (function() {
       attackBonus: 3,
       defenseBonus: 2,
       color: '#5db8ff',
+      followPalette: {
+        4: '#3659ce',
+        5: '#32446d',
+        7: '#8de8ff'
+      },
       supportCommand: {
         id: 'boundary_call',
         name: '境見の合図',
@@ -25,6 +33,11 @@ Game.Player = (function() {
       attackBonus: 2,
       defenseBonus: 3,
       color: '#8fe0a2',
+      followPalette: {
+        4: '#43875a',
+        5: '#405045',
+        7: '#b8ffd0'
+      },
       supportCommand: {
         id: 'terrain_guard',
         name: '地脈の布陣',
@@ -42,6 +55,11 @@ Game.Player = (function() {
       attackBonus: 4,
       defenseBonus: 1,
       color: '#ffb36b',
+      followPalette: {
+        4: '#c97a48',
+        5: '#704532',
+        7: '#ffd39a'
+      },
       supportCommand: {
         id: 'breakthrough_sign',
         name: '突破の号令',
@@ -99,6 +117,8 @@ Game.Player = (function() {
   var lastBlockedMove = null;
   var blockedDirectionLatch = '';
   var pendingSkillChoices = [];
+  var followerTrail = [];
+  var frameClock = 0;
 
   var sprites = {
     down: [
@@ -177,6 +197,8 @@ Game.Player = (function() {
     lastCompletedStep = null;
     lastBlockedMove = null;
     blockedDirectionLatch = '';
+    frameClock = 0;
+    resetFollowerTrail();
   }
 
   function getAttemptDirection(dx, dy) {
@@ -304,6 +326,7 @@ Game.Player = (function() {
   }
 
   function update() {
+    frameClock++;
     if (data.moving) {
       data.moveFrame++;
       var ts = Game.Config.TILE_SIZE;
@@ -334,6 +357,7 @@ Game.Player = (function() {
         data.x = startX + (targetX - startX) * progress;
         data.y = startY + (targetY - startY) * progress;
       }
+      recordFollowerTrail();
       return;
     }
 
@@ -346,6 +370,7 @@ Game.Player = (function() {
 
     if (dx === 0 && dy === 0) {
       blockedDirectionLatch = '';
+      recordFollowerTrail();
       return;
     }
 
@@ -358,6 +383,7 @@ Game.Player = (function() {
       if (blockedMessage && blockedDirectionLatch !== attemptDirection) {
         lastBlockedMove = blockedMessage;
         blockedDirectionLatch = attemptDirection;
+        recordFollowerTrail();
         return;
       }
 
@@ -375,9 +401,109 @@ Game.Player = (function() {
         }
       }
     }
+    recordFollowerTrail();
+  }
+
+  function createTrailEntry() {
+    return {
+      x: data.x,
+      y: data.y,
+      direction: data.direction,
+      moving: !!data.moving
+    };
+  }
+
+  function resetFollowerTrail() {
+    followerTrail = [];
+    var entry = createTrailEntry();
+    for (var i = 0; i < FOLLOWER_HISTORY_LIMIT; i++) {
+      followerTrail.push({
+        x: entry.x,
+        y: entry.y,
+        direction: entry.direction,
+        moving: entry.moving
+      });
+    }
+  }
+
+  function recordFollowerTrail() {
+    var entry = createTrailEntry();
+    var latest = followerTrail[0];
+    if (latest &&
+        latest.x === entry.x &&
+        latest.y === entry.y &&
+        latest.direction === entry.direction &&
+        latest.moving === entry.moving) {
+      followerTrail[0] = entry;
+      return;
+    }
+    followerTrail.unshift(entry);
+    if (followerTrail.length > FOLLOWER_HISTORY_LIMIT) {
+      followerTrail.length = FOLLOWER_HISTORY_LIMIT;
+    }
+  }
+
+  function getFollowerPalette(member) {
+    var custom = member && member.followPalette ? member.followPalette : {};
+    return {
+      1: '#1d2436',
+      2: '#f4cfab',
+      3: '#2e201c',
+      4: custom[4] || '#5e72b5',
+      5: custom[5] || '#4d5363',
+      6: '#5f4630',
+      7: custom[7] || member.color || '#c6d6ff'
+    };
+  }
+
+  function getFollowerRenderStates() {
+    var members = getPartyMembers();
+    var result = [];
+    if (!members.length) return result;
+    if (!followerTrail.length) resetFollowerTrail();
+    for (var i = 0; i < members.length; i++) {
+      var historyIndex = Math.min(followerTrail.length - 1, (i + 1) * FOLLOWER_DELAY_FRAMES);
+      var trailState = followerTrail[historyIndex] || createTrailEntry();
+      result.push({
+        id: members[i].id,
+        name: members[i].name,
+        role: members[i].role,
+        color: members[i].color,
+        x: trailState.x,
+        y: trailState.y,
+        direction: trailState.direction,
+        moving: trailState.moving,
+        slot: i
+      });
+    }
+    return result;
+  }
+
+  function drawFollowerMarker(renderState, bob) {
+    var pulse = Math.sin((frameClock + renderState.slot * 6) / 10) * 0.5 + 0.5;
+    var markerY = renderState.y - 3 + bob;
+    Game.Renderer.drawRect(renderState.x + 6, markerY, 4, 1, 'rgba(255,255,255,' + (0.2 + pulse * 0.18) + ')');
+    Game.Renderer.drawRect(renderState.x + 7, markerY - 1, 2, 2, renderState.color);
+  }
+
+  function drawPartyFollowers() {
+    var states = getFollowerRenderStates().sort(function(a, b) {
+      return a.y - b.y;
+    });
+    for (var i = 0; i < states.length; i++) {
+      var renderState = states[i];
+      var bob = renderState.moving ? 0 : Math.round(Math.sin((frameClock + renderState.slot * 4) / FOLLOWER_BOB_PERIOD) * 1);
+      var sprite = sprites[renderState.direction] || sprites.down;
+      var flipped = (renderState.direction === 'right');
+      Game.Renderer.drawRect(renderState.x + 3, renderState.y + 14, 10, 2, 'rgba(8,12,20,0.35)');
+      Game.Renderer.drawRect(renderState.x + 5, renderState.y + 13, 6, 1, 'rgba(255,255,255,0.08)');
+      Game.Renderer.drawSprite(sprite, renderState.x, renderState.y + bob, getFollowerPalette(companionDefs[renderState.id]), flipped);
+      drawFollowerMarker(renderState, bob);
+    }
   }
 
   function draw() {
+    drawPartyFollowers();
     var sprite = sprites[data.direction] || sprites.down;
     var flipped = (data.direction === 'right');
     Game.Renderer.drawSprite(sprite, data.x, data.y, palette, flipped);
@@ -816,6 +942,7 @@ Game.Player = (function() {
     hasPartyMember: hasPartyMember,
     getCompanionCatalog: getCompanionCatalog,
     getMaxPartyMembers: getMaxPartyMembers,
+    getFollowerRenderStates: getFollowerRenderStates,
     consumeCompletedStep: consumeCompletedStep,
     consumeBlockedMove: consumeBlockedMove,
     syncCatalystsFromInventory: syncCatalystsFromInventory,

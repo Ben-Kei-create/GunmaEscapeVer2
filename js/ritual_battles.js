@@ -31,7 +31,13 @@ Game.RitualBattles = (function() {
       overCoolPenalty: false,
       resonanceCreated: false,
       reviewPhaseIndex: 0,
-      targetZoneRevealed: false
+      targetZoneRevealed: false,
+      offeringOrder: [],
+      lightDieReady: false,
+      lightReleased: false,
+      lightReleaseFrames: 0,
+      thankYouIndex: 0,
+      lastAction: null
     };
   }
 
@@ -53,13 +59,18 @@ Game.RitualBattles = (function() {
     }
 
     if (mode === 'offering') {
-      var offeringSlotCount = params.slotCount || params.offeringSlotCount || 5;
+      var offeringDefs = Array.isArray(params.offerings) ? params.offerings : [];
+      var offeringSlotCount = params.slotCount || offeringDefs.length || params.offeringSlotCount || 5;
       for (i = 0; i < offeringSlotCount; i++) {
+        var offering = offeringDefs[i] || {};
         slots.push({
           id: 'offering_slot_' + (i + 1),
-          kind: 'dice',
+          kind: 'item',
           filled: false,
-          value: null,
+          itemId: null,
+          requiredId: normalizeItemId(offering.itemId || offering.requiredId || null),
+          label: offering.label || ('奉納 ' + (i + 1)),
+          glyph: offering.glyph || null,
           visible: true
         });
       }
@@ -277,6 +288,135 @@ Game.RitualBattles = (function() {
         var params = enemy.ritualParams || {};
         if (player && player.hp <= 0) return true;
         return runtime.ritualGauge <= (params.freezeFailThreshold || 10);
+      }
+    },
+
+    offering: {
+      id: 'offering',
+
+      setup: function(runtime) {
+        runtime.ritualHintState = 1;
+        runtime.ritualInputUnlocks.dragItem = true;
+        runtime.ritualInputUnlocks.dropToSlot = true;
+        runtime.ritualState.offeringOrder = [];
+        runtime.ritualState.lightDieReady = false;
+        runtime.ritualState.lightReleased = false;
+        runtime.ritualState.lightReleaseFrames = 0;
+        runtime.ritualState.thankYouIndex = 0;
+        runtime.ritualState.lastAction = null;
+        runtime.uiFlags.silentMoment = false;
+      },
+
+      onActionResolved: function(runtime, enemy, player, action, result) {
+        if (!runtime || !runtime.ritualState) return;
+
+        if (action && action.id === 'attack' && result) {
+          result.damage = 0;
+          return;
+        }
+
+        if (action && action.id === 'drop_item_to_offering_slot') {
+          var itemId = normalizeItemId(action.itemId);
+          var nextSlot = null;
+          for (var i = 0; i < runtime.ritualSlots.length; i++) {
+            if (!runtime.ritualSlots[i].filled) {
+              nextSlot = runtime.ritualSlots[i];
+              break;
+            }
+          }
+
+          if (!nextSlot) {
+            runtime.ritualState.lastAction = { kind: 'complete' };
+            return;
+          }
+
+          if (!itemId || itemId !== nextSlot.requiredId) {
+            runtime.ritualState.lastAction = {
+              kind: 'rejected',
+              itemId: itemId,
+              slotLabel: nextSlot.label
+            };
+            addRespect(-1);
+            return;
+          }
+
+          nextSlot.filled = true;
+          nextSlot.itemId = itemId;
+          runtime.ritualState.offeringOrder.push(itemId);
+          runtime.ritualState.lastAction = {
+            kind: 'accepted',
+            itemId: itemId,
+            slotLabel: nextSlot.label
+          };
+          addRespect(6);
+
+          var allFilled = true;
+          for (i = 0; i < runtime.ritualSlots.length; i++) {
+            if (!runtime.ritualSlots[i].filled) {
+              allFilled = false;
+              break;
+            }
+          }
+          if (allFilled) {
+            runtime.ritualState.lightDieReady = true;
+            runtime.ritualHintState = 2;
+            runtime.ritualState.lastAction = {
+              kind: 'light_ready',
+              itemId: itemId,
+              slotLabel: nextSlot.label
+            };
+            setJourneyFlag('offering_slots_complete', true);
+          }
+          return;
+        }
+
+        if (action && action.id === 'release_light_die') {
+          if (!runtime.ritualState.lightDieReady || runtime.ritualState.lightReleased) return;
+          runtime.ritualState.lightReleased = true;
+          runtime.ritualState.lightReleaseFrames = runtime.ritualParams.silentFrames || 84;
+          runtime.ritualState.thankYouIndex = 0;
+          runtime.ritualState.lastAction = { kind: 'light_release' };
+          runtime.uiFlags.silentMoment = true;
+          addRespect(10);
+          setJourneyFlag('final_offering_released', true);
+        }
+      },
+
+      onFrame: function(runtime) {
+        if (!runtime || !runtime.ritualState || !runtime.ritualState.lightReleased) return;
+        if (runtime.ritualState.lightReleaseFrames <= 0) {
+          runtime.uiFlags.silentMoment = false;
+          runtime.ritualState.thankYouIndex = 5;
+          return;
+        }
+
+        runtime.ritualState.lightReleaseFrames--;
+        var totalFrames = runtime.ritualParams.silentFrames || 84;
+        var elapsed = totalFrames - runtime.ritualState.lightReleaseFrames;
+        var segment = Math.max(10, Math.floor(totalFrames / 6));
+        runtime.ritualState.thankYouIndex = Math.min(5, Math.floor(elapsed / segment));
+        if (runtime.ritualState.lightReleaseFrames <= 0) {
+          runtime.uiFlags.silentMoment = false;
+          runtime.ritualState.thankYouIndex = 5;
+        }
+      },
+
+      getExtraActions: function(runtime) {
+        var actions = [
+          { id: 'drop_item_to_offering_slot', name: runtime.ritualState.lightDieReady ? '奉納を見直す' : '奉納する' }
+        ];
+        if (runtime.ritualState.lightDieReady && !runtime.ritualState.lightReleased) {
+          actions.push({ id: 'release_light_die', name: '光を手放す' });
+        }
+        return actions;
+      },
+
+      checkVictory: function(runtime) {
+        return !!(runtime && runtime.ritualState.lightReleased && runtime.ritualState.lightReleaseFrames <= 0);
+      },
+
+      checkFailure: function(runtime, enemy, player) {
+        return !!(player && player.hp <= 0);
       }
     }
   };

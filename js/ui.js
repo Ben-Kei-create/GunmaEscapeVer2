@@ -1167,6 +1167,7 @@ Game.UI = (function() {
     var settingsOptions = getSettingsOptions();
     var mapInfo = getMapInfo();
     var map = Game.Map.getCurrentMap();
+    var continueInfo = Game.Save && Game.Save.getSlotInfo ? Game.Save.getSlotInfo(1) : null;
     var currentMapLabel = (mapInfo && mapInfo.label) || (map && map.name) || '現在地';
     var activeNpcCount = 0;
     var exitCount = map && map.exits ? map.exits.length : 0;
@@ -1183,7 +1184,7 @@ Game.UI = (function() {
     for (var i = 0; i < settingsOptions.length; i++) {
       var option = settingsOptions[i];
       var selected = (i === fieldMenuState.settingIndex);
-      var lineY = panelY + 18 + i * 12;
+      var lineY = panelY + 18 + i * 10;
       if (selected) {
         R.drawRectAbsolute(listX + 6, lineY - 1, listW - 12, 11, 'rgba(255,204,0,0.12)');
       }
@@ -1197,7 +1198,14 @@ Game.UI = (function() {
     R.drawTextJP(current.valueLabel, detailX + 102, panelY + 18, current.valueColor, 9, 'right');
     drawWrappedTextBlock(current.description, detailX + 10, panelY + 30, 10, 2, 10, '#b7c3e3', 9);
     R.drawTextJP(clampText(currentMapLabel, 8), detailX + 10, panelY + 52, '#8fe0ff', 8);
-    R.drawTextJP('怪異' + activeNpcCount + ' 出口' + exitCount, detailX + 108, panelY + 52, '#9fb6dc', 8, 'right');
+    if (current.id === 'saveBook' && continueInfo) {
+      var continueLabel = clampText(continueInfo.mapLabel || continueInfo.mapName || '未記録', 8);
+      R.drawTextJP('続き先 ' + continueLabel, detailX + 108, panelY + 52, '#9fb6dc', 8, 'right');
+    } else if (current.id === 'saveBook') {
+      R.drawTextJP('移動ごとにslot1自動記録', detailX + 108, panelY + 52, '#9fb6dc', 8, 'right');
+    } else {
+      R.drawTextJP('怪異' + activeNpcCount + ' 出口' + exitCount, detailX + 108, panelY + 52, '#9fb6dc', 8, 'right');
+    }
     drawMinimap({
       forceVisible: true,
       x: detailX + 118,
@@ -1427,6 +1435,14 @@ Game.UI = (function() {
     var eventTextSpeed = getEventTextSpeedChoice();
     var battleDialogueSpeed = getBattleDialogueSpeedChoice();
     return [
+      {
+        id: 'saveBook',
+        label: '記録帳',
+        value: 'open',
+        valueLabel: 'ひらく',
+        valueColor: '#ffd66b',
+        description: '探索中の今いる場所で記録帳を開き、手動保存やあいことばを扱う。'
+      },
       {
         id: 'questLog',
         label: '依頼帳',
@@ -1762,6 +1778,12 @@ Game.UI = (function() {
 
     var current = settingsOptions[fieldMenuState.settingIndex];
     if (!current) return null;
+    if (current.id === 'saveBook') {
+      if (Game.Input.isPressed('confirm')) {
+        return { openSave: true };
+      }
+      return null;
+    }
     if (current.id === 'questLog') {
       if (Game.Input.isPressed('cancel')) {
         return { close: true };

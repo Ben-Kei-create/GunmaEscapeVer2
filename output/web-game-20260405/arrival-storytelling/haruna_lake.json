@@ -1,0 +1,116 @@
+{
+  "mode": "event",
+  "titleSelection": 0,
+  "map": "haruna_lake",
+  "mapLabel": "榛名湖",
+  "audio": {
+    "requestedBgm": null,
+    "currentBgm": null
+  },
+  "player": {
+    "tileX": 14,
+    "tileY": 18,
+    "direction": "down",
+    "hp": 96,
+    "maxHp": 96,
+    "attack": 12,
+    "defense": 6,
+    "experience": 0,
+    "journeyRank": 1,
+    "nextRankExperience": 80,
+    "gold": 100,
+    "chapter": 1,
+    "skillsKnown": [],
+    "skillCharges": {},
+    "inventory": []
+  },
+  "journeyLabel": "第五章",
+  "journeyIndex": 5,
+  "chapterTitle": "湯と水の境界",
+  "objective": "湯と水の境界を越え、終盤へ向かう静かな呼吸を整える。",
+  "respectGauge": 0,
+  "catalystCount": 0,
+  "party": [],
+  "storyFlags": {
+    "checkpointFailedOnce": false,
+    "checkpointCleared": false,
+    "akagiJoinedSlice": false,
+    "darumaCleared": false,
+    "threadCleared": false
+  },
+  "continueSlot": null,
+  "hasAnySave": false,
+  "saveMenuContext": "field",
+  "quests": {
+    "open": false,
+    "active": [
+      {
+        "id": "onsen_tour",
+        "name": "温泉巡り",
+        "progress": 0,
+        "target": 3
+      },
+      {
+        "id": "joumo_karuta_collection",
+        "name": "上毛かるた収集",
+        "progress": 0,
+        "target": 5
+      },
+      {
+        "id": "daruma_perseverance",
+        "name": "だるま七転び八起き",
+        "progress": 0,
+        "target": 3
+      },
+      {
+        "id": "gunma_dialect_master",
+        "name": "群馬弁マスター",
+        "progress": 0,
+        "target": 5
+      }
+    ]
+  },
+  "services": [],
+  "ui": {
+    "showJourneyBadge": true,
+    "eventTextSpeed": "ふつう",
+    "battleDialogueSpeed": "ふつう"
+  },
+  "title": {
+    "mode": "intro_movie",
+    "sceneId": "highway",
+    "sceneTitle": "深夜の関越道",
+    "sceneIndex": 0,
+    "sceneTimer": 15,
+    "totalTimer": 15,
+    "revealTimer": 0
+  },
+  "encounters": {
+    "mapId": "haruna_lake",
+    "eligibleSteps": 0,
+    "cooldown": 3,
+    "cycleIndex": 0
+  },
+  "achievements": {
+    "unlockedCount": 0,
+    "totalCount": 22,
+    "trackedMapCount": 21,
+    "visitedTrackedMapCount": 1
+  },
+  "event": {
+    "active": true,
+    "sceneIndex": 0,
+    "sceneCount": 2,
+    "lineIndex": 0,
+    "charIndex": 0,
+    "charSpeed": 2,
+    "textComplete": false,
+    "autoAdvanceTimer": 0,
+    "speaker": null,
+    "lines": [
+      "榛名湖へ出ると、水面と空の境目が霧の中でひとつに溶けていた。",
+      "岸に立っているはずなのに、足元までゆっくり沈みはじめたような錯覚が離れない。"
+    ],
+    "autoAdvance": 0
+  }
+}

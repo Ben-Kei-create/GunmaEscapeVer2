@@ -1,0 +1,218 @@
+{
+  "mode": "battle",
+  "titleSelection": 0,
+  "map": "",
+  "mapLabel": "",
+  "audio": {
+    "requestedBgm": "battle",
+    "currentBgm": "battle"
+  },
+  "player": {
+    "tileX": 14,
+    "tileY": 10,
+    "direction": "down",
+    "hp": 96,
+    "maxHp": 96,
+    "attack": 12,
+    "defense": 6,
+    "experience": 0,
+    "journeyRank": 1,
+    "nextRankExperience": 80,
+    "gold": 100,
+    "chapter": 1,
+    "skillsKnown": [],
+    "skillCharges": {},
+    "inventory": []
+  },
+  "followers": [
+    {
+      "id": "akagi",
+      "x": 0,
+      "y": 0,
+      "direction": "down",
+      "moving": false
+    },
+    {
+      "id": "yamakawa",
+      "x": 0,
+      "y": 0,
+      "direction": "down",
+      "moving": false
+    },
+    {
+      "id": "furuya",
+      "x": 0,
+      "y": 0,
+      "direction": "down",
+      "moving": false
+    }
+  ],
+  "journeyLabel": "第一章",
+  "journeyIndex": 1,
+  "chapterTitle": "前橋関所",
+  "objective": "前橋で旅の作法を学び、最初の関所を越える準備を整えろ。",
+  "respectGauge": 0,
+  "catalystCount": 0,
+  "party": [
+    "akagi",
+    "yamakawa",
+    "furuya"
+  ],
+  "storyFlags": {
+    "checkpointFailedOnce": false,
+    "checkpointCleared": false,
+    "akagiJoinedSlice": false,
+    "darumaCleared": false,
+    "threadCleared": false
+  },
+  "continueSlot": null,
+  "hasAnySave": false,
+  "saveMenuContext": "field",
+  "quests": {
+    "open": false,
+    "active": [
+      {
+        "id": "onsen_tour",
+        "name": "温泉巡り",
+        "progress": 0,
+        "target": 3
+      },
+      {
+        "id": "joumo_karuta_collection",
+        "name": "上毛かるた収集",
+        "progress": 0,
+        "target": 5
+      },
+      {
+        "id": "daruma_perseverance",
+        "name": "だるま七転び八起き",
+        "progress": 0,
+        "target": 3
+      },
+      {
+        "id": "gunma_dialect_master",
+        "name": "群馬弁マスター",
+        "progress": 0,
+        "target": 5
+      }
+    ]
+  },
+  "ui": {
+    "showJourneyBadge": true,
+    "eventTextSpeed": "ふつう",
+    "battleDialogueSpeed": "ふつう"
+  },
+  "title": {
+    "mode": "intro_movie",
+    "sceneId": "highway",
+    "sceneTitle": "深夜の関越道",
+    "sceneIndex": 0,
+    "sceneTimer": 0,
+    "totalTimer": 0,
+    "revealTimer": 0
+  },
+  "encounters": {
+    "mapId": "",
+    "eligibleSteps": 0,
+    "cooldown": 0,
+    "cycleIndex": 0
+  },
+  "achievements": {
+    "unlockedCount": 0,
+    "totalCount": 22,
+    "trackedMapCount": 21,
+    "visitedTrackedMapCount": 0
+  },
+  "battle": {
+    "phase": "playerAttack",
+    "backdropId": "field_roadside",
+    "message": "アカギが境見の合図。敵の白い賽が鈍り、こちらの拍が整う。",
+    "supportAction": {
+      "memberId": "akagi",
+      "memberName": "アカギ",
+      "commandName": "境見の合図",
+      "motif": "boundary",
+      "effectLabel": "敵賽緩",
+      "timer": 9,
+      "detailLines": [
+        "境界の脈を合わせ、敵の白い賽を鈍らせ",
+        "る。"
+      ]
+    },
+    "bossAction": null,
+    "enemyRoll": null,
+    "targetIndex": 0,
+    "enemy": {
+      "name": "境界の追いはぎ",
+      "hp": 66,
+      "maxHp": 66
+    },
+    "enemies": [
+      {
+        "index": 0,
+        "name": "境界の追いはぎ",
+        "hp": 66,
+        "maxHp": 66,
+        "active": true,
+        "tag": "境界狩り",
+        "role": ""
+      }
+    ],
+    "formation": null,
+    "menuEntries": [
+      "たたかう",
+      "アイテム",
+      "とくぎ",
+      "支援",
+      "にげる"
+    ],
+    "itemMenu": null,
+    "skillMenu": null,
+    "supportMenu": null,
+    "companionSupport": [
+      {
+        "id": "akagi",
+        "usedTurn": 0,
+        "commandId": "boundary_call"
+      }
+    ],
+    "playerEffects": [
+      {
+        "type": "slow_roll",
+        "turnsLeft": 1,
+        "value": 1
+      }
+    ],
+    "enemyEffects": [
+      {
+        "type": "enemy_roll_slow",
+        "turnsLeft": 2,
+        "value": 5
+      }
+    ],
+    "ritual": {
+      "mode": "hp",
+      "gauge": 0,
+      "targetZone": null,
+      "hintState": 0,
+      "slots": [],
+      "state": {
+        "eyeRepaired": false,
+        "hpZeroReached": false,
+        "lastLowDiceHit": false,
+        "overCoolPenalty": false,
+        "resonanceCreated": false,
+        "reviewPhaseIndex": 0,
+        "targetZoneRevealed": false,
+        "offeringOrder": [],
+        "lightDieReady": false,
+        "lightReleased": false,
+        "lightReleaseFrames": 0,
+        "thankYouIndex": 0,
+        "lastAction": null
+      }
+    },
+    "dialogue": null,
+    "rewardSummary": null
+  }
+}

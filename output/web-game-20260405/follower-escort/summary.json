@@ -1,0 +1,83 @@
+{
+  "idleFollowers": [
+    {
+      "id": "akagi",
+      "x": 288,
+      "y": 174,
+      "direction": "down",
+      "moving": true
+    },
+    {
+      "id": "yamakawa",
+      "x": 284,
+      "y": 160,
+      "direction": "right",
+      "moving": true
+    },
+    {
+      "id": "furuya",
+      "x": 266,
+      "y": 160,
+      "direction": "right",
+      "moving": true
+    }
+  ],
+  "walkFollowers": [
+    {
+      "id": "akagi",
+      "x": 274,
+      "y": 192,
+      "direction": "left",
+      "moving": true
+    },
+    {
+      "id": "yamakawa",
+      "x": 288,
+      "y": 188,
+      "direction": "down",
+      "moving": true
+    },
+    {
+      "id": "furuya",
+      "x": 288,
+      "y": 170,
+      "direction": "down",
+      "moving": true
+    }
+  ],
+  "idlePlayer": {
+    "tileX": 18,
+    "tileY": 12,
+    "direction": "down",
+    "hp": 96,
+    "maxHp": 96,
+    "attack": 12,
+    "defense": 6,
+    "experience": 0,
+    "journeyRank": 1,
+    "nextRankExperience": 80,
+    "gold": 100,
+    "chapter": 1,
+    "skillsKnown": [],
+    "skillCharges": {},
+    "inventory": []
+  },
+  "walkPlayer": {
+    "tileX": 16,
+    "tileY": 12,
+    "direction": "left",
+    "hp": 96,
+    "maxHp": 96,
+    "attack": 12,
+    "defense": 6,
+    "experience": 0,
+    "journeyRank": 1,
+    "nextRankExperience": 80,
+    "gold": 100,
+    "chapter": 1,
+    "skillsKnown": [],
+    "skillCharges": {},
+    "inventory": []
+  },
+  "errors": []
+}

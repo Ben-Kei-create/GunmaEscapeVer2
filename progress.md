@@ -869,3 +869,27 @@ Original prompt: そうだね。セーブできる村役場みたいなところ
   - `develop-web-game` の Playwright client を `output/web-game-20260405/follower-smoke` と `output/web-game-20260405/follower-smoke-rerun` で実行し、開幕側のスモークに新規エラーが増えていないことを確認した。
   - 追加で Playwright により `maebashi` 上へ3人同行状態を直接作り、`output/web-game-20260405/follower-escort/summary.json` で追従座標を確認した。停止時は `akagi / yamakawa / furuya` が別々の座標に残り、歩行時も `followers-walk.png` で隊列が左へ流れることを確認した。
   - `followers-idle.png` と `followers-walk.png` を目視し、前橋中央通りで 3 人の同行表示が重なり切らず、HUD や地面の読みに大きく干渉しないことを確認した。console error / pageerror は 0 件。
+- 2026-04-07: 通常戦の群れプロフィールと差別化演出を強化。
+  - `js/encounters.js` に `formation()` を追加し、複数敵編成へ `packName / omen / directive / entryText / layout / accent / roles` を持てるようにした。
+  - 高崎、草津、下仁田、富岡、嬬恋、森、小沼、大沼、赤城牧場、白根山道、草津深部、谷川、榛名、尾瀬、水上の複数敵編成をプロフィール付きへ置き換え、群れごとに役割と演出名が立つようにした。
+  - `js/battle.js` はこのプロフィールを受け取れるようにし、群れ戦で `packName` ベースの導入オーバーレイ、`directive` を出す群れカード、`layout` に応じた隊列配置、個体ごとの `role` 表示を追加した。
+  - あわせて `wishShelfShade / bathhouseRemnant / ferryBellEcho / marshPathShade / mudWisp` の個体タグと意図を `enemyReadStyles` に追加し、群れの中でも「何をする相手か」が読み取れるようにした。
+  - 群れ導入中は HP バーや群れカードを抑え、導入オーバーレイの読みやすさを優先するよう整理した。
+- 2026-04-07: 群れ演出強化の検証結果
+  - `node --check js/encounters.js js/battle.js` と `git diff --check` 通過。
+  - `output/web-game-20260407/group-identity` で Playwright による実戦確認を行い、`takasaki` の 2 体編成と `onuma` の 3 体編成を `Game.Encounters.consumeStep()` から実際に取得して戦闘開始した。
+  - `summary.json` では 2 体編成に `棚荒らしの連れ影 / 掠め役 / 拾い手`、3 体編成に `湖畔の寄せ集め / 掠め役 / 誘い灯 / 当て役` が入り、`battle.formation` と各敵の `tag / role` が `render_game_to_text` に反映されることを確認した。
+  - `takasaki-duo-intro.png` では群れ導入時に中央オーバーレイだけが立ち、`takasaki-duo-menu.png` と `onuma-trio-menu.png` では隊列の並び、群れカード、個体役割チップが読み取れることを目視した。console error / pageerror は 0 件。
+  - 追加で `develop-web-game` の Playwright client を `output/web-game-20260407/group-smoke` で実行し、`?debugBattle=wishShelfShade` の単体通常戦でも新しい個体タグ `棚願い火` が出ることを確認した。
+- 2026-04-07: 仲間支援の発動演出を強化。
+  - `js/battle.js`
+    - 支援オーバーレイへ `motif / sigil / effectLabel / noteText / focus座標` を持たせ、仲間ごとに演出の意味が見た目へ直結するようにした。
+    - `アカギ=boundary`, `山川=bulwark`, `古谷=breakthrough` の3系統を追加し、境界フレーム、守りの輪、突破斬線が戦闘画面へ出るようにした。
+    - 発動ライン上を流れる支援チップ、仲間別バッジ、効果ラベルを追加し、誰がどこへ効かせた支援かを一目で読めるようにした。
+    - パネル内部は暗いインナーと本文帯を敷き直し、背景や敵情報が透けすぎて読みづらくなる問題を抑えた。
+    - `getStateSnapshot()` の `supportAction` に `motif / effectLabel` を追加し、自動確認で演出種類まで追えるようにした。
+- 2026-04-07: 仲間支援演出強化の検証結果
+  - `node --check js/battle.js` 通過。
+  - `develop-web-game` の Playwright client を `?debugBattle=roadsideBandit` で再実行し、支援演出追加後も通常戦スモークで新規 console error / pageerror が出ていないことを確認した。
+  - `output/web-game-20260407/support-visuals` で Playwright により `アカギ / 山川 / 古谷` を順に発動させ、`summary.json` で `supportAction.memberId / motif / effectLabel` と、各自の効果 (`enemy_roll_slow`, `slow_roll`, `defense_up`, `ward`, `attack_up`, `dice_bonus`) が正しく付与されることを確認した。
+  - `akagi-support.png`, `yamakawa-support.png`, `furuya-support.png` を目視し、境界線、守りの輪、突破斬線の3演出がそれぞれ別の印象で立ち、支援パネル内の文字も読み崩れないことを確認した。console error / pageerror は 0 件。

@@ -1,0 +1,217 @@
+{
+  "mode": "battle",
+  "titleSelection": 0,
+  "map": "",
+  "mapLabel": "",
+  "audio": {
+    "requestedBgm": "ch10_border",
+    "currentBgm": "ch10_border"
+  },
+  "player": {
+    "tileX": 14,
+    "tileY": 10,
+    "direction": "down",
+    "hp": 96,
+    "maxHp": 96,
+    "attack": 12,
+    "defense": 6,
+    "experience": 0,
+    "journeyRank": 1,
+    "nextRankExperience": 80,
+    "gold": 100,
+    "chapter": 1,
+    "skillsKnown": [],
+    "skillCharges": {},
+    "inventory": []
+  },
+  "journeyLabel": "第一章",
+  "journeyIndex": 1,
+  "chapterTitle": "前橋関所",
+  "objective": "前橋で旅の作法を学び、最初の関所を越える準備を整えろ。",
+  "respectGauge": 30,
+  "catalystCount": 5,
+  "party": [],
+  "storyFlags": {
+    "checkpointFailedOnce": false,
+    "checkpointCleared": false,
+    "akagiJoinedSlice": false,
+    "darumaCleared": false,
+    "threadCleared": false
+  },
+  "continueSlot": null,
+  "hasAnySave": false,
+  "saveMenuContext": "field",
+  "quests": {
+    "open": false,
+    "active": [
+      {
+        "id": "onsen_tour",
+        "name": "温泉巡り",
+        "progress": 0,
+        "target": 3
+      },
+      {
+        "id": "joumo_karuta_collection",
+        "name": "上毛かるた収集",
+        "progress": 0,
+        "target": 5
+      },
+      {
+        "id": "daruma_perseverance",
+        "name": "だるま七転び八起き",
+        "progress": 0,
+        "target": 3
+      },
+      {
+        "id": "gunma_dialect_master",
+        "name": "群馬弁マスター",
+        "progress": 0,
+        "target": 5
+      }
+    ]
+  },
+  "ui": {
+    "showJourneyBadge": true,
+    "eventTextSpeed": "ふつう",
+    "battleDialogueSpeed": "ふつう"
+  },
+  "title": {
+    "mode": "intro_movie",
+    "sceneId": "highway",
+    "sceneTitle": "深夜の関越道",
+    "sceneIndex": 0,
+    "sceneTimer": 2,
+    "totalTimer": 2,
+    "revealTimer": 0
+  },
+  "encounters": {
+    "mapId": "",
+    "eligibleSteps": 0,
+    "cooldown": 0,
+    "cycleIndex": 0
+  },
+  "achievements": {
+    "unlockedCount": 0,
+    "totalCount": 22,
+    "trackedMapCount": 21,
+    "visitedTrackedMapCount": 0
+  },
+  "battle": {
+    "phase": "menu",
+    "backdropId": "boss_ritual",
+    "message": "五つの空位が満ちた。あとは光を手放すだけだ。",
+    "supportAction": null,
+    "bossAction": null,
+    "enemyRoll": null,
+    "targetIndex": 0,
+    "enemy": {
+      "name": "終章の奉納",
+      "hp": 1,
+      "maxHp": 1
+    },
+    "enemies": [
+      {
+        "index": 0,
+        "name": "終章の奉納",
+        "hp": 1,
+        "maxHp": 1,
+        "active": true
+      }
+    ],
+    "menuEntries": [
+      "奉納を見直す",
+      "光を手放す"
+    ],
+    "itemMenu": null,
+    "skillMenu": null,
+    "supportMenu": null,
+    "companionSupport": [],
+    "playerEffects": [],
+    "enemyEffects": [],
+    "ritual": {
+      "mode": "offering",
+      "gauge": 0,
+      "targetZone": null,
+      "hintState": 2,
+      "slots": [
+        {
+          "id": "offering_slot_1",
+          "kind": "item",
+          "filled": true,
+          "itemId": "darumaEye",
+          "requiredId": "darumaEye",
+          "label": "願いの目",
+          "glyph": "願",
+          "visible": true
+        },
+        {
+          "id": "offering_slot_2",
+          "kind": "item",
+          "filled": true,
+          "itemId": "konnyakuPass",
+          "requiredId": "konnyakuPass",
+          "label": "山路の証",
+          "glyph": "峠",
+          "visible": true
+        },
+        {
+          "id": "offering_slot_3",
+          "kind": "item",
+          "filled": true,
+          "itemId": "silkBundle",
+          "requiredId": "silkBundle",
+          "label": "白糸の記憶",
+          "glyph": "糸",
+          "visible": true
+        },
+        {
+          "id": "offering_slot_4",
+          "kind": "item",
+          "filled": true,
+          "itemId": "onsenKey",
+          "requiredId": "onsenKey",
+          "label": "湯の灯",
+          "glyph": "湯",
+          "visible": true
+        },
+        {
+          "id": "offering_slot_5",
+          "kind": "item",
+          "filled": true,
+          "itemId": "akagiKey",
+          "requiredId": "akagiKey",
+          "label": "赤城の鍵",
+          "glyph": "山",
+          "visible": true
+        }
+      ],
+      "state": {
+        "eyeRepaired": false,
+        "hpZeroReached": false,
+        "lastLowDiceHit": false,
+        "overCoolPenalty": false,
+        "resonanceCreated": false,
+        "reviewPhaseIndex": 0,
+        "targetZoneRevealed": false,
+        "offeringOrder": [
+          "darumaEye",
+          "konnyakuPass",
+          "silkBundle",
+          "onsenKey",
+          "akagiKey"
+        ],
+        "lightDieReady": true,
+        "lightReleased": false,
+        "lightReleaseFrames": 0,
+        "thankYouIndex": 0,
+        "lastAction": {
+          "kind": "light_ready",
+          "itemId": "akagiKey",
+          "slotLabel": "赤城の鍵"
+        }
+      }
+    },
+    "dialogue": null,
+    "rewardSummary": null
+  }
+}

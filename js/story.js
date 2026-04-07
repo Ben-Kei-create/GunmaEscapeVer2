@@ -24,6 +24,72 @@ Game.Story = (function() {
     9: 'ch9_minakami',   // 川のせせらぎと張り詰めた空気
     10: 'ch10_border'    // 現実ノイズ終末アンビエント
   };
+  var chapterStartPlans = {
+    2: {
+      openingEventId: 'ch2_opening',
+      mapId: 'forest',
+      spawnX: 10,
+      spawnY: 10,
+      resetMaps: ['tamura', 'forest', 'konuma', 'onuma', 'akagi_ranch', 'akagi_shrine'],
+      achievementId: 'chapter1_clear'
+    },
+    3: {
+      openingEventId: 'ch3_opening',
+      mapId: 'shirane_trail',
+      spawnX: 14,
+      spawnY: 18,
+      resetMaps: ['shirane_trail']
+    },
+    4: {
+      openingEventId: 'ch4_opening',
+      mapId: 'kusatsu_deep',
+      spawnX: 14,
+      spawnY: 18,
+      resetMaps: ['kusatsu_deep']
+    },
+    5: {
+      openingEventId: 'ch5_opening',
+      mapId: 'jomo_gakuen',
+      spawnX: 14,
+      spawnY: 18,
+      resetMaps: ['jomo_gakuen']
+    },
+    6: {
+      openingEventId: 'ch6_opening',
+      mapId: 'tanigawa_tunnel',
+      spawnX: 14,
+      spawnY: 18,
+      resetMaps: ['tanigawa_tunnel']
+    },
+    7: {
+      openingEventId: 'ch7_opening',
+      mapId: 'haruna_lake',
+      spawnX: 14,
+      spawnY: 18,
+      resetMaps: ['haruna_lake']
+    },
+    8: {
+      openingEventId: 'ch8_opening',
+      mapId: 'oze_marsh',
+      spawnX: 14,
+      spawnY: 18,
+      resetMaps: ['oze_marsh']
+    },
+    9: {
+      openingEventId: 'ch9_opening',
+      mapId: 'minakami_valley',
+      spawnX: 14,
+      spawnY: 18,
+      resetMaps: ['minakami_valley']
+    },
+    10: {
+      openingEventId: 'ch10_opening',
+      mapId: 'border_tunnel',
+      spawnX: 14,
+      spawnY: 18,
+      resetMaps: ['border_tunnel']
+    }
+  };
   var eventQueue = [];
   var onEventEnd = null;
   var choiceIndex = 0;
@@ -47,6 +113,10 @@ Game.Story = (function() {
       respectGauge: 0,
       catalysts: []
     };
+  }
+
+  function cloneData(value) {
+    return JSON.parse(JSON.stringify(value));
   }
 
   function normalizeJourneyState(state) {
@@ -1082,6 +1152,9 @@ Game.Story = (function() {
   function getPhase() { return phase; }
   function setPhase(p) { phase = p; }
   function getChapter() { return chapter; }
+  function getChapterStartPlan(chapterNumber) {
+    return chapterStartPlans[chapterNumber] ? cloneData(chapterStartPlans[chapterNumber]) : null;
+  }
 
   // Start a story event (array of steps)
   function startEvent(event, callback) {
@@ -2005,6 +2078,7 @@ Game.Story = (function() {
     startCh3Scene: startCh3Scene,
     startChapterEvent: startChapterEvent,
     getChapterEvents: function() { return chapterEvents; },
+    getChapterStartPlan: getChapterStartPlan,
     saveFlags: saveFlags,
     loadFlags: loadFlags,
     getFlags: exportFlags,

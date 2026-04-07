@@ -1,0 +1,94 @@
+{
+  "summary": [
+    {
+      "memberId": "akagi",
+      "phase": "playerAttack",
+      "supportAction": {
+        "memberId": "akagi",
+        "memberName": "アカギ",
+        "commandName": "境見の合図",
+        "motif": "boundary",
+        "effectLabel": "敵賽緩",
+        "timer": 9,
+        "detailLines": [
+          "境界の脈を合わせ、敵の白い賽を鈍らせ",
+          "る。"
+        ]
+      },
+      "playerEffects": [
+        {
+          "type": "slow_roll",
+          "turnsLeft": 1,
+          "value": 1
+        }
+      ],
+      "enemyEffects": [
+        {
+          "type": "enemy_roll_slow",
+          "turnsLeft": 2,
+          "value": 5
+        }
+      ]
+    },
+    {
+      "memberId": "yamakawa",
+      "phase": "playerAttack",
+      "supportAction": {
+        "memberId": "yamakawa",
+        "memberName": "山川",
+        "commandName": "地脈の布陣",
+        "motif": "bulwark",
+        "effectLabel": "守線",
+        "timer": 9,
+        "detailLines": [
+          "土地の癖を読み切り、守りの線を静かに",
+          "引き直す。"
+        ]
+      },
+      "playerEffects": [
+        {
+          "type": "defense_up",
+          "turnsLeft": 2,
+          "value": 5
+        },
+        {
+          "type": "ward",
+          "turnsLeft": 1,
+          "value": 8
+        }
+      ],
+      "enemyEffects": []
+    },
+    {
+      "memberId": "furuya",
+      "phase": "playerAttack",
+      "supportAction": {
+        "memberId": "furuya",
+        "memberName": "古谷",
+        "commandName": "突破の号令",
+        "motif": "breakthrough",
+        "effectLabel": "突破",
+        "timer": 10,
+        "detailLines": [
+          "ためらいを断ち切り、突破の拍を前へ押",
+          "し出す。"
+        ]
+      },
+      "playerEffects": [
+        {
+          "type": "attack_up",
+          "turnsLeft": 2,
+          "value": 6
+        },
+        {
+          "type": "dice_bonus",
+          "turnsLeft": 1,
+          "value": 2
+        }
+      ],
+      "enemyEffects": []
+    }
+  ],
+  "consoleErrors": [],
+  "pageErrors": []
+}

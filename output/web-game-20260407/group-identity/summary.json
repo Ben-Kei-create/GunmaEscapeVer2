@@ -1,0 +1,104 @@
+{
+  "duo": {
+    "encounter": {
+      "enemyIds": [
+        "roadsideBandit",
+        "wishShelfShade"
+      ],
+      "packName": "棚荒らしの連れ影",
+      "omen": "高崎の棚音だけが、遅れて追いかけてくる。",
+      "directive": "先に手を伸ばし、遅れて掠め取る。",
+      "entryText": "棚荒らしの連れ影が、土産棚の陰から間合いを合わせて現れた。",
+      "layout": "stagger",
+      "accent": "#ff9f7d",
+      "roles": [
+        "掠め役",
+        "拾い手"
+      ]
+    },
+    "formation": {
+      "packName": "棚荒らしの連れ影",
+      "omen": "高崎の棚音だけが、遅れて追いかけてくる。",
+      "directive": "先に手を伸ばし、遅れて掠め取る。",
+      "layout": "stagger"
+    },
+    "enemies": [
+      {
+        "index": 0,
+        "name": "境界の追いはぎ",
+        "hp": 66,
+        "maxHp": 66,
+        "active": true,
+        "tag": "境界狩り",
+        "role": "掠め役"
+      },
+      {
+        "index": 1,
+        "name": "願棚のこぼれ火",
+        "hp": 58,
+        "maxHp": 58,
+        "active": false,
+        "tag": "棚願い火",
+        "role": "拾い手"
+      }
+    ],
+    "phase": "menu"
+  },
+  "trio": {
+    "encounter": {
+      "enemyIds": [
+        "roadsideBandit",
+        "lanternKeeper",
+        "strayDaruma"
+      ],
+      "packName": "湖畔の寄せ集め",
+      "omen": "灯り、赤粉、足音が、まとまりきらないままこちらへ揃う。",
+      "directive": "役の違う三つの圧で、逃げ道を細らせる。",
+      "entryText": "湖畔の寄せ集めが、ばらばらの足並みのまま包むように現れた。",
+      "layout": "wedge",
+      "accent": "#ffd18a",
+      "roles": [
+        "掠め役",
+        "誘い灯",
+        "当て役"
+      ]
+    },
+    "formation": {
+      "packName": "湖畔の寄せ集め",
+      "omen": "灯り、赤粉、足音が、まとまりきらないままこちらへ揃う。",
+      "directive": "役の違う三つの圧で、逃げ道を細らせる。",
+      "layout": "wedge"
+    },
+    "enemies": [
+      {
+        "index": 0,
+        "name": "境界の追いはぎ",
+        "hp": 66,
+        "maxHp": 66,
+        "active": true,
+        "tag": "境界狩り",
+        "role": "掠め役"
+      },
+      {
+        "index": 1,
+        "name": "灯籠の見回り",
+        "hp": 102,
+        "maxHp": 102,
+        "active": false,
+        "tag": "灯守り",
+        "role": "誘い灯"
+      },
+      {
+        "index": 2,
+        "name": "さまようだるま",
+        "hp": 52,
+        "maxHp": 52,
+        "active": false,
+        "tag": "願掛け殻",
+        "role": "当て役"
+      }
+    ],
+    "phase": "menu"
+  },
+  "errors": []
+}

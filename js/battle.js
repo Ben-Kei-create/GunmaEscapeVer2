@@ -57,7 +57,9 @@ Game.Battle = (function() {
   var introMaxTimer = 0;
   var introLabel = '';
   var introSubLabel = '';
+  var introMidLabel = '';
   var introAccent = '#8fb8ff';
+  var encounterProfile = null;
   var introBgmStarted = false;
   var introBgmTriggerFrame = 0;
   var introBgmOptions = null;
@@ -96,6 +98,11 @@ Game.Battle = (function() {
     echoShard: { tag: '返り声片', color: '#8fe0ff', intent: '遅れて響く一撃で足並みを崩す。' },
     mistBeastling: { tag: '霧の仔', color: '#a8d9ff', intent: '視界の端から忍び寄り、気を散らす。' },
     lanternKeeper: { tag: '灯守り', color: '#ffd66b', intent: '消えかけた灯を守るように距離を測る。' },
+    wishShelfShade: { tag: '棚願い火', color: '#ffb388', intent: '置き去りの願いから、熱だけを掬い直す。' },
+    bathhouseRemnant: { tag: '湯屋残り火', color: '#ffbe8a', intent: '癒やし損ねた手つきで、間合いを押し返す。' },
+    ferryBellEcho: { tag: '渡し鐘', color: '#9fd8ff', intent: '遠い呼び声を響かせ、判断を一拍遅らせる。' },
+    marshPathShade: { tag: '木道残り', color: '#c9d79b', intent: '沈みかけた道順だけを頼りに、足元へ寄ってくる。' },
+    mudWisp: { tag: '泥灯', color: '#d5bf8c', intent: '濁りを揺らして足場の感覚を鈍らせる。' },
     ruined_checkpoint: { tag: '通行の遺志', color: '#8fb8ff', intent: '止まれの形を崩さず、進路を拒み続ける。' }
   };
   var enemyFamilyStyles = {
@@ -104,6 +111,61 @@ Game.Battle = (function() {
     mud: { tag: '澱み', color: '#d2b27a', intent: '濁りに足を取らせ、動きを鈍らせる。' },
     thread: { tag: '製糸残響', color: '#d8c3ff', intent: '切らずに絡め取り、呼吸ごと引き寄せる。' }
   };
+
+  function buildDefaultEncounterProfile(enemyIds) {
+    var ids = enemyIds || [];
+    var firstId = ids.length ? ids[0] : '';
+    var fallbackStyle = firstId && enemyReadStyles[firstId] ? enemyReadStyles[firstId] : null;
+    return {
+      packName: ids.length >= 3 ? '寄せ集まる群れ影' : '間合いを測る連れ影',
+      omen: ids.length >= 3
+        ? '土地のざわめきが、ばらばらの足音をひとつへ寄せている。'
+        : '二つの影が、片方の間合いをもう片方が埋めてくる。',
+      directive: ids.length >= 3
+        ? '役の違う気配が噛み合い、逃げ足をじわじわ削る。'
+        : '互いの間を埋め、逃げる向きだけを狂わせる。',
+      entryText: ids.length >= 3
+        ? '異形の群れが、ばらついた足並みのままこちらを囲みに来た。'
+        : '異形の連れ影が、間合いを確かめ合いながら現れた。',
+      layout: ids.length >= 3 ? 'wedge' : 'screen',
+      accent: fallbackStyle && fallbackStyle.color ? fallbackStyle.color : '#8fe0ff',
+      roles: []
+    };
+  }
+
+  function sanitizeEncounterProfile(profile, enemyIds) {
+    var fallback = buildDefaultEncounterProfile(enemyIds);
+    var source = profile || {};
+    return {
+      packName: source.packName || fallback.packName,
+      omen: source.omen || fallback.omen,
+      directive: source.directive || fallback.directive,
+      entryText: source.entryText || fallback.entryText,
+      layout: source.layout || fallback.layout,
+      accent: source.accent || fallback.accent,
+      roles: Array.isArray(source.roles) ? source.roles.slice() : fallback.roles.slice()
+    };
+  }
+
+  function normalizeEncounterPayload(encounterArg) {
+    if (encounterArg && typeof encounterArg === 'object' && !Array.isArray(encounterArg)) {
+      var objectEnemyIds = Array.isArray(encounterArg.enemyIds)
+        ? encounterArg.enemyIds.slice()
+        : (Array.isArray(encounterArg.enemies) ? encounterArg.enemies.slice() : []);
+      if (objectEnemyIds.length) {
+        return {
+          enemyIds: objectEnemyIds,
+          profile: sanitizeEncounterProfile(encounterArg, objectEnemyIds)
+        };
+      }
+    }
+
+    var enemyIds = Array.isArray(encounterArg) ? encounterArg.slice() : [encounterArg];
+    return {
+      enemyIds: enemyIds,
+      profile: enemyIds.length > 1 ? sanitizeEncounterProfile(null, enemyIds) : null
+    };
+  }
 
   // ============================================================
   //  第1章〜第6章 ボス固有ギミック定義
@@ -221,6 +283,33 @@ Game.Battle = (function() {
       [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
     ],
     palette: { 1:'#2f2d3a', 2:'#d8d3c8', 3:'#1b1b22', 4:'#c96f7a', 5:'#f2f1ee', 6:'#8b7f6f' }
+  };
+
+  enemies.finalOffering = {
+    name: '終章の奉納',
+    hp: 1, maxHp: 1,
+    attack: 0, defense: 999, goldReward: 0, expReward: 0,
+    battleLabel: '奉納儀式',
+    battleAccent: '#f4eed7',
+    battleBackdrop: 'boss_ritual',
+    battleTheme: 'ch10_border',
+    echoText: '返し終えた記憶のあいだから、夜明け前の静かな風だけが残った。',
+    ritualMode: 'offering',
+    ritualFailStyle: {
+      text: 'その記憶の場所は、ここではないようだ。'
+    },
+    ritualParams: {
+      silentFrames: 84,
+      offerings: [
+        { itemId: 'darumaEye', label: '願いの目', glyph: '願' },
+        { itemId: 'konnyakuPass', label: '山路の証', glyph: '峠' },
+        { itemId: 'silkBundle', label: '白糸の記憶', glyph: '糸' },
+        { itemId: 'onsenKey', label: '湯の灯', glyph: '湯' },
+        { itemId: 'akagiKey', label: '赤城の鍵', glyph: '山' }
+      ]
+    },
+    sprite: enemies.juke_final.spritePhase2 || enemies.juke_final.sprite,
+    palette: { 1:'#f1efe8', 2:'#dfe6f7', 3:'#f1d98a' }
   };
 
   enemies.strayDaruma = {
@@ -364,6 +453,24 @@ Game.Battle = (function() {
 
   function getMenuEntries() {
     var partyMembers = Game.Player.getPartyMembers ? Game.Player.getPartyMembers() : [];
+    if (ritualRuntime && ritualRuntime.ritualMode === 'offering') {
+      var offeringEntries = [];
+      if (partyMembers.length > 0) {
+        offeringEntries.push({ id: 'support', label: '支援' });
+      }
+      if (Game.RitualBattles && Game.RitualBattles.getExtraActions) {
+        var ritualEntries = Game.RitualBattles.getExtraActions(ritualRuntime, enemy, Game.Player.getData()) || [];
+        for (var ri = 0; ri < ritualEntries.length; ri++) {
+          offeringEntries.push({
+            id: ritualEntries[ri].id,
+            label: ritualEntries[ri].name || ritualEntries[ri].id,
+            ritual: true
+          });
+        }
+      }
+      return offeringEntries;
+    }
+
     var entries = [
       { id: 'attack', label: menuItems[0] },
       { id: 'items', label: menuItems[1] },
@@ -493,8 +600,77 @@ Game.Battle = (function() {
     Game.Audio.playSfx('confirm');
   }
 
+  function getSupportActionProfile(member, support) {
+    var baseColor = (support && support.color) || (member && member.color) || '#dce6ff';
+    var fallback = {
+      motif: 'pulse',
+      sigil: '支',
+      effectLabel: '支援',
+      noteText: '次の行動へ、静かに追い風を足す。',
+      accentColor: '#eef4ff',
+      shadeColor: '#3a4768',
+      targetSide: 'enemy',
+      sourceX: 78,
+      sourceY: 208,
+      targetX: 312,
+      targetY: 108,
+      color: baseColor
+    };
+    if (!member) return fallback;
+    switch (member.id) {
+      case 'akagi':
+        return {
+          motif: 'boundary',
+          sigil: '境',
+          effectLabel: '敵賽緩',
+          noteText: '境界線を縫い、白い賽の拍を一段遅らせる。',
+          accentColor: '#d7f5ff',
+          shadeColor: '#274ea8',
+          targetSide: 'enemy',
+          sourceX: 76,
+          sourceY: 206,
+          targetX: 326,
+          targetY: 102,
+          color: baseColor
+        };
+      case 'yamakawa':
+        return {
+          motif: 'bulwark',
+          sigil: '護',
+          effectLabel: '守線',
+          noteText: '地脈を揃え、守りと返しの輪を結び直す。',
+          accentColor: '#dfffe1',
+          shadeColor: '#396a49',
+          targetSide: 'ally',
+          sourceX: 82,
+          sourceY: 208,
+          targetX: 112,
+          targetY: 194,
+          color: baseColor
+        };
+      case 'furuya':
+        return {
+          motif: 'breakthrough',
+          sigil: '斬',
+          effectLabel: '突破',
+          noteText: '踏み込みの勢いを前へ押し出し、次の一投へ乗せる。',
+          accentColor: '#ffe2bf',
+          shadeColor: '#7d4b2e',
+          targetSide: 'enemy',
+          sourceX: 82,
+          sourceY: 210,
+          targetX: 318,
+          targetY: 110,
+          color: baseColor
+        };
+      default:
+        return fallback;
+    }
+  }
+
   function createSupportActionOverlay(member, support) {
-    var duration = 30;
+    var duration = 36;
+    var profile = getSupportActionProfile(member, support);
     return {
       memberId: member.id,
       memberName: member.name,
@@ -505,7 +681,18 @@ Game.Battle = (function() {
         18,
         2
       ),
-      color: (support && support.color) || member.color || '#dce6ff',
+      color: profile.color,
+      accentColor: profile.accentColor,
+      shadeColor: profile.shadeColor,
+      motif: profile.motif,
+      sigil: profile.sigil,
+      effectLabel: profile.effectLabel,
+      noteText: profile.noteText,
+      targetSide: profile.targetSide,
+      sourceX: profile.sourceX,
+      sourceY: profile.sourceY,
+      targetX: profile.targetX,
+      targetY: profile.targetY,
       timer: duration,
       maxTimer: duration
     };
@@ -592,42 +779,135 @@ Game.Battle = (function() {
     animTimer = PLAYER_ACTION_RECOVERY_FRAMES;
   }
 
-  function openRitualItemMenu(actionId) {
-    var inv = Game.Player.getData().inventory;
-    var requiredId = ritualRuntime && ritualRuntime.ritualItemRequirement ? ritualRuntime.ritualItemRequirement : null;
+  function getNextOfferingSlot() {
+    if (!ritualRuntime || ritualRuntime.ritualMode !== 'offering' || !ritualRuntime.ritualSlots) return null;
+    for (var i = 0; i < ritualRuntime.ritualSlots.length; i++) {
+      if (!ritualRuntime.ritualSlots[i].filled) return ritualRuntime.ritualSlots[i];
+    }
+    return null;
+  }
+
+  function buildOfferingActionFeedback(selected) {
+    var itemName = selected && selected.item ? selected.item.name : 'その記憶';
+    var lastAction = ritualRuntime && ritualRuntime.ritualState ? ritualRuntime.ritualState.lastAction : null;
+    if (!lastAction) {
+      return {
+        text: itemName + 'をそっと祭壇へ返した。',
+        sfx: 'confirm',
+        timer: 42
+      };
+    }
+
+    switch (lastAction.kind) {
+      case 'accepted':
+        return {
+          text: itemName + 'を「' + (lastAction.slotLabel || '空位') + '」へ返した。',
+          sfx: 'ritual_chime',
+          timer: 48
+        };
+      case 'light_ready':
+        return {
+          text: '五つの空位が満ちた。あとは光を手放すだけだ。',
+          sfx: 'ritual_chime',
+          timer: 56
+        };
+      case 'rejected':
+        return {
+          text: itemName + 'はまだ違う。次は「' + (lastAction.slotLabel || 'この場所') + '」が待っている。',
+          sfx: 'cancel',
+          timer: 50
+        };
+      case 'complete':
+        return {
+          text: '返すべき記憶は、もう揃っている。',
+          sfx: 'confirm',
+          timer: 36
+        };
+      default:
+        return {
+          text: itemName + 'をそっと祭壇へ返した。',
+          sfx: 'confirm',
+          timer: 42
+        };
+    }
+  }
+
+  function buildOfferingItemEntries() {
+    var entries = [];
     var added = {};
+    var journeyState = ritualRuntime && ritualRuntime.storyRefs && ritualRuntime.storyRefs.getJourneyState
+      ? ritualRuntime.storyRefs.getJourneyState()
+      : { catalysts: [] };
+    var catalystIds = journeyState && journeyState.catalysts ? journeyState.catalysts.slice() : [];
+
+    if (ritualRuntime && ritualRuntime.ritualSlots) {
+      for (var i = 0; i < ritualRuntime.ritualSlots.length; i++) {
+        var requiredId = ritualRuntime.ritualSlots[i].requiredId;
+        if (!requiredId || added[requiredId] || catalystIds.indexOf(requiredId) < 0) continue;
+        var requiredItem = Game.Items.get(requiredId);
+        if (!requiredItem) continue;
+        entries.push({ id: requiredId, item: requiredItem });
+        added[requiredId] = true;
+      }
+    }
+
+    for (var c = 0; c < catalystIds.length; c++) {
+      var catalystId = catalystIds[c];
+      if (added[catalystId]) continue;
+      var item = Game.Items.get(catalystId);
+      if (!item) continue;
+      entries.push({ id: catalystId, item: item });
+      added[catalystId] = true;
+    }
+
+    return entries;
+  }
+
+  function openRitualItemMenu(actionId) {
     itemMenuItems = [];
     itemMenuIndex = 0;
     itemMenuMode = 'ritual';
     ritualMenuActionId = actionId;
 
-    if (requiredId && Game.Player.hasItem(requiredId)) {
-      var requiredItem = Game.Items.get(requiredId);
-      if (requiredItem) {
-        itemMenuItems.push({ id: requiredId, item: requiredItem });
-        added[requiredId] = true;
-      }
-    }
+    if (ritualRuntime && ritualRuntime.ritualMode === 'offering') {
+      itemMenuItems = buildOfferingItemEntries();
+    } else {
+      var inv = Game.Player.getData().inventory;
+      var requiredId = ritualRuntime && ritualRuntime.ritualItemRequirement ? ritualRuntime.ritualItemRequirement : null;
+      var added = {};
 
-    for (var i = 0; i < inv.length; i++) {
-      var itemId = inv[i];
-      if (added[itemId]) continue;
-      var item = Game.Items.get(itemId);
-      if (!item) continue;
-      itemMenuItems.push({
-        id: itemId,
-        item: item
-      });
-      added[itemId] = true;
+      if (requiredId && Game.Player.hasItem(requiredId)) {
+        var requiredItem = Game.Items.get(requiredId);
+        if (requiredItem) {
+          itemMenuItems.push({ id: requiredId, item: requiredItem });
+          added[requiredId] = true;
+        }
+      }
+
+      for (var i = 0; i < inv.length; i++) {
+        var itemId = inv[i];
+        if (added[itemId]) continue;
+        var item = Game.Items.get(itemId);
+        if (!item) continue;
+        itemMenuItems.push({
+          id: itemId,
+          item: item
+        });
+        added[itemId] = true;
+      }
     }
 
     if (itemMenuItems.length > 0) {
       phase = 'itemMenu';
-      message = '差し出す記憶を選べ';
+      message = ritualRuntime && ritualRuntime.ritualMode === 'offering'
+        ? '返す記憶を選べ'
+        : '差し出す記憶を選べ';
       messageTimer = 0;
       Game.Audio.playSfx('confirm');
     } else {
-      message = '差し出せるものがない…';
+      message = ritualRuntime && ritualRuntime.ritualMode === 'offering'
+        ? '返せる記憶がまだ足りない。'
+        : '差し出せるものがない…';
       messageTimer = 30;
     }
   }
@@ -663,13 +943,44 @@ Game.Battle = (function() {
     return ritualOutcome || true;
   }
 
+  function resolveOfferingLightRelease() {
+    var ritualDefinition = getRitualDefinition();
+    if (!ritualDefinition || !ritualRuntime || ritualRuntime.ritualMode !== 'offering') return false;
+    if (!ritualRuntime.ritualState.lightDieReady) {
+      message = 'まだ五つの記憶が揃っていない。';
+      messageTimer = 34;
+      Game.Audio.playSfx('cancel');
+      return false;
+    }
+
+    if (ritualDefinition.onActionResolved) {
+      ritualDefinition.onActionResolved(
+        ritualRuntime,
+        enemy,
+        Game.Player.getData(),
+        { id: 'release_light_die' },
+        { damage: 0, heal: 0 }
+      );
+    }
+
+    message = '';
+    messageTimer = 0;
+    phase = 'ritualMoment';
+    Game.Audio.stopBgm();
+    Game.Audio.playSfx('ritual_chime');
+    return true;
+  }
+
   function evaluateRitualOutcome() {
     var ritualDefinition = getRitualDefinition();
     if (!ritualDefinition || !ritualRuntime) return null;
 
     var playerData = Game.Player.getData();
     if (ritualDefinition.checkVictory && ritualDefinition.checkVictory(ritualRuntime, enemy, playerData)) {
-      enterVictoryPhase(enemy.name + 'を鎮めた。');
+      var ritualVictoryText = ritualRuntime.ritualMode === 'offering'
+        ? '五つの記憶は返され、境界の息が静かに整った。'
+        : (enemy.name + 'を鎮めた。');
+      enterVictoryPhase(ritualVictoryText);
       if (Game.Particles) Game.Particles.emit('victory', 240, 100, { count: 20 });
       return 'victory';
     }
@@ -1064,9 +1375,34 @@ Game.Battle = (function() {
 
   function drawEnemyIdentityChip(R, x, y, w, foe, maxChars) {
     var style = getEnemyReadStyle(foe);
-    R.drawRectAbsolute(x, y, w, 10, 'rgba(6,10,20,0.78)');
-    R.drawRectAbsolute(x, y, 2, 10, style.color);
+    var roleText = foe && foe._formationRole ? clampBattleText(foe._formationRole, maxChars || 10) : '';
+    var chipHeight = roleText ? 18 : 10;
+    R.drawRectAbsolute(x, y, w, chipHeight, 'rgba(6,10,20,0.78)');
+    R.drawRectAbsolute(x, y, 2, chipHeight, style.color);
     R.drawTextJP(clampBattleText(style.tag, maxChars || 10), x + 6, y + 1, style.color, 8);
+    if (roleText) {
+      R.drawTextJP(roleText, x + 6, y + 9, '#dbe3ff', 7);
+    }
+  }
+
+  function getBattleIntroPrimaryLabel() {
+    if (isGroupBattle() && encounterProfile && encounterProfile.packName) return encounterProfile.packName;
+    return getBattleHeaderLabel();
+  }
+
+  function getBattleIntroSecondaryLabel() {
+    if (isGroupBattle()) {
+      if (encounterProfile && encounterProfile.omen) return encounterProfile.omen;
+      return enemyParty.map(function(foe) { return foe.name; }).join(' / ');
+    }
+    return enemy ? enemy.name : '';
+  }
+
+  function getBattleIntroMiddleLabel() {
+    if (isGroupBattle() && encounterProfile && encounterProfile.directive) {
+      return encounterProfile.directive;
+    }
+    return '境界がきしむ';
   }
 
   function syncCurrentEnemy() {
@@ -1144,6 +1480,14 @@ Game.Battle = (function() {
   }
 
   function previewEnemyPartyAttack() {
+    if (ritualRuntime && ritualRuntime.ritualMode === 'offering') {
+      return {
+        activeAttackers: [],
+        stunnedNames: [],
+        slowedNames: [],
+        totalDamage: 0
+      };
+    }
     var defBonus = getEffectBonus(playerEffects, 'defense_up');
     var activeAttackers = [];
     var stunnedNames = [];
@@ -1310,8 +1654,13 @@ Game.Battle = (function() {
     var wardBonus = getEffectBonus(playerEffects, 'ward');
 
     if (!activeAttackers.length) {
-      message = stunnedNames.length ? (stunnedNames.join(' / ') + 'は痺れて動けない！') : '敵の群れは様子をうかがっている。';
-      messageTimer = 48;
+      if (ritualRuntime && ritualRuntime.ritualMode === 'offering') {
+        message = '';
+        messageTimer = 0;
+      } else {
+        message = stunnedNames.length ? (stunnedNames.join(' / ') + 'は痺れて動けない！') : '敵の群れは様子をうかがっている。';
+        messageTimer = 48;
+      }
       return false;
     }
 
@@ -1360,18 +1709,21 @@ Game.Battle = (function() {
 
   function getEncounterIntroText() {
     if (!enemyParty.length) return '敵が現れた！';
+    if (enemyParty.length === 1 && enemyParty[0].ritualMode === 'offering') {
+      return '五つの空位が、返されるべき記憶を静かに待っている。';
+    }
     if (enemyParty.length === 1 && enemyParty[0]._enemyId === 'ruined_checkpoint') {
       return '止められた旅人の気配が、瓦礫を門の形に立たせている。';
     }
     if (enemyParty.length === 1) return enemyParty[0].name + 'が現れた！';
-    var names = [];
-    for (var i = 0; i < enemyParty.length && i < 3; i++) {
-      names.push(enemyParty[i].name);
+    if (encounterProfile && encounterProfile.entryText) {
+      return encounterProfile.entryText;
     }
-    return names.join(' / ') + ' が現れた！';
+    return '異形の群れが、足並みを揃えて現れた！';
   }
 
   function getBattleHeaderLabel() {
+    if (isSpecialRitualBattle() && enemy && enemy.battleLabel) return enemy.battleLabel;
     if (isSpecialRitualBattle()) return '儀式開始';
     if (isGroupBattle()) return '群れ遭遇';
     if (enemy && enemy.battleLabel) return enemy.battleLabel;
@@ -1380,7 +1732,9 @@ Game.Battle = (function() {
   }
 
   function getBattleAccentColor() {
+    if (isSpecialRitualBattle() && enemy && enemy.battleAccent) return enemy.battleAccent;
     if (isSpecialRitualBattle()) return '#ffd66b';
+    if (isGroupBattle() && encounterProfile && encounterProfile.accent) return encounterProfile.accent;
     if (isGroupBattle()) return '#8fe0ff';
     if (enemy && enemy.battleAccent) return enemy.battleAccent;
     if (enemy && enemy.palette && enemy.palette[1]) return enemy.palette[1];
@@ -1458,14 +1812,24 @@ Game.Battle = (function() {
   function start(enemyId, npc) {
     active = true;
     npcRef = npc;
-    var enemyIds = Array.isArray(enemyId) ? enemyId.slice() : [enemyId];
+    var encounterPayload = normalizeEncounterPayload(enemyId);
+    var enemyIds = encounterPayload.enemyIds.slice();
+    encounterProfile = encounterPayload.profile;
     battleEnemyIds = enemyIds.slice();
     enemyParty = [];
     for (var ei = 0; ei < enemyIds.length; ei++) {
       var enemyClone = cloneEnemy(enemyIds[ei]);
-      if (enemyClone) enemyParty.push(enemyClone);
+      if (enemyClone) {
+        enemyClone._formationRole = encounterProfile && encounterProfile.roles ? (encounterProfile.roles[ei] || '') : '';
+        enemyClone._formationSlot = ei;
+        enemyParty.push(enemyClone);
+      }
     }
-    if (!enemyParty.length) return;
+    if (!enemyParty.length) {
+      active = false;
+      encounterProfile = null;
+      return;
+    }
     currentTargetIndex = 0;
     enemy = enemyParty[0];
     menuIndex = 0;
@@ -1526,8 +1890,9 @@ Game.Battle = (function() {
     var introProfile = getBattleIntroProfile();
     introMaxTimer = introProfile.duration;
     introTimer = introMaxTimer;
-    introLabel = getBattleHeaderLabel();
-    introSubLabel = isGroupBattle() ? enemyParty.map(function(foe) { return foe.name; }).join(' / ') : enemy.name;
+    introLabel = getBattleIntroPrimaryLabel();
+    introSubLabel = getBattleIntroSecondaryLabel();
+    introMidLabel = getBattleIntroMiddleLabel();
     introAccent = getBattleAccentColor();
     introBgmStarted = false;
     introBgmTriggerFrame = introProfile.bgmTriggerFrame;
@@ -1850,6 +2215,7 @@ Game.Battle = (function() {
       case 'diceResult': phaseResult = handleDiceResultPhase(); break;
       case 'playerAttack': phaseResult = handlePlayerAttackPhase(); break;
       case 'enemyAttack': phaseResult = handleEnemyAttackPhase(); break;
+      case 'ritualMoment': phaseResult = handleRitualMomentPhase(); break;
       case 'victory': phaseResult = handleVictoryPhase(); break;
       case 'reward': phaseResult = handleRewardPhase(); break;
       case 'defeat': phaseResult = handleDefeatPhase(); break;
@@ -2143,6 +2509,31 @@ Game.Battle = (function() {
 
   }
 
+  function handleRitualMomentPhase() {
+        var ritualDefinition = getRitualDefinition();
+        if (!ritualRuntime || !ritualDefinition) {
+          phase = 'menu';
+          return;
+        }
+
+        if (!ritualRuntime.ritualState || !ritualRuntime.ritualState.lightReleased) {
+          phase = 'menu';
+          return;
+        }
+
+        if ((Game.Input.isPressed('confirm') || Game.Input.isPressed('cancel')) &&
+            ritualRuntime.ritualState.lightReleaseFrames > 18) {
+          ritualRuntime.ritualState.lightReleaseFrames = 18;
+        }
+
+        if (ritualDefinition.onFrame) {
+          ritualDefinition.onFrame(ritualRuntime, enemy, Game.Player.getData());
+        }
+
+        return evaluateRitualOutcome();
+
+  }
+
   function handleVictoryPhase() {
         // Queue victory dialogue if present
         if (currentGimmick && currentGimmick.dialogue && currentGimmick.dialogue.victory) {
@@ -2172,7 +2563,7 @@ Game.Battle = (function() {
           }
           if (victoryBgm) {
             Game.Audio.playBgm(victoryBgm);
-          } else {
+          } else if (!(ritualRuntime && ritualRuntime.ritualMode === 'offering')) {
             Game.Audio.playSfx('victory');
           }
         }
@@ -2309,7 +2700,54 @@ Game.Battle = (function() {
           openRitualItemMenu(entry.id);
         }
         break;
+      case 'release_light_die':
+        resolveOfferingLightRelease();
+        break;
     }
+  }
+
+  function resolveRitualItemSelection(selected, actionId) {
+    if (!selected || !selected.item) {
+      phase = 'menu';
+      return false;
+    }
+
+    var ritualDefinition = getRitualDefinition();
+    if (ritualDefinition && ritualDefinition.onActionResolved) {
+      ritualDefinition.onActionResolved(
+        ritualRuntime,
+        enemy,
+        Game.Player.getData(),
+        { id: actionId || 'drop_item_to_eye_slot', itemId: selected.id },
+        { damage: 0, heal: 0 }
+      );
+    }
+
+    var ritualItemOutcome = evaluateRitualOutcome();
+    if (!ritualItemOutcome) {
+      if (ritualRuntime && ritualRuntime.ritualMode === 'offering') {
+        var offeringFeedback = buildOfferingActionFeedback(selected);
+        message = offeringFeedback.text;
+        messageTimer = offeringFeedback.timer;
+        Game.Audio.playSfx(offeringFeedback.sfx);
+      } else {
+        message = ritualRuntime && ritualRuntime.ritualState.eyeRepaired
+          ? selected.item.name + 'をそっと重ねた。'
+          : 'その記憶は、まだ噛み合わない。';
+        messageTimer = 45;
+        Game.Audio.playSfx(
+          ritualRuntime && ritualRuntime.ritualState && ritualRuntime.ritualState.eyeRepaired
+            ? 'ritual_chime'
+            : 'confirm'
+        );
+      }
+      phase = 'menu';
+    }
+    itemMenuItems = [];
+    itemMenuIndex = 0;
+    itemMenuMode = 'heal';
+    ritualMenuActionId = null;
+    return ritualItemOutcome || true;
   }
 
   function useSelectedItem() {
@@ -2324,30 +2762,7 @@ Game.Battle = (function() {
     }
 
     if (itemMenuMode === 'ritual') {
-      var ritualDefinition = getRitualDefinition();
-      if (ritualDefinition && ritualDefinition.onActionResolved) {
-        ritualDefinition.onActionResolved(
-          ritualRuntime,
-          enemy,
-          Game.Player.getData(),
-          { id: ritualMenuActionId || 'drop_item_to_eye_slot', itemId: selected.id },
-          { damage: 0, heal: 0 }
-        );
-      }
-
-      var ritualItemOutcome = evaluateRitualOutcome();
-      if (!ritualItemOutcome) {
-        message = ritualRuntime && ritualRuntime.ritualState.eyeRepaired
-          ? selected.item.name + 'をそっと重ねた。'
-          : 'その記憶は、まだ噛み合わない。';
-        messageTimer = 45;
-        phase = 'menu';
-      }
-      itemMenuItems = [];
-      itemMenuIndex = 0;
-      itemMenuMode = 'heal';
-      ritualMenuActionId = null;
-      Game.Audio.playSfx(ritualRuntime && ritualRuntime.ritualState && ritualRuntime.ritualState.eyeRepaired ? 'ritual_chime' : 'confirm');
+      resolveRitualItemSelection(selected, ritualMenuActionId || 'drop_item_to_eye_slot');
       return;
     }
 
@@ -2700,6 +3115,130 @@ Game.Battle = (function() {
     R.drawTextJP('目を入れる', enemyX + 36, 82, '#d8c68a', 10);
   }
 
+  function drawOfferingConstellation(R, ctx, C, runtime) {
+    if (!runtime) return;
+    var slots = runtime.ritualSlots || [];
+    var state = runtime.ritualState || {};
+    var totalFrames = runtime.ritualParams ? (runtime.ritualParams.silentFrames || 84) : 84;
+    var remainingFrames = Math.max(0, state.lightReleaseFrames || 0);
+    var releaseProgress = state.lightReleased ? 1 - (remainingFrames / Math.max(1, totalFrames)) : 0;
+    var lightX = 240;
+    var lightY = 96 - Math.floor(releaseProgress * 46);
+    var ringRx = 110;
+    var ringRy = 44;
+    var nextSlot = getNextOfferingSlot();
+    var guideText = '';
+    var guideColor = '#dbe3ff';
+    var silenceDots = 3 + Math.min(5, Math.floor((state.thankYouIndex || 0) + releaseProgress * 5));
+    var positions = [];
+    var i;
+
+    ctx.fillStyle = 'rgba(8, 10, 18, 0.32)';
+    ctx.fillRect(118, 26, 244, 124);
+
+    for (i = 0; i < slots.length; i++) {
+      var angle = -Math.PI / 2 + (Math.PI * 2 * i / Math.max(1, slots.length));
+      positions.push({
+        x: Math.round(lightX + Math.cos(angle) * ringRx),
+        y: Math.round(98 + Math.sin(angle) * ringRy)
+      });
+    }
+
+    ctx.save();
+    ctx.lineWidth = 2;
+    for (i = 0; i < positions.length; i++) {
+      var slot = slots[i];
+      var pos = positions[i];
+      var slotAlpha = slot && slot.filled ? 0.34 : (nextSlot && slot && slot.id === nextSlot.id ? 0.26 : 0.12);
+      ctx.strokeStyle = slot && slot.filled
+        ? 'rgba(244, 238, 215, 0.34)'
+        : (nextSlot && slot && slot.id === nextSlot.id ? 'rgba(255, 214, 107, 0.26)' : 'rgba(184, 196, 224, 0.14)');
+      ctx.beginPath();
+      ctx.moveTo(lightX, lightY);
+      ctx.lineTo(pos.x, pos.y);
+      ctx.stroke();
+      ctx.fillStyle = slot && slot.filled ? 'rgba(244, 238, 215, 0.10)' : 'rgba(214, 222, 242, 0.04)';
+      ctx.beginPath();
+      ctx.arc(pos.x, pos.y, slot && slot.filled ? 20 : 16, 0, Math.PI * 2);
+      ctx.fill();
+      if (slotAlpha > 0) {
+        ctx.strokeStyle = slot && slot.filled
+          ? 'rgba(244, 238, 215, 0.48)'
+          : 'rgba(214, 222, 242, ' + slotAlpha.toFixed(3) + ')';
+        ctx.beginPath();
+        ctx.arc(pos.x, pos.y, slot && slot.filled ? 20 : 16, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+    }
+    ctx.restore();
+
+    for (i = 0; i < positions.length; i++) {
+      var offeringSlot = slots[i];
+      var offeringPos = positions[i];
+      var slotX = offeringPos.x - 14;
+      var slotY = offeringPos.y - 14;
+      var isNext = nextSlot && offeringSlot && offeringSlot.id === nextSlot.id && !state.lightDieReady;
+      var isFilled = offeringSlot && offeringSlot.filled;
+      R.drawRectAbsolute(slotX, slotY, 28, 28, isFilled ? 'rgba(244, 238, 215, 0.24)' : 'rgba(10, 14, 24, 0.68)');
+      R.drawRectAbsolute(slotX + 1, slotY + 1, 26, 26, isFilled ? '#101521' : '#171c29');
+      if (isNext) {
+        R.drawRectAbsolute(slotX - 2, slotY - 2, 32, 2, '#ffd66b');
+        R.drawRectAbsolute(slotX - 2, slotY + 28, 32, 2, '#ffd66b');
+      }
+
+      if (isFilled && offeringSlot.itemId) {
+        var offeringItem = Game.Items.get(offeringSlot.itemId);
+        if (offeringItem && offeringItem.icon && offeringItem.palette) {
+          R.drawSpriteAbsolute(offeringItem.icon, slotX + 2, slotY + 2, offeringItem.palette, 3);
+        } else {
+          R.drawTextJP(offeringSlot.glyph || '返', slotX + 8, slotY + 8, '#f4eed7', 11);
+        }
+      } else {
+        R.drawTextJP(offeringSlot.glyph || '記', slotX + 8, slotY + 8, isNext ? '#ffd66b' : '#9ca8c7', 11);
+      }
+      R.drawTextJP(clampBattleText(offeringSlot.label || ('奉納 ' + (i + 1)), 7), offeringPos.x - 22, offeringPos.y + 22, isFilled ? '#f4eed7' : '#9ea9c8', 8);
+    }
+
+    var dieGlow = state.lightDieReady ? '#f4eed7' : '#cbd4ea';
+    var dieSize = state.lightReleased ? 20 : 24;
+    var dieX = lightX - Math.floor(dieSize / 2);
+    var dieY = lightY - Math.floor(dieSize / 2);
+    ctx.fillStyle = state.lightReleased ? 'rgba(244, 238, 215, 0.16)' : 'rgba(214, 222, 242, 0.12)';
+    ctx.fillRect(dieX - 6, dieY - 6, dieSize + 12, dieSize + 12);
+    R.drawRectAbsolute(dieX, dieY, dieSize, dieSize, state.lightReleased ? '#f6f0da' : '#f3f6ff');
+    ctx.strokeStyle = dieGlow;
+    ctx.lineWidth = 2;
+    ctx.strokeRect(dieX + 0.5, dieY + 0.5, dieSize - 1, dieSize - 1);
+    R.drawTextJP('光', lightX - 6, lightY - 6, state.lightDieReady ? '#6d5d2a' : '#6c748c', 12);
+
+    if (state.lightReleased && state.thankYouIndex > 0) {
+      var thanksChars = ['あ', 'り', 'が', 'と', 'う'];
+      for (i = 0; i < Math.min(thanksChars.length, state.thankYouIndex); i++) {
+        R.drawTextJP(thanksChars[i], 196 + i * 22, 34 + Math.max(0, i - 1) * 2, '#f4eed7', 12);
+      }
+    }
+
+    if (runtime.uiFlags && runtime.uiFlags.silentMoment) {
+      var dots = '';
+      for (i = 0; i < silenceDots; i++) dots += '・';
+      R.drawTextJP(dots, 226, 154, '#c7cfdf', 11);
+    } else if (state.lightReleased) {
+      guideText = '風だけが残っている。';
+      guideColor = '#f4eed7';
+    } else if (state.lightDieReady) {
+      guideText = '五つの記憶が揃った。光を手放す。';
+      guideColor = '#f4eed7';
+    } else if (nextSlot) {
+      guideText = '次は「' + nextSlot.label + '」へ返す。';
+    } else {
+      guideText = '返されるべき記憶を選ぶ。';
+    }
+
+    if (guideText) {
+      R.drawTextJP(clampBattleText(guideText, 22), 162, 152, guideColor, 10);
+    }
+  }
+
   function isBattleMessageVisible() {
     return !!(message && phase !== 'reward' && !isBossActionOverlayVisible());
   }
@@ -2720,6 +3259,18 @@ Game.Battle = (function() {
     }
 
     if (itemMenuMode === 'ritual') {
+      if (ritualRuntime && ritualRuntime.ritualMode === 'offering') {
+        var nextSlot = getNextOfferingSlot();
+        var matchesOffering = nextSlot && selectedEntry.id === nextSlot.requiredId;
+        var slotLabel = nextSlot ? nextSlot.label : '五つの空位';
+        return {
+          leftText: nextSlot
+            ? (matchesOffering ? slotLabel + ' へ返せる' : '次は ' + slotLabel)
+            : '五つの記憶は揃っている',
+          leftColor: !nextSlot ? '#f4eed7' : (matchesOffering ? '#ffd66b' : '#d59b9b'),
+          rightText: 'Xで戻る'
+        };
+      }
       var requiredId = ritualRuntime && ritualRuntime.ritualItemRequirement ? ritualRuntime.ritualItemRequirement : null;
       var matches = !requiredId || selectedEntry.id === requiredId;
       return {
@@ -2744,6 +3295,54 @@ Game.Battle = (function() {
     };
   }
 
+  function getGroupFormationSlots(count, layout) {
+    if (count <= 1) return [{ x: 0, y: 0 }];
+    if (count === 2) {
+      switch (layout) {
+        case 'pincer':
+          return [{ x: -0.9, y: 10 }, { x: 0.9, y: -4 }];
+        case 'stagger':
+          return [{ x: -0.9, y: -4 }, { x: 0.9, y: 10 }];
+        case 'wedge':
+          return [{ x: -0.8, y: 12 }, { x: 0.8, y: 0 }];
+        case 'screen':
+          return [{ x: -0.9, y: 4 }, { x: 0.9, y: 4 }];
+        default:
+          return [{ x: -0.9, y: 4 }, { x: 0.9, y: 4 }];
+      }
+    }
+    if (count === 3) {
+      switch (layout) {
+        case 'screen':
+          return [{ x: -1.15, y: 8 }, { x: 0, y: 0 }, { x: 1.15, y: 8 }];
+        case 'stagger':
+          return [{ x: -1.1, y: 12 }, { x: 0, y: 0 }, { x: 1.1, y: 12 }];
+        case 'pincer':
+          return [{ x: -1.1, y: 4 }, { x: 0, y: 12 }, { x: 1.1, y: 4 }];
+        case 'wedge':
+        default:
+          return [{ x: -1.1, y: 12 }, { x: 0, y: 0 }, { x: 1.1, y: 12 }];
+      }
+    }
+    var result = [];
+    for (var i = 0; i < count; i++) {
+      result.push({ x: i - Math.floor(count / 2), y: (i % 2) * 6 });
+    }
+    return result;
+  }
+
+  function drawEncounterFormationPanel(R, x, y, w, h) {
+    if (!isGroupBattle() || !encounterProfile || phase === 'intro') return;
+    var directiveLines = wrapBattleText(encounterProfile.directive || '互いの間を埋め、逃げ足だけを揺らしてくる。', 19, 2);
+    R.drawDialogBox(x, y, w, h);
+    drawBattlePanelAccent(R, x, y, w, h, getBattleAccentColor());
+    R.drawTextJP(clampBattleText(encounterProfile.packName || '群れの気配', 12), x + 10, y + 8, getBattleAccentColor(), 10);
+    R.drawTextJP('←→で対象切替', x + w - 10, y + 8, '#8b96b6', 8, 'right');
+    for (var i = 0; i < directiveLines.length; i++) {
+      R.drawTextJP(directiveLines[i], x + 10, y + 20 + i * 10, '#dbe3ff', 8);
+    }
+  }
+
   function drawEnemyPartyGroup(R, ctx, C) {
     var visibleEnemies = [];
     for (var vi = 0; vi < enemyParty.length; vi++) {
@@ -2757,36 +3356,56 @@ Game.Battle = (function() {
     var scale = count >= 3 ? 3 : 4;
     var spriteW = 16 * scale;
     var spriteH = 16 * scale;
-    var gap = count >= 3 ? 18 : 28;
-    var totalWidth = count * spriteW + (count - 1) * gap;
-    var startX = Math.floor((C.CANVAS_WIDTH - totalWidth) / 2);
-    var baseY = count >= 3 ? 42 : 48;
+    var minimalIntro = phase === 'intro';
+    var baseY = count >= 3 ? 42 : 50;
+    var centerX = Math.floor(C.CANVAS_WIDTH / 2);
+    var spacing = count >= 3 ? 54 : 72;
+    var slots = getGroupFormationSlots(count, encounterProfile && encounterProfile.layout ? encounterProfile.layout : 'line');
+    var drawEntries = [];
 
-    for (var i = 0; i < count; i++) {
-      var entry = visibleEnemies[i];
+    for (var si = 0; si < count; si++) {
+      var slot = slots[si] || { x: si - Math.floor(count / 2), y: 0 };
+      var slotX = Math.floor(centerX + slot.x * spacing - spriteW / 2);
+      var slotY = baseY + Math.round(slot.y);
+      drawEntries.push({
+        foe: visibleEnemies[si].foe,
+        partyIndex: visibleEnemies[si].partyIndex,
+        x: slotX,
+        y: slotY
+      });
+    }
+
+    drawEntries.sort(function(a, b) {
+      if (a.y === b.y) return a.partyIndex - b.partyIndex;
+      return a.y - b.y;
+    });
+
+    for (var i = 0; i < drawEntries.length; i++) {
+      var entry = drawEntries[i];
       var foe = entry.foe;
-      var ex = startX + i * (spriteW + gap);
+      var ex = entry.x;
+      var ey = entry.y;
       var foeStyle = getEnemyReadStyle(foe);
       ctx.fillStyle = hexToRgba(foeStyle.color, entry.partyIndex === currentTargetIndex ? 0.22 : 0.12);
-      ctx.fillRect(ex + 8, baseY + spriteH - 6, spriteW - 16, 8);
-      R.drawSpriteAbsolute(foe.sprite, ex, baseY, foe.palette, scale);
-      if (entry.partyIndex === currentTargetIndex) {
-        R.drawTextJP('▼', ex + Math.floor(spriteW / 2) - 4, baseY - 12, '#ffd66b', 10);
+      ctx.fillRect(ex + 8, ey + spriteH - 6, spriteW - 16, 8);
+      R.drawSpriteAbsolute(foe.sprite, ex, ey, foe.palette, scale);
+      if (!minimalIntro && entry.partyIndex === currentTargetIndex) {
+        R.drawTextJP('▼', ex + Math.floor(spriteW / 2) - 4, ey - 12, '#ffd66b', 10);
       }
 
-      R.drawRectAbsolute(ex, baseY + spriteH + 8, spriteW, 8, '#333');
-      var foeDisplayHp = Math.max(0, foe.hp);
-      var hpRatio = foe.maxHp > 0 ? Math.max(0, foeDisplayHp / foe.maxHp) : 0;
-      R.drawRectAbsolute(ex + 1, baseY + spriteH + 9, Math.max(0, Math.floor((spriteW - 2) * hpRatio)), 6,
-        hpRatio > 0.3 ? C.COLORS.HP_GREEN : C.COLORS.HP_RED);
-      R.drawTextJP(foe.name, ex, baseY + spriteH + 18, foe.hp > 0 ? '#ffffff' : '#777777', 9);
-      R.drawText(foeDisplayHp + '/' + foe.maxHp, ex + spriteW, baseY + spriteH + 18, '#b8c4e0', 8, 'right');
-      drawEnemyIdentityChip(R, ex, baseY + spriteH + 26, spriteW, foe, count >= 3 ? 7 : 10);
+      if (!minimalIntro) {
+        R.drawRectAbsolute(ex, ey + spriteH + 8, spriteW, 8, '#333');
+        var foeDisplayHp = Math.max(0, foe.hp);
+        var hpRatio = foe.maxHp > 0 ? Math.max(0, foeDisplayHp / foe.maxHp) : 0;
+        R.drawRectAbsolute(ex + 1, ey + spriteH + 9, Math.max(0, Math.floor((spriteW - 2) * hpRatio)), 6,
+          hpRatio > 0.3 ? C.COLORS.HP_GREEN : C.COLORS.HP_RED);
+        R.drawTextJP(foe.name, ex, ey + spriteH + 18, foe.hp > 0 ? '#ffffff' : '#777777', 9);
+        R.drawText(foeDisplayHp + '/' + foe.maxHp, ex + spriteW, ey + spriteH + 18, '#b8c4e0', 8, 'right');
+        drawEnemyIdentityChip(R, ex, ey + spriteH + 26, spriteW, foe, count >= 3 ? 7 : 10);
+      }
     }
 
-    if (count > 1) {
-      R.drawTextJP('←→: 対象切替', 318, 136, '#8b96b6', 9);
-    }
+    drawEncounterFormationPanel(R, 152, 26, 308, 34);
   }
 
   function drawBattlePanelAccent(R, x, y, w, h, accent) {
@@ -3351,38 +3970,169 @@ Game.Battle = (function() {
     var overlay = supportActionOverlay;
     var progress = 1 - (overlay.timer / Math.max(1, overlay.maxTimer));
     var eased = 1 - Math.pow(1 - Math.max(0, Math.min(1, progress)), 3);
+    var pulse = 0.5 + 0.5 * Math.sin(progress * Math.PI * 5);
     var alpha = overlay.timer < 7 ? overlay.timer / 7 : 1;
-    var trailAlpha = (0.12 + eased * 0.24) * alpha;
-    var panelX = 108;
-    var panelY = 78;
-    var panelW = 264;
-    var panelH = 88;
-    var chipX = 60 + eased * 150;
-    var chipY = 176 - eased * 70 + Math.sin(progress * Math.PI * 2) * 3;
+    var panelX = 84;
+    var panelY = 56;
+    var panelW = 312;
+    var panelH = 112;
+    var badgeX = panelX + 18;
+    var badgeY = panelY + 18;
+    var badgeSize = 60;
+    var trailAlpha = (0.18 + eased * 0.18) * alpha;
+    var flowProgress = 0.20 + eased * 0.72;
+    var flowX = overlay.sourceX + (overlay.targetX - overlay.sourceX) * flowProgress;
+    var flowY = overlay.sourceY + (overlay.targetY - overlay.sourceY) * flowProgress;
 
-    ctx.fillStyle = 'rgba(8, 10, 18, ' + (0.12 + alpha * 0.18).toFixed(3) + ')';
+    ctx.fillStyle = 'rgba(8, 10, 18, ' + (0.16 + alpha * 0.20).toFixed(3) + ')';
     ctx.fillRect(0, 0, C.CANVAS_WIDTH, C.CANVAS_HEIGHT);
-    ctx.fillStyle = hexToRgba(overlay.color, trailAlpha);
-    ctx.fillRect(34, chipY - 4, chipX + 78, 8);
-    ctx.fillStyle = 'rgba(255,255,255,' + (0.06 + alpha * 0.08).toFixed(3) + ')';
+    ctx.save();
+    ctx.strokeStyle = hexToRgba(overlay.color, trailAlpha);
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.moveTo(overlay.sourceX, overlay.sourceY);
+    ctx.lineTo(flowX, flowY);
+    ctx.stroke();
+    ctx.strokeStyle = hexToRgba('#ffffff', (0.08 + alpha * 0.12) * alpha);
+    ctx.lineWidth = 1.25;
+    ctx.setLineDash([7, 10]);
+    ctx.lineDashOffset = -progress * 28;
+    ctx.beginPath();
+    ctx.moveTo(overlay.sourceX, overlay.sourceY);
+    ctx.lineTo(overlay.targetX, overlay.targetY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    for (var spark = 0; spark < 4; spark++) {
+      var sparkT = (progress * 1.25 + spark * 0.18) % 1;
+      var sparkX = overlay.sourceX + (overlay.targetX - overlay.sourceX) * sparkT;
+      var sparkY = overlay.sourceY + (overlay.targetY - overlay.sourceY) * sparkT;
+      var sparkSize = 4 + spark * 0.5;
+      ctx.fillStyle = hexToRgba(overlay.accentColor || overlay.color, (0.16 + (1 - sparkT) * 0.22) * alpha);
+      ctx.fillRect(Math.floor(sparkX - sparkSize / 2), Math.floor(sparkY - sparkSize / 2), Math.floor(sparkSize), Math.floor(sparkSize));
+    }
+    ctx.restore();
+
+    if (overlay.motif === 'boundary') {
+      var boundaryWidth = 96 + pulse * 24;
+      var boundaryHeight = 48 + pulse * 12;
+      for (var ring = 0; ring < 3; ring++) {
+        var inset = ring * 10;
+        var bx = overlay.targetX - boundaryWidth / 2 - inset;
+        var by = overlay.targetY - boundaryHeight / 2 - inset * 0.45;
+        var bw = boundaryWidth + inset * 2;
+        var bh = boundaryHeight + inset * 0.9;
+        var corner = 16 + ring * 3;
+        ctx.strokeStyle = hexToRgba(ring === 0 ? (overlay.accentColor || overlay.color) : overlay.color, (0.34 - ring * 0.08) * alpha);
+        ctx.lineWidth = ring === 0 ? 2 : 1;
+        ctx.beginPath();
+        ctx.moveTo(bx, by + corner);
+        ctx.lineTo(bx, by);
+        ctx.lineTo(bx + corner, by);
+        ctx.moveTo(bx + bw - corner, by);
+        ctx.lineTo(bx + bw, by);
+        ctx.lineTo(bx + bw, by + corner);
+        ctx.moveTo(bx, by + bh - corner);
+        ctx.lineTo(bx, by + bh);
+        ctx.lineTo(bx + corner, by + bh);
+        ctx.moveTo(bx + bw - corner, by + bh);
+        ctx.lineTo(bx + bw, by + bh);
+        ctx.lineTo(bx + bw, by + bh - corner);
+        ctx.stroke();
+      }
+      ctx.fillStyle = hexToRgba(overlay.color, 0.10 * alpha);
+      ctx.fillRect(Math.floor(overlay.targetX - 60), Math.floor(overlay.targetY - 20), 120, 40);
+      ctx.fillStyle = hexToRgba(overlay.accentColor || overlay.color, 0.22 * alpha);
+      ctx.fillRect(Math.floor(overlay.targetX - 48 - pulse * 6), Math.floor(overlay.targetY - 2), Math.floor(96 + pulse * 12), 3);
+      ctx.fillRect(Math.floor(overlay.targetX - 2), Math.floor(overlay.targetY - 30 - pulse * 5), 3, Math.floor(60 + pulse * 10));
+    } else if (overlay.motif === 'bulwark') {
+      var guardCenterX = overlay.targetX;
+      var guardCenterY = overlay.targetY;
+      for (var arc = 0; arc < 3; arc++) {
+        var radius = 26 + arc * 12 + pulse * 5;
+        ctx.strokeStyle = hexToRgba(arc === 0 ? (overlay.accentColor || overlay.color) : overlay.color, (0.34 - arc * 0.08) * alpha);
+        ctx.lineWidth = arc === 0 ? 2 : 1.25;
+        ctx.beginPath();
+        ctx.arc(guardCenterX, guardCenterY, radius, Math.PI * 1.05, Math.PI * 1.95);
+        ctx.stroke();
+      }
+      for (var ridge = 0; ridge < 4; ridge++) {
+        var ridgeW = 112 - ridge * 16;
+        ctx.fillStyle = hexToRgba(ridge % 2 === 0 ? overlay.color : (overlay.accentColor || overlay.color), (0.12 - ridge * 0.018) * alpha);
+        ctx.fillRect(Math.floor(guardCenterX - ridgeW / 2), Math.floor(guardCenterY + 16 + ridge * 7), ridgeW, 2);
+      }
+      for (var ward = 0; ward < 4; ward++) {
+        var wardAngle = progress * 1.8 + ward * (Math.PI / 2);
+        var wardX = guardCenterX + Math.cos(wardAngle) * (18 + pulse * 6);
+        var wardY = guardCenterY + Math.sin(wardAngle) * (10 + pulse * 4) - 2;
+        ctx.fillStyle = hexToRgba(overlay.accentColor || overlay.color, 0.28 * alpha);
+        ctx.fillRect(Math.floor(wardX - 3), Math.floor(wardY - 3), 6, 6);
+      }
+    } else if (overlay.motif === 'breakthrough') {
+      var slashBaseX = overlay.targetX - 28;
+      var slashBaseY = overlay.targetY + 6;
+      for (var streak = 0; streak < 5; streak++) {
+        var streakShift = ((progress * 140) + streak * 22) % 132;
+        ctx.save();
+        ctx.translate(194 + streakShift, 190 - streakShift * 0.46 + streak * 5);
+        ctx.rotate(-0.52);
+        ctx.fillStyle = hexToRgba(streak === 0 ? (overlay.accentColor || overlay.color) : overlay.color, (0.28 - streak * 0.04) * alpha);
+        ctx.fillRect(-28, -1, 56, streak === 0 ? 4 : 2);
+        ctx.restore();
+      }
+      for (var wedge = 0; wedge < 2; wedge++) {
+        var wedgeOffset = wedge * 14;
+        ctx.fillStyle = hexToRgba(wedge === 0 ? (overlay.accentColor || overlay.color) : overlay.color, (0.22 - wedge * 0.05) * alpha);
+        ctx.beginPath();
+        ctx.moveTo(slashBaseX - wedgeOffset, slashBaseY - 24 - wedgeOffset);
+        ctx.lineTo(slashBaseX + 54 - wedgeOffset, slashBaseY - wedgeOffset);
+        ctx.lineTo(slashBaseX - wedgeOffset, slashBaseY + 24 - wedgeOffset);
+        ctx.lineTo(slashBaseX + 8 - wedgeOffset, slashBaseY - wedgeOffset);
+        ctx.closePath();
+        ctx.fill();
+      }
+    }
+
+    ctx.fillStyle = hexToRgba(overlay.color, 0.18 * alpha);
+    ctx.fillRect(overlay.sourceX - 18, overlay.sourceY - 18, 36, 36);
+    ctx.fillStyle = overlay.color;
+    ctx.fillRect(Math.floor(flowX - 14), Math.floor(flowY - 14), 28, 28);
+    ctx.fillStyle = overlay.shadeColor || '#09101b';
+    ctx.fillRect(Math.floor(flowX - 7), Math.floor(flowY - 7), 14, 14);
+    R.drawTextJP(overlay.sigil || '支', Math.floor(flowX), Math.floor(flowY - 2), overlay.accentColor || '#ffffff', 12, 'center');
+
+    ctx.fillStyle = 'rgba(255,255,255,' + (0.08 + alpha * 0.07).toFixed(3) + ')';
     ctx.fillRect(panelX, panelY, panelW, panelH);
+    ctx.fillStyle = 'rgba(8, 12, 24, ' + (0.74 + alpha * 0.08).toFixed(3) + ')';
+    ctx.fillRect(panelX + 6, panelY + 6, panelW - 12, panelH - 12);
     ctx.strokeStyle = hexToRgba(overlay.color, 0.58 * alpha);
     ctx.lineWidth = 1.5;
     ctx.strokeRect(panelX + 0.5, panelY + 0.5, panelW - 1, panelH - 1);
-
     ctx.fillStyle = hexToRgba(overlay.color, 0.18 * alpha);
-    ctx.fillRect(panelX + 14, panelY + 12, 78, 54);
+    ctx.fillRect(panelX + 12, panelY + 10, panelW - 24, 3);
+    ctx.fillRect(panelX + 12, panelY + panelH - 14, panelW - 24, 2);
+    ctx.fillStyle = hexToRgba(overlay.color, 0.10 * alpha);
+    ctx.fillRect(panelX + 88, panelY + 62, panelW - 106, 36);
+    ctx.fillStyle = hexToRgba(overlay.color, 0.18 * alpha);
+    ctx.fillRect(badgeX, badgeY, badgeSize, badgeSize);
+    ctx.strokeStyle = hexToRgba(overlay.accentColor || overlay.color, 0.44 * alpha);
+    ctx.strokeRect(badgeX + 0.5, badgeY + 0.5, badgeSize - 1, badgeSize - 1);
     ctx.fillStyle = overlay.color;
-    ctx.fillRect(chipX, chipY, 24, 24);
-    ctx.fillStyle = '#09101b';
-    ctx.fillRect(chipX + 6, chipY + 6, 12, 12);
+    ctx.fillRect(badgeX + 10, badgeY + 8, badgeSize - 20, badgeSize - 24);
+    ctx.fillStyle = overlay.shadeColor || '#09101b';
+    ctx.fillRect(badgeX + 20, badgeY + 18, badgeSize - 40, badgeSize - 44);
+    R.drawTextJP(overlay.sigil || '支', badgeX + Math.floor(badgeSize / 2), badgeY + 19, overlay.accentColor || '#ffffff', 16, 'center');
+    R.drawTextJP(overlay.effectLabel || '支援', badgeX + Math.floor(badgeSize / 2), badgeY + 46, '#edf3ff', 8, 'center');
 
-    R.drawTextJP(overlay.memberName, panelX + 24, panelY + 20, overlay.color, 14);
-    R.drawTextJP(overlay.role, panelX + 24, panelY + 36, '#dbe6ff', 10);
-    R.drawTextJP(overlay.commandName, panelX + 112, panelY + 20, '#fff2bf', 12);
+    ctx.fillStyle = hexToRgba(overlay.color, 0.16 * alpha);
+    ctx.fillRect(panelX + 242, panelY + 18, 54, 16);
+    R.drawTextJP(overlay.effectLabel || '支援', panelX + 269, panelY + 22, overlay.accentColor || overlay.color, 8, 'center');
+    R.drawTextJP(overlay.memberName, panelX + 94, panelY + 18, overlay.color, 14);
+    R.drawTextJP(overlay.role, panelX + 94, panelY + 34, '#dbe6ff', 10);
+    R.drawTextJP(overlay.commandName, panelX + 94, panelY + 54, '#fff2bf', 12);
     for (var li = 0; li < overlay.detailLines.length; li++) {
-      R.drawTextJP(overlay.detailLines[li], panelX + 112, panelY + 38 + li * 12, '#edf3ff', 10);
+      R.drawTextJP(overlay.detailLines[li], panelX + 94, panelY + 72 + li * 12, '#edf3ff', 10);
     }
+    R.drawTextJP(clampBattleText(overlay.noteText || '', 28), panelX + 94, panelY + 96, '#b9c7ea', 9);
   }
 
   function drawBattleIntroOverlay(R, ctx, C) {
@@ -3409,9 +4159,12 @@ Game.Battle = (function() {
       ctx.fillRect(0, 0, C.CANVAS_WIDTH, C.CANVAS_HEIGHT);
     }
 
-    R.drawTextJP(introLabel, 240, 96, introAccent, 15, 'center');
-    R.drawTextJP(introSubLabel, 240, 146, '#ffffff', isGroupBattle() ? 12 : 15, 'center');
-    R.drawTextJP('境界がきしむ', 240, 120, '#a9b5d9', 9, 'center');
+    R.drawTextJP(clampBattleText(introLabel, 18), 240, 96, introAccent, 15, 'center');
+    R.drawTextJP(clampBattleText(introMidLabel, 22), 240, 120, '#a9b5d9', 9, 'center');
+    var introSubLines = wrapBattleText(introSubLabel, isGroupBattle() ? 22 : 18, isGroupBattle() ? 2 : 1);
+    for (var i = 0; i < introSubLines.length; i++) {
+      R.drawTextJP(introSubLines[i], 240, 146 + i * 12, '#ffffff', isGroupBattle() ? 11 : 15, 'center');
+    }
   }
 
   function getStateSnapshot() {
@@ -3424,6 +4177,8 @@ Game.Battle = (function() {
         memberId: supportActionOverlay.memberId,
         memberName: supportActionOverlay.memberName,
         commandName: supportActionOverlay.commandName,
+        motif: supportActionOverlay.motif,
+        effectLabel: supportActionOverlay.effectLabel,
         timer: supportActionOverlay.timer,
         detailLines: supportActionOverlay.detailLines.slice()
       } : null,
@@ -3446,14 +4201,23 @@ Game.Battle = (function() {
         maxHp: enemy.maxHp
       },
       enemies: enemyParty.map(function(foe, index) {
+        var readStyle = getEnemyReadStyle(foe);
         return {
           index: index,
           name: foe.name,
           hp: Math.max(0, foe.hp),
           maxHp: foe.maxHp,
-          active: index === currentTargetIndex
+          active: index === currentTargetIndex,
+          tag: readStyle.tag,
+          role: foe._formationRole || ''
         };
       }),
+      formation: encounterProfile ? {
+        packName: encounterProfile.packName,
+        omen: encounterProfile.omen,
+        directive: encounterProfile.directive,
+        layout: encounterProfile.layout
+      } : null,
       menuEntries: getMenuEntries().map(function(entry) { return entry.label; }),
       itemMenu: phase === 'itemMenu' ? itemMenuItems.map(function(entry, index) {
         return {
@@ -3532,19 +4296,18 @@ Game.Battle = (function() {
 
     drawBattleBackdrop(R, ctx, C);
 
-    R.drawDialogBox(10, 8, 112, 18);
-    drawBattlePanelAccent(R, 10, 8, 112, 18, isSpecialRitualBattle() ? '#ffd66b' : '#8fb8ff');
-    if (isSpecialRitualBattle()) {
-      R.drawTextJP('儀式戦', 20, 12, '#ffd66b', 10);
-    } else if (isGroupBattle()) {
-      R.drawTextJP('群れ遭遇 ' + getLivingEnemies().length + '体', 20, 12, '#8fe0ff', 10);
-    } else {
-      R.drawTextJP('通常戦闘', 20, 12, '#8fe0ff', 10);
-    }
+    R.drawDialogBox(10, 8, 132, 18);
+    drawBattlePanelAccent(R, 10, 8, 132, 18, getBattleAccentColor());
+    var battleHeaderText = isGroupBattle()
+      ? getBattleHeaderLabel() + ' ' + getLivingEnemies().length + '体'
+      : getBattleHeaderLabel();
+    R.drawTextJP(clampBattleText(battleHeaderText, 11), 20, 12, getBattleAccentColor(), 10);
 
     // Enemy
     if (enemy) {
-      if (isGroupBattle()) {
+      if (ritualRuntime && ritualRuntime.ritualMode === 'offering') {
+        drawOfferingConstellation(R, ctx, C, ritualRuntime);
+      } else if (isGroupBattle()) {
         drawEnemyPartyGroup(R, ctx, C);
       } else {
       var ex = 200 + (shakeX > 0 ? (Math.random() - 0.5) * shakeX : 0);
@@ -3945,6 +4708,26 @@ Game.Battle = (function() {
 
   function isActive() { return active; }
 
+  function debugResolveRitualAction(actionId, itemId) {
+    if (!active || !ritualRuntime) return false;
+    if (actionId === 'release_light_die') {
+      return resolveOfferingLightRelease();
+    }
+    if ((actionId === 'drop_item_to_offering_slot' || actionId === 'drop_item_to_eye_slot') && itemId) {
+      var item = Game.Items.get(itemId);
+      if (!item) return false;
+      return resolveRitualItemSelection({ id: itemId, item: item }, actionId);
+    }
+    var menuEntries = getMenuEntries();
+    for (var i = 0; i < menuEntries.length; i++) {
+      if (menuEntries[i].id === actionId) {
+        executeAction(i, menuEntries[i]);
+        return true;
+      }
+    }
+    return false;
+  }
+
 
   function resolveDiceResults() {
             // All dice stopped — calculate results
@@ -4194,6 +4977,7 @@ Game.Battle = (function() {
     getRitualDefinition: function(mode) {
       return Game.RitualBattles && Game.RitualBattles.getDefinition ? Game.RitualBattles.getDefinition(mode) : null;
     },
+    debugResolveRitualAction: debugResolveRitualAction,
     getBossGimmick: function(bossId) { return bossGimmicks[bossId] || null; },
     getAllBossGimmicks: function() { return bossGimmicks; },
     debugForceBossCue: function(kind) {

@@ -826,3 +826,70 @@ Original prompt: そうだね。セーブできる村役場みたいなところ
   - `node --check js/battle.js` 通過。
   - `develop-web-game` の Playwright client を `output/web-game/reward-growth-ui-fix` で実行し、`debugBattle=roadsideBandit&debugAttack=999&debugExp=258` の戦果画面で `つぎの目安` が見出し、`次のランクまで あと42` がその下に独立表示されることを確認した。
   - Playwright console error は 0 件。AudioContext の autoplay 警告のみ発生した。
+- 2026-04-05: イベント終端の暗転バグを全イベント共通で修正。
+  - オープニング終端で `sceneIndex === sceneCount` のままフェードアウトに入り、`event.draw()` が何も描かず真っ暗になる不具合を特定した。
+  - `js/event.js` に `renderHold` と `holdTerminalScene() / getDrawState()` を追加し、最後の `fade` 中も直前のシーンと全文を保持して描画し続けるようにした。
+  - 同時に `renderHold` のクリア条件を `start()` / `update()` に明示し、イベント再開や終了時に古い描画が残らないよう整理した。
+- 2026-04-05: `event.js / story.js / main.js` の章導入処理を整理。
+  - `js/story.js` に `chapterStartPlans` と `getChapterStartPlan()` を追加し、2章以降の導入イベント / 開始マップ / 初期座標 / リセット対象マップをデータ側へ寄せた。
+  - `js/main.js` には `startChapter()`, `tryHandleChapterEndingAction()`, `startFinalOfferingSequence()` を追加し、章またぎの分岐を章番号ベースの共通処理へ寄せた。
+  - `event_ch2_ending` 〜 `event_ch9_ending` の個別分岐は共通ハンドラへ寄せ、終章だけ奉納導入イベント `ep_constellation_offering_intro` を挟む構造へ再構成した。
+- 2026-04-05: 終章の奉納UIと儀式フローを実装。
+  - `js/ritual_battles.js`
+    - `offering` 儀式定義を追加し、5つの供物スロット、誤奉納の拒否、全枠充足後の `lightDieReady`、光を手放したあとの静寂フェーズを実装した。
+  - `js/battle.js`
+    - `finalOffering` 敵定義を追加し、奉納専用の `battleLabel / battleAccent / ritualParams.offerings` を設定した。
+    - 奉納戦のメニューを `奉納する / 光を手放す` 中心の構成へ分け、通常攻撃系メニューを出さないようにした。
+    - `ritualMoment` フェーズを追加し、光解放後は BGM を止めて、一定時間の静寂のあと戦果画面へ移る流れを接続した。
+    - 奉納専用の祭壇UIを追加し、5つの空位、中央の光ダイス、満たされた記憶のアイコン、`ありがとう` の段階表示を描画するようにした。
+    - 奉納戦では敵ターンの攻撃演出が走らないようにし、戦果画面も勝利ジングルなしで静かに入るよう調整した。
+    - QA用に `debugResolveRitualAction()` を追加し、奉納・儀式の自動検証をしやすくした。
+- 2026-04-05: 暗転修正と奉納実装の検証結果
+  - `node --check js/event.js js/story.js js/main.js js/ritual_battles.js js/battle.js` 通過。
+  - `develop-web-game` の Playwright client を `output/web-game-20260405/opening-smoke` と `output/web-game-20260405/opening-transition` で実行し、オープニング後に `mode = exploring`, `map = maebashi`, `audio.currentBgm = field_maebashi` へ自然遷移すること、console error / pageerror が 0 件であることを確認した。
+  - `output/web-game-20260405/opening-transition/shot-0.png` を目視し、以前の真っ暗なフレームではなく、前橋中央通りの探索画面がそのまま表示されることを確認した。
+  - `output/web-game-20260405/offering-check` で終章奉納を自動確認し、誤奉納時に `こんにゃくパスはまだ違う。次は「願いの目」が待っている。` が出ること、全5枠充足後にメニューが `奉納を見直す / 光を手放す` へ変わること、`releasePhase = ritualMoment`, `rewardPhase = reward` まで到達することを確認した。
+  - 同テストで `offering-release.png` と `offering-reward.png` を目視し、静寂中の祭壇UIと、無音余韻のまま出る戦果パネルを確認した。console error / pageerror は 0 件。
+- 2026-04-05: 後半章の到着時環境ストーリーテリングを横展開。
+  - `js/main.js` の `ARRIVAL_EVENT_MAP` を拡張し、`shirane_trail / kusatsu_deep / jomo_gakuen / tanigawa_tunnel / haruna_lake / oze_marsh / minakami_valley / border_tunnel` に自動到着イベントを接続した。
+  - `js/event.js` には各マップ専用の2カット導入イベントを追加し、硫黄帯、学園廊下、谷川坑口、榛名湖、尾瀬湿原、水上の谷、国境トンネルなど、章後半の土地ごとの空気が最初の一歩で伝わるようにした。
+  - あわせて `sulfur_ridge / school_hall / tunnel_drift / lake_mist / marsh_breath / valley_crosswind / boundary_gate` のモーション背景を追加し、章導入の見た目も汎用フェードだけで終わらないようにした。
+- 2026-04-05: 後半章到着演出の検証結果
+  - `node --check js/event.js js/main.js` 通過。
+  - `develop-web-game` の Playwright client を `output/web-game-20260405/arrival-storytelling` で実行し、追加した8マップすべてで `mode = event`, `sceneCount = 2` の到着イベントが自動起動することを `summary.json` で確認した。
+  - 各マップの 1 枚目テキストも自動取得し、白根山道・草津深部・上毛学園・谷川トンネル・榛名湖・尾瀬・水上・国境トンネルの導入文がそれぞれ固有内容になっていることを確認した。
+  - `jomo_gakuen-lit.png` と `border_tunnel-lit.png` を目視し、廊下の蛍光灯と終端トンネルの境界表現が黒つぶれせず表示されることを確認した。console error / pageerror は 0 件。
+- 2026-04-05: 探索中の同行アニメを実装。
+  - `js/player.js` に移動履歴ベースの追従描画を追加し、仲間が主人公の数歩後ろをなぞる形でフィールド上に同行表示されるようにした。
+  - アカギ / 山川 / 古谷にはそれぞれ固有の追従パレットを割り当て、足元の影と小さな気配マーカーも足して、同じスプライト流用でも見分けやすくした。
+  - 履歴は停止中に無限に上書きしないようにし、主人公が立ち止まっても隊列がその場で潰れず残るよう調整した。
+  - `js/main.js` の `render_game_to_text` に `followers` を追加し、追従位置を自動確認しやすくした。
+- 2026-04-05: 同行アニメ実装の検証結果
+  - `node --check js/player.js js/main.js` 通過。
+  - `develop-web-game` の Playwright client を `output/web-game-20260405/follower-smoke` と `output/web-game-20260405/follower-smoke-rerun` で実行し、開幕側のスモークに新規エラーが増えていないことを確認した。
+  - 追加で Playwright により `maebashi` 上へ3人同行状態を直接作り、`output/web-game-20260405/follower-escort/summary.json` で追従座標を確認した。停止時は `akagi / yamakawa / furuya` が別々の座標に残り、歩行時も `followers-walk.png` で隊列が左へ流れることを確認した。
+  - `followers-idle.png` と `followers-walk.png` を目視し、前橋中央通りで 3 人の同行表示が重なり切らず、HUD や地面の読みに大きく干渉しないことを確認した。console error / pageerror は 0 件。
+- 2026-04-07: 通常戦の群れプロフィールと差別化演出を強化。
+  - `js/encounters.js` に `formation()` を追加し、複数敵編成へ `packName / omen / directive / entryText / layout / accent / roles` を持てるようにした。
+  - 高崎、草津、下仁田、富岡、嬬恋、森、小沼、大沼、赤城牧場、白根山道、草津深部、谷川、榛名、尾瀬、水上の複数敵編成をプロフィール付きへ置き換え、群れごとに役割と演出名が立つようにした。
+  - `js/battle.js` はこのプロフィールを受け取れるようにし、群れ戦で `packName` ベースの導入オーバーレイ、`directive` を出す群れカード、`layout` に応じた隊列配置、個体ごとの `role` 表示を追加した。
+  - あわせて `wishShelfShade / bathhouseRemnant / ferryBellEcho / marshPathShade / mudWisp` の個体タグと意図を `enemyReadStyles` に追加し、群れの中でも「何をする相手か」が読み取れるようにした。
+  - 群れ導入中は HP バーや群れカードを抑え、導入オーバーレイの読みやすさを優先するよう整理した。
+- 2026-04-07: 群れ演出強化の検証結果
+  - `node --check js/encounters.js js/battle.js` と `git diff --check` 通過。
+  - `output/web-game-20260407/group-identity` で Playwright による実戦確認を行い、`takasaki` の 2 体編成と `onuma` の 3 体編成を `Game.Encounters.consumeStep()` から実際に取得して戦闘開始した。
+  - `summary.json` では 2 体編成に `棚荒らしの連れ影 / 掠め役 / 拾い手`、3 体編成に `湖畔の寄せ集め / 掠め役 / 誘い灯 / 当て役` が入り、`battle.formation` と各敵の `tag / role` が `render_game_to_text` に反映されることを確認した。
+  - `takasaki-duo-intro.png` では群れ導入時に中央オーバーレイだけが立ち、`takasaki-duo-menu.png` と `onuma-trio-menu.png` では隊列の並び、群れカード、個体役割チップが読み取れることを目視した。console error / pageerror は 0 件。
+  - 追加で `develop-web-game` の Playwright client を `output/web-game-20260407/group-smoke` で実行し、`?debugBattle=wishShelfShade` の単体通常戦でも新しい個体タグ `棚願い火` が出ることを確認した。
+- 2026-04-07: 仲間支援の発動演出を強化。
+  - `js/battle.js`
+    - 支援オーバーレイへ `motif / sigil / effectLabel / noteText / focus座標` を持たせ、仲間ごとに演出の意味が見た目へ直結するようにした。
+    - `アカギ=boundary`, `山川=bulwark`, `古谷=breakthrough` の3系統を追加し、境界フレーム、守りの輪、突破斬線が戦闘画面へ出るようにした。
+    - 発動ライン上を流れる支援チップ、仲間別バッジ、効果ラベルを追加し、誰がどこへ効かせた支援かを一目で読めるようにした。
+    - パネル内部は暗いインナーと本文帯を敷き直し、背景や敵情報が透けすぎて読みづらくなる問題を抑えた。
+    - `getStateSnapshot()` の `supportAction` に `motif / effectLabel` を追加し、自動確認で演出種類まで追えるようにした。
+- 2026-04-07: 仲間支援演出強化の検証結果
+  - `node --check js/battle.js` 通過。
+  - `develop-web-game` の Playwright client を `?debugBattle=roadsideBandit` で再実行し、支援演出追加後も通常戦スモークで新規 console error / pageerror が出ていないことを確認した。
+  - `output/web-game-20260407/support-visuals` で Playwright により `アカギ / 山川 / 古谷` を順に発動させ、`summary.json` で `supportAction.memberId / motif / effectLabel` と、各自の効果 (`enemy_roll_slow`, `slow_roll`, `defense_up`, `ward`, `attack_up`, `dice_bonus`) が正しく付与されることを確認した。
+  - `akagi-support.png`, `yamakawa-support.png`, `furuya-support.png` を目視し、境界線、守りの輪、突破斬線の3演出がそれぞれ別の印象で立ち、支援パネル内の文字も読み崩れないことを確認した。console error / pageerror は 0 件。

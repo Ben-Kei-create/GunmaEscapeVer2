@@ -1,0 +1,163 @@
+{
+  "mode": "battle",
+  "titleSelection": 0,
+  "map": "tomioka",
+  "mapLabel": "富岡製糸場跡",
+  "audio": {
+    "requestedBgm": "battle",
+    "currentBgm": "battle"
+  },
+  "player": {
+    "tileX": 14,
+    "tileY": 8,
+    "direction": "down",
+    "hp": 96,
+    "maxHp": 96,
+    "attack": 12,
+    "defense": 6,
+    "experience": 0,
+    "journeyRank": 1,
+    "nextRankExperience": 80,
+    "gold": 100,
+    "chapter": 1,
+    "skillsKnown": [],
+    "skillCharges": {},
+    "inventory": []
+  },
+  "journeyLabel": "第二章",
+  "journeyIndex": 2,
+  "chapterTitle": "路線の町と最初の敬意",
+  "objective": "残された産業の記憶を辿り、旅路の作法をひとつ深める。",
+  "respectGauge": 0,
+  "catalystCount": 0,
+  "party": [],
+  "storyFlags": {
+    "checkpointFailedOnce": false,
+    "checkpointCleared": false,
+    "akagiJoinedSlice": false,
+    "darumaCleared": false,
+    "threadCleared": false
+  },
+  "continueSlot": null,
+  "hasAnySave": false,
+  "saveMenuContext": "field",
+  "quests": {
+    "open": false,
+    "active": [
+      {
+        "id": "onsen_tour",
+        "name": "温泉巡り",
+        "progress": 0,
+        "target": 3
+      },
+      {
+        "id": "joumo_karuta_collection",
+        "name": "上毛かるた収集",
+        "progress": 0,
+        "target": 5
+      },
+      {
+        "id": "daruma_perseverance",
+        "name": "だるま七転び八起き",
+        "progress": 0,
+        "target": 3
+      },
+      {
+        "id": "gunma_dialect_master",
+        "name": "群馬弁マスター",
+        "progress": 0,
+        "target": 5
+      }
+    ]
+  },
+  "services": [
+    {
+      "id": "heritageGuide",
+      "type": "dice_shop",
+      "x": 14,
+      "y": 16
+    },
+    {
+      "id": "tomiokaInnkeeper",
+      "type": "inn",
+      "x": 4,
+      "y": 15
+    }
+  ],
+  "ui": {
+    "showJourneyBadge": true,
+    "eventTextSpeed": "ふつう",
+    "battleDialogueSpeed": "ふつう"
+  },
+  "title": {
+    "mode": "intro_movie",
+    "sceneId": "highway",
+    "sceneTitle": "深夜の関越道",
+    "sceneIndex": 0,
+    "sceneTimer": 14,
+    "totalTimer": 14,
+    "revealTimer": 0
+  },
+  "encounters": {
+    "mapId": "tomioka",
+    "eligibleSteps": 0,
+    "cooldown": 3,
+    "cycleIndex": 0
+  },
+  "achievements": {
+    "unlockedCount": 1,
+    "totalCount": 22,
+    "trackedMapCount": 21,
+    "visitedTrackedMapCount": 2
+  },
+  "battle": {
+    "phase": "menu",
+    "backdropId": "boss_ritual",
+    "message": "絡糸の機女が現れた！",
+    "bossAction": null,
+    "enemyRoll": null,
+    "targetIndex": 0,
+    "enemy": {
+      "name": "絡糸の機女",
+      "hp": 1,
+      "maxHp": 1
+    },
+    "enemies": [
+      {
+        "index": 0,
+        "name": "絡糸の機女",
+        "hp": 1,
+        "maxHp": 1,
+        "active": true
+      }
+    ],
+    "menuEntries": [
+      "たたかう",
+      "アイテム",
+      "とくぎ",
+      "にげる"
+    ],
+    "itemMenu": null,
+    "skillMenu": null,
+    "playerEffects": [],
+    "enemyEffects": [],
+    "ritual": {
+      "mode": "untangle",
+      "gauge": 12,
+      "targetZone": null,
+      "hintState": 0,
+      "slots": [],
+      "state": {
+        "eyeRepaired": false,
+        "hpZeroReached": false,
+        "lastLowDiceHit": false,
+        "overCoolPenalty": false,
+        "resonanceCreated": false,
+        "reviewPhaseIndex": 0,
+        "targetZoneRevealed": false
+      }
+    },
+    "dialogue": null,
+    "rewardSummary": null
+  }
+}

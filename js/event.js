@@ -13,6 +13,7 @@ Game.Event = (function() {
   var onComplete = null;
   var textComplete = false;
   var autoAdvanceTimer = 0;
+  var renderHold = null;
   var MAX_EVENT_CHARS_PER_LINE = 23;
   var TRAILING_PUNCTUATION = '、。！？…）)]」』】';
 
@@ -296,6 +297,174 @@ Game.Event = (function() {
         lines: [
           '赤城の奥は、景色が広いほど逃げ場がない。',
           '足を止めたら飲まれる。見るなら遠くより、まず足元だ。'
+        ]
+      }
+    ],
+
+    arrival_shirane_trail_auto: [
+      {
+        bg: '#24140f',
+        motion: 'sulfur_ridge',
+        speaker: null,
+        lines: [
+          '白根の登山道へ出た瞬間、風に混じって硫黄の甘い痛みが喉へ貼りついた。',
+          '崩れた石のあいだから、まだ誰かを止めたいみたいな熱だけが細く漏れている。'
+        ]
+      },
+      {
+        bg: '#1a1220',
+        speaker: '主人公',
+        speakerColor: '#88aaff',
+        lines: [
+          '一歩ごとに、ここは温泉地の延長じゃなくて傷口の縁だとわかる。',
+          '足元が焼ける前に、この山の息を読み直さなきゃいけない。'
+        ]
+      }
+    ],
+
+    arrival_kusatsu_deep_auto: [
+      {
+        bg: '#121a1f',
+        motion: 'sulfur_ridge',
+        speaker: null,
+        lines: [
+          '草津の深部では、湯けむりが慰めじゃなく境界線みたいに視界を区切っていた。',
+          '見慣れたはずの湯の匂いまで、ここでは「戻るな」と囁いてくる。'
+        ]
+      },
+      {
+        bg: '#17121e',
+        speaker: '主人公',
+        speakerColor: '#88aaff',
+        lines: [
+          '休める場所のはずなのに、息をつくほど輪郭がほどけていく。',
+          '湯のやさしさごと呑まれる前に、奥で暴れているものを止める。'
+        ]
+      }
+    ],
+
+    arrival_jomo_gakuen_auto: [
+      {
+        bg: '#0d0f1b',
+        motion: 'school_hall',
+        speaker: null,
+        lines: [
+          '校舎へ足を踏み入れると、誰もいない廊下の向こうで椅子を引く音だけが先に鳴った。',
+          '止まった時計と磨かれすぎた床が、ここでは時間そのものが提出物だと告げてくる。'
+        ]
+      },
+      {
+        bg: '#120f19',
+        speaker: '校内放送',
+        speakerColor: '#cdb7ff',
+        lines: [
+          '着席時間です。忘れたい記憶を机上へ置き、正しい答えだけを持って移動してください。',
+          '未提出の名前は、廊下に残されます。'
+        ]
+      }
+    ],
+
+    arrival_tanigawa_tunnel_auto: [
+      {
+        bg: '#d9e1ef',
+        motion: 'tunnel_drift',
+        speaker: null,
+        lines: [
+          '谷川の白さは景色じゃなく、音と輪郭を削るための静けさだった。',
+          '坑口の黒だけが濃く、雪明かりの中で「名を置いて入れ」と口を開けている。'
+        ]
+      },
+      {
+        bg: '#161b28',
+        speaker: '主人公',
+        speakerColor: '#88aaff',
+        lines: [
+          '吐いた息まで自分のものじゃないみたいに薄い。',
+          'ここを越えるなら、忘れた名前の穴まで抱えたまま進むしかない。'
+        ]
+      }
+    ],
+
+    arrival_haruna_lake_auto: [
+      {
+        bg: '#102030',
+        motion: 'lake_mist',
+        speaker: null,
+        lines: [
+          '榛名湖へ出ると、水面と空の境目が霧の中でひとつに溶けていた。',
+          '岸に立っているはずなのに、足元までゆっくり沈みはじめたような錯覚が離れない。'
+        ]
+      },
+      {
+        bg: '#16192a',
+        speaker: '山川',
+        speakerColor: '#77aa55',
+        lines: [
+          '湖畔の地形が地図と噛み合わない。霧が景色そのものをずらしてる。',
+          '見えない時ほど、遠くより手前の輪郭から確かめよう。'
+        ]
+      }
+    ],
+
+    arrival_oze_marsh_auto: [
+      {
+        bg: '#112018',
+        motion: 'marsh_breath',
+        speaker: null,
+        lines: [
+          '尾瀬の木道は泥の呼吸にあわせてわずかに軋み、踏むたび下の黒がこちらを見返してきた。',
+          '花が咲くはずの湿原なのに、いまは沈みかけた記憶のほうが色を持っている。'
+        ]
+      },
+      {
+        bg: '#15241b',
+        speaker: '山川',
+        speakerColor: '#77aa55',
+        lines: [
+          'ここは景色より足場が物語る場所ね。崩れてるのは道だけじゃない。',
+          '沈んだ痕跡を拾いながら進めば、誰が先に通ったかも見えてくる。'
+        ]
+      }
+    ],
+
+    arrival_minakami_valley_auto: [
+      {
+        bg: '#11182a',
+        motion: 'valley_crosswind',
+        speaker: null,
+        lines: [
+          '水上の谷へ降りると、断崖を打つ冷たい水音が会話の間まで削っていった。',
+          'ここではためらいすら長く持てない。迷ったぶんだけ、風が先に答えを持っていく。'
+        ]
+      },
+      {
+        bg: '#171225',
+        speaker: '主人公',
+        speakerColor: '#88aaff',
+        lines: [
+          '古谷の足取りはいつもよりまっすぐで、そのぶん危うい。',
+          '追いつくなら説得の言葉より先に、同じ寒さの中へ立たなきゃいけない。'
+        ]
+      }
+    ],
+
+    arrival_border_tunnel_auto: [
+      {
+        bg: '#080b12',
+        motion: 'boundary_gate',
+        speaker: null,
+        lines: [
+          '国境トンネルの表示板は、行き先の代わりに旅の地名を順番に滲ませていた。',
+          '歩いてきた群馬じゅうの景色が、最後の入口でひとつの暗がりへ折り畳まれていく。'
+        ]
+      },
+      {
+        bg: '#100d18',
+        speaker: 'アカギ',
+        speakerColor: '#44aaff',
+        lines: [
+          'ここは終点じゃない。旅で拾ったものを返すための、いちばん静かな関所だ。',
+          '置いてきた景色の数だけ、お前の足はもう後戻りしない。'
         ]
       }
     ],
@@ -588,6 +757,40 @@ Game.Event = (function() {
       { bg: '#111111', speaker: 'アカギ', speakerColor: '#cc6633', lines: ['空気が違う。ここまでの結界とは比べ物にならない重圧だ。', 'だが、恐れることはない。我々にはこれまでの絆がある。', '行くぞ！ 全ての因縁をここで断ち切るのだ！'] },
       { bg: '#111111', speaker: '主人公', speakerColor: '#88aaff', lines: ['失われた記憶が戻る保証はない。', 'それでも、この仲間たちと過ごした旅の時間は本物だ。', '群馬からの脱出。その答えを、俺自身の手で掴み取る！'], effect: 'fade' }
     ],
+    ep_constellation_offering_intro: [
+      {
+        bg: '#050812',
+        motion: 'constellation_altar',
+        speaker: null,
+        lines: [
+          '崩れかけた境界の床へ、五つの空位が星座みたいに浮かび上がる。',
+          '返すべき記憶だけを、静かに置いていけと場のほうが告げていた。'
+        ],
+        autoAdvance: 180
+      },
+      {
+        bg: '#07101a',
+        motion: 'constellation_altar',
+        speaker: 'アカギ',
+        speakerColor: '#44aaff',
+        lines: [
+          'ここは押し切る場所じゃない。',
+          '群馬から借りた誇りを、順番どおりに返せ。最後は光だけを手放せばいい。'
+        ],
+        autoAdvance: 180
+      },
+      {
+        bg: '#04070f',
+        motion: 'constellation_altar',
+        speaker: null,
+        lines: [
+          '音を足すな。急ぐな。',
+          '置き終えたあとに残る静けさまで、儀式の一部になる。'
+        ],
+        effect: 'fade',
+        autoAdvance: 180
+      }
+    ],
     ch10_ending: [
       { bg: '#111111', speaker: 'ジューク', speakerColor: '#ff4444', lines: ['バカな……この完璧な箱庭が、崩壊していく……！', 'お前たちは、本当に現実へ帰るつもりですか？', 'このぬるま湯のような世界を捨てて、残酷な現実へ……？'] },
       { bg: '#000000', speaker: null, lines: ['真・ジュークの体が光に包まれ、空間全体が激しく揺れ始めた。', '境界が崩れていく……。', '目の前に、現実世界へ続く眩い光の裂け目が現れた。'] },
@@ -714,6 +917,7 @@ Game.Event = (function() {
     waitTimer = 0;
     textComplete = false;
     autoAdvanceTimer = 0;
+    renderHold = null;
     charSpeed = getConfiguredCharSpeed();
     onComplete = callback || null;
 
@@ -775,6 +979,7 @@ Game.Event = (function() {
         fadeDir = 0;
         // If fading out (between scenes), advance
         if (sceneIndex >= scenes.length) {
+          renderHold = null;
           active = false;
           if (onComplete) onComplete();
           return { result: 'done' };
@@ -790,6 +995,7 @@ Game.Event = (function() {
 
     var scene = scenes[sceneIndex];
     if (!scene) {
+      renderHold = null;
       active = false;
       if (onComplete) onComplete();
       return { result: 'done' };
@@ -841,8 +1047,9 @@ Game.Event = (function() {
     var C = Game.Config;
     var ctx = R.getContext();
 
-    var scene = scenes[sceneIndex];
-    if (!scene) return;
+    var drawState = getDrawState();
+    if (!drawState || !drawState.scene) return;
+    var scene = drawState.scene;
 
     // Background
     var bg = scene.bg || '#000011';
@@ -881,13 +1088,13 @@ Game.Event = (function() {
     var maxCharsPerLine = MAX_EVENT_CHARS_PER_LINE;
     var visualLines = [];
 
-    for (var i = 0; i <= lineIndex && i < scene.lines.length; i++) {
-      var lineText = i < lineIndex ? scene.lines[i] : scene.lines[i].substring(0, charIndex);
+    for (var i = 0; i <= drawState.lineIndex && i < scene.lines.length; i++) {
+      var lineText = i < drawState.lineIndex ? scene.lines[i] : scene.lines[i].substring(0, drawState.charIndex);
       var wrapped = wrapEventText(lineText, maxCharsPerLine);
       for (var j = 0; j < wrapped.length; j++) {
         visualLines.push({
           text: wrapped[j],
-          isCurrent: i === lineIndex
+          isCurrent: i === drawState.lineIndex
         });
       }
     }
@@ -939,8 +1146,10 @@ Game.Event = (function() {
 
       if (sceneIndex >= scenes.length) {
         if (scene.effect === 'fade') {
+          holdTerminalScene(scene);
           fadeDir = 1;
         } else {
+          renderHold = null;
           active = false;
           if (onComplete) onComplete();
         }
@@ -1157,6 +1366,225 @@ Game.Event = (function() {
         }
         break;
 
+      case 'sulfur_ridge':
+        ctx.fillStyle = '#241611';
+        ctx.fillRect(0, h * 0.62, w, h * 0.38);
+        ctx.fillStyle = '#342018';
+        ctx.beginPath();
+        ctx.moveTo(0, h);
+        ctx.lineTo(w * 0.14, h * 0.6);
+        ctx.lineTo(w * 0.28, h * 0.68);
+        ctx.lineTo(w * 0.44, h * 0.5);
+        ctx.lineTo(w * 0.62, h * 0.72);
+        ctx.lineTo(w * 0.8, h * 0.54);
+        ctx.lineTo(w, h * 0.66);
+        ctx.lineTo(w, h);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(248, 220, 132, 0.38)';
+        ctx.lineWidth = 2;
+        for (i = 0; i < 4; i++) {
+          var ventX = 44 + i * 88;
+          var ventHeight = 24 + Math.sin(t * 1.8 + i) * 8;
+          ctx.beginPath();
+          ctx.moveTo(ventX, h * 0.64);
+          ctx.lineTo(ventX - 10, h * 0.64 - ventHeight);
+          ctx.lineTo(ventX + 8, h * 0.64 - ventHeight * 1.4);
+          ctx.lineTo(ventX + 20, h * 0.64 - ventHeight * 0.6);
+          ctx.stroke();
+        }
+        ctx.fillStyle = 'rgba(242, 228, 176, 0.08)';
+        for (i = 0; i < 6; i++) {
+          var plumeX = ((t * 18) + i * 72) % (w + 50) - 30;
+          var plumeY = h * 0.26 + i * 18;
+          ctx.fillRect(plumeX, plumeY, 46, 9);
+          ctx.fillRect(plumeX + 18, plumeY - 10, 30, 6);
+        }
+        break;
+
+      case 'school_hall':
+        ctx.fillStyle = '#111220';
+        ctx.fillRect(0, h * 0.18, w, h * 0.82);
+        ctx.fillStyle = '#1b2033';
+        for (i = 0; i < 8; i++) {
+          ctx.fillRect(18 + i * 58, h * 0.26, 34, h * 0.28);
+        }
+        ctx.fillStyle = '#2b3045';
+        ctx.fillRect(0, h * 0.58, w, 20);
+        ctx.strokeStyle = 'rgba(196, 208, 248, 0.18)';
+        ctx.lineWidth = 1;
+        for (i = 0; i < 7; i++) {
+          ctx.beginPath();
+          ctx.moveTo(0, h * 0.24 + i * 26);
+          ctx.lineTo(w, h * 0.24 + i * 26);
+          ctx.stroke();
+        }
+        var pendulum = Math.sin(t * 1.8) * 12;
+        ctx.strokeStyle = '#d7dbe8';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(w * 0.5, h * 0.16);
+        ctx.lineTo(w * 0.5 + pendulum, h * 0.3);
+        ctx.stroke();
+        ctx.fillStyle = '#d7dbe8';
+        ctx.beginPath();
+        ctx.arc(w * 0.5 + pendulum, h * 0.31, 6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = 'rgba(255,255,255,0.05)';
+        for (i = 0; i < 4; i++) {
+          ctx.fillRect(52 + i * 86, h * 0.4 + Math.sin(t * 1.2 + i) * 5, 32, 4);
+        }
+        break;
+
+      case 'tunnel_drift':
+        ctx.fillStyle = '#202531';
+        ctx.beginPath();
+        ctx.moveTo(w * 0.15, h);
+        ctx.lineTo(w * 0.32, h * 0.18);
+        ctx.lineTo(w * 0.68, h * 0.18);
+        ctx.lineTo(w * 0.85, h);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(232, 238, 248, 0.14)';
+        ctx.lineWidth = 2;
+        for (i = 0; i < 6; i++) {
+          var laneY = h * 0.3 + i * 22;
+          ctx.beginPath();
+          ctx.moveTo(w * 0.26, laneY);
+          ctx.lineTo(w * 0.74, laneY);
+          ctx.stroke();
+        }
+        ctx.fillStyle = 'rgba(234, 240, 255, 0.12)';
+        for (i = 0; i < 14; i++) {
+          var snowX = ((t * 34) + i * 32) % (w + 24) - 12;
+          var snowY = (i * 17 + Math.floor(t * 20)) % h;
+          ctx.fillRect(snowX, snowY, 3, 3);
+        }
+        ctx.fillStyle = '#0f141d';
+        ctx.fillRect(w * 0.455, h * 0.14, w * 0.09, h * 0.08);
+        break;
+
+      case 'lake_mist':
+        ctx.fillStyle = '#102435';
+        ctx.fillRect(0, h * 0.54, w, h * 0.46);
+        ctx.fillStyle = '#20374a';
+        ctx.fillRect(0, h * 0.48, w, 18);
+        ctx.fillStyle = '#0d1722';
+        ctx.beginPath();
+        ctx.moveTo(0, h * 0.62);
+        ctx.lineTo(w * 0.16, h * 0.55);
+        ctx.lineTo(w * 0.36, h * 0.6);
+        ctx.lineTo(w * 0.56, h * 0.53);
+        ctx.lineTo(w * 0.78, h * 0.61);
+        ctx.lineTo(w, h * 0.57);
+        ctx.lineTo(w, h);
+        ctx.lineTo(0, h);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = 'rgba(220, 232, 245, 0.10)';
+        for (i = 0; i < 6; i++) {
+          var mistX = ((t * 20) + i * 84) % (w + 90) - 50;
+          ctx.fillRect(mistX, h * (0.28 + i * 0.05), 90, 14);
+        }
+        ctx.strokeStyle = 'rgba(240, 248, 255, 0.20)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(w * 0.12, h * 0.74);
+        ctx.quadraticCurveTo(w * 0.42, h * 0.7, w * 0.68, h * 0.76);
+        ctx.stroke();
+        break;
+
+      case 'marsh_breath':
+        ctx.fillStyle = '#132016';
+        ctx.fillRect(0, h * 0.58, w, h * 0.42);
+        ctx.fillStyle = '#243526';
+        for (i = 0; i < 7; i++) {
+          ctx.fillRect(24 + i * 58, h * 0.62 + ((i % 2) * 8), 42, 12);
+        }
+        ctx.fillStyle = '#0d1610';
+        ctx.beginPath();
+        ctx.moveTo(0, h);
+        ctx.lineTo(w * 0.18, h * 0.72);
+        ctx.lineTo(w * 0.32, h * 0.8);
+        ctx.lineTo(w * 0.54, h * 0.7);
+        ctx.lineTo(w * 0.78, h * 0.82);
+        ctx.lineTo(w, h * 0.76);
+        ctx.lineTo(w, h);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = 'rgba(162, 194, 154, 0.10)';
+        for (i = 0; i < 5; i++) {
+          var bubbleX = 48 + i * 78 + Math.sin(t * 1.4 + i) * 8;
+          var bubbleY = h * 0.7 + Math.cos(t * 1.8 + i) * 10;
+          ctx.beginPath();
+          ctx.arc(bubbleX, bubbleY, 6 + (i % 2), 0, Math.PI * 2);
+          ctx.fill();
+        }
+        break;
+
+      case 'valley_crosswind':
+        ctx.fillStyle = '#162033';
+        ctx.beginPath();
+        ctx.moveTo(0, h);
+        ctx.lineTo(w * 0.22, h * 0.2);
+        ctx.lineTo(w * 0.38, h * 0.48);
+        ctx.lineTo(w * 0.56, h * 0.12);
+        ctx.lineTo(w * 0.76, h * 0.44);
+        ctx.lineTo(w, h * 0.24);
+        ctx.lineTo(w, h);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(204, 224, 255, 0.14)';
+        ctx.lineWidth = 1;
+        for (i = 0; i < 5; i++) {
+          var gustY = h * 0.24 + i * 30;
+          ctx.beginPath();
+          ctx.moveTo(28, gustY);
+          ctx.lineTo(96, gustY - 8);
+          ctx.lineTo(176, gustY + 4);
+          ctx.lineTo(248, gustY - 10);
+          ctx.lineTo(320, gustY + 2);
+          ctx.stroke();
+        }
+        ctx.fillStyle = '#0a1220';
+        ctx.fillRect(w * 0.48, h * 0.56, 8, h * 0.24);
+        ctx.fillStyle = '#233447';
+        ctx.fillRect(w * 0.445, h * 0.58, 40, 18);
+        break;
+
+      case 'boundary_gate':
+        ctx.fillStyle = '#0d111a';
+        ctx.fillRect(0, h * 0.6, w, h * 0.4);
+        ctx.strokeStyle = '#282f44';
+        ctx.lineWidth = 20;
+        ctx.beginPath();
+        ctx.moveTo(w * 0.3, h);
+        ctx.lineTo(w * 0.3, h * 0.18);
+        ctx.lineTo(w * 0.7, h * 0.18);
+        ctx.lineTo(w * 0.7, h);
+        ctx.stroke();
+        ctx.fillStyle = '#121728';
+        ctx.fillRect(w * 0.36, h * 0.22, w * 0.28, h * 0.12);
+        ctx.fillStyle = '#f0c86a';
+        for (i = 0; i < 6; i++) {
+          ctx.fillRect(w * 0.38 + i * 18, h * 0.25 + ((i % 2) * 8), 12, 4);
+        }
+        ctx.strokeStyle = 'rgba(122, 152, 210, 0.28)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(w * 0.5, h * 0.32);
+        ctx.lineTo(w * 0.5, h * 0.76);
+        ctx.stroke();
+        for (i = 0; i < 5; i++) {
+          var gateLineX = w * 0.18 + i * 70 + ((t * 24) % 12);
+          ctx.strokeStyle = 'rgba(210, 224, 255, 0.08)';
+          ctx.beginPath();
+          ctx.moveTo(gateLineX, h * 0.4);
+          ctx.lineTo(gateLineX + 30, h * 0.4);
+          ctx.stroke();
+        }
+        break;
+
       case 'gururin_stop':
         ctx.fillStyle = '#0f1525';
         ctx.fillRect(0, h * 0.6, w, h * 0.4);
@@ -1228,11 +1656,90 @@ Game.Event = (function() {
           ctx.stroke();
         }
         break;
+
+      case 'constellation_altar':
+        ctx.fillStyle = '#050812';
+        ctx.fillRect(0, 0, w, h);
+        ctx.fillStyle = '#0b1020';
+        ctx.fillRect(0, h * 0.58, w, h * 0.42);
+        ctx.strokeStyle = 'rgba(182, 210, 255, 0.12)';
+        ctx.lineWidth = 1;
+        for (i = 0; i < 6; i++) {
+          ctx.beginPath();
+          ctx.moveTo(18, h * (0.24 + i * 0.08));
+          ctx.lineTo(w - 18, h * (0.24 + i * 0.08));
+          ctx.stroke();
+        }
+        var altarNodes = [
+          { x: w * 0.24, y: h * 0.47 },
+          { x: w * 0.39, y: h * 0.34 },
+          { x: w * 0.58, y: h * 0.31 },
+          { x: w * 0.71, y: h * 0.46 },
+          { x: w * 0.54, y: h * 0.56 }
+        ];
+        ctx.strokeStyle = 'rgba(246, 232, 186, 0.28)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(altarNodes[0].x, altarNodes[0].y);
+        for (i = 1; i < altarNodes.length; i++) {
+          ctx.lineTo(altarNodes[i].x, altarNodes[i].y);
+        }
+        ctx.stroke();
+        for (i = 0; i < altarNodes.length; i++) {
+          var pulse = 0.55 + Math.sin(t * 1.6 + i * 0.9) * 0.18;
+          ctx.fillStyle = 'rgba(244, 230, 180,' + pulse.toFixed(3) + ')';
+          ctx.beginPath();
+          ctx.arc(altarNodes[i].x, altarNodes[i].y, 6, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.fillStyle = 'rgba(255,255,255,0.04)';
+        for (i = 0; i < 18; i++) {
+          ctx.fillRect((i * 29 + Math.floor(t * 6)) % w, 18 + ((i * 21) % 104), 2, 2);
+        }
+        ctx.strokeStyle = 'rgba(214, 228, 255, 0.32)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(w * 0.5, h * 0.46, 54 + Math.sin(t * 0.8) * 3, 0, Math.PI * 2);
+        ctx.stroke();
+        break;
     }
   }
 
   function getConfiguredCharSpeed() {
     return Game.UI && Game.UI.getEventTextSpeedFrames ? Game.UI.getEventTextSpeedFrames() : 2;
+  }
+
+  function holdTerminalScene(scene) {
+    if (!scene || !scene.lines || !scene.lines.length) {
+      renderHold = null;
+      return;
+    }
+    var holdLineIndex = scene.lines.length - 1;
+    var holdLine = scene.lines[holdLineIndex] || '';
+    renderHold = {
+      scene: scene,
+      lineIndex: holdLineIndex,
+      charIndex: holdLine.length
+    };
+  }
+
+  function getDrawState() {
+    var scene = scenes[sceneIndex];
+    if (scene) {
+      return {
+        scene: scene,
+        lineIndex: lineIndex,
+        charIndex: charIndex
+      };
+    }
+    if (renderHold) {
+      return {
+        scene: renderHold.scene,
+        lineIndex: renderHold.lineIndex,
+        charIndex: renderHold.charIndex
+      };
+    }
+    return null;
   }
 
   function getStateSnapshot() {

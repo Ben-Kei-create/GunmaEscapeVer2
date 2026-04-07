@@ -1,0 +1,98 @@
+[
+  {
+    "mapId": "shirane_trail",
+    "mode": "event",
+    "sceneIndex": 0,
+    "sceneCount": 2,
+    "speaker": null,
+    "lines": [
+      "白根の登山道へ出た瞬間、風に混じって硫黄の甘い痛みが喉へ貼りついた。",
+      "崩れた石のあいだから、まだ誰かを止めたいみたいな熱だけが細く漏れている。"
+    ],
+    "errors": []
+  },
+  {
+    "mapId": "kusatsu_deep",
+    "mode": "event",
+    "sceneIndex": 0,
+    "sceneCount": 2,
+    "speaker": null,
+    "lines": [
+      "草津の深部では、湯けむりが慰めじゃなく境界線みたいに視界を区切っていた。",
+      "見慣れたはずの湯の匂いまで、ここでは「戻るな」と囁いてくる。"
+    ],
+    "errors": []
+  },
+  {
+    "mapId": "jomo_gakuen",
+    "mode": "event",
+    "sceneIndex": 0,
+    "sceneCount": 2,
+    "speaker": null,
+    "lines": [
+      "校舎へ足を踏み入れると、誰もいない廊下の向こうで椅子を引く音だけが先に鳴った。",
+      "止まった時計と磨かれすぎた床が、ここでは時間そのものが提出物だと告げてくる。"
+    ],
+    "errors": []
+  },
+  {
+    "mapId": "tanigawa_tunnel",
+    "mode": "event",
+    "sceneIndex": 0,
+    "sceneCount": 2,
+    "speaker": null,
+    "lines": [
+      "谷川の白さは景色じゃなく、音と輪郭を削るための静けさだった。",
+      "坑口の黒だけが濃く、雪明かりの中で「名を置いて入れ」と口を開けている。"
+    ],
+    "errors": []
+  },
+  {
+    "mapId": "haruna_lake",
+    "mode": "event",
+    "sceneIndex": 0,
+    "sceneCount": 2,
+    "speaker": null,
+    "lines": [
+      "榛名湖へ出ると、水面と空の境目が霧の中でひとつに溶けていた。",
+      "岸に立っているはずなのに、足元までゆっくり沈みはじめたような錯覚が離れない。"
+    ],
+    "errors": []
+  },
+  {
+    "mapId": "oze_marsh",
+    "mode": "event",
+    "sceneIndex": 0,
+    "sceneCount": 2,
+    "speaker": null,
+    "lines": [
+      "尾瀬の木道は泥の呼吸にあわせてわずかに軋み、踏むたび下の黒がこちらを見返してきた。",
+      "花が咲くはずの湿原なのに、いまは沈みかけた記憶のほうが色を持っている。"
+    ],
+    "errors": []
+  },
+  {
+    "mapId": "minakami_valley",
+    "mode": "event",
+    "sceneIndex": 0,
+    "sceneCount": 2,
+    "speaker": null,
+    "lines": [
+      "水上の谷へ降りると、断崖を打つ冷たい水音が会話の間まで削っていった。",
+      "ここではためらいすら長く持てない。迷ったぶんだけ、風が先に答えを持っていく。"
+    ],
+    "errors": []
+  },
+  {
+    "mapId": "border_tunnel",
+    "mode": "event",
+    "sceneIndex": 0,
+    "sceneCount": 2,
+    "speaker": null,
+    "lines": [
+      "国境トンネルの表示板は、行き先の代わりに旅の地名を順番に滲ませていた。",
+      "歩いてきた群馬じゅうの景色が、最後の入口でひとつの暗がりへ折り畳まれていく。"
+    ],
+    "errors": []
+  }
+]

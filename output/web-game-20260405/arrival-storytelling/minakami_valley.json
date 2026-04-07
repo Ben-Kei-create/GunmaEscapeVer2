@@ -1,0 +1,123 @@
+{
+  "mode": "event",
+  "titleSelection": 0,
+  "map": "minakami_valley",
+  "mapLabel": "水上渓谷",
+  "audio": {
+    "requestedBgm": null,
+    "currentBgm": null
+  },
+  "player": {
+    "tileX": 14,
+    "tileY": 18,
+    "direction": "down",
+    "hp": 96,
+    "maxHp": 96,
+    "attack": 12,
+    "defense": 6,
+    "experience": 0,
+    "journeyRank": 1,
+    "nextRankExperience": 80,
+    "gold": 100,
+    "chapter": 1,
+    "skillsKnown": [],
+    "skillCharges": {},
+    "inventory": []
+  },
+  "journeyLabel": "第六章",
+  "journeyIndex": 6,
+  "chapterTitle": "尾瀬と水上の交差点",
+  "objective": "古谷の選択と向き合い、最後の境界へ進む意志を固める。",
+  "respectGauge": 0,
+  "catalystCount": 0,
+  "party": [],
+  "storyFlags": {
+    "checkpointFailedOnce": false,
+    "checkpointCleared": false,
+    "akagiJoinedSlice": false,
+    "darumaCleared": false,
+    "threadCleared": false
+  },
+  "continueSlot": null,
+  "hasAnySave": false,
+  "saveMenuContext": "field",
+  "quests": {
+    "open": false,
+    "active": [
+      {
+        "id": "onsen_tour",
+        "name": "温泉巡り",
+        "progress": 0,
+        "target": 3
+      },
+      {
+        "id": "joumo_karuta_collection",
+        "name": "上毛かるた収集",
+        "progress": 0,
+        "target": 5
+      },
+      {
+        "id": "daruma_perseverance",
+        "name": "だるま七転び八起き",
+        "progress": 0,
+        "target": 3
+      },
+      {
+        "id": "gunma_dialect_master",
+        "name": "群馬弁マスター",
+        "progress": 0,
+        "target": 5
+      }
+    ]
+  },
+  "services": [
+    {
+      "id": "ridge_peddler",
+      "type": "item_shop",
+      "x": 16,
+      "y": 9
+    }
+  ],
+  "ui": {
+    "showJourneyBadge": true,
+    "eventTextSpeed": "ふつう",
+    "battleDialogueSpeed": "ふつう"
+  },
+  "title": {
+    "mode": "intro_movie",
+    "sceneId": "highway",
+    "sceneTitle": "深夜の関越道",
+    "sceneIndex": 0,
+    "sceneTimer": 16,
+    "totalTimer": 16,
+    "revealTimer": 0
+  },
+  "encounters": {
+    "mapId": "minakami_valley",
+    "eligibleSteps": 0,
+    "cooldown": 3,
+    "cycleIndex": 0
+  },
+  "achievements": {
+    "unlockedCount": 0,
+    "totalCount": 22,
+    "trackedMapCount": 21,
+    "visitedTrackedMapCount": 1
+  },
+  "event": {
+    "active": true,
+    "sceneIndex": 0,
+    "sceneCount": 2,
+    "lineIndex": 0,
+    "charIndex": 0,
+    "charSpeed": 2,
+    "textComplete": false,
+    "autoAdvanceTimer": 0,
+    "speaker": null,
+    "lines": [
+      "水上の谷へ降りると、断崖を打つ冷たい水音が会話の間まで削っていった。",
+      "ここではためらいすら長く持てない。迷ったぶんだけ、風が先に答えを持っていく。"
+    ],
+    "autoAdvance": 0
+  }
+}

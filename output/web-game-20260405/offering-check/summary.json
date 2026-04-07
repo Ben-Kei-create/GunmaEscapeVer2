@@ -1,0 +1,30 @@
+{
+  "introPhase": "menu",
+  "rejectedMessage": "こんにゃくパスはまだ違う。次は「願いの目」が待っている。",
+  "rejectedLastAction": {
+    "kind": "rejected",
+    "itemId": "konnyakuPass",
+    "slotLabel": "願いの目"
+  },
+  "readyMenu": [
+    "奉納を見直す",
+    "光を手放す"
+  ],
+  "readyLastAction": {
+    "kind": "light_ready",
+    "itemId": "akagiKey",
+    "slotLabel": "赤城の鍵"
+  },
+  "releasePhase": "ritualMoment",
+  "releaseThankYouIndex": 3,
+  "rewardPhase": "reward",
+  "rewardSummary": {
+    "gold": 0,
+    "exp": 0,
+    "items": [],
+    "supportLogs": [],
+    "afterglowText": "空っぽの祈りは満たされ、風だけがやさしく残った。",
+    "enemyEchoText": "返し終えた記憶のあいだから、夜明け前の静かな風だけが残った。"
+  },
+  "errors": []
+}

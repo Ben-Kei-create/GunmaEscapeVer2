@@ -66,6 +66,15 @@ Game.Maps.jomo_gakuen = (function() {
     {
       id: 'library_committee', x: 15, y: 12, name: '図書委員',
       dialog: ['本を破らないでくださいね。', '返却日は永遠ですが。', '記憶は大切に扱いましょう。'],
+      contextDialog: [
+        {
+          flag: 'env_jomo_gakuen_submission_hall',
+          lines: [
+            '廊下の反射を見てきたのですね。',
+            'あそこは提出物だけでなく、立ち止まった理由まで回収するんです。だから皆、急いで歩くふりをするの。'
+          ]
+        }
+      ],
       defeatedDialog: ['本棚が空っぽになったわ。', '皆さん、卒業したのね。'],
       defeated: false, sprite: humanSprite, palette: { 1:'#ddbbcc', 2:'#cc3333', 3:'#222222' }
     },

@@ -162,6 +162,21 @@ Game.NPC = (function() {
     npc.facing = state.facing;
   }
 
+  function getContextDialogEntry(npc, defeated) {
+    if (!npc || !npc.contextDialog || !npc.contextDialog.length || !Game.Story || !Game.Story.hasFlag) {
+      return null;
+    }
+    for (var i = 0; i < npc.contextDialog.length; i++) {
+      var entry = npc.contextDialog[i];
+      if (!entry) continue;
+      if (entry.defeatedOnly && !defeated) continue;
+      if (entry.excludeDefeated && defeated) continue;
+      if (entry.flag && !Game.Story.hasFlag(entry.flag)) continue;
+      return entry;
+    }
+    return null;
+  }
+
   function interact(npc) {
     if (!npc) return;
     faceNpcTowardPlayer(npc);
@@ -170,23 +185,28 @@ Game.NPC = (function() {
     resetDialogPagination();
 
     var checkpointFailedOnce = Game.Story && Game.Story.hasFlag && Game.Story.hasFlag('checkpoint_failed_once');
+    var contextDialog = getContextDialogEntry(npc, !!npc.defeated);
 
     if (npc.defeated) {
       // Shop NPCs always reopen
       if (npc.afterDialog && npc.afterDialog.indexOf('shop_') === 0) {
-        dialogLines = npc.dialog;
-        onDialogEnd = npc.afterDialog;
+        dialogLines = contextDialog && contextDialog.lines ? contextDialog.lines : npc.dialog;
+        onDialogEnd = contextDialog && contextDialog.action ? contextDialog.action : npc.afterDialog;
         return dialogLines[0];
       }
-      if (npc.defeatedDialog) {
+      if (contextDialog && contextDialog.lines) {
+        dialogLines = contextDialog.lines;
+        onDialogEnd = contextDialog.action || null;
+      } else if (npc.defeatedDialog) {
         dialogLines = npc.defeatedDialog;
+        onDialogEnd = null;
       } else {
         dialogLines = ['...'];
+        onDialogEnd = null;
       }
       if (npc.id === 'cabbageGuardian' && Game.Player.hasAllKeys()) {
         dialogLines = ['結界は既に解かれておる。県境を越えよ！'];
       }
-      onDialogEnd = null;
     } else if (npc.id === 'cabbageGuardian' && npc.allKeysDialog &&
                Game.Player.hasItem('onsenKey') && Game.Player.hasItem('darumaEye') &&
                Game.Player.hasItem('konnyakuPass')) {
@@ -201,6 +221,9 @@ Game.NPC = (function() {
     } else if (npc.id === 'cabbageGuardian') {
       dialogLines = npc.dialog;
       onDialogEnd = null;
+    } else if (contextDialog && contextDialog.lines) {
+      dialogLines = contextDialog.lines;
+      onDialogEnd = contextDialog.action || npc.afterDialog || null;
     } else {
       dialogLines = npc.dialog;
       onDialogEnd = npc.afterDialog || null;

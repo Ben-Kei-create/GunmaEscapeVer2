@@ -893,3 +893,41 @@ Original prompt: そうだね。セーブできる村役場みたいなところ
   - `develop-web-game` の Playwright client を `?debugBattle=roadsideBandit` で再実行し、支援演出追加後も通常戦スモークで新規 console error / pageerror が出ていないことを確認した。
   - `output/web-game-20260407/support-visuals` で Playwright により `アカギ / 山川 / 古谷` を順に発動させ、`summary.json` で `supportAction.memberId / motif / effectLabel` と、各自の効果 (`enemy_roll_slow`, `slow_roll`, `defense_up`, `ward`, `attack_up`, `dice_bonus`) が正しく付与されることを確認した。
   - `akagi-support.png`, `yamakawa-support.png`, `furuya-support.png` を目視し、境界線、守りの輪、突破斬線の3演出がそれぞれ別の印象で立ち、支援パネル内の文字も読み崩れないことを確認した。console error / pageerror は 0 件。
+- 2026-04-07: 終章奉納の音と無音の切り替えを強化。
+  - `js/audio.js`
+    - `stopBgm()` を `fadeOut` オプション対応にし、終章奉納ではBGMを少し長めに引かせてから静けさへ落とせるようにした。
+    - `ritual_release` と `ritual_afterglow` を追加し、光を手放す瞬間と、静寂の終わり際にだけ返り音を置くようにした。
+  - `js/ritual_battles.js`
+    - `offering` 儀式の状態へ `afterglowCuePlayed` を追加し、返り音を1回だけ鳴らす制御を持たせた。
+  - `js/battle.js`
+    - `resolveOfferingLightRelease()` は `ritual_release` と長めフェードを使うよう変更した。
+    - `handleRitualMomentPhase()` で静寂終盤に `ritual_afterglow` を一度だけ発火するようにした。
+    - 奉納UIのガイド文を `音が、ひとつずつ遠ざかる。 / 何も鳴らさない。風だけを通す。 / 返り音だけが、遠くで小さく残る。` の3段階へ切り替え、無音そのものが演出として読めるようにした。
+- 2026-04-07: 終章奉納の音演出強化の検証結果
+  - `node --check js/audio.js js/ritual_battles.js js/battle.js` と `git diff --check` 通過。
+  - `develop-web-game` の Playwright client を `output/web-game-20260407/offering-audio-smoke` で実行し、`?debugBattle=finalOffering&debugInventory=darumaEye,konnyakuPass,silkBundle,onsenKey,akagiKey` の通常起動で新規 console error / pageerror が出ていないことを確認した。
+  - `output/web-game-20260407/offering-audio/summary.json` では、解放直前に `audio.currentBgm = ch10_border`、解放直後から `requestedBgm/currentBgm = null`、reward 到達後も無音を維持していることを確認した。
+  - 同 summary で `sfxLog` に `ritual_release` と `ritual_afterglow` が入り、`stopBgmLog` には解放時の `{ fadeOut: 0.18 }` が残ることを確認した。
+  - `offering-release.png`, `offering-silence.png`, `offering-reward.png` を目視し、解放直後の案内文、静寂中の文言、無音のまま入る戦果パネルがそれぞれ成立していることを確認した。console error / pageerror は 0 件。
+- 2026-04-07: 各章の環境ストーリーテリングを強化。
+  - `js/chapter_data.js`
+    - `ikaho` を章データへ正式追加し、`mapJourneyIndex` とマップ表示情報を補完した。
+    - `maebashi` から `border_tunnel` まで全21マップへ `environmentSpots` を追加し、各土地に1つずつ一回限りの環境メモを持たせた。
+    - 環境メモは `title / lines / radius` を持ち、町並み、湖、湯けむり、硫黄、湿原、国境の偽星空まで、章ごとの空気を探索中にも拾えるようにした。
+  - `js/ui.js`
+    - 探索を止めない小型オーバーレイ `environmentNote` を追加し、環境メモを章アクセント付きで短く表示するようにした。
+    - `show/update/drawEnvironmentNote()` とデバッグ取得関数を追加し、`render_game_to_text` でも発火状況を追えるようにした。
+  - `js/main.js`
+    - `forest / tsumagoi / tamura / konuma / onuma / akagi_shrine` の到着イベントを自動発火対象へ追加した。
+    - 探索中の `stepInfo` から環境スポットを判定する処理を追加し、到達した場所のメモを一度だけ出すようにした。
+    - `renderExploring()` と `renderGameToText()` を更新し、実画面と検証ログの両方で環境メモを確認できるようにした。
+  - `js/event.js`
+    - `arrival_forest_auto / arrival_tsumagoi_auto / arrival_tamura_auto / arrival_konuma_auto / arrival_onuma_auto / arrival_akagi_shrine_auto` を追加した。
+    - 章前半と赤城終盤で薄かった到着の余韻を補い、風、霧、暮らし、見張り、荷車の墓場といった土地の印象が移動直後に立つようにした。
+- 2026-04-07: 環境ストーリーテリング強化の検証結果
+  - `node --check js/chapter_data.js js/ui.js js/main.js js/event.js` と `git diff --check` 通過。
+  - `output/web-game-20260407/environment-storytelling/summary.json` で、`maebashi` から `border_tunnel` まで全21マップに環境スポットが1件ずつ登録されていることを確認した。
+  - 同 summary で追加した6件の到着イベント (`arrival_forest_auto / arrival_tsumagoi_auto / arrival_tamura_auto / arrival_konuma_auto / arrival_onuma_auto / arrival_akagi_shrine_auto`) がすべて `Game.Event.hasEvent()` で存在することを確認した。
+  - 実機確認では `forest / tsumagoi / tamura / konuma / akagi_shrine` の到着カットが `mode=event` で起動し、各シーン冒頭の文面が想定どおり出ることを確認した。
+  - 環境メモは `forest / takasaki / akagi_shrine / border_tunnel` で実際に歩いて発火させ、`note-forest.png`, `note-takasaki.png`, `note-akagi-shrine.png`, `note-border-tunnel.png` でオーバーレイ表示を目視した。
+  - 到着カットのキャプチャは `arrival-forest.png`, `arrival-tsumagoi.png`, `arrival-tamura.png`, `arrival-konuma.png`, `arrival-akagi-shrine.png` に保存し、今回の検証では console error / pageerror は 0 件だった。

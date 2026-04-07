@@ -11,12 +11,18 @@ Game.Main = (function() {
   var storyBattleContext = null;
   var pendingArrivalCheck = '';
   var ARRIVAL_EVENT_MAP = {
+    forest: { flag: 'arrival_forest_auto', eventId: 'arrival_forest_auto' },
     takasaki: { flag: 'arrival_takasaki_auto', eventId: 'arrival_takasaki_auto' },
+    tsumagoi: { flag: 'arrival_tsumagoi_auto', eventId: 'arrival_tsumagoi_auto' },
     shimonita: { flag: 'arrival_shimonita_auto', eventId: 'arrival_shimonita_auto' },
     tomioka: { flag: 'arrival_tomioka_auto', eventId: 'arrival_tomioka_auto' },
+    tamura: { flag: 'arrival_tamura_auto', eventId: 'arrival_tamura_auto' },
     kusatsu: { flag: 'arrival_kusatsu_auto', eventId: 'arrival_kusatsu_auto' },
+    konuma: { flag: 'arrival_konuma_auto', eventId: 'arrival_konuma_auto' },
+    onuma: { flag: 'arrival_onuma_auto', eventId: 'arrival_onuma_auto' },
     ikaho: { flag: 'arrival_ikaho_auto', eventId: 'arrival_ikaho_auto' },
     akagi_ranch: { flag: 'arrival_akagi_ranch_auto', eventId: 'arrival_akagi_ranch_auto' },
+    akagi_shrine: { flag: 'arrival_akagi_shrine_auto', eventId: 'arrival_akagi_shrine_auto' },
     shirane_trail: { flag: 'arrival_shirane_trail_auto', eventId: 'arrival_shirane_trail_auto' },
     kusatsu_deep: { flag: 'arrival_kusatsu_deep_auto', eventId: 'arrival_kusatsu_deep_auto' },
     jomo_gakuen: { flag: 'arrival_jomo_gakuen_auto', eventId: 'arrival_jomo_gakuen_auto' },
@@ -155,6 +161,43 @@ Game.Main = (function() {
       Game.Audio.playBgm('field');
     });
     return true;
+  }
+
+  function getEnvironmentSpotFlag(mapId, spot) {
+    return spot && spot.flag ? spot.flag : 'env_' + mapId + '_' + (spot && spot.id ? spot.id : 'spot');
+  }
+
+  function isEnvironmentSpotReached(tileX, tileY, spot) {
+    if (!spot || typeof tileX !== 'number' || typeof tileY !== 'number') return false;
+    var radius = typeof spot.radius === 'number' ? Math.max(0, spot.radius | 0) : 0;
+    if (typeof spot.minX === 'number' && typeof spot.maxX === 'number' &&
+        typeof spot.minY === 'number' && typeof spot.maxY === 'number') {
+      return tileX >= spot.minX && tileX <= spot.maxX && tileY >= spot.minY && tileY <= spot.maxY;
+    }
+    if (typeof spot.x !== 'number' || typeof spot.y !== 'number') return false;
+    return Math.abs(tileX - spot.x) <= radius && Math.abs(tileY - spot.y) <= radius;
+  }
+
+  function maybeTriggerEnvironmentSpot(stepInfo) {
+    if (!stepInfo || !Game.Chapters || !Game.Chapters.getEnvironmentSpots || !Game.UI || !Game.UI.showEnvironmentNote) {
+      return false;
+    }
+    if (!Game.Story || !Game.Story.hasFlag || !Game.Story.setFlag) return false;
+    var mapId = Game.Map && Game.Map.getCurrentMapId ? Game.Map.getCurrentMapId() : '';
+    var spots = Game.Chapters.getEnvironmentSpots(mapId);
+    if (!spots || !spots.length) return false;
+
+    for (var i = 0; i < spots.length; i++) {
+      var spot = spots[i];
+      if (!isEnvironmentSpotReached(stepInfo.tileX, stepInfo.tileY, spot)) continue;
+      var flag = getEnvironmentSpotFlag(mapId, spot);
+      if (Game.Story.hasFlag(flag)) continue;
+      Game.Story.setFlag(flag);
+      if (Game.Story.saveFlags) Game.Story.saveFlags();
+      Game.UI.showEnvironmentNote(spot, mapId);
+      return true;
+    }
+    return false;
   }
 
   function continuePendingSkillFlow() {
@@ -358,6 +401,7 @@ Game.Main = (function() {
     if (Game.Particles) Game.Particles.update();
     if (Game.UI.updatePopups) Game.UI.updatePopups();
     if (Game.UI.updateAreaBanner) Game.UI.updateAreaBanner();
+    if (Game.UI.updateEnvironmentNote) Game.UI.updateEnvironmentNote();
     if (Game.Renderer.updateEffects) Game.Renderer.updateEffects();
     if (Game.Achievements && Game.Achievements.update) Game.Achievements.update();
 
@@ -466,6 +510,10 @@ Game.Main = (function() {
             stepInfo.tileY,
             Game.Map.getTile(stepInfo.tileX, stepInfo.tileY)
           );
+        }
+
+        if (stepInfo) {
+          maybeTriggerEnvironmentSpot(stepInfo);
         }
 
         if (stepInfo && Game.Encounters && Game.Encounters.consumeStep) {
@@ -1164,6 +1212,7 @@ Game.Main = (function() {
     if (!overlayMode) {
       Game.UI.drawHUD();
       if (Game.UI.drawAreaBanner) Game.UI.drawAreaBanner();
+      if (Game.UI.drawEnvironmentNote) Game.UI.drawEnvironmentNote();
       if (Game.Quests && Game.Quests.drawTracker) Game.Quests.drawTracker();
     }
     if (Game.UI.drawPopups) Game.UI.drawPopups();
@@ -1271,7 +1320,8 @@ Game.Main = (function() {
     payload.ui = {
       showJourneyBadge: Game.UI && Game.UI.isJourneyBadgeEnabled ? Game.UI.isJourneyBadgeEnabled() : true,
       eventTextSpeed: Game.UI && Game.UI.getEventTextSpeedLabel ? Game.UI.getEventTextSpeedLabel() : 'ふつう',
-      battleDialogueSpeed: Game.UI && Game.UI.getBattleDialogueSpeedLabel ? Game.UI.getBattleDialogueSpeedLabel() : 'ふつう'
+      battleDialogueSpeed: Game.UI && Game.UI.getBattleDialogueSpeedLabel ? Game.UI.getBattleDialogueSpeedLabel() : 'ふつう',
+      environmentNote: Game.UI && Game.UI.getEnvironmentNoteDebugState ? Game.UI.getEnvironmentNoteDebugState() : null
     };
     if (Game.UI && Game.UI.getTitlePresentationState) {
       payload.title = Game.UI.getTitlePresentationState();
@@ -1290,6 +1340,12 @@ Game.Main = (function() {
     }
     if (state === Game.Config.STATE.EVENT && Game.Event && Game.Event.getStateSnapshot) {
       payload.event = Game.Event.getStateSnapshot();
+    }
+    if (state === Game.Config.STATE.DIALOG) {
+      payload.dialog = {
+        speaker: Game.NPC && Game.NPC.getCurrentNpcDisplayName ? Game.NPC.getCurrentNpcDisplayName() : null,
+        text: dialogText || (Game.NPC && Game.NPC.getCurrentDialog ? Game.NPC.getCurrentDialog() : '')
+      };
     }
     if (state === Game.Config.STATE.SKILL_LEARN && Game.UI && Game.UI.getSkillLearnDebugState) {
       payload.skillLearn = Game.UI.getSkillLearnDebugState();

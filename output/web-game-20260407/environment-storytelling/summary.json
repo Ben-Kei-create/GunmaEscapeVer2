@@ -1,0 +1,234 @@
+{
+  "generatedAt": "2026-04-07T14:49:06.279Z",
+  "coverage": [
+    {
+      "mapId": "maebashi",
+      "count": 1,
+      "title": "中央通りの白線"
+    },
+    {
+      "mapId": "takasaki",
+      "count": 1,
+      "title": "片目の棚"
+    },
+    {
+      "mapId": "kusatsu",
+      "count": 1,
+      "title": "湯の縁"
+    },
+    {
+      "mapId": "ikaho",
+      "count": 1,
+      "title": "石段の息切れ"
+    },
+    {
+      "mapId": "shimonita",
+      "count": 1,
+      "title": "積み残しの荷札"
+    },
+    {
+      "mapId": "tomioka",
+      "count": 1,
+      "title": "無言のリール"
+    },
+    {
+      "mapId": "tsumagoi",
+      "count": 1,
+      "title": "高原の芯"
+    },
+    {
+      "mapId": "tamura",
+      "count": 1,
+      "title": "織りの手元"
+    },
+    {
+      "mapId": "forest",
+      "count": 1,
+      "title": "湿った石"
+    },
+    {
+      "mapId": "konuma",
+      "count": 1,
+      "title": "霧の見張り"
+    },
+    {
+      "mapId": "onuma",
+      "count": 1,
+      "title": "止まった車体"
+    },
+    {
+      "mapId": "akagi_ranch",
+      "count": 1,
+      "title": "牧柵の切れ目"
+    },
+    {
+      "mapId": "akagi_shrine",
+      "count": 1,
+      "title": "荷車の墓場"
+    },
+    {
+      "mapId": "shirane_trail",
+      "count": 1,
+      "title": "硫黄の裂け目"
+    },
+    {
+      "mapId": "kusatsu_deep",
+      "count": 1,
+      "title": "深部の湯面"
+    },
+    {
+      "mapId": "jomo_gakuen",
+      "count": 1,
+      "title": "提出廊下"
+    },
+    {
+      "mapId": "tanigawa_tunnel",
+      "count": 1,
+      "title": "返声の坑道"
+    },
+    {
+      "mapId": "haruna_lake",
+      "count": 1,
+      "title": "霧の岸"
+    },
+    {
+      "mapId": "oze_marsh",
+      "count": 1,
+      "title": "沈む木道"
+    },
+    {
+      "mapId": "minakami_valley",
+      "count": 1,
+      "title": "祈りの断崖"
+    },
+    {
+      "mapId": "border_tunnel",
+      "count": 1,
+      "title": "偽りの星空"
+    }
+  ],
+  "addedEvents": [
+    {
+      "id": "arrival_forest_auto",
+      "exists": true
+    },
+    {
+      "id": "arrival_tsumagoi_auto",
+      "exists": true
+    },
+    {
+      "id": "arrival_tamura_auto",
+      "exists": true
+    },
+    {
+      "id": "arrival_konuma_auto",
+      "exists": true
+    },
+    {
+      "id": "arrival_onuma_auto",
+      "exists": true
+    },
+    {
+      "id": "arrival_akagi_shrine_auto",
+      "exists": true
+    }
+  ],
+  "arrivalChecks": [
+    {
+      "mapId": "forest",
+      "mode": "event",
+      "speaker": null,
+      "lines": [
+        "森へ踏み戻った瞬間、湿った土と古い石の匂いが一緒に立ち上がった。",
+        "ここは入口というより、誰かを選別したあとの余白みたいに静かだ。"
+      ]
+    },
+    {
+      "mapId": "tsumagoi",
+      "mode": "event",
+      "speaker": null,
+      "lines": [
+        "嬬恋の高原では、畑の列より先に風の押し方がこの土地の広さを教えてきた。",
+        "見晴らしはいいのに、背中だけがずっと前へ出ろと急かされる。"
+      ]
+    },
+    {
+      "mapId": "tamura",
+      "mode": "event",
+      "speaker": null,
+      "lines": [
+        "タムラ村へ入ると、家の明かりと畑の匂いが同じ温度で寄ってきた。",
+        "助けを求める声より先に、ここで守られてきた暮らしの輪郭が見える。"
+      ]
+    },
+    {
+      "mapId": "konuma",
+      "mode": "event",
+      "speaker": null,
+      "lines": [
+        "小沼の霧へ入る直前、アカギが前を横切って足を止めた。",
+        "湖面の白さより、見張られている感触のほうが先に肌へ貼りつく。"
+      ]
+    },
+    {
+      "mapId": "akagi_shrine",
+      "mode": "event",
+      "speaker": null,
+      "lines": [
+        "赤城神社の参道には、祈りより先に運び終えられなかった気配が積もっていた。",
+        "奥へ行くほど静かになるのに、その静けさだけが妙に重い。"
+      ]
+    }
+  ],
+  "environmentChecks": [
+    {
+      "mapId": "forest",
+      "note": {
+        "title": "湿った石",
+        "lines": [
+          "苔むした壁は崩れても、",
+          "ここが誰かの入口だった記憶だけは残している。"
+        ],
+        "timer": 175,
+        "maxTimer": 190
+      }
+    },
+    {
+      "mapId": "takasaki",
+      "note": {
+        "title": "片目の棚",
+        "lines": [
+          "赤い殻が並ぶほど、",
+          "言えなかった願いの数まで町が重くなる。"
+        ],
+        "timer": 176,
+        "maxTimer": 190
+      }
+    },
+    {
+      "mapId": "akagi_shrine",
+      "note": {
+        "title": "荷車の墓場",
+        "lines": [
+          "石段より先は祈りじゃない。",
+          "運び終えられなかったものだけが奥へ積まれている。"
+        ],
+        "timer": 176,
+        "maxTimer": 190
+      }
+    },
+    {
+      "mapId": "border_tunnel",
+      "note": {
+        "title": "偽りの星空",
+        "lines": [
+          "作りものだと知っても、",
+          "見上げた数だけ本物の夜を思い出してしまう。"
+        ],
+        "timer": 176,
+        "maxTimer": 190
+      }
+    }
+  ],
+  "consoleErrors": []
+}

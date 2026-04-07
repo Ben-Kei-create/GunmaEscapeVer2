@@ -56,6 +56,15 @@ Game.Maps.shirane_trail = (function() {
     {
       id: 'old_miner', x: 7, y: 9, name: '硫黄採取の老人',
       dialog: ['ゴホッ...ここの硫黄は質がいいが、毒気も強い。', '長居は無用じゃぞ。'],
+      contextDialog: [
+        {
+          flag: 'env_shirane_trail_sulfur_cut',
+          lines: [
+            '裂け目を覗いたのか。あれは鉱脈じゃなく、山の機嫌そのものだ。',
+            '白根は掘れば掘るほど、景色じゃなく傷口を見せてくる。'
+          ]
+        }
+      ],
       defeated: false, sprite: humanSprite, palette: { 1:'#ddbb88', 2:'#8866aa', 3:'#888888' }
     },
     {

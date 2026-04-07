@@ -33,6 +33,14 @@ Game.UI = (function() {
     mapSubtitle: '',
     accent: '#ffcc00'
   };
+  var environmentNote = {
+    active: false,
+    timer: 0,
+    maxTimer: 0,
+    title: '',
+    lines: [],
+    accent: '#ffcc00'
+  };
   var fieldMenuState = {
     section: 0,
     itemIndex: 0,
@@ -1917,6 +1925,51 @@ Game.UI = (function() {
     ctx.globalAlpha = 1;
   }
 
+  function showEnvironmentNote(note, mapId) {
+    note = note || {};
+    var chapterInfo = getChapterInfo();
+    var mapInfo = mapId && Game.Chapters && Game.Chapters.getMap ? Game.Chapters.getMap(mapId) : getMapInfo();
+    var fallbackTitle = mapInfo && mapInfo.label ? mapInfo.label : '土地の気配';
+    var lines = Array.isArray(note.lines) ? note.lines.slice(0, 2) : [];
+    if (!lines.length && note.text) {
+      lines = [clampText(note.text, 30)];
+    }
+    environmentNote.active = true;
+    environmentNote.timer = 190;
+    environmentNote.maxTimer = 190;
+    environmentNote.title = note.title || fallbackTitle;
+    environmentNote.lines = lines;
+    environmentNote.accent = note.accent || chapterInfo.accent || Game.Config.COLORS.GOLD;
+  }
+
+  function updateEnvironmentNote() {
+    if (!environmentNote.active) return;
+    environmentNote.timer--;
+    if (environmentNote.timer <= 0) {
+      environmentNote.active = false;
+      environmentNote.lines = [];
+    }
+  }
+
+  function drawEnvironmentNote() {
+    if (!environmentNote.active) return;
+    var R = Game.Renderer;
+    var ctx = R.getContext();
+    var lifetime = environmentNote.maxTimer || 1;
+    var progress = environmentNote.timer / lifetime;
+    var fade = Math.min(1, Math.min((1 - progress) * 4, progress * 2.8));
+    var slide = Math.max(0, (1 - fade) * 10);
+    var boxY = 218 + slide;
+
+    ctx.globalAlpha = fade;
+    R.drawDialogBox(18, boxY, 252, 44);
+    drawPanelAccent(18, boxY, 252, 44, environmentNote.accent);
+    R.drawTextJP(environmentNote.title, 32, boxY + 8, environmentNote.accent, 11);
+    if (environmentNote.lines[0]) R.drawTextJP(environmentNote.lines[0], 32, boxY + 22, '#f4f7ff', 10);
+    if (environmentNote.lines[1]) R.drawTextJP(environmentNote.lines[1], 32, boxY + 33, '#b7c4e0', 9);
+    ctx.globalAlpha = 1;
+  }
+
   // Minimap
   function drawMinimap(options) {
     options = options || {};
@@ -2162,6 +2215,16 @@ Game.UI = (function() {
     };
   }
 
+  function getEnvironmentNoteDebugState() {
+    if (!environmentNote.active) return null;
+    return {
+      title: environmentNote.title,
+      lines: environmentNote.lines.slice(),
+      timer: environmentNote.timer,
+      maxTimer: environmentNote.maxTimer
+    };
+  }
+
   function setFieldMenuSectionForDebug(section) {
     fieldMenuState.section = Math.max(0, Math.min(4, section | 0));
     clampFieldMenuSelection();
@@ -2182,6 +2245,9 @@ Game.UI = (function() {
     showAreaBanner: showAreaBanner,
     updateAreaBanner: updateAreaBanner,
     drawAreaBanner: drawAreaBanner,
+    showEnvironmentNote: showEnvironmentNote,
+    updateEnvironmentNote: updateEnvironmentNote,
+    drawEnvironmentNote: drawEnvironmentNote,
     startIntroMovie: startIntroMovie,
     updateIntroMovie: updateIntroMovie,
     isTitleIntroLocked: isTitleIntroLocked,
@@ -2206,6 +2272,7 @@ Game.UI = (function() {
     getBattleDialogueSpeedFrames: getBattleDialogueSpeedFrames,
     getBattleDialogueSpeedLabel: getBattleDialogueSpeedLabel,
     getFieldMenuDebugState: getFieldMenuDebugState,
+    getEnvironmentNoteDebugState: getEnvironmentNoteDebugState,
     setFieldMenuSectionForDebug: setFieldMenuSectionForDebug
   };
 })();

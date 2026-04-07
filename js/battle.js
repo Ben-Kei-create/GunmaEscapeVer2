@@ -966,8 +966,8 @@ Game.Battle = (function() {
     message = '';
     messageTimer = 0;
     phase = 'ritualMoment';
-    Game.Audio.stopBgm();
-    Game.Audio.playSfx('ritual_chime');
+    Game.Audio.stopBgm({ fadeOut: 0.18 });
+    Game.Audio.playSfx('ritual_release');
     return true;
   }
 
@@ -2526,6 +2526,16 @@ Game.Battle = (function() {
           ritualRuntime.ritualState.lightReleaseFrames = 18;
         }
 
+        var ritualState = ritualRuntime.ritualState || {};
+        var totalFrames = ritualRuntime.ritualParams ? (ritualRuntime.ritualParams.silentFrames || 84) : 84;
+        var afterglowThreshold = Math.max(14, Math.floor(totalFrames * 0.22));
+        if (!ritualState.afterglowCuePlayed &&
+            ritualState.lightReleaseFrames > 0 &&
+            ritualState.lightReleaseFrames <= afterglowThreshold) {
+          ritualState.afterglowCuePlayed = true;
+          Game.Audio.playSfx('ritual_afterglow');
+        }
+
         if (ritualDefinition.onFrame) {
           ritualDefinition.onFrame(ritualRuntime, enemy, Game.Player.getData());
         }
@@ -3222,6 +3232,16 @@ Game.Battle = (function() {
       var dots = '';
       for (i = 0; i < silenceDots; i++) dots += '・';
       R.drawTextJP(dots, 226, 154, '#c7cfdf', 11);
+      if (releaseProgress < 0.28) {
+        guideText = '音が、ひとつずつ遠ざかる。';
+        guideColor = '#dbe3ff';
+      } else if (releaseProgress < 0.78) {
+        guideText = '何も鳴らさない。風だけを通す。';
+        guideColor = '#f4eed7';
+      } else {
+        guideText = '返り音だけが、遠くで小さく残る。';
+        guideColor = '#f4eed7';
+      }
     } else if (state.lightReleased) {
       guideText = '風だけが残っている。';
       guideColor = '#f4eed7';

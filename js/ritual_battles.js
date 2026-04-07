@@ -36,6 +36,7 @@ Game.RitualBattles = (function() {
       lightDieReady: false,
       lightReleased: false,
       lightReleaseFrames: 0,
+      afterglowCuePlayed: false,
       thankYouIndex: 0,
       lastAction: null
     };
@@ -302,6 +303,7 @@ Game.RitualBattles = (function() {
         runtime.ritualState.lightDieReady = false;
         runtime.ritualState.lightReleased = false;
         runtime.ritualState.lightReleaseFrames = 0;
+        runtime.ritualState.afterglowCuePlayed = false;
         runtime.ritualState.thankYouIndex = 0;
         runtime.ritualState.lastAction = null;
         runtime.uiFlags.silentMoment = false;
@@ -374,6 +376,7 @@ Game.RitualBattles = (function() {
           if (!runtime.ritualState.lightDieReady || runtime.ritualState.lightReleased) return;
           runtime.ritualState.lightReleased = true;
           runtime.ritualState.lightReleaseFrames = runtime.ritualParams.silentFrames || 84;
+          runtime.ritualState.afterglowCuePlayed = false;
           runtime.ritualState.thankYouIndex = 0;
           runtime.ritualState.lastAction = { kind: 'light_release' };
           runtime.uiFlags.silentMoment = true;

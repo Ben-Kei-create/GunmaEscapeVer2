@@ -77,6 +77,15 @@ Game.Maps.minakami_valley = (function() {
         '水上まで来る客は少ないからね。',
         'だから荷は軽く、役に立つものだけ選んで背負ってる。'
       ],
+      contextDialog: [
+        {
+          flag: 'env_minakami_valley_prayer_ledge',
+          lines: [
+            '断崖の祈りを聞いてきた顔だね。',
+            'この谷じゃ願いも長く持てない。だから商いも言葉も、残る重さだけを選ぶんだ。'
+          ]
+        }
+      ],
       afterDialog: 'shop_峠の行商_superYakimanju,kaeshiOmamori,silkWeight',
       defeatedDialog: [
         '谷を越えるなら、手数より保ち方だ。',

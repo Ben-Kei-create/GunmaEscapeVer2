@@ -60,6 +60,15 @@ Game.Maps.haruna_lake = (function() {
     {
       id: 'guard_oldman', x: 11, y: 12, name: '見回り役',
       dialog: ['規格外は不良品だ。', '感情なんて捨てるんだよ。', 'ただの歯車になればいい。'],
+      contextDialog: [
+        {
+          flag: 'env_haruna_lake_mist_bank',
+          lines: [
+            '岸を見てきたならわかるだろう。',
+            'ここじゃ距離さえ規格外になる。近い波音も遠く聞こえるうちは、まだ湖に揃えられている最中だ。'
+          ]
+        }
+      ],
       defeatedDialog: ['部品が…足りない…', 'これでは動かせないぞ…'],
       defeated: false, sprite: humanSprite, palette: { 1:'#ddbb88', 2:'#8866aa', 3:'#888888' }
     },

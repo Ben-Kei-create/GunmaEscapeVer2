@@ -137,6 +137,7 @@ Game.Maps.maebashi = (function() {
       name: 'アカギ',
       aliasName: '見知らぬ案内人',
       nameRevealFlag: 'party_akagi',
+      hideWhenFlag: 'party_akagi',
       dialog: [
         '……その顔。県境に弾かれて、前橋に吐き出されたばかりだな。',
         '俺は赤城のふもとを見回ってる案内役だ。皆からは「アカギ」って呼ばれてる。',

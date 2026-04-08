@@ -31,6 +31,7 @@ Game.UI = (function() {
     chapterTitle: '',
     mapLabel: '',
     mapSubtitle: '',
+    detailLine: '',
     accent: '#ffcc00'
   };
   var environmentNote = {
@@ -71,6 +72,10 @@ Game.UI = (function() {
     'あいことばで旅の続きへ戻る。',
     '実績と解放状況を確認する。'
   ];
+  var DIALOG_TEXT_MAX_CHARS = 36;
+  var DIALOG_TEXT_MAX_LINES = 4;
+  var DIALOG_TEXT_SIZE = 11;
+  var DIALOG_LINE_HEIGHT = 14;
   var INTRO_MOVIE_SCENES = [
     { id: 'highway', duration: 210, title: '深夜の関越道', subtitle: 'くだらない笑い声だけが、闇の道を滑っていく。', accent: '#8fe0ff' },
     { id: 'signs', duration: 180, title: '群馬が近づく', subtitle: '見慣れた地名が、少しずつ異界の響きに変わる。', accent: '#ffd66b' },
@@ -211,6 +216,11 @@ Game.UI = (function() {
   function clampText(text, maxChars) {
     if (!text || text.length <= maxChars) return text || '';
     return text.substring(0, Math.max(0, maxChars - 1)) + '…';
+  }
+
+  function shouldCountNpc(npc) {
+    if (Game.NPC && Game.NPC.shouldHideNpc) return !Game.NPC.shouldHideNpc(npc);
+    return !npc.defeated;
   }
 
   function getItemTypeLabel(type) {
@@ -835,13 +845,17 @@ Game.UI = (function() {
     var journeyState = getJourneyState();
     var accent = chapterInfo.accent || Game.Config.COLORS.GOLD;
 
+    if (areaBanner.active) {
+      return;
+    }
+
     if (map) {
-      R.drawDialogBox(5, 5, 176, 34);
-      drawPanelAccent(5, 5, 176, 34, accent);
-      R.drawTextJP(chapterInfo.act + ' / ' + chapterInfo.displayLabel, 12, 8, accent, 9);
-      R.drawTextJP((mapInfo && mapInfo.label) || map.name, 12, 18, '#fff', 11);
+      R.drawDialogBox(5, 5, 170, 34);
+      drawPanelAccent(5, 5, 170, 34, accent);
+      R.drawTextJP(chapterInfo.act + ' / ' + chapterInfo.displayLabel, 12, 8, accent, 8);
+      R.drawTextJP((mapInfo && mapInfo.label) || map.name, 12, 18, '#fff', 10);
       if ((mapInfo && mapInfo.subtitle) || chapterInfo.subtitle) {
-        R.drawTextJP(clampText((mapInfo && mapInfo.subtitle) || chapterInfo.subtitle, 16), 12, 28, '#91a2c8', 8);
+        R.drawTextJP(clampText((mapInfo && mapInfo.subtitle) || chapterInfo.subtitle, 18), 12, 28, '#91a2c8', 7);
       }
     }
 
@@ -861,14 +875,14 @@ Game.UI = (function() {
 
     R.drawDialogBox(hudX, hudY, hudW, hudH);
     drawPanelAccent(hudX, hudY, hudW, hudH, '#8fb8ff');
-    R.drawTextJP('HP', hudX + 9, hudY + 5, '#fff', 9);
+    R.drawTextJP('HP', hudX + 9, hudY + 5, '#fff', 8);
     R.drawText(pd.hp + '/' + pd.maxHp, hudX + 58, hudY + 5, '#d9e6ff', 8);
     R.drawText(pd.gold + 'G', hudX + hudW - 10, hudY + 5, '#ffdd44', 8, 'right');
     var hpRatio = pd.hp / pd.maxHp;
     R.drawRectAbsolute(hpBarX, hpBarY, hpBarW, 8, '#243147');
     R.drawRectAbsolute(hpBarX, hpBarY, hpBarW * hpRatio, 8,
       hpRatio > 0.3 ? Game.Config.COLORS.HP_GREEN : Game.Config.COLORS.HP_RED);
-    R.drawTextJP('敬意', hudX + 9, hudY + 31, '#ffe08f', 8);
+    R.drawTextJP('敬意', hudX + 9, hudY + 31, '#ffe08f', 7);
     R.drawRectAbsolute(hudX + 35, hudY + 31, 58, 5, '#243147');
     R.drawRectAbsolute(hudX + 35, hudY + 31, 58 * respectRatio, 5, '#ffd66b');
     R.drawText(Math.min(respectGauge, 999), hudX + hudW - 10, hudY + 29, '#ffe08f', 8, 'right');
@@ -890,13 +904,13 @@ Game.UI = (function() {
     if (speakerName) {
       R.drawDialogBox(10, Game.Config.CANVAS_HEIGHT - 104, 114, 20);
       drawPanelAccent(10, Game.Config.CANVAS_HEIGHT - 104, 114, 20, accent);
-      R.drawTextJP(speakerName, 20, Game.Config.CANVAS_HEIGHT - 100, accent, 12);
+      R.drawTextJP(clampText(speakerName, 10), 20, Game.Config.CANVAS_HEIGHT - 100, accent, 10);
     }
 
-    var lines = wrapTextSmart(text, 29, 3);
+    var lines = wrapTextSmart(text, DIALOG_TEXT_MAX_CHARS, DIALOG_TEXT_MAX_LINES);
 
-    for (var i = 0; i < lines.length && i < 3; i++) {
-      R.drawTextJP(lines[i], 24, Game.Config.CANVAS_HEIGHT - 75 + i * 19, '#fff', 14);
+    for (var i = 0; i < lines.length && i < DIALOG_TEXT_MAX_LINES; i++) {
+      R.drawTextJP(lines[i], 24, Game.Config.CANVAS_HEIGHT - 77 + i * DIALOG_LINE_HEIGHT, '#fff', DIALOG_TEXT_SIZE);
     }
 
     // Advance indicator
@@ -952,37 +966,37 @@ Game.UI = (function() {
     R.drawRectAbsolute(0, 0, C.CANVAS_WIDTH, C.CANVAS_HEIGHT, 'rgba(4, 6, 18, 0.5)');
     R.drawDialogBox(boxX, boxY, boxW, boxH);
     drawPanelAccent(boxX, boxY, boxW, boxH, accent);
-    R.drawTextJP(chapterInfo.act + ' / ' + chapterInfo.displayLabel + ' ' + chapterInfo.title, 240, 20, accent, 13, 'center');
-    R.drawTextJP(clampText(chapterInfo.subtitle || ((mapInfo && mapInfo.subtitle) || ''), 24), 240, 38, '#cfd7f2', 9, 'center');
+    R.drawTextJP(chapterInfo.act + ' / ' + chapterInfo.displayLabel + ' ' + chapterInfo.title, 240, 20, accent, 12, 'center');
+    R.drawTextJP(clampText(chapterInfo.subtitle || ((mapInfo && mapInfo.subtitle) || ''), 28), 240, 38, '#cfd7f2', 8, 'center');
     R.drawRectAbsolute(68, 54, 344, 1, '#33415f');
 
     drawInsetPanel(leftCardX, cardY, cardW, cardH, '旅人の状態', accent, accent);
-    R.drawTextJP('HP', leftCardX + 10, cardY + 20, '#dfe8ff', 10);
-    R.drawTextJP(pd.hp + '/' + pd.maxHp, leftCardX + 42, cardY + 18, '#ffffff', 13);
+    R.drawTextJP('HP', leftCardX + 10, cardY + 20, '#dfe8ff', 9);
+    R.drawTextJP(pd.hp + '/' + pd.maxHp, leftCardX + 42, cardY + 18, '#ffffff', 12);
     R.drawRectAbsolute(leftCardX + 10, cardY + 36, 118, 8, '#273349');
     R.drawRectAbsolute(leftCardX + 11, cardY + 37, Math.max(0, Math.floor(116 * (pd.hp / pd.maxHp))), 6, pd.hp / pd.maxHp > 0.3 ? C.COLORS.HP_GREEN : C.COLORS.HP_RED);
     var moneyValueX = leftCardX + cardW - 12;
-    R.drawTextJP('防御', leftCardX + 10, cardY + 50, '#8fb8ff', 10);
-    R.drawTextJP('' + Game.Player.getDefense(), leftCardX + 46, cardY + 48, '#ffffff', 11);
+    R.drawTextJP('防御', leftCardX + 10, cardY + 50, '#8fb8ff', 9);
+    R.drawTextJP('' + Game.Player.getDefense(), leftCardX + 46, cardY + 48, '#ffffff', 10);
     R.drawTextJP('所持金', moneyValueX, cardY + 14, '#d8c163', 8, 'right');
-    R.drawTextJP(pd.gold + 'G', moneyValueX, cardY + 24, '#ffdd44', 10, 'right');
+    R.drawTextJP(pd.gold + 'G', moneyValueX, cardY + 24, '#ffdd44', 9, 'right');
 
     drawInsetPanel(rightCardX, cardY, cardW, cardH, '補助情報', '#8fe0ff', '#8fe0ff');
     R.drawTextJP('進行 ' + currentJourney + '/' + totalJourney, rightCardX + 148, cardY + 6, '#9ed7ff', 8, 'right');
-    R.drawTextJP('防具', rightCardX + 10, cardY + 20, '#9ed7ff', 10);
-    R.drawTextJP(clampText(aName, 10), rightCardX + 46, cardY + 18, '#ffffff', 11);
-    R.drawTextJP('触媒', rightCardX + 102, cardY + 20, '#9ed7ff', 10);
-    R.drawTextJP('' + (((journeyState.catalysts && journeyState.catalysts.length) || 0)), rightCardX + 144, cardY + 18, '#ffffff', 11, 'right');
-    R.drawTextJP('同行', rightCardX + 10, cardY + 36, '#8fe0ff', 10);
+    R.drawTextJP('防具', rightCardX + 10, cardY + 20, '#9ed7ff', 9);
+    R.drawTextJP(clampText(aName, 11), rightCardX + 46, cardY + 18, '#ffffff', 10);
+    R.drawTextJP('触媒', rightCardX + 102, cardY + 20, '#9ed7ff', 9);
+    R.drawTextJP('' + (((journeyState.catalysts && journeyState.catalysts.length) || 0)), rightCardX + 144, cardY + 18, '#ffffff', 10, 'right');
+    R.drawTextJP('同行', rightCardX + 10, cardY + 36, '#8fe0ff', 9);
     R.drawTextJP(clampText(partyText, 16), rightCardX + 46, cardY + 34, '#d7e6ff', 9);
-    R.drawTextJP('敬意', rightCardX + 10, cardY + 50, '#ffe08f', 10);
-    R.drawTextJP('' + respectValue, rightCardX + 144, cardY + 48, '#ffe08f', 11, 'right');
+    R.drawTextJP('敬意', rightCardX + 10, cardY + 50, '#ffe08f', 9);
+    R.drawTextJP('' + respectValue, rightCardX + 144, cardY + 48, '#ffe08f', 10, 'right');
 
     drawInsetPanel(infoX, infoY, infoW, infoH, '現在地 / 目標', '#7d8fb8', '#8fb8ff');
-    R.drawTextJP('現在地', infoX + 10, infoY + 17, '#8fb8ff', 10);
-    R.drawTextJP(clampText(currentMapLabel, 18), infoX + 52, infoY + 17, '#ffffff', 10);
-    R.drawTextJP('目標', infoX + 10, infoY + 29, '#8fb8ff', 10);
-    drawWrappedTextBlock(getCurrentObjective(), infoX + 52, infoY + 29, 18, 3, 9, '#dce6ff', 9);
+    R.drawTextJP('現在地', infoX + 10, infoY + 17, '#8fb8ff', 9);
+    R.drawTextJP(clampText(currentMapLabel, 21), infoX + 52, infoY + 17, '#ffffff', 9);
+    R.drawTextJP('目標', infoX + 10, infoY + 29, '#8fb8ff', 9);
+    drawWrappedTextBlock(getCurrentObjective(), infoX + 52, infoY + 29, 21, 3, 8, '#dce6ff', 8);
 
     // Tabs
     for (var t = 0; t < tabs.length; t++) {
@@ -992,7 +1006,7 @@ Game.UI = (function() {
       if (activeTab) {
         R.drawRectAbsolute(tx + 5, tabY + 3, tabW - 14, 1, accent);
       }
-      R.drawTextJP(tabs[t], tx + 8, tabY + 5, activeTab ? C.COLORS.GOLD : '#b5bfd8', 10);
+      R.drawTextJP(tabs[t], tx + 8, tabY + 5, activeTab ? C.COLORS.GOLD : '#b5bfd8', 9);
     }
     R.drawRectAbsolute(70, 218, 338, 1, '#446');
 
@@ -1018,7 +1032,7 @@ Game.UI = (function() {
     var footerText = fieldMenuState.messageTimer > 0 && fieldMenuState.message
       ? clampText(fieldMenuState.message, 40)
       : sectionHints[fieldMenuState.section];
-    R.drawTextJP(footerText, 72, 286, fieldMenuState.messageTimer > 0 ? '#ffffff' : '#9aa7c9', 9);
+    R.drawTextJP(footerText, 72, 286, fieldMenuState.messageTimer > 0 ? '#ffffff' : '#9aa7c9', 8);
     R.drawTextJP('←→ 切替  ↑↓ 選択  Z/Space 決定  X 戻る', 240, 296, '#6f7c9d', 8, 'center');
   }
 
@@ -1076,7 +1090,8 @@ Game.UI = (function() {
   }
 
   function drawDiceMenuSection(R, C, pd, equipped) {
-    var ownedDice = getOwnedDiceOptions();
+    var loadout = Game.Player.getDiceLoadout ? Game.Player.getDiceLoadout() : equipped;
+    var ownedDice = getOwnedDiceOptions(fieldMenuState.diceSlotIndex, loadout);
     var visibleDice = 4;
     var listX = 70;
     var detailX = 222;
@@ -1091,7 +1106,8 @@ Game.UI = (function() {
     for (var s = 0; s < pd.diceSlots; s++) {
       var slotY = panelY + 18 + s * 12;
       var selectedSlot = (s === fieldMenuState.diceSlotIndex);
-      var di = Game.Items.get(equipped[s] || 'normalDice');
+      var diceId = loadout[s] || null;
+      var di = diceId ? Game.Items.get(diceId) : null;
       if (selectedSlot) {
         R.drawRectAbsolute(listX + 6, slotY - 1, listW - 12, 11, 'rgba(255,204,0,0.12)');
       }
@@ -1099,15 +1115,31 @@ Game.UI = (function() {
       if (di) {
         R.drawRectAbsolute(listX + 62, slotY + 1, 8, 8, di.color || '#fff');
         R.drawTextJP(clampText(di.name, 7), listX + 76, slotY, '#d4dcf6', 9);
+      } else {
+        R.drawTextJP('未装備', listX + 76, slotY, '#7987aa', 9);
       }
     }
 
-    var selectedDie = Game.Items.get(equipped[fieldMenuState.diceSlotIndex] || 'normalDice');
+    var selectedDieId = loadout[fieldMenuState.diceSlotIndex] || null;
+    var selectedDie = selectedDieId ? Game.Items.get(selectedDieId) : null;
     if (!fieldMenuState.diceEquipActive) {
       if (selectedDie) {
         R.drawTextJP(selectedDie.name, detailX + 10, panelY + 18, '#ffffff', 11);
         R.drawTextJP('出目 ' + selectedDie.faces.join(' / '), detailX + 10, panelY + 30, '#88dd88', 9);
         drawWrappedTextBlock(selectedDie.desc || '説明なし', detailX + 10, panelY + 42, 19, 2, 10, '#b7c3e3', 9);
+      } else {
+        R.drawTextJP('未装備', detailX + 10, panelY + 18, '#ffffff', 11);
+        R.drawTextJP('この枠はまだ空いている。', detailX + 10, panelY + 32, '#b7c3e3', 9);
+        R.drawTextJP('サイコロを買って装備すると戦闘で使える。', detailX + 10, panelY + 44, '#88dd88', 8);
+      }
+      return;
+    }
+
+    if (!ownedDice.length) {
+      R.drawTextJP('候補なし', detailX + 10, panelY + 18, '#ffffff', 11);
+      R.drawTextJP('手持ちのサイコロが足りない。', detailX + 10, panelY + 32, '#b7c3e3', 9);
+      if (fieldMenuState.diceSlotIndex > 0 && selectedDie) {
+        R.drawTextJP('Xで戻ると今の装備のままにできる。', detailX + 10, panelY + 44, '#88dd88', 8);
       }
       return;
     }
@@ -1124,8 +1156,12 @@ Game.UI = (function() {
       }
       R.drawTextJP((selected ? '▶ ' : '  ') + clampText(label, 12), detailX + 10, lineY, selected ? C.COLORS.GOLD : '#fff', 10);
     }
-    if (ownedDice[fieldMenuState.diceEquipIndex] && ownedDice[fieldMenuState.diceEquipIndex].item) {
-      R.drawTextJP('出目 ' + ownedDice[fieldMenuState.diceEquipIndex].item.faces.join('-'), detailX + 10, panelY + 52, '#88dd88', 9);
+    if (ownedDice[fieldMenuState.diceEquipIndex]) {
+      if (ownedDice[fieldMenuState.diceEquipIndex].mode === 'unequip') {
+        R.drawTextJP('この枠からサイコロを外す', detailX + 10, panelY + 52, '#88dd88', 9);
+      } else if (ownedDice[fieldMenuState.diceEquipIndex].item) {
+        R.drawTextJP('出目 ' + ownedDice[fieldMenuState.diceEquipIndex].item.faces.join('-'), detailX + 10, panelY + 52, '#88dd88', 9);
+      }
     }
   }
 
@@ -1182,7 +1218,7 @@ Game.UI = (function() {
 
     if (map && map.npcs) {
       for (var ni = 0; ni < map.npcs.length; ni++) {
-        if (!map.npcs[ni].defeated) activeNpcCount++;
+        if (shouldCountNpc(map.npcs[ni])) activeNpcCount++;
       }
     }
 
@@ -1377,13 +1413,19 @@ Game.UI = (function() {
     fieldMenuState.messageTimer = timer || 45;
   }
 
-  function getOwnedDiceOptions() {
+  function getOwnedDiceOptions(slotIndex, loadout) {
     var inventory = Game.Player.getData().inventory;
-    var options = [{ id: 'normalDice', item: Game.Items.get('normalDice'), name: 'ふつうのサイコロ' }];
+    var options = [];
+    loadout = loadout || (Game.Player.getDiceLoadout ? Game.Player.getDiceLoadout() : []);
+    if (slotIndex === 0) {
+      options.push({ id: 'normalDice', item: Game.Items.get('normalDice'), name: 'ふつうのサイコロ', mode: 'equip' });
+    } else if (loadout[slotIndex]) {
+      options.push({ id: null, item: null, name: 'はずす', mode: 'unequip' });
+    }
     for (var i = 0; i < inventory.length; i++) {
       var item = Game.Items.get(inventory[i]);
       if (item && item.type === 'dice') {
-        options.push({ id: inventory[i], item: item, name: item.name });
+        options.push({ id: inventory[i], item: item, name: item.name, mode: 'equip' });
       }
     }
     return options;
@@ -1660,7 +1702,8 @@ Game.UI = (function() {
   }
 
   function updateDiceMenu(pd) {
-    var ownedDice = getOwnedDiceOptions();
+    var loadout = Game.Player.getDiceLoadout ? Game.Player.getDiceLoadout() : Game.Player.getEquippedDice();
+    var ownedDice = getOwnedDiceOptions(fieldMenuState.diceSlotIndex, loadout);
     if (!fieldMenuState.diceEquipActive) {
       if (Game.Input.isPressed('up')) {
         fieldMenuState.diceSlotIndex = (fieldMenuState.diceSlotIndex - 1 + pd.diceSlots) % pd.diceSlots;
@@ -1671,12 +1714,26 @@ Game.UI = (function() {
         Game.Audio.playSfx('confirm');
       }
       if (Game.Input.isPressed('confirm')) {
+        if (!ownedDice.length) {
+          setFieldMenuMessage('装備できるサイコロがない。', 45);
+          Game.Audio.playSfx('cancel');
+          return null;
+        }
         fieldMenuState.diceEquipActive = true;
         fieldMenuState.diceEquipIndex = 0;
         Game.Audio.playSfx('confirm');
       }
       if (Game.Input.isPressed('cancel')) {
         return { close: true };
+      }
+      return null;
+    }
+
+    if (!ownedDice.length) {
+      if (Game.Input.isPressed('cancel')) {
+        fieldMenuState.diceEquipActive = false;
+        fieldMenuState.diceEquipIndex = 0;
+        Game.Audio.playSfx('cancel');
       }
       return null;
     }
@@ -1698,6 +1755,13 @@ Game.UI = (function() {
     if (!Game.Input.isPressed('confirm')) return null;
 
     var selected = ownedDice[fieldMenuState.diceEquipIndex];
+    if (selected && selected.mode === 'unequip' && Game.Player.unequipDice(fieldMenuState.diceSlotIndex)) {
+      fieldMenuState.diceEquipActive = false;
+      fieldMenuState.diceEquipIndex = 0;
+      setFieldMenuMessage('スロット' + (fieldMenuState.diceSlotIndex + 1) + 'の装備を外した。', 55);
+      Game.Audio.playSfx('item');
+      return null;
+    }
     if (selected && Game.Player.equipDice(selected.id, fieldMenuState.diceSlotIndex)) {
       fieldMenuState.diceEquipActive = false;
       fieldMenuState.diceEquipIndex = 0;
@@ -1886,17 +1950,19 @@ Game.UI = (function() {
     Game.Renderer.fadeOverlay(alpha);
   }
 
-  function showAreaBanner(mapId) {
+  function showAreaBanner(mapId, options) {
+    options = options || {};
     var chapterInfo = getChapterInfo();
     var mapInfo = Game.Chapters && Game.Chapters.getMap ? Game.Chapters.getMap(mapId) : null;
     var map = Game.Map && Game.Map.getCurrentMap ? Game.Map.getCurrentMap() : null;
     areaBanner.active = true;
-    areaBanner.timer = 150;
-    areaBanner.maxTimer = 150;
+    areaBanner.timer = options.detailLine ? 172 : 150;
+    areaBanner.maxTimer = areaBanner.timer;
     areaBanner.chapterNumber = chapterInfo.journeyIndex || chapterInfo.number || 1;
     areaBanner.chapterTitle = chapterInfo.displayLabel + ' ' + (chapterInfo.title || '');
     areaBanner.mapLabel = mapInfo && mapInfo.label ? mapInfo.label : (map && map.name ? map.name : '');
     areaBanner.mapSubtitle = mapInfo && mapInfo.subtitle ? mapInfo.subtitle : '';
+    areaBanner.detailLine = options.detailLine || '';
     areaBanner.accent = chapterInfo.accent || Game.Config.COLORS.GOLD;
   }
 
@@ -1915,13 +1981,26 @@ Game.UI = (function() {
     var progress = areaBanner.timer / areaBanner.maxTimer;
     var fade = Math.min(1, progress * 2.2);
     var slide = progress > 0.5 ? (1 - progress) * 26 : 0;
+    var hasDetailLine = !!areaBanner.detailLine;
+    var detailLines = hasDetailLine ? wrapTextSmart(areaBanner.detailLine, 28, 2) : [];
+    var boxHeight = hasDetailLine ? 66 + Math.max(0, detailLines.length - 1) * 10 : 46;
+    var boxX = 88;
+    var boxW = 304;
+    var boxY = 54 + slide;
 
     ctx.globalAlpha = fade;
-    R.drawDialogBox(96, 52 + slide, 288, 46);
-    drawPanelAccent(96, 52 + slide, 288, 46, areaBanner.accent);
-    R.drawTextJP(areaBanner.chapterTitle, 116, 61 + slide, areaBanner.accent, 12);
-    R.drawTextJP(areaBanner.mapLabel, 116, 77 + slide, '#ffffff', 14);
-    R.drawTextJP(areaBanner.mapSubtitle, 116, 92 + slide, '#9fb0d6', 9);
+    R.drawDialogBox(boxX, boxY, boxW, boxHeight);
+    drawPanelAccent(boxX, boxY, boxW, boxHeight, areaBanner.accent);
+    R.drawTextJP(clampText(areaBanner.chapterTitle, 22), boxX + 18, boxY + 10, areaBanner.accent, 11);
+    R.drawTextJP(clampText(areaBanner.mapLabel, 18), boxX + 18, boxY + 25, '#ffffff', 13);
+    if (areaBanner.mapSubtitle) {
+      R.drawTextJP(clampText(areaBanner.mapSubtitle, 22), boxX + 18, boxY + 40, '#9fb0d6', 8);
+    }
+    if (detailLines.length) {
+      for (var i = 0; i < detailLines.length; i++) {
+        R.drawTextJP(detailLines[i], boxX + 18, boxY + 50 + i * 10, '#dce6ff', 7);
+      }
+    }
     ctx.globalAlpha = 1;
   }
 
@@ -2012,7 +2091,7 @@ Game.UI = (function() {
     // NPC positions
     if (map.npcs) {
       for (var n = 0; n < map.npcs.length; n++) {
-        if (!map.npcs[n].defeated) {
+        if (shouldCountNpc(map.npcs[n])) {
           R.drawRectAbsolute(mx + map.npcs[n].x * pw, my + map.npcs[n].y * ph, npcMarkerSize, npcMarkerSize, '#ffdd00');
         }
       }
@@ -2225,6 +2304,18 @@ Game.UI = (function() {
     };
   }
 
+  function getAreaBannerDebugState() {
+    if (!areaBanner.active) return null;
+    return {
+      chapterTitle: areaBanner.chapterTitle,
+      mapLabel: areaBanner.mapLabel,
+      mapSubtitle: areaBanner.mapSubtitle,
+      detailLine: areaBanner.detailLine,
+      timer: areaBanner.timer,
+      maxTimer: areaBanner.maxTimer
+    };
+  }
+
   function setFieldMenuSectionForDebug(section) {
     fieldMenuState.section = Math.max(0, Math.min(4, section | 0));
     clampFieldMenuSelection();
@@ -2272,6 +2363,7 @@ Game.UI = (function() {
     getBattleDialogueSpeedFrames: getBattleDialogueSpeedFrames,
     getBattleDialogueSpeedLabel: getBattleDialogueSpeedLabel,
     getFieldMenuDebugState: getFieldMenuDebugState,
+    getAreaBannerDebugState: getAreaBannerDebugState,
     getEnvironmentNoteDebugState: getEnvironmentNoteDebugState,
     setFieldMenuSectionForDebug: setFieldMenuSectionForDebug
   };

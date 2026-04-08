@@ -1,0 +1,70 @@
+{
+  "trainers": [
+    {
+      "mapId": "takasaki",
+      "npcId": "takasakiTrainer",
+      "name": "棚見の若衆",
+      "action": "training_takasaki_focus",
+      "x": 8,
+      "y": 14
+    },
+    {
+      "mapId": "onuma",
+      "npcId": "onumaTrainer",
+      "name": "湖畔の見張り火",
+      "action": "training_onuma_mist",
+      "x": 22,
+      "y": 15
+    },
+    {
+      "mapId": "shirane_trail",
+      "npcId": "shiraneTrainer",
+      "name": "硫黄の行者",
+      "action": "training_shirane_heat",
+      "x": 4,
+      "y": 13
+    },
+    {
+      "mapId": "haruna_lake",
+      "npcId": "harunaTrainer",
+      "name": "霧待ちの漁師",
+      "action": "training_haruna_echo",
+      "x": 23,
+      "y": 15
+    },
+    {
+      "mapId": "minakami_valley",
+      "npcId": "minakamiTrainer",
+      "name": "谷筋の修験者",
+      "action": "training_minakami_ridge",
+      "x": 17,
+      "y": 7
+    }
+  ],
+  "takasaki": {
+    "mode": "dialog",
+    "battlePhase": null,
+    "formation": null,
+    "enemies": [],
+    "playerRank": 3,
+    "playerExp": 160,
+    "rewards": {
+      "gold": 0,
+      "exp": 58
+    }
+  },
+  "minakami": {
+    "mode": "dialog",
+    "battlePhase": null,
+    "formation": null,
+    "enemies": [],
+    "playerRank": 14,
+    "playerExp": 1040,
+    "rewards": {
+      "gold": 0,
+      "exp": 126
+    }
+  },
+  "consoleErrors": [],
+  "pageErrors": []
+}

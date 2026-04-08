@@ -99,9 +99,9 @@ Game.NPC = (function() {
 
   function buildDialogPages(text) {
     if (Game.UI && Game.UI.paginateDialogText) {
-      return Game.UI.paginateDialogText(text, 29, 3);
+      return Game.UI.paginateDialogText(text, 36, 4);
     }
-    return paginateDialogText(text, 29, 3);
+    return paginateDialogText(text, 36, 4);
   }
 
   function resetDialogPagination() {
@@ -322,6 +322,21 @@ Game.NPC = (function() {
     return getNpcDisplayName(currentNpc);
   }
 
+  function shouldHideNpc(npc) {
+    if (!npc) return false;
+    if (npc.hideWhenDefeated && npc.defeated) return true;
+    if (npc.hideWhenFlag && Game.Story && Game.Story.hasFlag && Game.Story.hasFlag(npc.hideWhenFlag)) return true;
+    if (npc.hideWhenPartyMember && Game.Player && Game.Player.hasPartyMember && Game.Player.hasPartyMember(npc.hideWhenPartyMember)) {
+      return true;
+    }
+    if (npc.hideWhenAnyFlag && npc.hideWhenAnyFlag.length && Game.Story && Game.Story.hasFlag) {
+      for (var i = 0; i < npc.hideWhenAnyFlag.length; i++) {
+        if (Game.Story.hasFlag(npc.hideWhenAnyFlag[i])) return true;
+      }
+    }
+    return false;
+  }
+
   function getShopItemIdsFromAction(action) {
     if (!action || action.indexOf('shop_') !== 0) return [];
     var parts = action.substring(5).split('_');
@@ -367,7 +382,7 @@ Game.NPC = (function() {
 
     for (var i = 0; i < npcs.length; i++) {
       var other = npcs[i];
-      if (!other || other === npc) continue;
+      if (!other || other === npc || shouldHideNpc(other)) continue;
       var otherState = getMovementState(other);
       if (other.x === x && other.y === y) return false;
       if (otherState && otherState.moving && otherState.targetX === x && otherState.targetY === y) {
@@ -569,7 +584,7 @@ Game.NPC = (function() {
 
     for (var i = 0; i < npcs.length; i++) {
       var npc = npcs[i];
-      if (!npc || npc.defeated) continue;
+      if (!npc || npc.defeated || shouldHideNpc(npc)) continue;
       var state = getMovementState(npc);
       if (state.touchCooldown > 0) state.touchCooldown--;
 
@@ -654,7 +669,7 @@ Game.NPC = (function() {
         if (map.npcs) {
           for (var n = 0; n < map.npcs.length; n++) {
             var npc = map.npcs[n];
-            if (npc.hideWhenDefeated && npc.defeated) continue;
+            if (shouldHideNpc(npc)) continue;
             var renderPos = getNpcRenderPos(npc);
             var state = getMovementState(npc);
             var flipped = state && state.facing === 'right';
@@ -695,6 +710,7 @@ Game.NPC = (function() {
     getCurrentDialog: getCurrentDialog,
     getCurrentNpc: getCurrentNpc,
     getCurrentNpcDisplayName: getCurrentNpcDisplayName,
+    shouldHideNpc: shouldHideNpc,
     getNpcServiceType: getNpcServiceType,
     openDialog: openDialog,
     updateMovement: updateMovement,

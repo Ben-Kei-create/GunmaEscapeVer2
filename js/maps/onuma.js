@@ -100,6 +100,29 @@ Game.Maps.onuma = (function() {
     palette: { 1:'#333', 2:'#bbaa88', 3:'#221100', 4:'#556677', 5:'#443322' }
   });
 
+  npcs.push({
+    id: 'onumaTrainer',
+    x: 22, y: 15,
+    name: '湖畔の見張り火',
+    dialog: [
+      '湖の霧は、慣れないうちは数を数える前に足をさらう。',
+      'ここで白さに目を慣らしていけ。先の主は、迷った拍を見逃してくれない。',
+      '金は落ちない。だが、この湖で拾える勘はあとで効く。'
+    ],
+    contextDialog: [
+      {
+        flag: 'training_onuma_mist_cleared',
+        lines: [
+          'もう霧に追われるだけじゃない顔になってきた。',
+          'それでも湖は毎回違う。念入りにやるなら、もう一度白さへ入ろう。'
+        ]
+      }
+    ],
+    afterDialog: 'training_onuma_mist',
+    sprite: npcs[1].sprite,
+    palette: { 1:'#314052', 2:'#d7c39f', 3:'#1b120d', 4:'#557a8f', 5:'#3e4e61' }
+  });
+
   var items = [
     { id: 'healHerb', x: 3, y: 3, taken: false }
   ];

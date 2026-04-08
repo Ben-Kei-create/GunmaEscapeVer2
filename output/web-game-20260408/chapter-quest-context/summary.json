@@ -1,0 +1,193 @@
+{
+  "chapterBanner": {
+    "chapterTitle": "第三章 赤城の運び屋たち",
+    "mapLabel": "廃墟の森",
+    "mapSubtitle": "侵入者を選ぶ入口",
+    "detailLine": "森と湖には、運び切れなかったものの気配が沈んでいる。",
+    "timer": 171,
+    "maxTimer": 172
+  },
+  "trackerNote": {
+    "mode": "exploring",
+    "tracked": {
+      "id": "daruma_perseverance",
+      "name": "だるま七転び八起き",
+      "note": "片目の棚を抜けたあとだと、七転びの意味が少し変わる。",
+      "progress": 0,
+      "target": 3
+    },
+    "activeQuests": [
+      {
+        "id": "onsen_tour",
+        "name": "温泉巡り",
+        "note": "",
+        "progress": 0,
+        "target": 3
+      },
+      {
+        "id": "joumo_karuta_collection",
+        "name": "上毛かるた収集",
+        "note": "願いの並ぶ町では、読み札も少し声を低くする。",
+        "progress": 0,
+        "target": 5
+      },
+      {
+        "id": "daruma_perseverance",
+        "name": "だるま七転び八起き",
+        "note": "片目の棚を抜けたあとだと、七転びの意味が少し変わる。",
+        "progress": 0,
+        "target": 3
+      },
+      {
+        "id": "gunma_dialect_master",
+        "name": "群馬弁マスター",
+        "note": "",
+        "progress": 0,
+        "target": 5
+      }
+    ],
+    "areaBanner": {
+      "chapterTitle": "第二章 路線の町と最初の敬意",
+      "mapLabel": "高崎だるま街",
+      "mapSubtitle": "願掛けの町",
+      "detailLine": "",
+      "timer": 149,
+      "maxTimer": 150
+    }
+  },
+  "questLog": {
+    "mode": "exploring",
+    "titleSelection": 0,
+    "map": "ikaho",
+    "mapLabel": "伊香保石段街",
+    "audio": {
+      "requestedBgm": null,
+      "currentBgm": null
+    },
+    "player": {
+      "tileX": 14,
+      "tileY": 6,
+      "direction": "down",
+      "hp": 96,
+      "maxHp": 96,
+      "attack": 12,
+      "defense": 6,
+      "experience": 0,
+      "journeyRank": 1,
+      "nextRankExperience": 80,
+      "gold": 100,
+      "chapter": 1,
+      "skillsKnown": [],
+      "skillCharges": {},
+      "inventory": []
+    },
+    "followers": [],
+    "journeyLabel": "第二章",
+    "journeyIndex": 2,
+    "chapterTitle": "路線の町と最初の敬意",
+    "objective": "段を登るごとに町の呼吸を読み、湯の路線が試す敬意を受け止める。",
+    "respectGauge": 0,
+    "catalystCount": 0,
+    "party": [],
+    "storyFlags": {
+      "checkpointFailedOnce": false,
+      "checkpointCleared": false,
+      "akagiJoinedSlice": false,
+      "darumaCleared": false,
+      "threadCleared": false
+    },
+    "continueSlot": null,
+    "hasAnySave": false,
+    "saveMenuContext": "field",
+    "quests": {
+      "open": true,
+      "tracked": {
+        "id": "daruma_perseverance",
+        "name": "だるま七転び八起き",
+        "note": "片目の棚を抜けたあとだと、七転びの意味が少し変わる。",
+        "progress": 0,
+        "target": 3
+      },
+      "active": [
+        {
+          "id": "onsen_tour",
+          "name": "温泉巡り",
+          "note": "伊香保では段を登る呼吸そのものが、湯の作法になる。",
+          "progress": 0,
+          "target": 3
+        },
+        {
+          "id": "joumo_karuta_collection",
+          "name": "上毛かるた収集",
+          "note": "願いの並ぶ町では、読み札も少し声を低くする。",
+          "progress": 0,
+          "target": 5
+        },
+        {
+          "id": "daruma_perseverance",
+          "name": "だるま七転び八起き",
+          "note": "片目の棚を抜けたあとだと、七転びの意味が少し変わる。",
+          "progress": 0,
+          "target": 3
+        },
+        {
+          "id": "gunma_dialect_master",
+          "name": "群馬弁マスター",
+          "note": "",
+          "progress": 0,
+          "target": 5
+        }
+      ]
+    },
+    "services": [
+      {
+        "id": "yuMori",
+        "type": "item_shop",
+        "x": 5,
+        "y": 10
+      },
+      {
+        "id": "ishidanInnkeeper",
+        "type": "inn",
+        "x": 19,
+        "y": 10
+      }
+    ],
+    "ui": {
+      "showJourneyBadge": true,
+      "eventTextSpeed": "ふつう",
+      "battleDialogueSpeed": "ふつう",
+      "areaBanner": {
+        "chapterTitle": "第二章 路線の町と最初の敬意",
+        "mapLabel": "伊香保石段街",
+        "mapSubtitle": "登る湯の町",
+        "detailLine": "",
+        "timer": 149,
+        "maxTimer": 150
+      },
+      "environmentNote": null
+    },
+    "title": {
+      "mode": "intro_movie",
+      "sceneId": "highway",
+      "sceneTitle": "深夜の関越道",
+      "sceneIndex": 0,
+      "sceneTimer": 59,
+      "totalTimer": 59,
+      "revealTimer": 0
+    },
+    "encounters": {
+      "mapId": "ikaho",
+      "eligibleSteps": 0,
+      "cooldown": 3,
+      "cycleIndex": 0
+    },
+    "achievements": {
+      "unlockedCount": 1,
+      "totalCount": 22,
+      "trackedMapCount": 21,
+      "visitedTrackedMapCount": 3
+    }
+  },
+  "consoleErrors": []
+}

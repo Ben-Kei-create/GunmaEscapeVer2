@@ -140,6 +140,29 @@ Game.Maps.takasaki = (function() {
   });
 
   npcs.push({
+    id: 'takasakiTrainer',
+    x: 8, y: 14,
+    name: '棚見の若衆',
+    dialog: [
+      'だるま師匠の前に、数の合わせ方だけでも身体へ入れていくか？',
+      'ここは願いの町だ。勢いだけで突っ込むと、片目のまま見返される。',
+      '金にはならないが、足慣らしにはなる。何度でも付き合うぞ。'
+    ],
+    contextDialog: [
+      {
+        flag: 'training_takasaki_focus_cleared',
+        lines: [
+          '呼吸は前より整ってきたな。',
+          'まだだるまの目が重いなら、もう一度だけ棚音に合わせていくか。'
+        ]
+      }
+    ],
+    afterDialog: 'training_takasaki_focus',
+    sprite: npcs[2].sprite,
+    palette: { 1:'#333', 2:'#ddbb88', 3:'#221100', 4:'#8a5d48', 5:'#56608f', 6:'#443322' }
+  });
+
+  npcs.push({
     id: 'gururinStop',
     x: 18, y: 14,
     name: 'ぐるりん停留所',

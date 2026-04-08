@@ -33,6 +33,11 @@ Game.Map = (function() {
     return currentMapId;
   }
 
+  function shouldHideNpc(npc) {
+    if (Game.NPC && Game.NPC.shouldHideNpc) return Game.NPC.shouldHideNpc(npc);
+    return !!(npc && npc.hideWhenDefeated && npc.defeated);
+  }
+
   function getTile(x, y) {
     if (!currentMap) return -1;
     if (x < 0 || x >= Game.Config.MAP_COLS || y < 0 || y >= Game.Config.MAP_ROWS) return -1;
@@ -55,7 +60,7 @@ Game.Map = (function() {
     if (currentMap.npcs) {
       for (var i = 0; i < currentMap.npcs.length; i++) {
         var npc = currentMap.npcs[i];
-        if (npc.hideWhenDefeated && npc.defeated) continue;
+        if (shouldHideNpc(npc)) continue;
         if (npc.x === x && npc.y === y) return false;
       }
     }
@@ -184,6 +189,7 @@ Game.Map = (function() {
   function getNpcAt(x, y) {
     if (!currentMap || !currentMap.npcs) return null;
     for (var i = 0; i < currentMap.npcs.length; i++) {
+      if (shouldHideNpc(currentMap.npcs[i])) continue;
       if (currentMap.npcs[i].x === x && currentMap.npcs[i].y === y) {
         return currentMap.npcs[i];
       }
@@ -213,7 +219,7 @@ Game.Map = (function() {
     if (currentMap.npcs) {
       for (var i = 0; i < currentMap.npcs.length; i++) {
         var npc = currentMap.npcs[i];
-        if (npc.hideWhenDefeated && npc.defeated) continue;
+        if (shouldHideNpc(npc)) continue;
         var ts = Game.Config.TILE_SIZE;
         Game.Renderer.drawSprite(npc.sprite, npc.x * ts, npc.y * ts, npc.palette);
       }

@@ -98,7 +98,7 @@ Game.Player = (function() {
     attack: 12,
     defense: 6,
     experience: 0,
-    gold: 100,
+    gold: 60,
     chapter: 1,                  // current chapter (1 or 2)
     diceSlots: 1,                // max dice slots (1-5)
     equippedDice: ['normalDice'], // array of dice item IDs
@@ -644,6 +644,7 @@ Game.Player = (function() {
   }
 
   function equipDice(diceId, slot) {
+    normalizeDiceLoadout();
     var item = Game.Items.get(diceId);
     if (!item || item.type !== 'dice') return false;
     if (slot < 0 || slot >= data.diceSlots) return false;
@@ -652,19 +653,84 @@ Game.Player = (function() {
       addItem(data.equippedDice[slot]);
     }
     data.equippedDice[slot] = diceId;
-    removeItem(diceId);
+    if (diceId !== 'normalDice') {
+      removeItem(diceId);
+    }
+    normalizeDiceLoadout();
     return true;
   }
 
   function addDiceSlot() {
     if (data.diceSlots >= 5) return false;
+    normalizeDiceLoadout();
     data.diceSlots++;
-    data.equippedDice.push('normalDice');
     return true;
   }
 
+  function unequipDice(slot) {
+    normalizeDiceLoadout();
+    if (slot < 0 || slot >= data.diceSlots) return false;
+    var equippedId = data.equippedDice[slot];
+    if (slot === 0) {
+      if (equippedId && equippedId !== 'normalDice') {
+        addItem(equippedId);
+      }
+      data.equippedDice[0] = 'normalDice';
+      normalizeDiceLoadout();
+      return true;
+    }
+    if (!equippedId) return false;
+    if (equippedId !== 'normalDice') {
+      addItem(equippedId);
+    }
+    data.equippedDice[slot] = null;
+    normalizeDiceLoadout();
+    return true;
+  }
+
+  function getDiceLoadout() {
+    normalizeDiceLoadout();
+    var loadout = [];
+    for (var i = 0; i < data.diceSlots; i++) {
+      if (i === 0) {
+        loadout.push(data.equippedDice[0] || 'normalDice');
+      } else {
+        loadout.push(data.equippedDice[i] || null);
+      }
+    }
+    return loadout;
+  }
+
   function getEquippedDice() {
-    return data.equippedDice.slice(0, data.diceSlots);
+    var loadout = getDiceLoadout();
+    var equipped = [];
+    for (var i = 0; i < loadout.length; i++) {
+      if (loadout[i]) {
+        equipped.push(loadout[i]);
+      }
+    }
+    return equipped.length ? equipped : ['normalDice'];
+  }
+
+  function normalizeDiceLoadout() {
+    if (!Array.isArray(data.equippedDice)) {
+      data.equippedDice = [];
+    }
+    data.diceSlots = Math.max(1, Math.min(5, data.diceSlots || 1));
+    if (!data.equippedDice.length || !data.equippedDice[0]) {
+      data.equippedDice[0] = 'normalDice';
+    }
+    for (var i = 1; i < data.equippedDice.length; i++) {
+      if (data.equippedDice[i] === 'normalDice') {
+        data.equippedDice[i] = null;
+      }
+    }
+    if (data.equippedDice.length > data.diceSlots) {
+      data.equippedDice.length = data.diceSlots;
+    }
+    while (data.equippedDice.length > 1 && !data.equippedDice[data.equippedDice.length - 1]) {
+      data.equippedDice.pop();
+    }
   }
 
   function equipArmor(itemId) {
@@ -911,8 +977,10 @@ Game.Player = (function() {
     getAttack: getAttack,
     getDefense: getDefense,
     equipDice: equipDice,
+    unequipDice: unequipDice,
     addDiceSlot: addDiceSlot,
     getEquippedDice: getEquippedDice,
+    getDiceLoadout: getDiceLoadout,
     equipArmor: equipArmor,
     unequipArmor: unequipArmor,
     addGold: addGold,

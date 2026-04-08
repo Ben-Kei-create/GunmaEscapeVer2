@@ -14,8 +14,17 @@ Game.Event = (function() {
   var textComplete = false;
   var autoAdvanceTimer = 0;
   var renderHold = null;
-  var MAX_EVENT_CHARS_PER_LINE = 23;
+  var currentEventId = '';
+  var currentEventOptions = null;
+  var skipGraceFrames = 0;
+  var MAX_EVENT_CHARS_PER_LINE = 25;
   var TRAILING_PUNCTUATION = '、。！？…）)]」』】';
+  var EVENT_OPTIONS = {
+    opening: {
+      skipToCompleteOnConfirm: true,
+      graceFrames: 18
+    }
+  };
 
   // Scene format:
   // {
@@ -1041,6 +1050,9 @@ Game.Event = (function() {
     autoAdvanceTimer = 0;
     renderHold = null;
     charSpeed = getConfiguredCharSpeed();
+    currentEventId = eventId || '';
+    currentEventOptions = EVENT_OPTIONS[currentEventId] || null;
+    skipGraceFrames = currentEventOptions && currentEventOptions.graceFrames ? currentEventOptions.graceFrames : 0;
     onComplete = callback || null;
 
     var firstScene = scenes[0];
@@ -1088,6 +1100,13 @@ Game.Event = (function() {
   function update() {
     if (!active) return null;
     charSpeed = getConfiguredCharSpeed();
+    if (skipGraceFrames > 0) skipGraceFrames--;
+
+    if (shouldSkipEventImmediately()) {
+      Game.Audio.playSfx('confirm');
+      finishEventNow();
+      return { result: 'done' };
+    }
 
     // Handle fade
     if (fadeDir !== 0) {
@@ -1101,9 +1120,7 @@ Game.Event = (function() {
         fadeDir = 0;
         // If fading out (between scenes), advance
         if (sceneIndex >= scenes.length) {
-          renderHold = null;
-          active = false;
-          if (onComplete) onComplete();
+          finishEventNow();
           return { result: 'done' };
         }
       }
@@ -1117,9 +1134,7 @@ Game.Event = (function() {
 
     var scene = scenes[sceneIndex];
     if (!scene) {
-      renderHold = null;
-      active = false;
-      if (onComplete) onComplete();
+      finishEventNow();
       return { result: 'done' };
     }
 
@@ -1172,6 +1187,10 @@ Game.Event = (function() {
     var drawState = getDrawState();
     if (!drawState || !drawState.scene) return;
     var scene = drawState.scene;
+    var illustrationKey = Game.Illustrations && Game.Illustrations.getEventKey
+      ? Game.Illustrations.getEventKey(scene, currentEventId)
+      : '';
+    var hasIllustration = !!illustrationKey;
 
     // Background
     var bg = scene.bg || '#000011';
@@ -1194,20 +1213,35 @@ Game.Event = (function() {
       shakeOffsetY = (Math.random() - 0.5) * 3;
     }
 
+    if (hasIllustration && Game.Illustrations.drawCardAbsolute) {
+      Game.Illustrations.drawCardAbsolute(
+        illustrationKey,
+        268 + shakeOffsetX,
+        72 + shakeOffsetY,
+        188,
+        110,
+        {
+          accent: scene.speakerColor || '#8fb8ff',
+          matteAlpha: 0.08,
+          label: scene.motion || currentEventId || ''
+        }
+      );
+    }
+
     // Top decorative line
     R.drawRectAbsolute(20, 60, C.CANVAS_WIDTH - 40, 1, '#334');
 
     // Speaker name
     if (scene.speaker) {
       var speakerColor = scene.speakerColor || C.COLORS.GOLD;
-      R.drawTextJP(scene.speaker, 40 + shakeOffsetX, 42 + shakeOffsetY, speakerColor, 16);
+      R.drawTextJP(scene.speaker, 40 + shakeOffsetX, 42 + shakeOffsetY, speakerColor, 14);
     }
 
     // Text area - show all previous lines + current line with typewriter
-    var textStartY = 80;
-    var lineHeight = 24;
-    var maxDisplayLines = 7;
-    var maxCharsPerLine = MAX_EVENT_CHARS_PER_LINE;
+    var textStartY = 78;
+    var lineHeight = hasIllustration ? 20 : 22;
+    var maxDisplayLines = hasIllustration ? 9 : 7;
+    var maxCharsPerLine = hasIllustration ? 15 : MAX_EVENT_CHARS_PER_LINE;
     var visualLines = [];
 
     for (var i = 0; i <= drawState.lineIndex && i < scene.lines.length; i++) {
@@ -1226,7 +1260,7 @@ Game.Event = (function() {
       var y = textStartY + (v - startVisualLine) * lineHeight + shakeOffsetY;
       var x = 50 + shakeOffsetX;
       var visual = visualLines[v];
-      R.drawTextJP(visual.text, x, y, visual.isCurrent ? '#ffffff' : '#aaaacc', 15);
+      R.drawTextJP(visual.text, x, y, visual.isCurrent ? '#ffffff' : '#aaaacc', 14);
     }
 
     // Bottom decorative line
@@ -1236,7 +1270,7 @@ Game.Event = (function() {
     if (textComplete) {
       var blinkT = Date.now() / 400;
       var promptColor = Math.sin(blinkT) > 0 ? '#d7dced' : '#939db8';
-      R.drawTextJP('Z / Enterで進む', C.CANVAS_WIDTH - 132, C.CANVAS_HEIGHT - 50, promptColor, 9);
+      R.drawTextJP('Z / Enterで進む', C.CANVAS_WIDTH - 128, C.CANVAS_HEIGHT - 50, promptColor, 8);
       if (scene.autoAdvance) {
         var remainingFrames = autoAdvanceTimer > 0 ? autoAdvanceTimer : scene.autoAdvance;
         var remainingSeconds = Math.max(0, remainingFrames / 60);
@@ -1245,7 +1279,7 @@ Game.Event = (function() {
     }
 
     // Scene counter (small)
-    R.drawTextJP((sceneIndex + 1) + '/' + scenes.length, 20, C.CANVAS_HEIGHT - 18, '#333', 10);
+    R.drawTextJP((sceneIndex + 1) + '/' + scenes.length, 20, C.CANVAS_HEIGHT - 18, '#333', 9);
 
     // Fade overlay
     if (fadeAlpha > 0) {
@@ -1271,9 +1305,7 @@ Game.Event = (function() {
           holdTerminalScene(scene);
           fadeDir = 1;
         } else {
-          renderHold = null;
-          active = false;
-          if (onComplete) onComplete();
+          finishEventNow();
         }
         return;
       }
@@ -1845,6 +1877,34 @@ Game.Event = (function() {
     };
   }
 
+  function shouldSkipEventImmediately() {
+    if (!active || !currentEventOptions || !currentEventOptions.skipToCompleteOnConfirm) return false;
+    if (skipGraceFrames > 0 || !Game.Input || !Game.Input.isPressed) return false;
+    if (!Game.Input.isPressed('confirm') && !Game.Input.isPressed('cancel')) return false;
+    return true;
+  }
+
+  function finishEventNow() {
+    var callback = onComplete;
+    active = false;
+    scenes = [];
+    sceneIndex = 0;
+    lineIndex = 0;
+    charIndex = 0;
+    charTimer = 0;
+    fadeAlpha = 0;
+    fadeDir = 0;
+    waitTimer = 0;
+    textComplete = false;
+    autoAdvanceTimer = 0;
+    renderHold = null;
+    currentEventId = '';
+    currentEventOptions = null;
+    skipGraceFrames = 0;
+    onComplete = null;
+    if (callback) callback();
+  }
+
   function getDrawState() {
     var scene = scenes[sceneIndex];
     if (scene) {
@@ -1868,6 +1928,7 @@ Game.Event = (function() {
     var scene = scenes[sceneIndex];
     return {
       active: active,
+      eventId: currentEventId,
       sceneIndex: sceneIndex,
       sceneCount: scenes.length,
       lineIndex: lineIndex,
@@ -1877,7 +1938,11 @@ Game.Event = (function() {
       autoAdvanceTimer: autoAdvanceTimer,
       speaker: scene ? scene.speaker : null,
       lines: scene && scene.lines ? scene.lines.slice() : [],
-      autoAdvance: scene ? (scene.autoAdvance || 0) : 0
+      autoAdvance: scene ? (scene.autoAdvance || 0) : 0,
+      illustrationKey: scene && Game.Illustrations && Game.Illustrations.getEventKey
+        ? Game.Illustrations.getEventKey(scene, currentEventId)
+        : '',
+      skippable: !!(currentEventOptions && currentEventOptions.skipToCompleteOnConfirm)
     };
   }
 

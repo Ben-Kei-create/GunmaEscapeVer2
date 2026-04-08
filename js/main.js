@@ -32,6 +32,88 @@ Game.Main = (function() {
     minakami_valley: { flag: 'arrival_minakami_valley_auto', eventId: 'arrival_minakami_valley_auto' },
     border_tunnel: { flag: 'arrival_border_tunnel_auto', eventId: 'arrival_border_tunnel_auto' }
   };
+  var TRAINING_BATTLES = {
+    training_takasaki_focus: {
+      clearFlag: 'training_takasaki_focus_cleared',
+      recommendedRank: 3,
+      firstClearLine: '棚音と足音のズレが、ようやく手の内で読めるようになってきた。',
+      repeatLine: '片目棚の気配が揃うほど、こちらの呼吸も少しずつ静かになる。',
+      payload: {
+        enemyIds: ['training_daruma_shell', 'training_takasaki_ember', 'training_daruma_shell'],
+        packName: '片目棚の足慣らし',
+        omen: '赤い粉が散るたび、棚の気配が一歩ずつ近づいてくる。',
+        directive: 'ぶつけて揺らし、遅れて熱を押し込んでくる。',
+        entryText: '片目棚の足慣らしが、だるま棚の影から輪を作って現れた。',
+        layout: 'wedge',
+        accent: '#ff9d78',
+        roles: ['押し役', '棚火', '返し役']
+      }
+    },
+    training_onuma_mist: {
+      clearFlag: 'training_onuma_mist_cleared',
+      recommendedRank: 6,
+      firstClearLine: '湖面の白さに目を奪われず、気配の重なりだけを追えるようになった。',
+      repeatLine: '霧と灯りの拍が合うほど、こちらの足運びも湖畔へ馴染んでいく。',
+      payload: {
+        enemyIds: ['training_onuma_mist', 'training_onuma_lantern', 'training_onuma_mist'],
+        packName: '大沼の霧稽古',
+        omen: '白い霧の奥で、小さな灯りだけが先にこちらを測っている。',
+        directive: '灯で間合いを計り、霧の二拍で逃げ道を薄くする。',
+        entryText: '大沼の霧稽古が、湖畔の白さを裂くように揃った。',
+        layout: 'screen',
+        accent: '#a7d8ff',
+        roles: ['左霧', '測り灯', '右霧']
+      }
+    },
+    training_shirane_heat: {
+      clearFlag: 'training_shirane_heat_cleared',
+      recommendedRank: 9,
+      firstClearLine: '熱と白糸が重なっても、手順を崩さずに踏み返せるようになってきた。',
+      repeatLine: '噴気の白さに慣れるほど、切り返しの拍が身体へ落ちてくる。',
+      payload: {
+        enemyIds: ['training_shirane_steam', 'training_shirane_silk', 'training_shirane_remnant'],
+        packName: '噴気の地慣らし',
+        omen: '硫黄の熱と白糸の鳴りが、山道いっぱいに薄く張っている。',
+        directive: '勢いで崩し、細い手数で詰め、最後に熱で押し返す。',
+        entryText: '噴気の地慣らしが、白根の風と一緒に押し寄せた。',
+        layout: 'wedge',
+        accent: '#ffbe8e',
+        roles: ['切り込み', '詰め手', '押し返し']
+      }
+    },
+    training_haruna_echo: {
+      clearFlag: 'training_haruna_echo_cleared',
+      recommendedRank: 12,
+      firstClearLine: '返り声に焦らされず、自分の拍だけを残せるようになった。',
+      repeatLine: '榛名の霧はまだ深いが、遅れて届く声へ振り回されなくなってきた。',
+      payload: {
+        enemyIds: ['training_haruna_echo', 'training_haruna_mist', 'training_haruna_bell'],
+        packName: '湖霧の返し稽古',
+        omen: '湖面から遅れて返る声が、霧の白さと重なって近づいてくる。',
+        directive: '返り声で拍を外し、霧で散らし、最後に呼び声で寄せる。',
+        entryText: '湖霧の返し稽古が、水面の向こうから順に姿を結んだ。',
+        layout: 'stagger',
+        accent: '#b5dcff',
+        roles: ['返り声', '散らし役', '呼び声']
+      }
+    },
+    training_minakami_ridge: {
+      clearFlag: 'training_minakami_ridge_cleared',
+      recommendedRank: 14,
+      firstClearLine: '冷えた断崖でも崩れず、最後の境界へ向けて体勢を保てるようになった。',
+      repeatLine: '谷風に削られるほど、こちらの踏み込みはむしろ細く深くなる。',
+      payload: {
+        enemyIds: ['training_minakami_mud', 'training_minakami_bell', 'training_minakami_mist'],
+        packName: '断崖の踏み固め',
+        omen: '冷たい水音の下で、沈む黒と返り声が同じ拍へ揃っていく。',
+        directive: '足場を鈍らせ、呼び声で誘い、最後に白い影で包む。',
+        entryText: '断崖の踏み固めが、谷あいの風に押されて迫ってきた。',
+        layout: 'screen',
+        accent: '#9fd0e8',
+        roles: ['足止め', '呼び声', '包み役']
+      }
+    }
+  };
 
   function init() {
     Game.Renderer.init();
@@ -89,6 +171,14 @@ Game.Main = (function() {
     return Game.Story.getChapterStartPlan(chapterNumber);
   }
 
+  function showChapterArrivalBanner(mapId, chapterNumber) {
+    if (!Game.UI || !Game.UI.showAreaBanner) return;
+    var chapterInfo = Game.Chapters && Game.Chapters.getChapter ? Game.Chapters.getChapter(chapterNumber || 1, mapId) : null;
+    Game.UI.showAreaBanner(mapId, {
+      detailLine: chapterInfo && chapterInfo.arrivalLine ? chapterInfo.arrivalLine : ''
+    });
+  }
+
   function resetMapStateList(mapIds) {
     for (var m = 0; m < mapIds.length; m++) {
       var mapData = Game.Maps[mapIds[m]];
@@ -131,6 +221,7 @@ Game.Main = (function() {
     setState(Game.Config.STATE.EVENT);
     Game.Event.start(plan.openingEventId, function() {
       setState(Game.Config.STATE.EXPLORING);
+      showChapterArrivalBanner(plan.mapId, chapterNumber);
       Game.Audio.playBgm('field');
     });
     return true;
@@ -608,7 +699,7 @@ Game.Main = (function() {
         var puzzleResult = Game.Puzzle.update();
         if (puzzleResult) {
           if (puzzleResult.result === 'success') {
-            Game.Player.addGold(40);
+            Game.Player.addGold(24);
             Game.NPC.showDefeatedDialog(puzzleResult.npc);
             dialogText = Game.NPC.getCurrentDialog();
             setState(Game.Config.STATE.DIALOG);
@@ -743,6 +834,46 @@ Game.Main = (function() {
     setState(Game.Config.STATE.DIALOG);
   }
 
+  function hasStoryFlag(flag) {
+    return !!(flag && Game.Story && Game.Story.hasFlag && Game.Story.hasFlag(flag));
+  }
+
+  function setStoryFlag(flag) {
+    if (!flag || !Game.Story || !Game.Story.setFlag) return;
+    Game.Story.setFlag(flag);
+    if (Game.Story.saveFlags) Game.Story.saveFlags();
+  }
+
+  function buildTrainingCompletionLines(config, firstClear) {
+    var lines = [];
+    var currentRank = Game.Player && Game.Player.getJourneyRank ? Game.Player.getJourneyRank() : 1;
+    lines.push(firstClear ? config.firstClearLine : config.repeatLine);
+
+    if (currentRank < config.recommendedRank) {
+      lines.push('今の旅路ランクは ' + currentRank + '。この先を見るなら、まずは ' + config.recommendedRank + ' まで整えておきたい。');
+    } else {
+      lines.push('今の旅路ランクは ' + currentRank + '。次の主と噛み合うだけの地力が、ようやく揃ってきた。');
+    }
+
+    lines.push('この修練では金は落ちない。持ち帰れるのは経験と間合いだけだ。');
+    return lines;
+  }
+
+  function handleTrainingAction(action) {
+    var config = TRAINING_BATTLES[action];
+    if (!config) return false;
+
+    startStoryBattle(config.payload, null, function() {
+      var firstClear = !hasStoryFlag(config.clearFlag);
+      if (firstClear) {
+        setStoryFlag(config.clearFlag);
+      }
+      Game.Audio.playBgm('field');
+      openSystemDialog(buildTrainingCompletionLines(config, firstClear));
+    });
+    return true;
+  }
+
   function handleInnAction(action) {
     var parts = action.substring(4).split('_');
     var innName = parts[0] || '宿';
@@ -788,6 +919,9 @@ Game.Main = (function() {
 
   function handleAction(action, npc) {
     if (tryHandleChapterEndingAction(action)) {
+      return;
+    }
+    if (handleTrainingAction(action)) {
       return;
     }
 
@@ -1039,7 +1173,7 @@ Game.Main = (function() {
     pd.attack = 12;
     pd.defense = 6;
     pd.experience = 0;
-    pd.gold = 100;
+    pd.gold = 60;
     pd.chapter = 1;
     pd.diceSlots = 1;
     pd.equippedDice = ['normalDice'];
@@ -1066,6 +1200,9 @@ Game.Main = (function() {
     if (Game.Quests && Game.Quests.reset) {
       Game.Quests.reset();
     }
+    if (Game.Shop && Game.Shop.resetState) {
+      Game.Shop.resetState();
+    }
   }
 
   function startGame() {
@@ -1075,7 +1212,7 @@ Game.Main = (function() {
     Game.Audio.stopBgm();
     Game.Event.start('opening', function() {
       setState(Game.Config.STATE.EXPLORING);
-      if (Game.UI && Game.UI.showAreaBanner) Game.UI.showAreaBanner('maebashi');
+      showChapterArrivalBanner('maebashi', 1);
       Game.Audio.playBgm('field');
     });
   }
@@ -1283,19 +1420,33 @@ Game.Main = (function() {
         checkpointCleared: !!storyFlags.checkpoint_cleared,
         akagiJoinedSlice: !!storyFlags.akagi_joined_slice,
         darumaCleared: !!storyFlags.daruma_master_cleared_slice,
-        threadCleared: !!storyFlags.thread_maiden_cleared_slice
+        threadCleared: !!storyFlags.thread_maiden_cleared_slice,
+        trainingTakasaki: !!storyFlags.training_takasaki_focus_cleared,
+        trainingOnuma: !!storyFlags.training_onuma_mist_cleared,
+        trainingShirane: !!storyFlags.training_shirane_heat_cleared,
+        trainingHaruna: !!storyFlags.training_haruna_echo_cleared,
+        trainingMinakami: !!storyFlags.training_minakami_ridge_cleared
       },
       continueSlot: Game.Save && Game.Save.getSlotInfo ? Game.Save.getSlotInfo(1) : null,
       hasAnySave: Game.Save && Game.Save.hasAnySave ? Game.Save.hasAnySave() : false,
       saveMenuContext: Game.SaveMenu && Game.SaveMenu.getContext ? Game.SaveMenu.getContext() : null
     };
     if (Game.Quests) {
+      var trackedQuest = Game.Quests.getTrackedQuest ? Game.Quests.getTrackedQuest() : null;
       payload.quests = {
         open: Game.Quests.isOpen ? Game.Quests.isOpen() : false,
+        tracked: trackedQuest ? {
+          id: trackedQuest.id,
+          name: trackedQuest.name,
+          note: Game.Quests.getContextNote ? Game.Quests.getContextNote(trackedQuest.id) : '',
+          progress: trackedQuest.progress,
+          target: trackedQuest.target
+        } : null,
         active: Game.Quests.getActive ? Game.Quests.getActive().map(function(quest) {
           return {
             id: quest.id,
             name: quest.name,
+            note: Game.Quests.getContextNote ? Game.Quests.getContextNote(quest.id) : '',
             progress: quest.progress,
             target: quest.target
           };
@@ -1306,6 +1457,7 @@ Game.Main = (function() {
       var currentMap = Game.Map.getCurrentMap();
       if (currentMap && currentMap.npcs) {
         payload.services = currentMap.npcs.map(function(npc) {
+          if (Game.NPC.shouldHideNpc && Game.NPC.shouldHideNpc(npc)) return null;
           return {
             id: npc.id,
             type: Game.NPC.getNpcServiceType(npc),
@@ -1313,7 +1465,7 @@ Game.Main = (function() {
             y: npc.y
           };
         }).filter(function(entry) {
-          return !!entry.type;
+          return !!(entry && entry.type);
         });
       }
     }
@@ -1321,6 +1473,7 @@ Game.Main = (function() {
       showJourneyBadge: Game.UI && Game.UI.isJourneyBadgeEnabled ? Game.UI.isJourneyBadgeEnabled() : true,
       eventTextSpeed: Game.UI && Game.UI.getEventTextSpeedLabel ? Game.UI.getEventTextSpeedLabel() : 'ふつう',
       battleDialogueSpeed: Game.UI && Game.UI.getBattleDialogueSpeedLabel ? Game.UI.getBattleDialogueSpeedLabel() : 'ふつう',
+      areaBanner: Game.UI && Game.UI.getAreaBannerDebugState ? Game.UI.getAreaBannerDebugState() : null,
       environmentNote: Game.UI && Game.UI.getEnvironmentNoteDebugState ? Game.UI.getEnvironmentNoteDebugState() : null
     };
     if (Game.UI && Game.UI.getTitlePresentationState) {
@@ -1337,6 +1490,9 @@ Game.Main = (function() {
     }
     if (state === Game.Config.STATE.BATTLE && Game.Battle && Game.Battle.getStateSnapshot) {
       payload.battle = Game.Battle.getStateSnapshot();
+    }
+    if (state === Game.Config.STATE.SHOP && Game.Shop && Game.Shop.getDebugState) {
+      payload.shop = Game.Shop.getDebugState();
     }
     if (state === Game.Config.STATE.EVENT && Game.Event && Game.Event.getStateSnapshot) {
       payload.event = Game.Event.getStateSnapshot();

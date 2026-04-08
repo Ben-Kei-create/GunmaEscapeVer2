@@ -77,6 +77,25 @@ Game.Maps.haruna_lake = (function() {
       dialog: ['糸電話が繋がらないよ。', 'お姉ちゃんの声が聞こえない。', 'どこに行っちゃったの？'],
       defeatedDialog: ['あ、お姉ちゃんの声だ！', 'やっと繋がったよ！'],
       defeated: false, sprite: humanSprite, palette: { 1:'#eeddcc', 2:'#5588cc', 3:'#443322' }
+    },
+    {
+      id: 'harunaTrainer', x: 23, y: 15, name: '霧待ちの漁師',
+      dialog: [
+        '榛名じゃ、見えないことに慣れた者だけが次の波を読める。',
+        '返り声に釣られない稽古をしていくか。湖獣の前で拍を乱すと、そのまま飲まれるぞ。',
+        '魚は持ってないが、勘を研ぐ相手くらいは出してやれる。'
+      ],
+      contextDialog: [
+        {
+          flag: 'training_haruna_echo_cleared',
+          lines: [
+            '返ってくる声に首を振らなくなってきたな。',
+            'まだ霧の奥が重いなら、もう一度だけ湖面の呼吸をさらっていけ。'
+          ]
+        }
+      ],
+      afterDialog: 'training_haruna_echo',
+      defeated: false, sprite: humanSprite, palette: { 1:'#e6d0b5', 2:'#557b9f', 3:'#3f2d1f' }
     }
   ];
   var items = [

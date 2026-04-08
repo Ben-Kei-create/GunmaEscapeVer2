@@ -931,3 +931,199 @@ Original prompt: そうだね。セーブできる村役場みたいなところ
   - 実機確認では `forest / tsumagoi / tamura / konuma / akagi_shrine` の到着カットが `mode=event` で起動し、各シーン冒頭の文面が想定どおり出ることを確認した。
   - 環境メモは `forest / takasaki / akagi_shrine / border_tunnel` で実際に歩いて発火させ、`note-forest.png`, `note-takasaki.png`, `note-akagi-shrine.png`, `note-border-tunnel.png` でオーバーレイ表示を目視した。
   - 到着カットのキャプチャは `arrival-forest.png`, `arrival-tsumagoi.png`, `arrival-tamura.png`, `arrival-konuma.png`, `arrival-akagi-shrine.png` に保存し、今回の検証では console error / pageerror は 0 件だった。
+- 2026-04-08: 環境ストーリーテリングをNPC反応へ接続。
+  - `js/npc.js`
+    - `contextDialog` を読んでストーリーフラグに応じた台詞へ差し替える `getContextDialogEntry()` を追加した。
+    - 通常NPCと撃破後のショップNPCの両方で文脈会話を使えるようにし、`afterDialog` やショップ再開処理を壊さずに上書きできるようにした。
+  - `js/main.js`
+    - `render_game_to_text` の dialog 出力へ `speaker / text` を追加し、会話内容を自動検証しやすくした。
+  - `js/maps/maebashi.js`
+    - 詩人が `中央線の跡` を見たあとに、舗道へ残る過去の気配へ言及するようにした。
+  - `js/maps/takasaki.js`
+    - 音楽家が `達磨列` を見たあとに、町全体が息を合わせるような赤の圧力を語るようにした。
+  - `js/maps/tamura.js`
+    - 機織り手が `織り家` の気配を拾ったあとに、布と生活の連なりを補う文脈台詞を持つようにした。
+  - `js/maps/konuma.js`
+    - 商人が `霧見張り` を見たあとに、水面を読む暮らしの緊張を語るようにした。
+  - `js/maps/onuma.js`
+    - 老漁師が `荷車の墓場` を見たあとに、残された物の時間を語るようにした。
+  - `js/maps/shirane_trail.js`
+    - 老坑夫が `硫黄の切り口` を見たあとに、山が今も削れ続けている感覚を補うようにした。
+  - `js/maps/jomo_gakuen.js`
+    - 図書委員が `提出物の廊下` を見たあとに、学園の空気の重さを言い換えるようにした。
+  - `js/maps/haruna_lake.js`
+    - 老人が `霧の岸` を見たあとに、湖の静けさと警戒の同居を語るようにした。
+  - `js/maps/minakami_valley.js`
+    - 行商人が `祈り棚` を見たあとに、谷の通い路と商いの記憶を拾うようにした。
+  - `js/maps/border_tunnel.js`
+    - 星を数える老人が `偽星空` を見たあとに、出口へ偽の夜が吊られている感覚を語るようにした。
+- 2026-04-08: 環境ストーリーテリングのNPC反応接続を検証。
+  - `node --check js/npc.js js/main.js js/maps/maebashi.js js/maps/takasaki.js js/maps/tamura.js js/maps/konuma.js js/maps/onuma.js js/maps/shirane_trail.js js/maps/jomo_gakuen.js js/maps/haruna_lake.js js/maps/minakami_valley.js js/maps/border_tunnel.js` と `git diff --check` 通過。
+  - `develop-web-game` の Playwright client を `output/web-game-20260407/npc-context-smoke` で実行し、通常探索の短時間スモークで新規 console error / pageerror が出ていないことを確認した。
+  - `output/web-game-20260407/npc-context/summary.json` で、`musician-baseline / musician-context / tamura-weaver-context / library-context / border-star-context / ridge-peddler-context-to-shop` の6ケースを検証した。
+  - 同 summary で、環境メモ発火前は既存台詞、発火後は文脈台詞へ切り替わること、`ridge_peddler` では文脈会話後も `mode=shop` へ遷移してショップ処理が壊れていないことを確認した。
+  - `musician-context.png`, `library-context.png`, `ridge-peddler-shop.png` を目視し、会話オーバーレイの視認性と文脈台詞の差し替わりが成立していることを確認した。console error / pageerror は 0 件。
+- 2026-04-08: 章導入バナーと依頼帳へ環境の文脈を接続。
+  - `js/chapter_data.js`
+    - 各 journey に `arrivalLine` を追加し、章が切り替わった直後にその章らしい一文をUIへ渡せるようにした。
+  - `js/ui.js`
+    - `showAreaBanner(mapId, options)` を拡張し、通常の地名バナーに加えて `detailLine` を出せるようにした。
+    - 章導入用の一文がある場合はバナー高さと表示時間を少しだけ伸ばし、章タイトル / 地名 / 土地の一文が3段で読めるようにした。
+    - `getAreaBannerDebugState()` を追加し、`render_game_to_text` からバナー文面を検証できるようにした。
+  - `js/main.js`
+    - `showChapterArrivalBanner()` を追加し、新規ゲーム開始時と `startChapter()` 後に、章ごとの `arrivalLine` を載せたバナーを出すようにした。
+    - `render_game_to_text` の `quests` に `tracked` と各 active quest の `note` を、`ui` に `areaBanner` を追加し、章導入と依頼文脈の両方を自動確認しやすくした。
+  - `js/quests.js`
+    - 12件の依頼へ `contextNotes` を追加し、到着した土地や拾った環境フラグに応じて依頼の見え方が変わるようにした。
+    - 依頼帳の下部へ選択中依頼の `土地メモ` を出し、追跡トラッカーも文脈メモつきの2段表示へ拡張した。
+    - `getContextNote()` と `getTrackedQuest()` を追加し、UIと検証ログの両方から依頼の現在文脈を参照できるようにした。
+- 2026-04-08: 章導入バナーと依頼文脈接続の検証結果
+  - `node --check js/chapter_data.js js/ui.js js/quests.js js/main.js` と `git diff --check` 通過。
+  - `develop-web-game` の Playwright client を `output/web-game-20260408/chapter-quest-context-smoke` で実行し、通常起動の短時間スモークで新規 console error / pageerror が出ていないことを確認した。
+  - `output/web-game-20260408/chapter-quest-context/summary.json` で、`第三章 赤城の運び屋たち / 廃墟の森 / 森と湖には、運び切れなかったものの気配が沈んでいる。` の章導入バナー文面が `ui.areaBanner` に乗ることを確認した。
+  - 同 summary で、高崎では追跡依頼 `daruma_perseverance` に `片目の棚を抜けたあとだと、七転びの意味が少し変わる。` が、伊香保では `onsen_tour` に `伊香保では段を登る呼吸そのものが、湯の作法になる。` がそれぞれ `quests.tracked / quests.active[].note` として出ることを確認した。
+  - `trackerNote.mode` と `questLog.mode` はどちらも `exploring` を維持し、到着イベントの自動発火を抑えた検証条件でも依頼メモが正常に出ることを確認した。console error / pageerror は 0 件。
+- 2026-04-08: オープニング暗転を1入力スキップへ寄せ、最初の街への遷移を安定化。
+  - `js/event.js`
+    - イベントごとの挙動を持てる `EVENT_OPTIONS` と `currentEventId / currentEventOptions` を追加し、`opening` にだけ `skipToCompleteOnConfirm` を付与した。
+    - 開始直後の誤入力だけ避けるための `skipGraceFrames` を追加し、その後はテキスト送りの途中でも confirm/cancel 1回で `finishEventNow()` が走るようにした。
+    - イベント終了処理を `finishEventNow()` へ統一し、フェード、シーン、レンダ保持、コールバック復帰をまとめて片付けるようにした。
+    - `getStateSnapshot()` へ `eventId / skippable` を追加し、自動検証側からオープニングの状態を識別しやすくした。
+- 2026-04-08: 仲間化したNPCの残像を横展開で抑制。
+  - `js/npc.js`
+    - `shouldHideNpc()` を追加し、`hideWhenDefeated / hideWhenFlag / hideWhenPartyMember / hideWhenAnyFlag` をまとめて判定するようにした。
+    - NPCの移動更新、タイル占有、描画の各経路で `shouldHideNpc()` を使い、隠れるはずのNPCが場に残らないようにした。
+  - `js/map.js`
+    - 通行判定、`getNpcAt()`、描画でも hidden NPC を除外し、探索ロジック全体で同じ非表示条件を共有するようにした。
+  - `js/ui.js`
+    - ミニマップと設定パネルのNPC数集計から hidden NPC を外し、見えていないNPCがUI上だけ残るズレを防いだ。
+  - `js/main.js`
+    - `render_game_to_text()` の service/NPC出力から hidden NPC を外し、自動検証ログにも分身が残らないようにした。
+  - `js/maps/maebashi.js`
+    - `akagiGuide` に `hideWhenFlag: 'party_akagi'` を追加し、加入直後から案内役アカギ本体を確実に消すようにした。
+- 2026-04-08: オープニング暗転スキップとアカギ分身解消の検証結果
+  - `node --check js/event.js js/npc.js js/map.js js/ui.js js/main.js js/maps/maebashi.js` と `git diff --check` 通過。
+  - `develop-web-game` の Playwright client を `output/web-game-20260408/opening-akagi-smoke` で実行し、通常起動の短時間スモークで新規 console error / pageerror が出ていないことを確認した。
+  - `output/web-game-20260408/opening-akagi-fixes/summary.json` で、`beforeOpening.mode=event` かつ `event.eventId=opening` の状態から、confirm 1回で `openingState.mode=exploring` と `openingState.map=maebashi` へ遷移することを確認した。
+  - 同 summary で、遷移後に `audio.currentBgm=field_maebashi` と `ui.areaBanner` が乗ることを確認し、黒画面待ちではなく街の表示へ直結していることを確認した。
+  - アカギ加入後は `akagiHidden=true` かつ `tileNpcId=null` を確認し、同行フォロワーは残したまま元位置の案内役だけ消えることを確認した。
+  - `opening-skip-to-town.png` と `akagi-no-ghost.png` を目視し、今回の検証では console error / pageerror は 0 件だった。
+- 2026-04-08: 店の在庫を固定化し、所持金バランスを絞った。
+  - `js/shop.js`
+    - 店ごとの購入数を `runtime.purchases` として持ち、通常商品にも有限在庫を持たせた。
+    - 基本在庫は `heal=3/2/1`, `battle=2`, `dice/armor/diceSlot=1` の型ベースで決め、残数表示と売り切れ表示をUIへ追加した。
+    - `exportState / importState / resetState / getDebugState` を追加し、保存復帰と自動検証から店在庫を扱えるようにした。
+  - `js/save.js`
+    - セーブバージョンを `8` に上げ、通常セーブとあいことば圧縮データの両方へ `shopState` を保存するようにした。
+  - `js/player.js` / `js/main.js`
+    - 初期所持金を `100G -> 60G` に下げ、新規開始時の所持金感覚を締めた。
+    - パズル成功時の固定報酬を `40G -> 24G` に下げた。
+    - 新規ゲーム開始時は `Game.Shop.resetState()` で棚在庫も初期化するようにした。
+  - `js/battle.js`
+    - 通常戦勝利金の係数を `0.55 -> 0.4` に下げ、雑魚戦の積み上がりを抑えた。
+  - `js/quests.js`
+    - 金報酬の依頼を `200 -> 90`, `500 -> 180`, `300 -> 120`, `150 -> 70`, `1000 -> 300` へ見直し、依頼一発で財布が膨らみすぎないようにした。
+- 2026-04-08: 店在庫と経済調整の検証結果
+  - `node --check js/shop.js js/save.js js/player.js js/battle.js js/quests.js js/main.js` と `git diff --check` 通過。
+  - `develop-web-game` の Playwright client を `output/web-game-20260408/shop-economy-smoke` で実行し、通常起動スモークで新規 console error / pageerror が出ていないことを確認した。
+  - `output/web-game-20260408/shop-economy-check/summary.json` で、前橋道具屋の初期在庫が `薬草3 / 焼きまんじゅう2 / ゆるみ札2 / 皮の鎧1` で始まることを確認した。
+  - 同 summary で、`60G` から薬草を3回買うと `15G` になり、`remaining: 3 -> 0`、4回目は `薬草はもう売り切れだ。` と弾かれることを確認した。
+  - さらに `Game.Save.save(1) -> resetState -> Game.Save.load(1)` 後も、前橋道具屋の薬草在庫が `remaining: 0` のまま復元されることを確認した。
+  - `shop-sold-out.png` を目視し、価格と残数が並び、薬草だけ `売切` になることを確認した。console error / pageerror は 0 件。
+  - `output/web-game-20260408/economy-battle-check/summary.json` で、`roadsideBandit` 戦の `rewardSummary.gold = 8` を確認し、`22G * 0.4` の縮小報酬が戦果画面へ反映されていることを確認した。
+  - `battle-reward.png` を目視し、戦果パネルで `+8G` 表示になることを確認した。console error / pageerror は 0 件。
+- 2026-04-08: 文字サイズと横幅を全体調整し、重なりや詰まりを解消。
+  - `js/ui.js`
+    - HUD、会話、フィールドメニュー、章到着バナーの文字サイズを 1px 前後落とし、折り返し幅を広げた。
+    - 章到着バナー表示中は通常HUDを止めるようにして、上段の情報同士が重ならないようにした。
+    - 章バナーは `detailLine` を 2行まで受けられる可変高さにして、章導入文が潰れないようにした。
+  - `js/save_menu.js`
+    - 記録帳、あいことば、説明画面のフォントを少し細くし、保存スロットの `章/地名` と `HP / 所持金 / プレイ時間` を左右に分けて詰まりを減らした。
+  - `js/quests.js`
+    - 依頼帳の見出し、依頼名、説明、報酬、進捗の文字サイズを整理し、下段の土地メモも短く保てるようにした。
+  - `js/event.js`
+    - イベント本文の 1行あたり文字数を `23 -> 25` に広げつつ、本文・話者名・行間を一段小さくして、長文でも画面内に収まりやすくした。
+  - `js/shop.js`
+    - 店名、所持金、商品名、価格、残数、説明文を少しずつ縮め、下段メッセージを2行まで折り返せるようにした。
+  - `js/battle.js`
+    - 戦果パネルの文字サイズを少し落とし、戦利品・余韻・残響・同行支援の行長を抑えた。
+    - 報酬画面の暗幕とパネル下地を濃くして、背後の敵名やHPが透けて読みにくくならないようにした。
+- 2026-04-08: タイポグラフィ再調整の検証結果
+  - `node --check js/ui.js js/save_menu.js js/quests.js js/event.js js/shop.js js/battle.js` と `git diff --check` 通過。
+  - `develop-web-game` の Playwright client を `output/web-game-20260408/typography-ui-smoke` で実行し、タイトル導入の短時間スモークで新規 console error / pageerror が出ていないことを確認した。
+  - `output/web-game-20260408/typography-review/summary.json` で、`banner-forest / field-menu / quest-log / save-slots / shop-confirm / event-dialogue / battle-reward` の7面がすべて目的の状態で撮れていることを確認した。
+  - `banner-forest.png` では、章バナーがHUDと重ならず、地名・副題・導入文が1枚に収まることを確認した。
+  - `field-menu.png` では、同行表示と目標文、設定欄、ミニマップが互いに食い合わないことを確認した。
+  - `quest-log.png` では、依頼名・説明・報酬・進捗が分離され、下段の土地メモも1行で潰れないことを確認した。
+  - `save-slots.png` では、保存スロットの `章 / 地名 / HP / 所持金 / プレイ時間` が横一列で競合しないことを確認した。
+  - `shop-confirm.png` では、価格・残数・説明と確認メッセージがぶつからないことを確認した。
+  - `event-dialogue.png` では、話者名・本文・送り案内が十分に離れていることを確認した。
+  - `battle-reward.png` では、報酬パネルの背後透けが抑えられ、戦果本文が読みやすくなったことを確認した。console error / pageerror は 0 件。
+- 2026-04-08: イベントとボス導入に、静止画のリアル寄りピクセルカードを追加。
+  - `js/illustrations.js`
+    - 外部アセットなしで使える `Game.Illustrations` を新設し、イベント用とボス用の静止画カードをオフスクリーンcanvasへ生成・キャッシュするようにした。
+    - `opening_highway / lake_mist / boundary_gate / constellation_altar` などのイベント気配カードと、`boss_daruma_master / boss_boundary_final` を含む複数ボスカードを実装した。
+    - 画像生成APIはこの環境で `OPENAI_API_KEY` が無く使えなかったため、今回の差し込みは外部生成画像ではなく「ゲーム内で一貫して使える静止画カード基盤」として実装した。
+  - `index.html`
+    - `js/illustrations.js` を読み込み順へ追加した。
+  - `js/event.js`
+    - イベントsceneの `motion` と `eventId` からカードキーを引けるようにし、該当イベントでは本文の右側へ静止画カードを差し込むようにした。
+    - カード表示時だけ本文の折り返し幅、行間、表示行数を詰め、台詞とカードが同居しても潰れにくいようにした。
+    - `getStateSnapshot()` に `illustrationKey` を追加し、自動検証ログからどのカードが表示される設計か追えるようにした。
+  - `js/battle.js`
+    - ボス導入の `intro` フェーズで敵IDに応じた静止画カードを中央上部へ表示するようにした。
+    - カード表示時は導入帯の位置を下げ、導入ラベル色も明るくして、敵名とサブコピーが暗幕へ沈まないようにした。
+    - `getStateSnapshot()` に `illustrationKey` を追加し、導入画面の検証とスクリーンショットを突き合わせやすくした。
+- 2026-04-08: 静止画カード差し込みの検証結果
+  - `node --check js/illustrations.js js/event.js js/battle.js` と `git diff --check` 通過。
+  - `develop-web-game` の Playwright client を `output/web-game-20260408/illustration-smoke` で実行し、通常起動スモークで新規 console error / pageerror が出ていないことを確認した。
+  - `output/web-game-20260408/illustration-review/run.mjs` でイベント2件、ボス2件の固定シナリオを撮影し、`summary.json` に状態を保存した。
+  - `event-opening-card.png` と `event-lake-card.png` を目視し、本文を左、静止画カードを右へ逃がした構図で読みやすさが残っていることを確認した。
+  - `boss-daruma-card.png` と `boss-final-card.png` を目視し、ボス導入でカード、導入ラベル、敵名が重ならず、導入演出として視線を集められることを確認した。
+  - `summary.json` では `event.illustrationKey = opening_highway / lake_mist`、`battle.illustrationKey = boss_daruma_master / boss_boundary_final` を確認し、今回の差し込みが状態出力にも反映されていることを確認した。console error / pageerror は 0 件。
+- 2026-04-08: サイコロポーチは「所持枠」だけを増やし、装備しない限りダイス数は増えないよう修正。
+  - `js/player.js`
+    - `addDiceSlot()` が追加枠へ `normalDice` を自動投入しないよう変更した。
+    - `getDiceLoadout()` を追加し、`[normalDice, null, null]` のような「空き枠つき装備状態」を扱えるようにした。
+    - `getEquippedDice()` は実際に戦闘で使うダイスだけを返すようにし、空き枠はダイス数に含めないようにした。
+    - `unequipDice()` を追加し、1枠目は `ふつうのサイコロ` に戻し、2枠目以降は空に戻せるようにした。
+  - `js/ui.js`
+    - サイコロ装備欄で空き枠を `未装備` と表示するようにした。
+    - 追加枠には無料の `ふつうのサイコロ` を入れられないようにし、1枠目だけ `ふつうのサイコロ` へ戻せる構成にした。
+    - 候補が無い空き枠では `装備できるサイコロがない。` と出し、誤って枠だけで増えたように見えないようにした。
+  - `js/shop.js`
+    - 店の装備表示も `getDiceLoadout()` ベースに切り替え、空き枠を `空き` と表示するようにした。
+  - `js/save.js`
+    - セーブ版を `v9` に上げ、通常セーブとあいことば圧縮データの両方で空き枠つきのサイコロ装備位置を保存できるようにした。
+    - 旧セーブの「追加枠に自動で入っていた normalDice」は読み込み時に空き枠へ補正するようにした。
+  - `js/achievements.js`
+    - 空き枠 `null` をサイコロ種別として数えないようにした。
+- 2026-04-08: サイコロ装備ルール変更の検証結果
+  - `node --check js/player.js js/save.js js/ui.js js/shop.js js/achievements.js` と `git diff --check` 通過。
+  - `develop-web-game` の Playwright client を `output/web-game-20260408/dice-loadout-smoke` で実行し、通常起動スモークで新規 console error / pageerror が出ていないことを確認した。
+  - `output/web-game-20260408/dice-loadout-rules/summary.json` で、`diceSlots=3` でも `equippedDice=[normalDice]`、`diceLoadout=[normalDice, null, null]`、つまりポーチだけ増やしても実戦ダイス数は1個のままであることを確認した。
+  - 同 summary で、`inventory=[powerDice]` を持っているだけの状態でも `equippedDice=[normalDice]` のままで、未装備ならダイス数が増えないことを確認した。
+  - さらに `save-restore-menu` で `diceLoadout=[normalDice, null, powerDice]` を保存・再読込し、空きスロットを含む装備位置が崩れず復元されることを確認した。
+  - `pouch-only-menu.png` と `save-restore-menu.png` を目視し、空き枠が `未装備` と見え、3枠目だけに装備したダイスも表示上保たれることを確認した。console error / pageerror は 0 件。
+- 2026-04-08: ダイアログ全体の文字あふれ対策を横展開。
+  - `js/ui.js`
+    - 通常会話ダイアログの本文を `32x3` 相当から、より小さい文字サイズで `36x4` 相当に見直した。
+    - 話者名は少し小さくし、長い名前でも名札枠からはみ出しにくくした。
+  - `js/npc.js`
+    - NPC会話ページングを `36文字 / 4行` に合わせ、読めるのにページが細かく割れすぎる状態を減らした。
+  - `js/battle.js`
+    - 戦況メッセージを2行折り返しに変更し、底部メッセージ欄で長文が箱外へ出ないようにした。
+    - ボス会話オーバーレイも折り返し前提へ変更し、話者名・本文・進行案内が同じ帯の中で収まるようにした。
+    - ギミック説明帯も2行折り返しへ変更した。
+    - 長文検証用に `debugSetMessage` と `debugQueueDialogue` を追加した。
+  - `js/save_menu.js`
+    - 記録帳メッセージの描画を `clamp` から2行折り返しへ変更し、優先して文字サイズを下げる方向で収めた。
+    - `wrapText` も句読点優先の分割へ見直した。
+- 2026-04-08: ダイアログ文字あふれ対策の検証結果
+  - `node --check js/ui.js js/npc.js js/battle.js js/save_menu.js` と `git diff --check` 通過。
+  - `develop-web-game` の Playwright client を `output/web-game-20260408/dialog-overflow-smoke` で実行し、通常起動スモークで新規 console error / pageerror が出ていないことを確認した。
+  - `output/web-game-20260408/dialog-overflow-review/run.mjs` で、通常会話、戦況メッセージ、ボス会話、記録帳メッセージの4ケースを長文固定で撮影した。
+  - `npc-dialog.png` では、長い話者名と2行会話が会話枠内に収まり、右下の進行案内とも干渉しないことを確認した。
+  - `battle-message.png` では、長い戦況文が底部メッセージ欄の2行に収まり、HP枠や戦場表示に食い込まないことを確認した。
+  - `battle-dialogue.png` では、ボス台詞が折り返されたうえで話者名・本文・`Space / Z / Enter` 案内が帯の内側に収まることを確認した。
+  - `save-menu-message.png` では、長いあいことばエラー文が2行のまま記録帳下部に収まり、本文パネルの上まで侵食しないことを確認した。console error / pageerror は 0 件。

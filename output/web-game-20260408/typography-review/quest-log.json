@@ -1,0 +1,121 @@
+{
+  "mode": "exploring",
+  "titleSelection": 0,
+  "map": "ikaho",
+  "mapLabel": "伊香保石段街",
+  "audio": {
+    "requestedBgm": null,
+    "currentBgm": null
+  },
+  "player": {
+    "tileX": 10,
+    "tileY": 10,
+    "direction": "down",
+    "hp": 96,
+    "maxHp": 96,
+    "attack": 12,
+    "defense": 6,
+    "experience": 0,
+    "journeyRank": 1,
+    "nextRankExperience": 80,
+    "gold": 60,
+    "chapter": 1,
+    "skillsKnown": [],
+    "skillCharges": {},
+    "inventory": []
+  },
+  "followers": [],
+  "journeyLabel": "第二章",
+  "journeyIndex": 2,
+  "chapterTitle": "路線の町と最初の敬意",
+  "objective": "段を登るごとに町の呼吸を読み、湯の路線が試す敬意を受け止める。",
+  "respectGauge": 0,
+  "catalystCount": 0,
+  "party": [],
+  "storyFlags": {
+    "checkpointFailedOnce": false,
+    "checkpointCleared": false,
+    "akagiJoinedSlice": false,
+    "darumaCleared": false,
+    "threadCleared": false
+  },
+  "continueSlot": null,
+  "hasAnySave": false,
+  "saveMenuContext": "field",
+  "quests": {
+    "open": true,
+    "tracked": null,
+    "active": [
+      {
+        "id": "onsen_tour",
+        "name": "温泉巡り",
+        "note": "伊香保では段を登る呼吸そのものが、湯の作法になる。",
+        "progress": 0,
+        "target": 3
+      },
+      {
+        "id": "joumo_karuta_collection",
+        "name": "上毛かるた収集",
+        "note": "",
+        "progress": 0,
+        "target": 5
+      },
+      {
+        "id": "daruma_perseverance",
+        "name": "だるま七転び八起き",
+        "note": "",
+        "progress": 0,
+        "target": 3
+      },
+      {
+        "id": "gunma_dialect_master",
+        "name": "群馬弁マスター",
+        "note": "",
+        "progress": 0,
+        "target": 5
+      }
+    ]
+  },
+  "services": [
+    {
+      "id": "yuMori",
+      "type": "item_shop",
+      "x": 5,
+      "y": 10
+    },
+    {
+      "id": "ishidanInnkeeper",
+      "type": "inn",
+      "x": 19,
+      "y": 10
+    }
+  ],
+  "ui": {
+    "showJourneyBadge": true,
+    "eventTextSpeed": "ふつう",
+    "battleDialogueSpeed": "ふつう",
+    "areaBanner": null,
+    "environmentNote": null
+  },
+  "title": {
+    "mode": "intro_movie",
+    "sceneId": "signs",
+    "sceneTitle": "群馬が近づく",
+    "sceneIndex": 1,
+    "sceneTimer": 4,
+    "totalTimer": 214,
+    "revealTimer": 0
+  },
+  "encounters": {
+    "mapId": "ikaho",
+    "eligibleSteps": 0,
+    "cooldown": 3,
+    "cycleIndex": 0
+  },
+  "achievements": {
+    "unlockedCount": 0,
+    "totalCount": 22,
+    "trackedMapCount": 21,
+    "visitedTrackedMapCount": 1
+  }
+}

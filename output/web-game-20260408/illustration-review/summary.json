@@ -1,0 +1,640 @@
+{
+  "generatedAt": "2026-04-08T10:06:15.839Z",
+  "results": [
+    {
+      "name": "event-opening-card",
+      "type": "event",
+      "motion": "road_trip",
+      "errors": [],
+      "screenshot": "/Users/fumiaki/Desktop/GunmaEscapeVer2/output/web-game-20260408/illustration-review/event-opening-card.png",
+      "statePath": "/Users/fumiaki/Desktop/GunmaEscapeVer2/output/web-game-20260408/illustration-review/event-opening-card.json",
+      "state": {
+        "mode": "event",
+        "titleSelection": 0,
+        "map": "",
+        "mapLabel": "",
+        "audio": {
+          "requestedBgm": null,
+          "currentBgm": null
+        },
+        "player": {
+          "tileX": 14,
+          "tileY": 10,
+          "direction": "down",
+          "hp": 96,
+          "maxHp": 96,
+          "attack": 12,
+          "defense": 6,
+          "experience": 0,
+          "journeyRank": 1,
+          "nextRankExperience": 80,
+          "gold": 60,
+          "chapter": 1,
+          "skillsKnown": [],
+          "skillCharges": {},
+          "inventory": []
+        },
+        "followers": [],
+        "journeyLabel": "第一章",
+        "journeyIndex": 1,
+        "chapterTitle": "前橋関所",
+        "objective": "前橋で旅の作法を学び、最初の関所を越える準備を整えろ。",
+        "respectGauge": 0,
+        "catalystCount": 0,
+        "party": [],
+        "storyFlags": {
+          "checkpointFailedOnce": false,
+          "checkpointCleared": false,
+          "akagiJoinedSlice": false,
+          "darumaCleared": false,
+          "threadCleared": false
+        },
+        "continueSlot": null,
+        "hasAnySave": false,
+        "saveMenuContext": "field",
+        "quests": {
+          "open": false,
+          "tracked": null,
+          "active": [
+            {
+              "id": "onsen_tour",
+              "name": "温泉巡り",
+              "note": "",
+              "progress": 0,
+              "target": 3
+            },
+            {
+              "id": "joumo_karuta_collection",
+              "name": "上毛かるた収集",
+              "note": "",
+              "progress": 0,
+              "target": 5
+            },
+            {
+              "id": "daruma_perseverance",
+              "name": "だるま七転び八起き",
+              "note": "",
+              "progress": 0,
+              "target": 3
+            },
+            {
+              "id": "gunma_dialect_master",
+              "name": "群馬弁マスター",
+              "note": "",
+              "progress": 0,
+              "target": 5
+            }
+          ]
+        },
+        "ui": {
+          "showJourneyBadge": true,
+          "eventTextSpeed": "ふつう",
+          "battleDialogueSpeed": "ふつう",
+          "areaBanner": null,
+          "environmentNote": null
+        },
+        "title": {
+          "mode": "intro_movie",
+          "sceneId": "highway",
+          "sceneTitle": "深夜の関越道",
+          "sceneIndex": 0,
+          "sceneTimer": 4,
+          "totalTimer": 4,
+          "revealTimer": 0
+        },
+        "encounters": {
+          "mapId": "",
+          "eligibleSteps": 0,
+          "cooldown": 0,
+          "cycleIndex": 0
+        },
+        "achievements": {
+          "unlockedCount": 0,
+          "totalCount": 22,
+          "trackedMapCount": 21,
+          "visitedTrackedMapCount": 0
+        },
+        "event": {
+          "active": true,
+          "eventId": "illustration_preview_event-opening-card",
+          "sceneIndex": 0,
+          "sceneCount": 1,
+          "lineIndex": 0,
+          "charIndex": 28,
+          "charSpeed": 2,
+          "textComplete": true,
+          "autoAdvanceTimer": 0,
+          "speaker": "語り手",
+          "lines": [
+            "夜の県境を抜ける車窓に、街の灯りが途切れ途切れに浮かぶ。",
+            "言葉より先に、帰れない距離だけが静かに伝わってくる。"
+          ],
+          "autoAdvance": 0,
+          "illustrationKey": "opening_highway",
+          "skippable": false
+        }
+      }
+    },
+    {
+      "name": "event-lake-card",
+      "type": "event",
+      "motion": "lake_mist",
+      "errors": [],
+      "screenshot": "/Users/fumiaki/Desktop/GunmaEscapeVer2/output/web-game-20260408/illustration-review/event-lake-card.png",
+      "statePath": "/Users/fumiaki/Desktop/GunmaEscapeVer2/output/web-game-20260408/illustration-review/event-lake-card.json",
+      "state": {
+        "mode": "event",
+        "titleSelection": 0,
+        "map": "",
+        "mapLabel": "",
+        "audio": {
+          "requestedBgm": null,
+          "currentBgm": null
+        },
+        "player": {
+          "tileX": 14,
+          "tileY": 10,
+          "direction": "down",
+          "hp": 96,
+          "maxHp": 96,
+          "attack": 12,
+          "defense": 6,
+          "experience": 0,
+          "journeyRank": 1,
+          "nextRankExperience": 80,
+          "gold": 60,
+          "chapter": 1,
+          "skillsKnown": [],
+          "skillCharges": {},
+          "inventory": []
+        },
+        "followers": [],
+        "journeyLabel": "第一章",
+        "journeyIndex": 1,
+        "chapterTitle": "前橋関所",
+        "objective": "前橋で旅の作法を学び、最初の関所を越える準備を整えろ。",
+        "respectGauge": 0,
+        "catalystCount": 0,
+        "party": [],
+        "storyFlags": {
+          "checkpointFailedOnce": false,
+          "checkpointCleared": false,
+          "akagiJoinedSlice": false,
+          "darumaCleared": false,
+          "threadCleared": false
+        },
+        "continueSlot": null,
+        "hasAnySave": false,
+        "saveMenuContext": "field",
+        "quests": {
+          "open": false,
+          "tracked": null,
+          "active": [
+            {
+              "id": "onsen_tour",
+              "name": "温泉巡り",
+              "note": "",
+              "progress": 0,
+              "target": 3
+            },
+            {
+              "id": "joumo_karuta_collection",
+              "name": "上毛かるた収集",
+              "note": "",
+              "progress": 0,
+              "target": 5
+            },
+            {
+              "id": "daruma_perseverance",
+              "name": "だるま七転び八起き",
+              "note": "",
+              "progress": 0,
+              "target": 3
+            },
+            {
+              "id": "gunma_dialect_master",
+              "name": "群馬弁マスター",
+              "note": "",
+              "progress": 0,
+              "target": 5
+            }
+          ]
+        },
+        "ui": {
+          "showJourneyBadge": true,
+          "eventTextSpeed": "ふつう",
+          "battleDialogueSpeed": "ふつう",
+          "areaBanner": null,
+          "environmentNote": null
+        },
+        "title": {
+          "mode": "intro_movie",
+          "sceneId": "highway",
+          "sceneTitle": "深夜の関越道",
+          "sceneIndex": 0,
+          "sceneTimer": 13,
+          "totalTimer": 13,
+          "revealTimer": 0
+        },
+        "encounters": {
+          "mapId": "",
+          "eligibleSteps": 0,
+          "cooldown": 0,
+          "cycleIndex": 0
+        },
+        "achievements": {
+          "unlockedCount": 0,
+          "totalCount": 22,
+          "trackedMapCount": 21,
+          "visitedTrackedMapCount": 0
+        },
+        "event": {
+          "active": true,
+          "eventId": "illustration_preview_event-lake-card",
+          "sceneIndex": 0,
+          "sceneCount": 1,
+          "lineIndex": 0,
+          "charIndex": 30,
+          "charSpeed": 2,
+          "textComplete": true,
+          "autoAdvanceTimer": 0,
+          "speaker": "山川",
+          "lines": [
+            "榛名の水面は、霧の下でまだ誰かの気配を抱えたまま揺れている。",
+            "近づくほど静かになって、音だけがこちらを見返してくる。"
+          ],
+          "autoAdvance": 0,
+          "illustrationKey": "lake_mist",
+          "skippable": false
+        }
+      }
+    },
+    {
+      "name": "boss-daruma-card",
+      "type": "boss",
+      "enemyId": "darumaMaster",
+      "errors": [],
+      "screenshot": "/Users/fumiaki/Desktop/GunmaEscapeVer2/output/web-game-20260408/illustration-review/boss-daruma-card.png",
+      "statePath": "/Users/fumiaki/Desktop/GunmaEscapeVer2/output/web-game-20260408/illustration-review/boss-daruma-card.json",
+      "state": {
+        "mode": "battle",
+        "titleSelection": 0,
+        "map": "",
+        "mapLabel": "",
+        "audio": {
+          "requestedBgm": null,
+          "currentBgm": null
+        },
+        "player": {
+          "tileX": 14,
+          "tileY": 10,
+          "direction": "down",
+          "hp": 96,
+          "maxHp": 96,
+          "attack": 12,
+          "defense": 6,
+          "experience": 0,
+          "journeyRank": 1,
+          "nextRankExperience": 80,
+          "gold": 60,
+          "chapter": 1,
+          "skillsKnown": [],
+          "skillCharges": {},
+          "inventory": []
+        },
+        "followers": [],
+        "journeyLabel": "第一章",
+        "journeyIndex": 1,
+        "chapterTitle": "前橋関所",
+        "objective": "前橋で旅の作法を学び、最初の関所を越える準備を整えろ。",
+        "respectGauge": 0,
+        "catalystCount": 0,
+        "party": [],
+        "storyFlags": {
+          "checkpointFailedOnce": false,
+          "checkpointCleared": false,
+          "akagiJoinedSlice": false,
+          "darumaCleared": false,
+          "threadCleared": false
+        },
+        "continueSlot": null,
+        "hasAnySave": false,
+        "saveMenuContext": "field",
+        "quests": {
+          "open": false,
+          "tracked": null,
+          "active": [
+            {
+              "id": "onsen_tour",
+              "name": "温泉巡り",
+              "note": "",
+              "progress": 0,
+              "target": 3
+            },
+            {
+              "id": "joumo_karuta_collection",
+              "name": "上毛かるた収集",
+              "note": "",
+              "progress": 0,
+              "target": 5
+            },
+            {
+              "id": "daruma_perseverance",
+              "name": "だるま七転び八起き",
+              "note": "",
+              "progress": 0,
+              "target": 3
+            },
+            {
+              "id": "gunma_dialect_master",
+              "name": "群馬弁マスター",
+              "note": "",
+              "progress": 0,
+              "target": 5
+            }
+          ]
+        },
+        "ui": {
+          "showJourneyBadge": true,
+          "eventTextSpeed": "ふつう",
+          "battleDialogueSpeed": "ふつう",
+          "areaBanner": null,
+          "environmentNote": null
+        },
+        "title": {
+          "mode": "intro_movie",
+          "sceneId": "highway",
+          "sceneTitle": "深夜の関越道",
+          "sceneIndex": 0,
+          "sceneTimer": 0,
+          "totalTimer": 0,
+          "revealTimer": 0
+        },
+        "encounters": {
+          "mapId": "",
+          "eligibleSteps": 0,
+          "cooldown": 0,
+          "cycleIndex": 0
+        },
+        "achievements": {
+          "unlockedCount": 0,
+          "totalCount": 22,
+          "trackedMapCount": 21,
+          "visitedTrackedMapCount": 0
+        },
+        "battle": {
+          "phase": "intro",
+          "backdropId": "boss_ritual",
+          "illustrationKey": "boss_daruma_master",
+          "message": "欠け目のだるまが現れた！",
+          "supportAction": null,
+          "bossAction": null,
+          "enemyRoll": null,
+          "targetIndex": 0,
+          "enemy": {
+            "name": "欠け目のだるま",
+            "hp": 84,
+            "maxHp": 84
+          },
+          "enemies": [
+            {
+              "index": 0,
+              "name": "欠け目のだるま",
+              "hp": 84,
+              "maxHp": 84,
+              "active": true,
+              "tag": "異形",
+              "role": ""
+            }
+          ],
+          "formation": null,
+          "menuEntries": [
+            "たたかう",
+            "アイテム",
+            "とくぎ",
+            "にげる"
+          ],
+          "itemMenu": null,
+          "skillMenu": null,
+          "supportMenu": null,
+          "companionSupport": [],
+          "playerEffects": [],
+          "enemyEffects": [],
+          "ritual": {
+            "mode": "repair_eye",
+            "gauge": 0,
+            "targetZone": null,
+            "hintState": 0,
+            "slots": [
+              {
+                "id": "eye_slot_1",
+                "kind": "item",
+                "filled": false,
+                "itemId": null,
+                "visible": false
+              }
+            ],
+            "state": {
+              "eyeRepaired": false,
+              "hpZeroReached": false,
+              "lastLowDiceHit": false,
+              "overCoolPenalty": false,
+              "resonanceCreated": false,
+              "reviewPhaseIndex": 0,
+              "targetZoneRevealed": false,
+              "offeringOrder": [],
+              "lightDieReady": false,
+              "lightReleased": false,
+              "lightReleaseFrames": 0,
+              "afterglowCuePlayed": false,
+              "thankYouIndex": 0,
+              "lastAction": null
+            }
+          },
+          "dialogue": null,
+          "rewardSummary": null
+        }
+      }
+    },
+    {
+      "name": "boss-final-card",
+      "type": "boss",
+      "enemyId": "juke_final",
+      "errors": [],
+      "screenshot": "/Users/fumiaki/Desktop/GunmaEscapeVer2/output/web-game-20260408/illustration-review/boss-final-card.png",
+      "statePath": "/Users/fumiaki/Desktop/GunmaEscapeVer2/output/web-game-20260408/illustration-review/boss-final-card.json",
+      "state": {
+        "mode": "battle",
+        "titleSelection": 0,
+        "map": "",
+        "mapLabel": "",
+        "audio": {
+          "requestedBgm": null,
+          "currentBgm": null
+        },
+        "player": {
+          "tileX": 14,
+          "tileY": 10,
+          "direction": "down",
+          "hp": 96,
+          "maxHp": 96,
+          "attack": 12,
+          "defense": 6,
+          "experience": 0,
+          "journeyRank": 1,
+          "nextRankExperience": 80,
+          "gold": 60,
+          "chapter": 1,
+          "skillsKnown": [],
+          "skillCharges": {},
+          "inventory": []
+        },
+        "followers": [],
+        "journeyLabel": "第一章",
+        "journeyIndex": 1,
+        "chapterTitle": "前橋関所",
+        "objective": "前橋で旅の作法を学び、最初の関所を越える準備を整えろ。",
+        "respectGauge": 0,
+        "catalystCount": 0,
+        "party": [],
+        "storyFlags": {
+          "checkpointFailedOnce": false,
+          "checkpointCleared": false,
+          "akagiJoinedSlice": false,
+          "darumaCleared": false,
+          "threadCleared": false
+        },
+        "continueSlot": null,
+        "hasAnySave": false,
+        "saveMenuContext": "field",
+        "quests": {
+          "open": false,
+          "tracked": null,
+          "active": [
+            {
+              "id": "onsen_tour",
+              "name": "温泉巡り",
+              "note": "",
+              "progress": 0,
+              "target": 3
+            },
+            {
+              "id": "joumo_karuta_collection",
+              "name": "上毛かるた収集",
+              "note": "",
+              "progress": 0,
+              "target": 5
+            },
+            {
+              "id": "daruma_perseverance",
+              "name": "だるま七転び八起き",
+              "note": "",
+              "progress": 0,
+              "target": 3
+            },
+            {
+              "id": "gunma_dialect_master",
+              "name": "群馬弁マスター",
+              "note": "",
+              "progress": 0,
+              "target": 5
+            }
+          ]
+        },
+        "ui": {
+          "showJourneyBadge": true,
+          "eventTextSpeed": "ふつう",
+          "battleDialogueSpeed": "ふつう",
+          "areaBanner": null,
+          "environmentNote": null
+        },
+        "title": {
+          "mode": "intro_movie",
+          "sceneId": "highway",
+          "sceneTitle": "深夜の関越道",
+          "sceneIndex": 0,
+          "sceneTimer": 0,
+          "totalTimer": 0,
+          "revealTimer": 0
+        },
+        "encounters": {
+          "mapId": "",
+          "eligibleSteps": 0,
+          "cooldown": 0,
+          "cycleIndex": 0
+        },
+        "achievements": {
+          "unlockedCount": 0,
+          "totalCount": 22,
+          "trackedMapCount": 21,
+          "visitedTrackedMapCount": 0
+        },
+        "battle": {
+          "phase": "intro",
+          "backdropId": "boss_omen",
+          "illustrationKey": "boss_boundary_final",
+          "message": "真・ジュークが現れた！",
+          "supportAction": null,
+          "bossAction": null,
+          "enemyRoll": null,
+          "targetIndex": 0,
+          "enemy": {
+            "name": "真・ジューク",
+            "hp": 620,
+            "maxHp": 620
+          },
+          "enemies": [
+            {
+              "index": 0,
+              "name": "真・ジューク",
+              "hp": 620,
+              "maxHp": 620,
+              "active": true,
+              "tag": "異形",
+              "role": ""
+            }
+          ],
+          "formation": null,
+          "menuEntries": [
+            "たたかう",
+            "アイテム",
+            "とくぎ",
+            "にげる"
+          ],
+          "itemMenu": null,
+          "skillMenu": null,
+          "supportMenu": null,
+          "companionSupport": [],
+          "playerEffects": [],
+          "enemyEffects": [],
+          "ritual": {
+            "mode": "hp",
+            "gauge": 0,
+            "targetZone": null,
+            "hintState": 0,
+            "slots": [],
+            "state": {
+              "eyeRepaired": false,
+              "hpZeroReached": false,
+              "lastLowDiceHit": false,
+              "overCoolPenalty": false,
+              "resonanceCreated": false,
+              "reviewPhaseIndex": 0,
+              "targetZoneRevealed": false,
+              "offeringOrder": [],
+              "lightDieReady": false,
+              "lightReleased": false,
+              "lightReleaseFrames": 0,
+              "afterglowCuePlayed": false,
+              "thankYouIndex": 0,
+              "lastAction": null
+            }
+          },
+          "dialogue": null,
+          "rewardSummary": null
+        }
+      }
+    }
+  ],
+  "errorCount": 0
+}

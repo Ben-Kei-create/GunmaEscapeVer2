@@ -94,6 +94,27 @@ Game.Maps.minakami_valley = (function() {
       defeated: false,
       sprite: humanSprite,
       palette: { 1:'#efd8be', 2:'#6f8f58', 3:'#43362c' }
+    },
+    {
+      id: 'minakamiTrainer',
+      x: 17, y: 7,
+      name: '谷筋の修験者',
+      dialog: [
+        '最後の境界は、攻める力より崩れぬ足場を試してくる。',
+        'ここで谷風と返り声へ身体を合わせていけ。断崖の向こうは、半端な拍では渡れん。',
+        '金も品もやらん。ただ、最後に残る踏み込みだけは整えてやる。'
+      ],
+      contextDialog: [
+        {
+          flag: 'training_minakami_ridge_cleared',
+          lines: [
+            '冷たい断崖でも、もう足が散らなくなった。',
+            '最終の前にもう一段だけ固めたいなら、谷の声をもう一度浴びていけ。'
+          ]
+        }
+      ],
+      afterDialog: 'training_minakami_ridge',
+      defeated: false, sprite: humanSprite, palette: { 1:'#ddd0bc', 2:'#7b7f95', 3:'#3b332d' }
     }
   ];
   var items = [{ id: 'healHerb', x: 25, y: 12, taken: false }];

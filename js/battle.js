@@ -73,6 +73,11 @@ Game.Battle = (function() {
   var ENEMY_ROLL_SLOW_BONUS_FRAMES = 18;
   var PLAYER_DICE_RESULT_FRAMES = 38;
   var PLAYER_ACTION_RECOVERY_FRAMES = 14;
+  var GOLD_REWARD_SCALE = 0.4;
+  var BATTLE_DIALOG_MAX_CHARS = 36;
+  var BATTLE_DIALOG_MAX_LINES = 2;
+  var BATTLE_DIALOG_TEXT_SIZE = 10;
+  var BATTLE_DIALOG_LINE_HEIGHT = 10;
 
   // Atmosphere foreground effects
   var atmosParticles = [];
@@ -111,6 +116,27 @@ Game.Battle = (function() {
     mud: { tag: '澱み', color: '#d2b27a', intent: '濁りに足を取らせ、動きを鈍らせる。' },
     thread: { tag: '製糸残響', color: '#d8c3ff', intent: '切らずに絡め取り、呼吸ごと引き寄せる。' }
   };
+
+  function createTrainingEnemy(baseId, overrides) {
+    var base = enemies[baseId];
+    var result = {};
+    var key = '';
+    if (!base) return result;
+    for (key in base) {
+      if (!Object.prototype.hasOwnProperty.call(base, key)) continue;
+      result[key] = base[key];
+    }
+    overrides = overrides || {};
+    for (key in overrides) {
+      if (!Object.prototype.hasOwnProperty.call(overrides, key)) continue;
+      result[key] = overrides[key];
+    }
+    result.goldReward = typeof overrides.goldReward === 'number' ? overrides.goldReward : 0;
+    result.dropItem = null;
+    result.dropRate = 0;
+    result.training = true;
+    return result;
+  }
 
   function buildDefaultEncounterProfile(enemyIds) {
     var ids = enemyIds || [];
@@ -443,6 +469,86 @@ Game.Battle = (function() {
     sprite: enemies.oze_mud_wraith.sprite,
     palette: { 1:'#5c6c52', 2:'#a9b38f', 3:'#2b2b24', 4:'#5c4f3f' }
   };
+
+  enemies.training_daruma_shell = createTrainingEnemy('strayDaruma', {
+    name: '足慣らしの願殻',
+    hp: 56, maxHp: 56,
+    attack: 14, defense: 4, expReward: 18
+  });
+  enemies.training_takasaki_ember = createTrainingEnemy('wishShelfShade', {
+    name: '棚火の足慣らし',
+    hp: 64, maxHp: 64,
+    attack: 16, defense: 5, expReward: 22
+  });
+  enemies.training_onuma_mist = createTrainingEnemy('mistBeastling', {
+    name: '霧踏みの幼影',
+    hp: 82, maxHp: 82,
+    attack: 18, defense: 8, expReward: 30
+  });
+  enemies.training_onuma_lantern = createTrainingEnemy('lanternKeeper', {
+    name: '湖畔の測り灯',
+    hp: 80, maxHp: 80,
+    attack: 18, defense: 8, expReward: 28
+  });
+  enemies.training_shirane_steam = createTrainingEnemy('steamMonkey', {
+    name: '噴気の荒らし影',
+    hp: 88, maxHp: 88,
+    attack: 23, defense: 10, expReward: 34
+  });
+  enemies.training_shirane_silk = createTrainingEnemy('silkShade', {
+    name: '裂き糸の影',
+    hp: 92, maxHp: 92,
+    attack: 21, defense: 9, expReward: 32
+  });
+  enemies.training_shirane_remnant = createTrainingEnemy('bathhouseRemnant', {
+    name: '湯宿の押し返し',
+    hp: 96, maxHp: 96,
+    attack: 22, defense: 11, expReward: 36
+  });
+  enemies.training_haruna_echo = createTrainingEnemy('echoShard', {
+    name: '返し稽古の欠片',
+    hp: 96, maxHp: 96,
+    attack: 24, defense: 12, expReward: 38
+  });
+  enemies.training_haruna_mist = createTrainingEnemy('mistBeastling', {
+    name: '榛名の散り霧',
+    hp: 102, maxHp: 102,
+    attack: 23, defense: 12, expReward: 36
+  });
+  enemies.training_haruna_bell = createTrainingEnemy('ferryBellEcho', {
+    name: '湖面の呼び鐘',
+    hp: 108, maxHp: 108,
+    attack: 26, defense: 13, expReward: 42
+  });
+  enemies.training_minakami_mud = createTrainingEnemy('mudWisp', {
+    name: '谷筋の泥灯',
+    hp: 112, maxHp: 112,
+    attack: 28, defense: 14, expReward: 42
+  });
+  enemies.training_minakami_bell = createTrainingEnemy('ferryBellEcho', {
+    name: '谷あいの返り鐘',
+    hp: 114, maxHp: 114,
+    attack: 29, defense: 15, expReward: 44
+  });
+  enemies.training_minakami_mist = createTrainingEnemy('mistBeastling', {
+    name: '断崖の白い仔',
+    hp: 110, maxHp: 110,
+    attack: 27, defense: 14, expReward: 40
+  });
+
+  enemyReadStyles.training_daruma_shell = { tag: '修練殻', color: '#ff8d7a', intent: '真正面から受け止める練習だけを繰り返す。' };
+  enemyReadStyles.training_takasaki_ember = { tag: '棚火稽古', color: '#ffb388', intent: '置き去りの熱で、足元の拍を乱してくる。' };
+  enemyReadStyles.training_onuma_mist = { tag: '霧踏み', color: '#a8d9ff', intent: '散る前提で寄り、視線の外へ回り込む。' };
+  enemyReadStyles.training_onuma_lantern = { tag: '測り灯', color: '#ffd66b', intent: '灯りの揺れで、こちらの呼吸を数えてくる。' };
+  enemyReadStyles.training_shirane_steam = { tag: '噴気影', color: '#ffb36b', intent: '熱の勢いで崩し、次の手を急がせる。' };
+  enemyReadStyles.training_shirane_silk = { tag: '裂き糸', color: '#d8c3ff', intent: '細い手数で、こちらの拍をじわりと削る。' };
+  enemyReadStyles.training_shirane_remnant = { tag: '押し返し', color: '#ffbe8a', intent: '守るための手つきで、間合いだけを押し戻す。' };
+  enemyReadStyles.training_haruna_echo = { tag: '返し稽古', color: '#8fe0ff', intent: '遅れて響く一打で、判断を半歩ずらす。' };
+  enemyReadStyles.training_haruna_mist = { tag: '散り霧', color: '#b5dcff', intent: '見えない前提で近づき、足を迷わせる。' };
+  enemyReadStyles.training_haruna_bell = { tag: '呼び鐘', color: '#9fd8ff', intent: '返ってくる声で、逃げる向きを誘導する。' };
+  enemyReadStyles.training_minakami_mud = { tag: '泥灯', color: '#d5bf8c', intent: '冷たい足場に慣れるまで、じわじわ沈ませる。' };
+  enemyReadStyles.training_minakami_bell = { tag: '返り鐘', color: '#9fd8ff', intent: '谷の反響で、決断を一拍だけ遅らせる。' };
+  enemyReadStyles.training_minakami_mist = { tag: '断崖霧', color: '#a7cde0', intent: '細い足場の外へ気を逃がし、包み直してくる。' };
 
   var menuItems = ['たたかう', 'アイテム', 'とくぎ', 'にげる'];
 
@@ -1098,7 +1204,7 @@ Game.Battle = (function() {
       total += enemyParty[i] && enemyParty[i].goldReward ? enemyParty[i].goldReward : 0;
     }
     if (total <= 0) return 0;
-    return Math.max(1, Math.floor(total * 0.55));
+    return Math.max(1, Math.floor(total * GOLD_REWARD_SCALE));
   }
 
   function getEnemyExperienceReward(foe) {
@@ -1329,6 +1435,12 @@ Game.Battle = (function() {
     var source = '' + (text || '');
     if (source.length <= maxChars) return source;
     return source.substring(0, Math.max(0, maxChars - 1)) + '…';
+  }
+
+  function drawBattleWrappedLines(R, lines, x, y, lineHeight, color, size) {
+    for (var i = 0; i < lines.length; i++) {
+      R.drawTextJP(lines[i], x, y + i * lineHeight, color, size);
+    }
   }
 
   function hexToRgba(hex, alpha) {
@@ -4162,16 +4274,39 @@ Game.Battle = (function() {
     var bandWidth = Math.floor(180 + eased * 180);
     var leftX = -bandWidth + Math.floor(progress * (120 + bandWidth));
     var rightX = C.CANVAS_WIDTH - Math.floor(progress * (120 + bandWidth));
+    var bossArtKey = enemy && Game.Illustrations && Game.Illustrations.getBossKey
+      ? Game.Illustrations.getBossKey(enemy._enemyId)
+      : '';
+    var hasBossArt = !!bossArtKey;
 
     ctx.fillStyle = 'rgba(5,8,20,0.62)';
     ctx.fillRect(0, 0, C.CANVAS_WIDTH, C.CANVAS_HEIGHT);
 
-    ctx.fillStyle = '#060a17';
-    ctx.fillRect(leftX, 86, bandWidth, 30);
-    ctx.fillRect(rightX, 140, bandWidth, 30);
-    ctx.fillStyle = introAccent;
-    ctx.fillRect(leftX + 10, 91, Math.max(40, bandWidth - 20), 2);
-    ctx.fillRect(rightX + 10, 145, Math.max(40, bandWidth - 20), 2);
+    if (hasBossArt && Game.Illustrations.drawCardAbsolute) {
+      Game.Illustrations.drawCardAbsolute(
+        bossArtKey,
+        114,
+        36,
+        252,
+        132,
+        {
+          accent: introAccent,
+          matteAlpha: 0.04,
+          label: enemy.name
+        }
+      );
+      ctx.fillStyle = 'rgba(6,10,24,0.88)';
+      ctx.fillRect(98, 180, 284, 52);
+      ctx.fillStyle = introAccent;
+      ctx.fillRect(112, 188, 256, 2);
+    } else {
+      ctx.fillStyle = '#060a17';
+      ctx.fillRect(leftX, 86, bandWidth, 30);
+      ctx.fillRect(rightX, 140, bandWidth, 30);
+      ctx.fillStyle = introAccent;
+      ctx.fillRect(leftX + 10, 91, Math.max(40, bandWidth - 20), 2);
+      ctx.fillRect(rightX + 10, 145, Math.max(40, bandWidth - 20), 2);
+    }
 
     var flashAlpha = Math.max(0, 0.4 - progress * 0.35);
     if (flashAlpha > 0) {
@@ -4179,11 +4314,16 @@ Game.Battle = (function() {
       ctx.fillRect(0, 0, C.CANVAS_WIDTH, C.CANVAS_HEIGHT);
     }
 
-    R.drawTextJP(clampBattleText(introLabel, 18), 240, 96, introAccent, 15, 'center');
-    R.drawTextJP(clampBattleText(introMidLabel, 22), 240, 120, '#a9b5d9', 9, 'center');
-    var introSubLines = wrapBattleText(introSubLabel, isGroupBattle() ? 22 : 18, isGroupBattle() ? 2 : 1);
+    var labelY = hasBossArt ? 188 : 96;
+    var midY = hasBossArt ? 206 : 120;
+    var subY = hasBossArt ? 222 : 146;
+    var introLabelColor = hasBossArt ? '#f6e3a1' : introAccent;
+    var introMidColor = hasBossArt ? '#c1d1ff' : '#a9b5d9';
+    R.drawTextJP(clampBattleText(introLabel, 18), 240, labelY, introLabelColor, 15, 'center');
+    R.drawTextJP(clampBattleText(introMidLabel, 22), 240, midY, introMidColor, 9, 'center');
+    var introSubLines = wrapBattleText(introSubLabel, isGroupBattle() ? 22 : (hasBossArt ? 20 : 18), isGroupBattle() ? 2 : 1);
     for (var i = 0; i < introSubLines.length; i++) {
-      R.drawTextJP(introSubLines[i], 240, 146 + i * 12, '#ffffff', isGroupBattle() ? 11 : 15, 'center');
+      R.drawTextJP(introSubLines[i], 240, subY + i * 12, '#ffffff', isGroupBattle() ? 11 : (hasBossArt ? 12 : 15), 'center');
     }
   }
 
@@ -4192,6 +4332,9 @@ Game.Battle = (function() {
     return {
       phase: phase,
       backdropId: getBattleBackdropId(),
+      illustrationKey: phase === 'intro' && Game.Illustrations && Game.Illustrations.getBossKey
+        ? Game.Illustrations.getBossKey(enemy._enemyId)
+        : '',
       message: message,
       supportAction: isCompanionSupportOverlayVisible() ? {
         memberId: supportActionOverlay.memberId,
@@ -4501,18 +4644,31 @@ Game.Battle = (function() {
     // Boss gimmick description (shown briefly)
     if (gimmickMessageTimer > 0 && !isBossActionOverlayVisible()) {
       gimmickMessageTimer--;
-      R.drawRectAbsolute(40, 165, 400, 20, 'rgba(80,20,20,0.85)');
-      R.drawTextJP(gimmickMessage, 50, 168, '#ff8866', 12);
+      var gimmickLines = wrapBattleText(gimmickMessage, 38, 2);
+      var gimmickBoxH = 8 + gimmickLines.length * 10;
+      R.drawRectAbsolute(40, 165, 400, gimmickBoxH, 'rgba(80,20,20,0.85)');
+      drawBattleWrappedLines(R, gimmickLines, 50, 169, 10, '#ffb18b', 10);
     }
 
     // Boss dialogue overlay (phase change / special move / victory lines)
     if (dialogueText && (dialogueWaitingConfirm || dialogueTimer > 0) && !isBossActionOverlayVisible()) {
-      R.drawRectAbsolute(20, 125, 440, 36, 'rgba(10,10,30,0.92)');
+      var dialogueLines = wrapBattleText(dialogueText, BATTLE_DIALOG_MAX_CHARS, BATTLE_DIALOG_MAX_LINES);
+      var dialogueY = 125;
+      var dialogueBoxH = (dialogueSpeaker ? 16 : 10) + dialogueLines.length * BATTLE_DIALOG_LINE_HEIGHT + 8;
+      R.drawRectAbsolute(20, dialogueY, 440, dialogueBoxH, 'rgba(10,10,30,0.92)');
       if (dialogueSpeaker) {
-        R.drawTextJP(dialogueSpeaker, 30, 128, '#ffcc44', 11);
+        R.drawTextJP(clampBattleText(dialogueSpeaker, 14), 30, dialogueY + 4, '#ffcc44', 10);
       }
-      R.drawTextJP(dialogueText, 30, 143, '#ffffff', 13);
-      R.drawTextJP('Space / Z / Enter', 376, 144, '#c8d0e8', 9);
+      drawBattleWrappedLines(
+        R,
+        dialogueLines,
+        30,
+        dialogueY + (dialogueSpeaker ? 16 : 8),
+        BATTLE_DIALOG_LINE_HEIGHT,
+        '#ffffff',
+        BATTLE_DIALOG_TEXT_SIZE
+      );
+      R.drawTextJP('Space / Z / Enter', 448, dialogueY + dialogueBoxH - 12, '#c8d0e8', 8, 'right');
     }
 
     // Menu
@@ -4617,9 +4773,9 @@ Game.Battle = (function() {
       var nextRank = previewExp ? previewExp.newRank : (1 + Math.floor(nextExp / 80));
       var rewardItems = getRewardItemLabels(rewardSummary.items || []);
       var supportLogs = rewardSummary.supportLogs || [];
-      var afterglowLines = rewardSummary.afterglowText ? wrapBattleText(rewardSummary.afterglowText, 24, 2) : [];
-      var enemyEchoLines = rewardSummary.enemyEchoText ? wrapBattleText(rewardSummary.enemyEchoText, 24, 3) : [];
-      var rewardItemLines = wrapBattleText(rewardItems.length ? rewardItems.join(' / ') : 'なし', 22, 2);
+      var afterglowLines = rewardSummary.afterglowText ? wrapBattleText(rewardSummary.afterglowText, 26, 2) : [];
+      var enemyEchoLines = rewardSummary.enemyEchoText ? wrapBattleText(rewardSummary.enemyEchoText, 26, 3) : [];
+      var rewardItemLines = wrapBattleText(rewardItems.length ? rewardItems.join(' / ') : 'なし', 24, 2);
       var growthLines = [];
       if (previewExp && previewExp.levelUps && previewExp.levelUps.length) {
         growthLines.push('最大HP +' + previewExp.totalGains.hp);
@@ -4634,59 +4790,60 @@ Game.Battle = (function() {
         (supportLogs.length ? 18 + supportLogs.length * 12 : 0);
       var panelY = Math.max(18, C.CANVAS_HEIGHT - panelH - 12);
 
-      R.drawRectAbsolute(0, 0, C.CANVAS_WIDTH, C.CANVAS_HEIGHT, 'rgba(8, 10, 18, 0.56)');
-      R.drawDialogBox(92, panelY, 296, panelH);
-      drawBattlePanelAccent(R, 92, panelY, 296, panelH, '#ffd66b');
-      R.drawTextJP('戦果', 106, panelY + 16, '#ffd66b', 12);
-      R.drawTextJP('獲得金', 106, panelY + 36, '#8fe0ff', 11);
-      R.drawTextJP('+' + (rewardSummary.gold || 0) + 'G', 196, panelY + 36, '#ffffff', 12);
-      R.drawTextJP('旅の経験', 106, panelY + 54, '#8fe0ff', 11);
-      R.drawTextJP('+' + (rewardSummary.exp || 0), 196, panelY + 54, '#ffffff', 12);
-      R.drawTextJP('累計経験', 106, panelY + 72, '#8fe0ff', 11);
-      R.drawTextJP(currentExp + ' → ' + nextExp, 196, panelY + 72, '#ffffff', 12);
+      R.drawRectAbsolute(0, 0, C.CANVAS_WIDTH, C.CANVAS_HEIGHT, 'rgba(8, 10, 18, 0.68)');
+      R.drawRectAbsolute(84, panelY - 2, 312, panelH + 4, 'rgba(5, 7, 20, 0.92)');
+      R.drawDialogBox(86, panelY, 308, panelH);
+      drawBattlePanelAccent(R, 86, panelY, 308, panelH, '#ffd66b');
+      R.drawTextJP('戦果', 100, panelY + 16, '#ffd66b', 11);
+      R.drawTextJP('獲得金', 100, panelY + 36, '#8fe0ff', 10);
+      R.drawTextJP('+' + (rewardSummary.gold || 0) + 'G', 188, panelY + 36, '#ffffff', 11);
+      R.drawTextJP('旅の経験', 100, panelY + 54, '#8fe0ff', 10);
+      R.drawTextJP('+' + (rewardSummary.exp || 0), 188, panelY + 54, '#ffffff', 11);
+      R.drawTextJP('累計経験', 100, panelY + 72, '#8fe0ff', 10);
+      R.drawTextJP(currentExp + ' → ' + nextExp, 188, panelY + 72, '#ffffff', 11);
       if (nextRank > currentRank) {
-        R.drawTextJP('旅路ランク ' + currentRank + ' → ' + nextRank, 106, panelY + 90, '#ffd66b', 11);
+        R.drawTextJP('旅路ランク ' + currentRank + ' → ' + nextRank, 100, panelY + 90, '#ffd66b', 10);
       } else {
-        R.drawTextJP('旅路ランク ' + currentRank, 106, panelY + 90, '#d8dce8', 11);
+        R.drawTextJP('旅路ランク ' + currentRank, 100, panelY + 90, '#d8dce8', 10);
       }
-      R.drawTextJP('戦利品', 106, panelY + 108, '#8fe0ff', 11);
+      R.drawTextJP('戦利品', 100, panelY + 108, '#8fe0ff', 10);
       for (var ri = 0; ri < rewardItemLines.length; ri++) {
-        R.drawTextJP(rewardItemLines[ri], 170, panelY + 108 + ri * 12, '#ffffff', 11);
+        R.drawTextJP(rewardItemLines[ri], 162, panelY + 108 + ri * 12, '#ffffff', 10);
       }
 
       var rewardY = panelY + 108 + rewardItemLines.length * 12 + 8;
       if (growthLines.length) {
-        R.drawTextJP(nextRank > currentRank ? '成長' : 'つぎの目安', 106, rewardY, '#ffd66b', 11);
+        R.drawTextJP(nextRank > currentRank ? '成長' : 'つぎの目安', 100, rewardY, '#ffd66b', 10);
         for (var gi = 0; gi < growthLines.length; gi++) {
-          R.drawTextJP(growthLines[gi], 142, rewardY + 12 + gi * 12, nextRank > currentRank ? '#fff4c6' : '#d9deeb', 10);
+          R.drawTextJP(growthLines[gi], 136, rewardY + 12 + gi * 12, nextRank > currentRank ? '#fff4c6' : '#d9deeb', 9);
         }
         rewardY += 18 + growthLines.length * 12;
       }
       if (afterglowLines.length) {
-        R.drawTextJP('余韻', 106, rewardY, '#ffd66b', 11);
+        R.drawTextJP('余韻', 100, rewardY, '#ffd66b', 10);
         for (var ai = 0; ai < afterglowLines.length; ai++) {
-          R.drawTextJP(afterglowLines[ai], 142, rewardY + ai * 12, '#f4eed7', 10);
+          R.drawTextJP(afterglowLines[ai], 136, rewardY + ai * 12, '#f4eed7', 9);
         }
         rewardY += afterglowLines.length * 12 + 18;
       }
 
       if (enemyEchoLines.length) {
-        R.drawTextJP('残響', 106, rewardY, '#ffb36b', 11);
+        R.drawTextJP('残響', 100, rewardY, '#ffb36b', 10);
         for (var ei = 0; ei < enemyEchoLines.length; ei++) {
-          R.drawTextJP(enemyEchoLines[ei], 142, rewardY + ei * 12, '#f3e3d9', 10);
+          R.drawTextJP(enemyEchoLines[ei], 136, rewardY + ei * 12, '#f3e3d9', 9);
         }
         rewardY += enemyEchoLines.length * 12 + 18;
       }
 
       if (supportLogs.length) {
-        R.drawTextJP('同行支援', 106, rewardY, '#8fe0ff', 11);
+        R.drawTextJP('同行支援', 100, rewardY, '#8fe0ff', 10);
         for (var si = 0; si < Math.min(3, supportLogs.length); si++) {
-          R.drawTextJP(supportLogs[si].text, 106, rewardY + 12 + si * 12, supportLogs[si].color || '#dce6ff', 10);
+          R.drawTextJP(clampBattleText(supportLogs[si].text, 32), 100, rewardY + 12 + si * 12, supportLogs[si].color || '#dce6ff', 9);
         }
         rewardY += 18 + Math.min(3, supportLogs.length) * 12;
       }
 
-      R.drawTextJP('Space / Z / Enter で進む', 236, panelY + panelH - 18, '#b7bfd8', 10);
+      R.drawTextJP('Space / Z / Enter で進む', 240, panelY + panelH - 18, '#b7bfd8', 9, 'center');
     }
 
     drawCompanionSupportOverlay(R, ctx, C);
@@ -4709,10 +4866,11 @@ Game.Battle = (function() {
 
     // Message
     if (message && phase !== 'reward' && !isBossActionOverlayVisible() && !isCompanionSupportOverlayVisible()) {
+      var messageLines = wrapBattleText(message, 42, 2);
       R.drawDialogBox(10, 278, 460, 39);
       drawBattlePanelAccent(R, 10, 278, 460, 39, isSpecialRitualBattle() ? '#ffd66b' : '#8fb8ff');
       R.drawTextJP(isSpecialRitualBattle() ? '儀式の声' : '戦況', 20, 286, isSpecialRitualBattle() ? '#ffd66b' : '#8fb8ff', 10);
-      R.drawTextJP(message, 20, 295, '#fff', 13);
+      drawBattleWrappedLines(R, messageLines, 20, 294, 10, '#fff', 10);
     }
 
     if (ritualRuntime && ritualRuntime.uiFlags && ritualRuntime.uiFlags.failureOverlay) {
@@ -5018,6 +5176,17 @@ Game.Battle = (function() {
         return true;
       }
       return false;
+    },
+    debugSetMessage: function(text, timer) {
+      if (!active) return false;
+      message = text || '';
+      messageTimer = timer || 90;
+      return true;
+    },
+    debugQueueDialogue: function(lines) {
+      if (!active) return false;
+      queueDialogue(lines || []);
+      return true;
     }
   };
 })();

@@ -1,0 +1,89 @@
+{
+  "generatedAt": "2026-04-07T23:10:10.163Z",
+  "scenarios": [
+    {
+      "name": "banner-forest",
+      "screenshot": "/Users/fumiaki/Desktop/GunmaEscapeVer2/output/web-game-20260408/typography-review/banner-forest.png",
+      "mode": "exploring",
+      "battlePhase": null,
+      "hasAreaBanner": true,
+      "questOpen": false,
+      "saveContext": "field",
+      "shopMessage": null,
+      "eventId": null,
+      "consoleErrors": 0
+    },
+    {
+      "name": "field-menu",
+      "screenshot": "/Users/fumiaki/Desktop/GunmaEscapeVer2/output/web-game-20260408/typography-review/field-menu.png",
+      "mode": "menu",
+      "battlePhase": null,
+      "hasAreaBanner": false,
+      "questOpen": false,
+      "saveContext": "field",
+      "shopMessage": null,
+      "eventId": null,
+      "consoleErrors": 0
+    },
+    {
+      "name": "quest-log",
+      "screenshot": "/Users/fumiaki/Desktop/GunmaEscapeVer2/output/web-game-20260408/typography-review/quest-log.png",
+      "mode": "exploring",
+      "battlePhase": null,
+      "hasAreaBanner": false,
+      "questOpen": true,
+      "saveContext": "field",
+      "shopMessage": null,
+      "eventId": null,
+      "consoleErrors": 0
+    },
+    {
+      "name": "save-slots",
+      "screenshot": "/Users/fumiaki/Desktop/GunmaEscapeVer2/output/web-game-20260408/typography-review/save-slots.png",
+      "mode": "save",
+      "battlePhase": null,
+      "hasAreaBanner": false,
+      "questOpen": false,
+      "saveContext": "title",
+      "shopMessage": null,
+      "eventId": null,
+      "consoleErrors": 0
+    },
+    {
+      "name": "shop-confirm",
+      "screenshot": "/Users/fumiaki/Desktop/GunmaEscapeVer2/output/web-game-20260408/typography-review/shop-confirm.png",
+      "mode": "shop",
+      "battlePhase": null,
+      "hasAreaBanner": false,
+      "questOpen": false,
+      "saveContext": "field",
+      "shopMessage": "薬草（15G）を買う？ Z:はい X:いいえ",
+      "eventId": null,
+      "consoleErrors": 0
+    },
+    {
+      "name": "event-dialogue",
+      "screenshot": "/Users/fumiaki/Desktop/GunmaEscapeVer2/output/web-game-20260408/typography-review/event-dialogue.png",
+      "mode": "event",
+      "battlePhase": null,
+      "hasAreaBanner": false,
+      "questOpen": false,
+      "saveContext": "field",
+      "shopMessage": null,
+      "eventId": "typography_preview",
+      "consoleErrors": 0
+    },
+    {
+      "name": "battle-reward",
+      "screenshot": "/Users/fumiaki/Desktop/GunmaEscapeVer2/output/web-game-20260408/typography-review/battle-reward.png",
+      "mode": "battle",
+      "battlePhase": "reward",
+      "hasAreaBanner": false,
+      "questOpen": false,
+      "saveContext": "field",
+      "shopMessage": null,
+      "eventId": null,
+      "consoleErrors": 0
+    }
+  ]
+}

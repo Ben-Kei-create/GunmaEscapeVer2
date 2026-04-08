@@ -42,10 +42,43 @@
     }
   ],
   "takasaki": {
-    "mode": "dialog",
-    "battlePhase": null,
-    "formation": null,
-    "enemies": [],
+    "mode": "battle",
+    "battlePhase": "intro",
+    "formation": {
+      "packName": "片目棚の足慣らし",
+      "omen": "赤い粉が散るたび、棚の気配が一歩ずつ近づいてくる。",
+      "directive": "ぶつけて揺らし、遅れて熱を押し込んでくる。",
+      "layout": "wedge"
+    },
+    "enemies": [
+      {
+        "index": 0,
+        "name": "足慣らしの願殻",
+        "hp": 56,
+        "maxHp": 56,
+        "active": true,
+        "tag": "修練殻",
+        "role": "押し役"
+      },
+      {
+        "index": 1,
+        "name": "棚火の足慣らし",
+        "hp": 64,
+        "maxHp": 64,
+        "active": false,
+        "tag": "棚火稽古",
+        "role": "棚火"
+      },
+      {
+        "index": 2,
+        "name": "足慣らしの願殻",
+        "hp": 56,
+        "maxHp": 56,
+        "active": false,
+        "tag": "修練殻",
+        "role": "返し役"
+      }
+    ],
     "playerRank": 3,
     "playerExp": 160,
     "rewards": {
@@ -54,10 +87,43 @@
     }
   },
   "minakami": {
-    "mode": "dialog",
-    "battlePhase": null,
-    "formation": null,
-    "enemies": [],
+    "mode": "battle",
+    "battlePhase": "intro",
+    "formation": {
+      "packName": "断崖の踏み固め",
+      "omen": "冷たい水音の下で、沈む黒と返り声が同じ拍へ揃っていく。",
+      "directive": "足場を鈍らせ、呼び声で誘い、最後に白い影で包む。",
+      "layout": "screen"
+    },
+    "enemies": [
+      {
+        "index": 0,
+        "name": "谷筋の泥灯",
+        "hp": 112,
+        "maxHp": 112,
+        "active": true,
+        "tag": "泥灯",
+        "role": "足止め"
+      },
+      {
+        "index": 1,
+        "name": "谷あいの返り鐘",
+        "hp": 114,
+        "maxHp": 114,
+        "active": false,
+        "tag": "返り鐘",
+        "role": "呼び声"
+      },
+      {
+        "index": 2,
+        "name": "断崖の白い仔",
+        "hp": 110,
+        "maxHp": 110,
+        "active": false,
+        "tag": "断崖霧",
+        "role": "包み役"
+      }
+    ],
     "playerRank": 14,
     "playerExp": 1040,
     "rewards": {

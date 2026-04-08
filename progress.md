@@ -1127,3 +1127,22 @@ Original prompt: そうだね。セーブできる村役場みたいなところ
   - `battle-message.png` では、長い戦況文が底部メッセージ欄の2行に収まり、HP枠や戦場表示に食い込まないことを確認した。
   - `battle-dialogue.png` では、ボス台詞が折り返されたうえで話者名・本文・`Space / Z / Enter` 案内が帯の内側に収まることを確認した。
   - `save-menu-message.png` では、長いあいことばエラー文が2行のまま記録帳下部に収まり、本文パネルの上まで侵食しないことを確認した。console error / pageerror は 0 件。
+- 2026-04-08: レベル上げポイントを章の節目へ追加。
+  - `js/main.js`
+    - `TRAINING_BATTLES` を追加し、`training_*` アクションから repeatable な修練戦へ入れるようにした。
+    - 修練戦の勝利後は `旅路ランク` と推奨ランクを返す専用ダイアログへ戻し、初回クリア時だけ `training_*_cleared` フラグを立てるようにした。
+    - `render_game_to_text` に `trainingTakasaki / trainingOnuma / trainingShirane / trainingHaruna / trainingMinakami` を追加して、検証時に修練解放状況を追いやすくした。
+  - `js/battle.js`
+    - `createTrainingEnemy()` を追加し、通常敵から派生した修練専用エネミーを定義。
+    - 修練用エネミーは `goldReward=0 / dropなし` に寄せつつ、EXP はまとまって取れるように調整した。
+    - `training_daruma_shell` から `training_minakami_mist` まで 12 体を追加し、個別タグも定義した。
+  - `js/maps/takasaki.js`, `js/maps/onuma.js`, `js/maps/shirane_trail.js`, `js/maps/haruna_lake.js`, `js/maps/minakami_valley.js`
+    - 各マップに修練NPCを追加。
+    - 高崎 `棚見の若衆`, 大沼 `湖畔の見張り火`, 白根 `硫黄の行者`, 榛名 `霧待ちの漁師`, 水上 `谷筋の修験者` の5箇所を設置し、初回後は `contextDialog` で再挑戦向けの台詞へ切り替えるようにした。
+- 2026-04-08: レベル上げポイントの検証結果
+  - `node --check js/main.js js/battle.js js/maps/takasaki.js js/maps/onuma.js js/maps/shirane_trail.js js/maps/haruna_lake.js js/maps/minakami_valley.js` と `git diff --check` 通過。
+  - `develop-web-game` の Playwright client を `output/web-game-20260408/training-points-smoke` で実行し、通常起動スモークで新規 console error / pageerror が出ていないことを確認した。
+  - `output/web-game-20260408/training-points-targeted/summary.json` で、5マップすべてに `training_*` アクション付きNPCが存在することを確認した。
+  - 同 summary で、高崎修練は `rank=3 / exp=58 / gold=0`、水上修練は `rank=14 / exp=126 / gold=0` の設計になっており、群れプロフィールと各役割が battle intro へ渡ることを確認した。
+  - `takasaki-battle.png` と `minakami-battle.png` を目視し、修練戦が通常ボス導入とは別の群れ演出として成立していることを確認した。
+  - 修練NPCの実機会話確認中に、水上の修験者を既存NPCと同座標へ置いて会話が食い違う不具合を発見し、`(17,7)` へ移して解消した。最終確認では console error / pageerror は 0 件。

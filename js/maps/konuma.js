@@ -36,6 +36,15 @@ Game.Maps.konuma = (function() {
         '俺は裏ルートで仕入れた特殊サイコロを売ってる。',
         'アングラを倒したいなら、買っておけ。損はしねえよ。'
       ],
+      contextDialog: [
+        {
+          flag: 'env_konuma_mist_watch',
+          lines: [
+            '霧に見られた顔してるな。',
+            '小沼じゃ見張りより湖面のほうがよく覚える。買い物するなら、忘れられる前に決めな。'
+          ]
+        }
+      ],
       afterDialog: 'shop_闇サイコロ屋_superYakimanju,gamblerDice,cabbageDice',
       sprite: [
         [0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0],

@@ -227,6 +227,12 @@ Game.Audio = (function() {
       [294, 0.18], [262, 0.22], [220, 0.32], [196, 0.42],
       [220, 0.26], [247, 0.22], [220, 0.22], [196, 0.68]
     ],
+    heroine_veil: [ // 白と青の少女が現れるときの細い祈り
+      [392, 0.34], [523, 0.18], [587, 0.38], [659, 0.22],
+      [587, 0.18], [523, 0.26], [440, 0.44], [0, 0.16],
+      [392, 0.26], [440, 0.2], [523, 0.34], [587, 0.22],
+      [659, 0.18], [523, 0.3], [440, 0.56]
+    ],
     kusatsu_bushi: [
       [392, 0.2], [440, 0.2], [392, 0.2], [349, 0.2],
       [294, 0.25], [262, 0.25], [294, 0.2], [349, 0.2],
@@ -538,7 +544,8 @@ Game.Audio = (function() {
     ch10_border: { wave: 'square', gain: 0.07 },
     melancholy_intro: { wave: 'triangle', gain: 0.072 },
     melancholy_battle: { wave: 'triangle', gain: 0.082 },
-    melancholy_victory: { wave: 'triangle', gain: 0.078 }
+    melancholy_victory: { wave: 'triangle', gain: 0.078 },
+    heroine_veil: { wave: 'triangle', gain: 0.062 }
   };
 
   var fieldBgmByMap = {
@@ -639,7 +646,13 @@ Game.Audio = (function() {
     scheduleLoop();
   }
 
-  function stopBgm() {
+  function stopBgm(options) {
+    var fadeOut = 0.04;
+    if (typeof options === 'number' && !isNaN(options)) {
+      fadeOut = Math.max(0, options);
+    } else if (options && typeof options.fadeOut === 'number' && !isNaN(options.fadeOut)) {
+      fadeOut = Math.max(0, options.fadeOut);
+    }
     if (currentBgm) {
       clearTimeout(currentBgm);
       currentBgm = null;
@@ -652,10 +665,14 @@ Game.Audio = (function() {
         if (node.gain && audioCtx) {
           node.gain.gain.cancelScheduledValues(audioCtx.currentTime);
           node.gain.gain.setValueAtTime(Math.max(0.0001, node.gain.gain.value || 0.0001), audioCtx.currentTime);
-          node.gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.04);
+          if (fadeOut > 0) {
+            node.gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + fadeOut);
+          } else {
+            node.gain.gain.setValueAtTime(0.001, audioCtx.currentTime);
+          }
         }
       } catch (e) {}
-      try { node.osc.stop(audioCtx ? audioCtx.currentTime + 0.05 : undefined); } catch (e2) {}
+      try { node.osc.stop(audioCtx ? audioCtx.currentTime + Math.max(0.05, fadeOut + 0.01) : undefined); } catch (e2) {}
       try { node.gain.disconnect(); } catch (e3) {}
     }
   }
@@ -713,6 +730,13 @@ Game.Audio = (function() {
         playNote(784, 0.15, 'square', now + 0.3, 0.15);
         playNote(1047, 0.4, 'square', now + 0.45, 0.15);
         break;
+      case 'level_up':
+        playNote(392, 0.08, 'triangle', now, 0.09);
+        playNote(523, 0.08, 'triangle', now + 0.07, 0.09);
+        playNote(659, 0.1, 'square', now + 0.14, 0.11);
+        playNote(784, 0.14, 'square', now + 0.22, 0.12);
+        playSweep(784, 1175, 0.28, 'triangle', now + 0.24, 0.08);
+        break;
       case 'walk':
         playNote(100, 0.05, 'triangle', now, 0.05);
         break;
@@ -755,6 +779,17 @@ Game.Audio = (function() {
         playNote(494, 0.07, 'triangle', now, 0.06);
         playNote(659, 0.08, 'triangle', now + 0.05, 0.06);
         playNote(784, 0.1, 'triangle', now + 0.1, 0.05);
+        break;
+      case 'ritual_release':
+        playSweep(840, 240, 0.26, 'triangle', now, 0.045);
+        playNote(523, 0.07, 'triangle', now + 0.04, 0.05);
+        playNote(659, 0.09, 'triangle', now + 0.11, 0.045);
+        playSweep(260, 110, 0.24, 'sawtooth', now + 0.02, 0.035);
+        break;
+      case 'ritual_afterglow':
+        playNote(392, 0.05, 'triangle', now, 0.035);
+        playNote(587, 0.07, 'triangle', now + 0.06, 0.03);
+        playNote(784, 0.12, 'triangle', now + 0.14, 0.028);
         break;
       case 'critical':
         playSweep(700, 1400, 0.18, 'square', now, 0.14);

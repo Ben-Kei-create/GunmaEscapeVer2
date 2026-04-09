@@ -101,6 +101,15 @@ Game.Maps.tamura = (function() {
         '日本の近代化を支えたのは群馬の絹なんじゃ。',
         '森にカイコがおったら持ってきてくれんか？'
       ],
+      contextDialog: [
+        {
+          flag: 'env_tamura_woven_home',
+          lines: [
+            'この村の音を聞いてきたか。',
+            '畑の風も機の音も、どっちも暮らしをつなぐ糸なんじゃ。切れると村ごとほどけてしまう。'
+          ]
+        }
+      ],
       sprite: [
         [0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0],
         [0,0,1,2,2,2,2,1,0,0,0,0,0,0,0,0],
@@ -131,7 +140,7 @@ Game.Maps.tamura = (function() {
         '普通のサイコロより癖は強いが、そのぶん土地の機嫌を読みやすい。',
         'ここにしかない逸品があるぜ！見ていきな！'
       ],
-      afterDialog: 'shop_サイコロ工房_powerDice,steadyDice,healDice',
+      afterDialog: 'shop_サイコロ工房_breatherDice,powerDice,steadyDice,healDice',
       sprite: [
         [0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0],
         [0,0,1,2,2,2,2,1,0,0,0,0,0,0,0,0],

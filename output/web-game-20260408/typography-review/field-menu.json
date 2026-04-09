@@ -1,0 +1,144 @@
+{
+  "mode": "menu",
+  "titleSelection": 0,
+  "map": "forest",
+  "mapLabel": "廃墟の森",
+  "audio": {
+    "requestedBgm": null,
+    "currentBgm": null
+  },
+  "player": {
+    "tileX": 10,
+    "tileY": 10,
+    "direction": "down",
+    "hp": 96,
+    "maxHp": 96,
+    "attack": 12,
+    "defense": 6,
+    "experience": 0,
+    "journeyRank": 1,
+    "nextRankExperience": 80,
+    "gold": 60,
+    "chapter": 3,
+    "skillsKnown": [],
+    "skillCharges": {},
+    "inventory": []
+  },
+  "followers": [
+    {
+      "id": "akagi",
+      "x": 160,
+      "y": 160,
+      "direction": "down",
+      "moving": false
+    },
+    {
+      "id": "yamakawa",
+      "x": 160,
+      "y": 160,
+      "direction": "down",
+      "moving": false
+    },
+    {
+      "id": "furuya",
+      "x": 160,
+      "y": 160,
+      "direction": "down",
+      "moving": false
+    }
+  ],
+  "journeyLabel": "第三章",
+  "journeyIndex": 3,
+  "chapterTitle": "赤城の運び屋たち",
+  "objective": "赤城の異界へ足を踏み入れ、運び屋たちの痕跡を追い始める。",
+  "respectGauge": 0,
+  "catalystCount": 0,
+  "party": [
+    "akagi",
+    "yamakawa",
+    "furuya"
+  ],
+  "storyFlags": {
+    "checkpointFailedOnce": false,
+    "checkpointCleared": false,
+    "akagiJoinedSlice": false,
+    "darumaCleared": false,
+    "threadCleared": false
+  },
+  "continueSlot": null,
+  "hasAnySave": false,
+  "saveMenuContext": "field",
+  "quests": {
+    "open": false,
+    "tracked": null,
+    "active": [
+      {
+        "id": "onsen_tour",
+        "name": "温泉巡り",
+        "note": "",
+        "progress": 0,
+        "target": 3
+      },
+      {
+        "id": "joumo_karuta_collection",
+        "name": "上毛かるた収集",
+        "note": "",
+        "progress": 0,
+        "target": 5
+      },
+      {
+        "id": "daruma_perseverance",
+        "name": "だるま七転び八起き",
+        "note": "",
+        "progress": 0,
+        "target": 3
+      },
+      {
+        "id": "gunma_dialect_master",
+        "name": "群馬弁マスター",
+        "note": "",
+        "progress": 0,
+        "target": 5
+      }
+    ]
+  },
+  "services": [],
+  "ui": {
+    "showJourneyBadge": true,
+    "eventTextSpeed": "ふつう",
+    "battleDialogueSpeed": "ふつう",
+    "areaBanner": null,
+    "environmentNote": null
+  },
+  "title": {
+    "mode": "intro_movie",
+    "sceneId": "signs",
+    "sceneTitle": "群馬が近づく",
+    "sceneIndex": 1,
+    "sceneTimer": 4,
+    "totalTimer": 214,
+    "revealTimer": 0
+  },
+  "menu": {
+    "section": 4,
+    "busIndex": 0,
+    "busUnlocked": false,
+    "busDestinationCount": 0,
+    "busSelection": null,
+    "settingIndex": 0,
+    "eventTextSpeed": "normal",
+    "battleDialogueSpeed": "normal"
+  },
+  "encounters": {
+    "mapId": "forest",
+    "eligibleSteps": 0,
+    "cooldown": 3,
+    "cycleIndex": 0
+  },
+  "achievements": {
+    "unlockedCount": 0,
+    "totalCount": 22,
+    "trackedMapCount": 21,
+    "visitedTrackedMapCount": 1
+  }
+}

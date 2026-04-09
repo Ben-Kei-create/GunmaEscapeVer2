@@ -60,6 +60,15 @@ Game.Maps.border_tunnel = (function() {
     {
       id: 'star_oldman', x: 14, y: 12, name: '星を見る老人',
       dialog: ['あの星空は偽物だ。', 'だが、それでいいんだ。', '外の世界など見たくない。'],
+      contextDialog: [
+        {
+          flag: 'env_border_tunnel_false_stars',
+          lines: [
+            '偽りと知って、まだ見上げたのか。',
+            'それでいい。本物じゃない夜ほど、ここでは旅の記憶を正直に照らすからな。'
+          ]
+        }
+      ],
       defeatedDialog: ['空にヒビが入ったな。', '俺たちも目を覚ます時か。'],
       defeated: false, sprite: humanSprite, palette: { 1:'#ddbb88', 2:'#8866aa', 3:'#888888' }
     },

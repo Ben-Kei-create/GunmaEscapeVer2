@@ -56,12 +56,40 @@ Game.Maps.shirane_trail = (function() {
     {
       id: 'old_miner', x: 7, y: 9, name: '硫黄採取の老人',
       dialog: ['ゴホッ...ここの硫黄は質がいいが、毒気も強い。', '長居は無用じゃぞ。'],
+      contextDialog: [
+        {
+          flag: 'env_shirane_trail_sulfur_cut',
+          lines: [
+            '裂け目を覗いたのか。あれは鉱脈じゃなく、山の機嫌そのものだ。',
+            '白根は掘れば掘るほど、景色じゃなく傷口を見せてくる。'
+          ]
+        }
+      ],
       defeated: false, sprite: humanSprite, palette: { 1:'#ddbb88', 2:'#8866aa', 3:'#888888' }
     },
     {
       id: 'onsen_researcher', x: 22, y: 8, name: '温泉研究者',
       dialog: ['ここの泉質、明らかに異常値を示しているわ。', 'まるで何かの「感情」が溶け込んでいるみたい...'],
       defeated: false, sprite: humanSprite, palette: { 1:'#ddbbcc', 2:'#bb66aa', 3:'#442244' }
+    },
+    {
+      id: 'shiraneTrainer', x: 4, y: 13, name: '硫黄の行者',
+      dialog: [
+        '白根は、熱に焦って賽を急ぐ者から順に飲み込む。',
+        'ここで一度、噴気の圧へ身体を慣らしていけ。先の主は拍の乱れを見逃さん。',
+        '礼も金もいらん。代わりに、崩れない順番だけ持って行け。'
+      ],
+      contextDialog: [
+        {
+          flag: 'training_shirane_heat_cleared',
+          lines: [
+            '熱に押されても、前よりずっと崩れなくなった。',
+            'もう一段だけ磨くなら付き合おう。白根は慣れたと思った瞬間がいちばん危うい。'
+          ]
+        }
+      ],
+      afterDialog: 'training_shirane_heat',
+      defeated: false, sprite: humanSprite, palette: { 1:'#e0c49b', 2:'#7c8c8d', 3:'#443322' }
     }
   ];
   var items = [

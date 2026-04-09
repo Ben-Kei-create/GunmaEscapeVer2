@@ -110,7 +110,7 @@ Game.Maps.maebashi = (function() {
         'うちの焼きまんじゅうは味噌ダレが自慢さ！',
         '群馬の旅にゃ欠かせねえぞ。さあ見てきな！'
       ],
-      afterDialog: 'shop_前橋道具屋_healHerb,yakimanju,tempoCharm,leatherArmor',
+      afterDialog: 'shop_前橋道具屋_healHerb,yakimanju,tempoCharm,breatherDice,leatherArmor',
       sprite: [
         [0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0],
         [0,0,1,2,2,2,2,1,0,0,0,0,0,0,0,0],
@@ -137,6 +137,7 @@ Game.Maps.maebashi = (function() {
       name: 'アカギ',
       aliasName: '見知らぬ案内人',
       nameRevealFlag: 'party_akagi',
+      hideWhenFlag: 'party_akagi',
       dialog: [
         '……その顔。県境に弾かれて、前橋に吐き出されたばかりだな。',
         '俺は赤城のふもとを見回ってる案内役だ。皆からは「アカギ」って呼ばれてる。',
@@ -272,6 +273,15 @@ Game.Maps.maebashi = (function() {
       '前橋出身の萩原朔太郎もまた、',
       '故郷への複雑な想いを抱いていた。',
       '群馬の文学の風を感じるがよい。'
+    ],
+    contextDialog: [
+      {
+        flag: 'env_maebashi_central_line',
+        lines: [
+          '白線のことを見てきたのだな。',
+          'この町では道一本でさえ、帰郷と境界のあいだを詩みたいに揺れておる。'
+        ]
+      }
     ],
     sprite: [
       [0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0],

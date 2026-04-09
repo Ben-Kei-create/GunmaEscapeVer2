@@ -80,6 +80,16 @@ python3 -m http.server 4173
 http://127.0.0.1:4173
 ```
 
+## itch向けZIP作成
+
+配布用ZIPは次のスクリプトで作れます。
+
+```bash
+bash scripts/package_itch_release.sh
+```
+
+`release/itch/` に `index.html / js / favicon.svg / site.webmanifest` だけを含むZIPが出力されます。
+
 ## デバッグ用の補助
 
 - `window.render_game_to_text()`
@@ -128,4 +138,3 @@ http://127.0.0.1:4173
 - いまの `main` は、再設計フェーズの成果を実装へ流し込み始めた段階です
 - すべての章が完成しているわけではありません
 - ただし、世界観、旅路UI、オープニング、通常戦闘、儀式戦闘、仲間、通常エンカウントの基盤は揃っています
-

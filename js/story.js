@@ -142,6 +142,7 @@ Game.Story = (function() {
   // Character portraits (8x8 pixel grids, scaled to 64x64)
   var portraits = {
     '主人公': { color: '#888888', accent: '#aaaaaa', label: '?' },
+    '白い少女': { color: '#edf6ff', accent: '#84b6ff', label: '白' },
     'アカギ': { color: '#8b4422', accent: '#cc6633', label: 'A' },
     '龝櫻':  { color: '#333344', accent: '#555566', label: '翁' },
     '国定忠治': { color: '#223366', accent: '#4455aa', label: '忠' },

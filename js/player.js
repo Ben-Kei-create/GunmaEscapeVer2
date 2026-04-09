@@ -12,6 +12,13 @@ Game.Player = (function() {
       attackBonus: 3,
       defenseBonus: 2,
       color: '#5db8ff',
+      companionStrike: {
+        faces: [1, 1, 2, 2, 3, 4],
+        label: '境',
+        color: '#d9f3ff',
+        dotColor: '#214d72',
+        shortDesc: '境界の隙へ、小さく賽を差し込む。'
+      },
       followPalette: {
         4: '#3659ce',
         5: '#32446d',
@@ -33,6 +40,13 @@ Game.Player = (function() {
       attackBonus: 2,
       defenseBonus: 3,
       color: '#8fe0a2',
+      companionStrike: {
+        faces: [1, 2, 2, 2, 3, 4],
+        label: '測',
+        color: '#e0ffe8',
+        dotColor: '#2f6940',
+        shortDesc: '足場を測り、崩れた所へ一打を置く。'
+      },
       followPalette: {
         4: '#43875a',
         5: '#405045',
@@ -55,6 +69,13 @@ Game.Player = (function() {
       attackBonus: 4,
       defenseBonus: 1,
       color: '#ffb36b',
+      companionStrike: {
+        faces: [2, 2, 3, 3, 4, 5],
+        label: '断',
+        color: '#ffe6ca',
+        dotColor: '#794828',
+        shortDesc: '踏み込みの残りで、もう一手を押し込む。'
+      },
       followPalette: {
         4: '#c97a48',
         5: '#704532',
@@ -74,7 +95,7 @@ Game.Player = (function() {
   var MAX_LEVEL = 100;
   var EXP_PER_LEVEL = 80;
   var LEVEL_MILESTONES = {
-    1: { maxHp: 96, attack: 12, defense: 6 },
+    1: { maxHp: 80, attack: 12, defense: 6 },
     10: { maxHp: 168, attack: 18, defense: 10 },
     20: { maxHp: 260, attack: 24, defense: 14 },
     30: { maxHp: 360, attack: 31, defense: 19 },
@@ -93,12 +114,12 @@ Game.Player = (function() {
     x: 0,
     y: 0,
     direction: 'down',
-    hp: 96,
-    maxHp: 96,
+    hp: 80,
+    maxHp: 80,
     attack: 12,
     defense: 6,
     experience: 0,
-    gold: 100,
+    gold: 60,
     chapter: 1,                  // current chapter (1 or 2)
     diceSlots: 1,                // max dice slots (1-5)
     equippedDice: ['normalDice'], // array of dice item IDs
@@ -479,6 +500,54 @@ Game.Player = (function() {
     return result;
   }
 
+  function getFollowerTileStates() {
+    var states = getFollowerRenderStates();
+    var ts = Game.Config.TILE_SIZE || 16;
+    var result = [];
+    for (var i = 0; i < states.length; i++) {
+      result.push({
+        id: states[i].id,
+        name: states[i].name,
+        role: states[i].role,
+        color: states[i].color,
+        slot: states[i].slot,
+        tileX: Math.round(states[i].x / ts),
+        tileY: Math.round(states[i].y / ts),
+        moving: states[i].moving
+      });
+    }
+    return result;
+  }
+
+  function getPartyMemberAtTile(tileX, tileY) {
+    var followerTiles = getFollowerTileStates();
+    for (var i = 0; i < followerTiles.length; i++) {
+      if (followerTiles[i].tileX === tileX && followerTiles[i].tileY === tileY) {
+        return companionDefs[followerTiles[i].id] || null;
+      }
+    }
+    return null;
+  }
+
+  function getTalkablePartyMember(tileX, tileY) {
+    var exact = getPartyMemberAtTile(tileX, tileY);
+    if (exact) return exact;
+
+    var followerTiles = getFollowerTileStates();
+    var best = null;
+    var bestDistance = 99;
+    for (var i = 0; i < followerTiles.length; i++) {
+      var follower = followerTiles[i];
+      var distance = Math.abs(follower.tileX - data.tileX) + Math.abs(follower.tileY - data.tileY);
+      if (distance > 1) continue;
+      if (!best || distance < bestDistance || (distance === bestDistance && follower.slot < best.slot)) {
+        best = follower;
+        bestDistance = distance;
+      }
+    }
+    return best ? (companionDefs[best.id] || null) : null;
+  }
+
   function drawFollowerMarker(renderState, bob) {
     var pulse = Math.sin((frameClock + renderState.slot * 6) / 10) * 0.5 + 0.5;
     var markerY = renderState.y - 3 + bob;
@@ -561,12 +630,7 @@ Game.Player = (function() {
   }
 
   function getAttack() {
-    var total = data.attack;
-    var partyMembers = getPartyMembers();
-    for (var i = 0; i < partyMembers.length; i++) {
-      total += partyMembers[i].attackBonus || 0;
-    }
-    return total;
+    return data.attack;
   }
 
   function getDefense() {
@@ -644,6 +708,7 @@ Game.Player = (function() {
   }
 
   function equipDice(diceId, slot) {
+    normalizeDiceLoadout();
     var item = Game.Items.get(diceId);
     if (!item || item.type !== 'dice') return false;
     if (slot < 0 || slot >= data.diceSlots) return false;
@@ -652,19 +717,84 @@ Game.Player = (function() {
       addItem(data.equippedDice[slot]);
     }
     data.equippedDice[slot] = diceId;
-    removeItem(diceId);
+    if (diceId !== 'normalDice') {
+      removeItem(diceId);
+    }
+    normalizeDiceLoadout();
     return true;
   }
 
   function addDiceSlot() {
     if (data.diceSlots >= 5) return false;
+    normalizeDiceLoadout();
     data.diceSlots++;
-    data.equippedDice.push('normalDice');
     return true;
   }
 
+  function unequipDice(slot) {
+    normalizeDiceLoadout();
+    if (slot < 0 || slot >= data.diceSlots) return false;
+    var equippedId = data.equippedDice[slot];
+    if (slot === 0) {
+      if (equippedId && equippedId !== 'normalDice') {
+        addItem(equippedId);
+      }
+      data.equippedDice[0] = 'normalDice';
+      normalizeDiceLoadout();
+      return true;
+    }
+    if (!equippedId) return false;
+    if (equippedId !== 'normalDice') {
+      addItem(equippedId);
+    }
+    data.equippedDice[slot] = null;
+    normalizeDiceLoadout();
+    return true;
+  }
+
+  function getDiceLoadout() {
+    normalizeDiceLoadout();
+    var loadout = [];
+    for (var i = 0; i < data.diceSlots; i++) {
+      if (i === 0) {
+        loadout.push(data.equippedDice[0] || 'normalDice');
+      } else {
+        loadout.push(data.equippedDice[i] || null);
+      }
+    }
+    return loadout;
+  }
+
   function getEquippedDice() {
-    return data.equippedDice.slice(0, data.diceSlots);
+    var loadout = getDiceLoadout();
+    var equipped = [];
+    for (var i = 0; i < loadout.length; i++) {
+      if (loadout[i]) {
+        equipped.push(loadout[i]);
+      }
+    }
+    return equipped.length ? equipped : ['normalDice'];
+  }
+
+  function normalizeDiceLoadout() {
+    if (!Array.isArray(data.equippedDice)) {
+      data.equippedDice = [];
+    }
+    data.diceSlots = Math.max(1, Math.min(5, data.diceSlots || 1));
+    if (!data.equippedDice.length || !data.equippedDice[0]) {
+      data.equippedDice[0] = 'normalDice';
+    }
+    for (var i = 1; i < data.equippedDice.length; i++) {
+      if (data.equippedDice[i] === 'normalDice') {
+        data.equippedDice[i] = null;
+      }
+    }
+    if (data.equippedDice.length > data.diceSlots) {
+      data.equippedDice.length = data.diceSlots;
+    }
+    while (data.equippedDice.length > 1 && !data.equippedDice[data.equippedDice.length - 1]) {
+      data.equippedDice.pop();
+    }
   }
 
   function equipArmor(itemId) {
@@ -714,6 +844,7 @@ Game.Player = (function() {
     var previousRank = getJourneyRank();
     var levelUps = [];
     var skillChoices = [];
+    var didLevelUp = false;
 
     data.experience = Math.max(0, (data.experience || 0) + gained);
 
@@ -722,9 +853,9 @@ Game.Player = (function() {
       for (var rank = previousRank + 1; rank <= nextRank; rank++) {
         var gains = getLevelUpGains(rank);
         data.maxHp += gains.hp;
-        data.hp = Math.min(data.maxHp, data.hp + gains.hp);
         data.attack += gains.attack;
         data.defense += gains.defense;
+        didLevelUp = true;
         levelUps.push({
           rank: rank,
           hpGain: gains.hp,
@@ -741,13 +872,18 @@ Game.Player = (function() {
       }
     }
 
+    if (didLevelUp) {
+      data.hp = data.maxHp;
+    }
+
     return {
       experience: data.experience,
       gained: gained,
       previousRank: previousRank,
       newRank: nextRank,
       levelUps: levelUps,
-      skillChoices: skillChoices
+      skillChoices: skillChoices,
+      healedToFull: didLevelUp
     };
   }
 
@@ -911,8 +1047,10 @@ Game.Player = (function() {
     getAttack: getAttack,
     getDefense: getDefense,
     equipDice: equipDice,
+    unequipDice: unequipDice,
     addDiceSlot: addDiceSlot,
     getEquippedDice: getEquippedDice,
+    getDiceLoadout: getDiceLoadout,
     equipArmor: equipArmor,
     unequipArmor: unequipArmor,
     addGold: addGold,
@@ -943,6 +1081,9 @@ Game.Player = (function() {
     getCompanionCatalog: getCompanionCatalog,
     getMaxPartyMembers: getMaxPartyMembers,
     getFollowerRenderStates: getFollowerRenderStates,
+    getFollowerTileStates: getFollowerTileStates,
+    getPartyMemberAtTile: getPartyMemberAtTile,
+    getTalkablePartyMember: getTalkablePartyMember,
     consumeCompletedStep: consumeCompletedStep,
     consumeBlockedMove: consumeBlockedMove,
     syncCatalystsFromInventory: syncCatalystsFromInventory,

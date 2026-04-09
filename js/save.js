@@ -1,7 +1,7 @@
 // Save system using localStorage + passphrase export
 Game.Save = (function() {
   var MAX_SLOTS = 3;
-  var VERSION = 7;
+  var VERSION = 9;
   var PASSPHRASE_PREFIX = 'GM2';
   var BASE32_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
   var runtime = window.__gunmaSaveRuntime || {
@@ -47,6 +47,7 @@ Game.Save = (function() {
       Game.Player.syncSkillState(true);
     }
     var playerData = Game.Player.getData();
+    var diceSlots = Math.max(1, playerData.diceSlots || 1);
     return {
       hp: playerData.hp,
       maxHp: playerData.maxHp,
@@ -59,11 +60,11 @@ Game.Save = (function() {
       tileX: playerData.tileX,
       tileY: playerData.tileY,
       direction: playerData.direction,
-      equippedDice: clone(playerData.equippedDice || []),
+      equippedDice: sanitizeEquippedDiceSlots(playerData.equippedDice || [], diceSlots),
       inventory: clone(playerData.inventory || []),
       keyItems: clone(playerData.keyItems || getKeyItemsFromInventory(playerData.inventory || [])),
       armor: playerData.armor,
-      diceSlots: playerData.diceSlots,
+      diceSlots: diceSlots,
       chapter: playerData.chapter,
       partyMembers: clone(playerData.partyMembers || []),
       skillsKnown: clone(playerData.skillsKnown || []),
@@ -123,6 +124,57 @@ Game.Save = (function() {
     return null;
   }
 
+  function hasActiveStoryFlags(storyFlags) {
+    if (!storyFlags || typeof storyFlags !== 'object') return false;
+    for (var flag in storyFlags) {
+      if (!storyFlags.hasOwnProperty(flag)) continue;
+      if (storyFlags[flag]) return true;
+    }
+    return false;
+  }
+
+  function isLegacyOpeningEconomySnapshot(data) {
+    if (!data || !data.player) return false;
+
+    var player = data.player;
+    var chapter = data.chapter || player.chapter || 1;
+    var inventory = player.inventory || [];
+    var partyMembers = player.partyMembers || [];
+    var skillsKnown = player.skillsKnown || [];
+    var keyItems = player.keyItems || [];
+    var diceSlots = Math.max(1, player.diceSlots || 1);
+
+    return data.mapName === 'maebashi' &&
+      chapter === 1 &&
+      (player.experience || 0) === 0 &&
+      !player.armor &&
+      diceSlots === 1 &&
+      !inventory.length &&
+      !partyMembers.length &&
+      !skillsKnown.length &&
+      !keyItems.length &&
+      !hasActiveStoryFlags(data.storyFlags || {});
+  }
+
+  function normalizeOpeningEconomy(data) {
+    if (!data || !data.player) return data;
+    if (!isLegacyOpeningEconomySnapshot(data)) return data;
+
+    var normalizedGold = 60;
+    if ((data.player.gold || 0) <= normalizedGold) return data;
+
+    var normalized = clone(data);
+    normalized.player.gold = normalizedGold;
+    return normalized;
+  }
+
+  function getShopState() {
+    if (Game.Shop && Game.Shop.exportState) {
+      return Game.Shop.exportState();
+    }
+    return {};
+  }
+
   function buildSaveData() {
     var playerSnapshot = getPlayerSnapshot();
     var currentMapId = Game.Map.getCurrentMapId();
@@ -140,7 +192,8 @@ Game.Save = (function() {
       itemStates: getItemStates(),
       storyFlags: getStoryFlags(),
       journeyState: getJourneyState(),
-      questState: getQuestState()
+      questState: getQuestState(),
+      shopState: getShopState()
     };
   }
 
@@ -149,7 +202,7 @@ Game.Save = (function() {
     var raw = localStorage.getItem(getStorageKey(slot));
     if (!raw) return null;
     try {
-      return JSON.parse(raw);
+      return normalizeOpeningEconomy(JSON.parse(raw));
     } catch (err) {
       return null;
     }
@@ -258,9 +311,7 @@ Game.Save = (function() {
     playerData.moveFrame = 0;
     playerData.moveTimer = 0;
 
-    while (playerData.equippedDice.length < playerData.diceSlots) {
-      playerData.equippedDice.push('normalDice');
-    }
+    playerData.equippedDice = sanitizeEquippedDiceSlots(playerData.equippedDice, playerData.diceSlots);
     if (Game.Player && Game.Player.syncGrowthStats) {
       Game.Player.syncGrowthStats('ratio');
     }
@@ -284,6 +335,9 @@ Game.Save = (function() {
     applyStoryFlags(data.storyFlags || {});
     applyJourneyState(data.journeyState || null);
     applyQuestState(data.questState || null, data.player.chapter || 1);
+    if (Game.Shop && Game.Shop.importState) {
+      Game.Shop.importState(data.shopState || {});
+    }
     if (Game.Player && Game.Player.syncCatalystsFromInventory) {
       Game.Player.syncCatalystsFromInventory();
     }
@@ -366,6 +420,44 @@ Game.Save = (function() {
     var result = [];
     for (var i = 0; i < indexes.length; i++) {
       if (catalog[indexes[i]]) result.push(catalog[indexes[i]]);
+    }
+    return result;
+  }
+
+  function encodeDiceLoadout(ids, catalog, diceSlots) {
+    var encoded = [];
+    var sanitized = sanitizeEquippedDiceSlots(ids || [], diceSlots);
+    for (var i = 0; i < Math.max(1, diceSlots || 1); i++) {
+      var index = catalog.indexOf(sanitized[i]);
+      encoded.push(index >= 0 ? index : -1);
+    }
+    return encoded;
+  }
+
+  function decodeDiceLoadout(indexes, catalog, diceSlots) {
+    var result = [];
+    var slotCount = Math.max(1, diceSlots || 1);
+    indexes = indexes || [];
+    for (var i = 0; i < slotCount; i++) {
+      var encoded = indexes[i];
+      result.push(typeof encoded === 'number' && encoded >= 0 && catalog[encoded] ? catalog[encoded] : null);
+    }
+    return sanitizeEquippedDiceSlots(result, slotCount);
+  }
+
+  function sanitizeEquippedDiceSlots(equippedDice, diceSlots) {
+    var slotCount = Math.max(1, diceSlots || 1);
+    var result = Array.isArray(equippedDice) ? equippedDice.slice(0, slotCount) : [];
+    if (!result.length || !result[0]) {
+      result[0] = 'normalDice';
+    }
+    for (var i = 1; i < result.length; i++) {
+      if (result[i] === 'normalDice') {
+        result[i] = null;
+      }
+    }
+    while (result.length > 1 && !result[result.length - 1]) {
+      result.pop();
     }
     return result;
   }
@@ -534,7 +626,7 @@ Game.Save = (function() {
         player.diceSlots || 1,
         player.chapter || 1,
         indexOfOr(itemCatalog, player.armor, -1),
-        encodeIdList(player.equippedDice || [], itemCatalog),
+        encodeDiceLoadout(player.equippedDice || [], itemCatalog, player.diceSlots || 1),
         encodeIdList(player.inventory || [], itemCatalog),
         encodeIdList(player.partyMembers || [], partyCatalog),
         encodeIdList(player.skillsKnown || [], skillCatalog),
@@ -543,6 +635,7 @@ Game.Save = (function() {
       n: encodeNpcStatesCompact(data.npcStates || {}),
       i: encodeItemStatesCompact(data.itemStates || {}),
       s: activeStoryFlags,
+      h: data.shopState || {},
       j: [
         journeyState.respectGauge || 0,
         encodeIdList(journeyState.catalysts || [], itemCatalog)
@@ -566,8 +659,11 @@ Game.Save = (function() {
     var legacyLayout = !compact.v || compact.v < 5;
     var hasSkills = version >= 6;
     var hasSkillCharges = version >= 7;
-    var equippedDice = decodeIdList(playerData[legacyLayout ? 11 : 12] || [], itemCatalog);
-    if (!equippedDice.length) equippedDice = ['normalDice'];
+    var hasDiceLoadout = version >= 9;
+    var diceSlots = playerData[legacyLayout ? 8 : 9] || 1;
+    var equippedDice = hasDiceLoadout
+      ? decodeDiceLoadout(playerData[legacyLayout ? 11 : 12] || [], itemCatalog, diceSlots)
+      : sanitizeEquippedDiceSlots(decodeIdList(playerData[legacyLayout ? 11 : 12] || [], itemCatalog), diceSlots);
     var inventory = decodeIdList(playerData[legacyLayout ? 12 : 13] || [], itemCatalog);
     var partyMembers = decodeIdList(playerData[legacyLayout ? 13 : 14] || [], partyCatalog);
     var skillsKnown = hasSkills ? decodeIdList(playerData[15] || [], skillCatalog) : [];
@@ -599,7 +695,7 @@ Game.Save = (function() {
         x: (playerData[legacyLayout ? 5 : 6] || 0) * Game.Config.TILE_SIZE,
         y: (playerData[legacyLayout ? 6 : 7] || 0) * Game.Config.TILE_SIZE,
         direction: directions[playerData[legacyLayout ? 7 : 8]] || 'down',
-        diceSlots: playerData[legacyLayout ? 8 : 9] || 1,
+        diceSlots: diceSlots,
         chapter: playerData[legacyLayout ? 9 : 10] || 1,
         armor: playerData[legacyLayout ? 10 : 11] >= 0 ? itemCatalog[playerData[legacyLayout ? 10 : 11]] : null,
         equippedDice: equippedDice,
@@ -612,6 +708,7 @@ Game.Save = (function() {
       npcStates: decodeNpcStatesCompact(compact.n || ''),
       itemStates: decodeItemStatesCompact(compact.i || ''),
       storyFlags: storyFlags,
+      shopState: compact.h || {},
       journeyState: {
         respectGauge: journeyData[0] || 0,
         catalysts: catalysts
@@ -710,7 +807,7 @@ Game.Save = (function() {
       if (!expanded) {
         return { success: false, error: 'このあいことばは使えない。' };
       }
-      return { success: true, data: expanded };
+      return { success: true, data: normalizeOpeningEconomy(expanded) };
     } catch (err) {
       return { success: false, error: 'あいことばを読み取れない。' };
     }

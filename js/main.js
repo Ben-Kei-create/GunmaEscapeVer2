@@ -6,17 +6,27 @@ Game.Main = (function() {
   var transitionTarget = null;
   var transitionSpawnX = 0;
   var transitionSpawnY = 0;
+  var transitionLoaded = false;
+  var transitionData = null;
   var dialogText = '';
   var pendingAction = null;
   var storyBattleContext = null;
   var pendingArrivalCheck = '';
+  var TRANSITION_SPEED = 0.028;
+  var TRANSITION_LOAD_PROGRESS = 0.5;
   var ARRIVAL_EVENT_MAP = {
+    forest: { flag: 'arrival_forest_auto', eventId: 'arrival_forest_auto' },
     takasaki: { flag: 'arrival_takasaki_auto', eventId: 'arrival_takasaki_auto' },
+    tsumagoi: { flag: 'arrival_tsumagoi_auto', eventId: 'arrival_tsumagoi_auto' },
     shimonita: { flag: 'arrival_shimonita_auto', eventId: 'arrival_shimonita_auto' },
     tomioka: { flag: 'arrival_tomioka_auto', eventId: 'arrival_tomioka_auto' },
+    tamura: { flag: 'arrival_tamura_auto', eventId: 'arrival_tamura_auto' },
     kusatsu: { flag: 'arrival_kusatsu_auto', eventId: 'arrival_kusatsu_auto' },
+    konuma: { flag: 'arrival_konuma_auto', eventId: 'arrival_konuma_auto' },
+    onuma: { flag: 'arrival_onuma_auto', eventId: 'arrival_onuma_auto' },
     ikaho: { flag: 'arrival_ikaho_auto', eventId: 'arrival_ikaho_auto' },
     akagi_ranch: { flag: 'arrival_akagi_ranch_auto', eventId: 'arrival_akagi_ranch_auto' },
+    akagi_shrine: { flag: 'arrival_akagi_shrine_auto', eventId: 'arrival_akagi_shrine_auto' },
     shirane_trail: { flag: 'arrival_shirane_trail_auto', eventId: 'arrival_shirane_trail_auto' },
     kusatsu_deep: { flag: 'arrival_kusatsu_deep_auto', eventId: 'arrival_kusatsu_deep_auto' },
     jomo_gakuen: { flag: 'arrival_jomo_gakuen_auto', eventId: 'arrival_jomo_gakuen_auto' },
@@ -25,6 +35,88 @@ Game.Main = (function() {
     oze_marsh: { flag: 'arrival_oze_marsh_auto', eventId: 'arrival_oze_marsh_auto' },
     minakami_valley: { flag: 'arrival_minakami_valley_auto', eventId: 'arrival_minakami_valley_auto' },
     border_tunnel: { flag: 'arrival_border_tunnel_auto', eventId: 'arrival_border_tunnel_auto' }
+  };
+  var TRAINING_BATTLES = {
+    training_takasaki_focus: {
+      clearFlag: 'training_takasaki_focus_cleared',
+      recommendedRank: 3,
+      firstClearLine: '棚音と足音のズレが、ようやく手の内で読めるようになってきた。',
+      repeatLine: '片目棚の気配が揃うほど、こちらの呼吸も少しずつ静かになる。',
+      payload: {
+        enemyIds: ['training_daruma_shell', 'training_takasaki_ember', 'training_daruma_shell'],
+        packName: '片目棚の足慣らし',
+        omen: '赤い粉が散るたび、棚の気配が一歩ずつ近づいてくる。',
+        directive: 'ぶつけて揺らし、遅れて熱を押し込んでくる。',
+        entryText: '片目棚の足慣らしが、だるま棚の影から輪を作って現れた。',
+        layout: 'wedge',
+        accent: '#ff9d78',
+        roles: ['押し役', '棚火', '返し役']
+      }
+    },
+    training_onuma_mist: {
+      clearFlag: 'training_onuma_mist_cleared',
+      recommendedRank: 6,
+      firstClearLine: '湖面の白さに目を奪われず、気配の重なりだけを追えるようになった。',
+      repeatLine: '霧と灯りの拍が合うほど、こちらの足運びも湖畔へ馴染んでいく。',
+      payload: {
+        enemyIds: ['training_onuma_mist', 'training_onuma_lantern', 'training_onuma_mist'],
+        packName: '大沼の霧稽古',
+        omen: '白い霧の奥で、小さな灯りだけが先にこちらを測っている。',
+        directive: '灯で間合いを計り、霧の二拍で逃げ道を薄くする。',
+        entryText: '大沼の霧稽古が、湖畔の白さを裂くように揃った。',
+        layout: 'screen',
+        accent: '#a7d8ff',
+        roles: ['左霧', '測り灯', '右霧']
+      }
+    },
+    training_shirane_heat: {
+      clearFlag: 'training_shirane_heat_cleared',
+      recommendedRank: 9,
+      firstClearLine: '熱と白糸が重なっても、手順を崩さずに踏み返せるようになってきた。',
+      repeatLine: '噴気の白さに慣れるほど、切り返しの拍が身体へ落ちてくる。',
+      payload: {
+        enemyIds: ['training_shirane_steam', 'training_shirane_silk', 'training_shirane_remnant'],
+        packName: '噴気の地慣らし',
+        omen: '硫黄の熱と白糸の鳴りが、山道いっぱいに薄く張っている。',
+        directive: '勢いで崩し、細い手数で詰め、最後に熱で押し返す。',
+        entryText: '噴気の地慣らしが、白根の風と一緒に押し寄せた。',
+        layout: 'wedge',
+        accent: '#ffbe8e',
+        roles: ['切り込み', '詰め手', '押し返し']
+      }
+    },
+    training_haruna_echo: {
+      clearFlag: 'training_haruna_echo_cleared',
+      recommendedRank: 12,
+      firstClearLine: '返り声に焦らされず、自分の拍だけを残せるようになった。',
+      repeatLine: '榛名の霧はまだ深いが、遅れて届く声へ振り回されなくなってきた。',
+      payload: {
+        enemyIds: ['training_haruna_echo', 'training_haruna_mist', 'training_haruna_bell'],
+        packName: '湖霧の返し稽古',
+        omen: '湖面から遅れて返る声が、霧の白さと重なって近づいてくる。',
+        directive: '返り声で拍を外し、霧で散らし、最後に呼び声で寄せる。',
+        entryText: '湖霧の返し稽古が、水面の向こうから順に姿を結んだ。',
+        layout: 'stagger',
+        accent: '#b5dcff',
+        roles: ['返り声', '散らし役', '呼び声']
+      }
+    },
+    training_minakami_ridge: {
+      clearFlag: 'training_minakami_ridge_cleared',
+      recommendedRank: 14,
+      firstClearLine: '冷えた断崖でも崩れず、最後の境界へ向けて体勢を保てるようになった。',
+      repeatLine: '谷風に削られるほど、こちらの踏み込みはむしろ細く深くなる。',
+      payload: {
+        enemyIds: ['training_minakami_mud', 'training_minakami_bell', 'training_minakami_mist'],
+        packName: '断崖の踏み固め',
+        omen: '冷たい水音の下で、沈む黒と返り声が同じ拍へ揃っていく。',
+        directive: '足場を鈍らせ、呼び声で誘い、最後に白い影で包む。',
+        entryText: '断崖の踏み固めが、谷あいの風に押されて迫ってきた。',
+        layout: 'screen',
+        accent: '#9fd0e8',
+        roles: ['足止め', '呼び声', '包み役']
+      }
+    }
   };
 
   function init() {
@@ -83,6 +175,96 @@ Game.Main = (function() {
     return Game.Story.getChapterStartPlan(chapterNumber);
   }
 
+  function getMapTravelLabel(mapId) {
+    if (!mapId) return '停留所';
+    if (Game.Chapters && Game.Chapters.getMap) {
+      var mapInfo = Game.Chapters.getMap(mapId);
+      if (mapInfo && mapInfo.label) return mapInfo.label;
+    }
+    if (Game.Maps && Game.Maps[mapId] && Game.Maps[mapId].name) {
+      return Game.Maps[mapId].name;
+    }
+    return mapId;
+  }
+
+  function buildTransitionStops(sourceMapId, targetMapId, options) {
+    options = options || {};
+    var rawStops = options.stopLabels && options.stopLabels.length ? options.stopLabels.slice() : [];
+    if (!rawStops.length) {
+      if (sourceMapId) rawStops.push(getMapTravelLabel(sourceMapId));
+      if (options.midLabel) rawStops.push(options.midLabel);
+      if (targetMapId && targetMapId !== sourceMapId) rawStops.push(getMapTravelLabel(targetMapId));
+    }
+
+    var stops = [];
+    for (var i = 0; i < rawStops.length; i++) {
+      var label = rawStops[i];
+      if (!label || (stops.length && stops[stops.length - 1] === label)) continue;
+      stops.push(label);
+    }
+    if (!stops.length) {
+      stops.push(targetMapId ? getMapTravelLabel(targetMapId) : '停留所');
+    }
+    return stops;
+  }
+
+  function applyMapLoad(target, spawnX, spawnY) {
+    if (!target) return;
+    Game.Map.load(target, spawnX, spawnY);
+    if (Game.Save && Game.Save.autoSave) Game.Save.autoSave();
+    if (Game.Weather && Game.Weather.setMapWeather) {
+      var curMap = Game.Map.getCurrentMap();
+      if (curMap) Game.Weather.setMapWeather(curMap.name);
+    }
+  }
+
+  function applyChapterStartPlan(plan, chapterNumber) {
+    if (!plan) return false;
+    if (plan.achievementId && Game.Achievements && Game.Achievements.check) {
+      Game.Achievements.check(plan.achievementId);
+    }
+
+    var pd = Game.Player.getData();
+    pd.chapter = chapterNumber;
+    if (Game.Quests && Game.Quests.activateChapter) {
+      Game.Quests.activateChapter(chapterNumber);
+    }
+    clearChapterKeyItems(pd);
+    resetMapStateList(plan.resetMaps || []);
+    applyMapLoad(plan.mapId, plan.spawnX, plan.spawnY);
+    return true;
+  }
+
+  function beginTravelTransition(options) {
+    options = options || {};
+    transitionTarget = options.targetMapId || null;
+    transitionSpawnX = typeof options.spawnX === 'number' ? options.spawnX : 0;
+    transitionSpawnY = typeof options.spawnY === 'number' ? options.spawnY : 0;
+    transitionAlpha = 0;
+    transitionLoaded = false;
+    transitionData = {
+      title: options.title || 'ぐるりん回送中',
+      subtitle: options.subtitle || '停留所をまたぎ、次の景色へ向かう。',
+      accent: options.accent || '#8fd7a1',
+      sourceMapId: options.sourceMapId || (Game.Map && Game.Map.getCurrentMapId ? Game.Map.getCurrentMapId() : ''),
+      targetMapId: options.targetMapId || '',
+      stopLabels: buildTransitionStops(options.sourceMapId || (Game.Map && Game.Map.getCurrentMapId ? Game.Map.getCurrentMapId() : ''), options.targetMapId || '', options),
+      targetLabel: options.targetLabel || getMapTravelLabel(options.targetMapId || ''),
+      onLoad: options.onLoad || null,
+      onComplete: options.onComplete || null,
+      busMovie: options.busMovie !== false
+    };
+    setState(Game.Config.STATE.TRANSITION);
+  }
+
+  function showChapterArrivalBanner(mapId, chapterNumber) {
+    if (!Game.UI || !Game.UI.showAreaBanner) return;
+    var chapterInfo = Game.Chapters && Game.Chapters.getChapter ? Game.Chapters.getChapter(chapterNumber || 1, mapId) : null;
+    Game.UI.showAreaBanner(mapId, {
+      detailLine: chapterInfo && chapterInfo.arrivalLine ? chapterInfo.arrivalLine : ''
+    });
+  }
+
   function resetMapStateList(mapIds) {
     for (var m = 0; m < mapIds.length; m++) {
       var mapData = Game.Maps[mapIds[m]];
@@ -109,23 +291,25 @@ Game.Main = (function() {
   function startChapter(chapterNumber) {
     var plan = getChapterStartPlan(chapterNumber);
     if (!plan) return false;
-
-    if (plan.achievementId && Game.Achievements && Game.Achievements.check) {
-      Game.Achievements.check(plan.achievementId);
-    }
-
-    var pd = Game.Player.getData();
-    pd.chapter = chapterNumber;
-    if (Game.Quests && Game.Quests.activateChapter) {
-      Game.Quests.activateChapter(chapterNumber);
-    }
-    clearChapterKeyItems(pd);
-    resetMapStateList(plan.resetMaps || []);
-    Game.Map.load(plan.mapId, plan.spawnX, plan.spawnY);
-    setState(Game.Config.STATE.EVENT);
-    Game.Event.start(plan.openingEventId, function() {
-      setState(Game.Config.STATE.EXPLORING);
-      Game.Audio.playBgm('field');
+    beginTravelTransition({
+      sourceMapId: Game.Map && Game.Map.getCurrentMapId ? Game.Map.getCurrentMapId() : '',
+      targetMapId: plan.mapId,
+      spawnX: plan.spawnX,
+      spawnY: plan.spawnY,
+      title: 'ぐるりん回送中',
+      subtitle: getMapTravelLabel(plan.mapId) + ' へ向かっている。',
+      midLabel: '回送',
+      onLoad: function() {
+        applyChapterStartPlan(plan, chapterNumber);
+      },
+      onComplete: function() {
+        setState(Game.Config.STATE.EVENT);
+        Game.Event.start(plan.openingEventId, function() {
+          setState(Game.Config.STATE.EXPLORING);
+          showChapterArrivalBanner(plan.mapId, chapterNumber);
+          Game.Audio.playBgm('field');
+        });
+      }
     });
     return true;
   }
@@ -155,6 +339,43 @@ Game.Main = (function() {
       Game.Audio.playBgm('field');
     });
     return true;
+  }
+
+  function getEnvironmentSpotFlag(mapId, spot) {
+    return spot && spot.flag ? spot.flag : 'env_' + mapId + '_' + (spot && spot.id ? spot.id : 'spot');
+  }
+
+  function isEnvironmentSpotReached(tileX, tileY, spot) {
+    if (!spot || typeof tileX !== 'number' || typeof tileY !== 'number') return false;
+    var radius = typeof spot.radius === 'number' ? Math.max(0, spot.radius | 0) : 0;
+    if (typeof spot.minX === 'number' && typeof spot.maxX === 'number' &&
+        typeof spot.minY === 'number' && typeof spot.maxY === 'number') {
+      return tileX >= spot.minX && tileX <= spot.maxX && tileY >= spot.minY && tileY <= spot.maxY;
+    }
+    if (typeof spot.x !== 'number' || typeof spot.y !== 'number') return false;
+    return Math.abs(tileX - spot.x) <= radius && Math.abs(tileY - spot.y) <= radius;
+  }
+
+  function maybeTriggerEnvironmentSpot(stepInfo) {
+    if (!stepInfo || !Game.Chapters || !Game.Chapters.getEnvironmentSpots || !Game.UI || !Game.UI.showEnvironmentNote) {
+      return false;
+    }
+    if (!Game.Story || !Game.Story.hasFlag || !Game.Story.setFlag) return false;
+    var mapId = Game.Map && Game.Map.getCurrentMapId ? Game.Map.getCurrentMapId() : '';
+    var spots = Game.Chapters.getEnvironmentSpots(mapId);
+    if (!spots || !spots.length) return false;
+
+    for (var i = 0; i < spots.length; i++) {
+      var spot = spots[i];
+      if (!isEnvironmentSpotReached(stepInfo.tileX, stepInfo.tileY, spot)) continue;
+      var flag = getEnvironmentSpotFlag(mapId, spot);
+      if (Game.Story.hasFlag(flag)) continue;
+      Game.Story.setFlag(flag);
+      if (Game.Story.saveFlags) Game.Story.saveFlags();
+      Game.UI.showEnvironmentNote(spot, mapId);
+      return true;
+    }
+    return false;
   }
 
   function continuePendingSkillFlow() {
@@ -331,9 +552,12 @@ Game.Main = (function() {
       }
     };
 
-    if (expSummary && expSummary.levelUps && expSummary.levelUps.length && Game.UI && Game.UI.addDamagePopup) {
-      var lastRank = expSummary.levelUps[expSummary.levelUps.length - 1].rank;
-      Game.UI.addDamagePopup('RANK ' + lastRank, 176, 34, '#ffdd66');
+    if (expSummary && expSummary.levelUps && expSummary.levelUps.length) {
+      Game.Audio.playSfx('level_up');
+      if (Game.UI && Game.UI.addDamagePopup) {
+        var lastRank = expSummary.levelUps[expSummary.levelUps.length - 1].rank;
+        Game.UI.addDamagePopup('RANK ' + lastRank, 176, 34, '#ffdd66');
+      }
     }
 
     pendingAction = { type: 'postBattleVictory', resume: finishVictory };
@@ -358,6 +582,7 @@ Game.Main = (function() {
     if (Game.Particles) Game.Particles.update();
     if (Game.UI.updatePopups) Game.UI.updatePopups();
     if (Game.UI.updateAreaBanner) Game.UI.updateAreaBanner();
+    if (Game.UI.updateEnvironmentNote) Game.UI.updateEnvironmentNote();
     if (Game.Renderer.updateEffects) Game.Renderer.updateEffects();
     if (Game.Achievements && Game.Achievements.update) Game.Achievements.update();
 
@@ -468,6 +693,10 @@ Game.Main = (function() {
           );
         }
 
+        if (stepInfo) {
+          maybeTriggerEnvironmentSpot(stepInfo);
+        }
+
         if (stepInfo && Game.Encounters && Game.Encounters.consumeStep) {
           var encounterEnemy = Game.Encounters.consumeStep(Game.Map.getCurrentMapId(), tile);
           if (encounterEnemy) {
@@ -488,6 +717,13 @@ Game.Main = (function() {
               Game.Quests.talkToNpc(npc.id, Game.Map.getCurrentMapId());
             }
             setState(Game.Config.STATE.DIALOG);
+          } else if (Game.Player.getTalkablePartyMember && Game.NPC.openCompanionDialog) {
+            var companion = Game.Player.getTalkablePartyMember(facing.x, facing.y);
+            if (companion) {
+              Game.Audio.playSfx('confirm');
+              dialogText = Game.NPC.openCompanionDialog(companion.id);
+              setState(Game.Config.STATE.DIALOG);
+            }
           }
         }
 
@@ -560,7 +796,7 @@ Game.Main = (function() {
         var puzzleResult = Game.Puzzle.update();
         if (puzzleResult) {
           if (puzzleResult.result === 'success') {
-            Game.Player.addGold(40);
+            Game.Player.addGold(24);
             Game.NPC.showDefeatedDialog(puzzleResult.npc);
             dialogText = Game.NPC.getCurrentDialog();
             setState(Game.Config.STATE.DIALOG);
@@ -586,8 +822,11 @@ Game.Main = (function() {
         var eventResult = Game.Event.update();
         if (eventResult) {
           if (eventResult.result === 'done') {
-            setState(Game.Config.STATE.EXPLORING);
-            if (!Game.Audio.isBgmPlaying()) {
+            var eventStillActive = Game.Event && Game.Event.isActive ? Game.Event.isActive() : false;
+            if (!eventStillActive && state === Game.Config.STATE.EVENT) {
+              setState(Game.Config.STATE.EXPLORING);
+            }
+            if (state === Game.Config.STATE.EXPLORING && !Game.Audio.isBgmPlaying()) {
               Game.Audio.playBgm('field');
             }
           }
@@ -630,26 +869,25 @@ Game.Main = (function() {
         break;
 
       case Game.Config.STATE.TRANSITION:
-        transitionAlpha += 0.05;
-        if (transitionAlpha >= 1) {
-          Game.Map.load(transitionTarget, transitionSpawnX, transitionSpawnY);
-          // Auto-save on map transition
-          if (Game.Save && Game.Save.autoSave) Game.Save.autoSave();
-          // Set weather for new map
-          if (Game.Weather && Game.Weather.setMapWeather) {
-            var curMap = Game.Map.getCurrentMap();
-            if (curMap) Game.Weather.setMapWeather(curMap.name);
+        transitionAlpha += TRANSITION_SPEED;
+        if (!transitionLoaded && transitionAlpha >= TRANSITION_LOAD_PROGRESS) {
+          transitionLoaded = true;
+          if (transitionData && transitionData.onLoad) {
+            transitionData.onLoad();
+          } else {
+            applyMapLoad(transitionTarget, transitionSpawnX, transitionSpawnY);
           }
-          transitionAlpha = 1;
-          state = 'transition_out';
         }
-        break;
-
-      case 'transition_out':
-        transitionAlpha -= 0.05;
-        if (transitionAlpha <= 0) {
+        if (transitionAlpha >= 1) {
+          var transitionComplete = transitionData && transitionData.onComplete ? transitionData.onComplete : null;
           transitionAlpha = 0;
-          setState(Game.Config.STATE.EXPLORING);
+          transitionLoaded = false;
+          transitionData = null;
+          if (transitionComplete) {
+            transitionComplete();
+          } else {
+            setState(Game.Config.STATE.EXPLORING);
+          }
         }
         break;
 
@@ -693,6 +931,46 @@ Game.Main = (function() {
       dialogText = (lines && lines[0]) || '';
     }
     setState(Game.Config.STATE.DIALOG);
+  }
+
+  function hasStoryFlag(flag) {
+    return !!(flag && Game.Story && Game.Story.hasFlag && Game.Story.hasFlag(flag));
+  }
+
+  function setStoryFlag(flag) {
+    if (!flag || !Game.Story || !Game.Story.setFlag) return;
+    Game.Story.setFlag(flag);
+    if (Game.Story.saveFlags) Game.Story.saveFlags();
+  }
+
+  function buildTrainingCompletionLines(config, firstClear) {
+    var lines = [];
+    var currentRank = Game.Player && Game.Player.getJourneyRank ? Game.Player.getJourneyRank() : 1;
+    lines.push(firstClear ? config.firstClearLine : config.repeatLine);
+
+    if (currentRank < config.recommendedRank) {
+      lines.push('今の旅路ランクは ' + currentRank + '。この先を見るなら、まずは ' + config.recommendedRank + ' まで整えておきたい。');
+    } else {
+      lines.push('今の旅路ランクは ' + currentRank + '。次の主と噛み合うだけの地力が、ようやく揃ってきた。');
+    }
+
+    lines.push('この修練では金は落ちない。持ち帰れるのは経験と間合いだけだ。');
+    return lines;
+  }
+
+  function handleTrainingAction(action) {
+    var config = TRAINING_BATTLES[action];
+    if (!config) return false;
+
+    startStoryBattle(config.payload, null, function() {
+      var firstClear = !hasStoryFlag(config.clearFlag);
+      if (firstClear) {
+        setStoryFlag(config.clearFlag);
+      }
+      Game.Audio.playBgm('field');
+      openSystemDialog(buildTrainingCompletionLines(config, firstClear));
+    });
+    return true;
   }
 
   function handleInnAction(action) {
@@ -740,6 +1018,9 @@ Game.Main = (function() {
 
   function handleAction(action, npc) {
     if (tryHandleChapterEndingAction(action)) {
+      return;
+    }
+    if (handleTrainingAction(action)) {
       return;
     }
 
@@ -986,12 +1267,12 @@ Game.Main = (function() {
 
     // Reset player
     var pd = Game.Player.getData();
-    pd.hp = 96;
-    pd.maxHp = 96;
+    pd.hp = 80;
+    pd.maxHp = 80;
     pd.attack = 12;
     pd.defense = 6;
     pd.experience = 0;
-    pd.gold = 100;
+    pd.gold = 60;
     pd.chapter = 1;
     pd.diceSlots = 1;
     pd.equippedDice = ['normalDice'];
@@ -1018,6 +1299,9 @@ Game.Main = (function() {
     if (Game.Quests && Game.Quests.reset) {
       Game.Quests.reset();
     }
+    if (Game.Shop && Game.Shop.resetState) {
+      Game.Shop.resetState();
+    }
   }
 
   function startGame() {
@@ -1027,7 +1311,7 @@ Game.Main = (function() {
     Game.Audio.stopBgm();
     Game.Event.start('opening', function() {
       setState(Game.Config.STATE.EXPLORING);
-      if (Game.UI && Game.UI.showAreaBanner) Game.UI.showAreaBanner('maebashi');
+      showChapterArrivalBanner('maebashi', 1);
       Game.Audio.playBgm('field');
     });
   }
@@ -1069,11 +1353,15 @@ Game.Main = (function() {
   }
 
   function startTransition(target, spawnX, spawnY) {
-    transitionTarget = target;
-    transitionSpawnX = spawnX;
-    transitionSpawnY = spawnY;
-    transitionAlpha = 0;
-    setState(Game.Config.STATE.TRANSITION);
+    beginTravelTransition({
+      sourceMapId: Game.Map && Game.Map.getCurrentMapId ? Game.Map.getCurrentMapId() : '',
+      targetMapId: target,
+      spawnX: spawnX,
+      spawnY: spawnY,
+      title: 'ぐるりん回送中',
+      subtitle: getMapTravelLabel(target) + ' へ向かっている。',
+      midLabel: '停車待ち'
+    });
   }
 
   function render() {
@@ -1129,9 +1417,8 @@ Game.Main = (function() {
         break;
 
       case Game.Config.STATE.TRANSITION:
-      case 'transition_out':
-        renderExploring();
-        Game.UI.drawTransition(transitionAlpha);
+        renderExploring(true);
+        Game.UI.drawTransition(transitionAlpha, transitionData);
         break;
 
       case Game.Config.STATE.GAMEOVER:
@@ -1164,10 +1451,15 @@ Game.Main = (function() {
     if (!overlayMode) {
       Game.UI.drawHUD();
       if (Game.UI.drawAreaBanner) Game.UI.drawAreaBanner();
+      if (Game.UI.drawEnvironmentNote) Game.UI.drawEnvironmentNote();
       if (Game.Quests && Game.Quests.drawTracker) Game.Quests.drawTracker();
     }
     if (Game.UI.drawPopups) Game.UI.drawPopups();
     if (Game.Quests && Game.Quests.draw) Game.Quests.draw();
+  }
+
+  function drawWorldBackdrop(overlayMode) {
+    renderExploring(overlayMode !== false);
   }
 
   function advanceTime(ms) {
@@ -1234,19 +1526,33 @@ Game.Main = (function() {
         checkpointCleared: !!storyFlags.checkpoint_cleared,
         akagiJoinedSlice: !!storyFlags.akagi_joined_slice,
         darumaCleared: !!storyFlags.daruma_master_cleared_slice,
-        threadCleared: !!storyFlags.thread_maiden_cleared_slice
+        threadCleared: !!storyFlags.thread_maiden_cleared_slice,
+        trainingTakasaki: !!storyFlags.training_takasaki_focus_cleared,
+        trainingOnuma: !!storyFlags.training_onuma_mist_cleared,
+        trainingShirane: !!storyFlags.training_shirane_heat_cleared,
+        trainingHaruna: !!storyFlags.training_haruna_echo_cleared,
+        trainingMinakami: !!storyFlags.training_minakami_ridge_cleared
       },
       continueSlot: Game.Save && Game.Save.getSlotInfo ? Game.Save.getSlotInfo(1) : null,
       hasAnySave: Game.Save && Game.Save.hasAnySave ? Game.Save.hasAnySave() : false,
       saveMenuContext: Game.SaveMenu && Game.SaveMenu.getContext ? Game.SaveMenu.getContext() : null
     };
     if (Game.Quests) {
+      var trackedQuest = Game.Quests.getTrackedQuest ? Game.Quests.getTrackedQuest() : null;
       payload.quests = {
         open: Game.Quests.isOpen ? Game.Quests.isOpen() : false,
+        tracked: trackedQuest ? {
+          id: trackedQuest.id,
+          name: trackedQuest.name,
+          note: Game.Quests.getContextNote ? Game.Quests.getContextNote(trackedQuest.id) : '',
+          progress: trackedQuest.progress,
+          target: trackedQuest.target
+        } : null,
         active: Game.Quests.getActive ? Game.Quests.getActive().map(function(quest) {
           return {
             id: quest.id,
             name: quest.name,
+            note: Game.Quests.getContextNote ? Game.Quests.getContextNote(quest.id) : '',
             progress: quest.progress,
             target: quest.target
           };
@@ -1257,6 +1563,7 @@ Game.Main = (function() {
       var currentMap = Game.Map.getCurrentMap();
       if (currentMap && currentMap.npcs) {
         payload.services = currentMap.npcs.map(function(npc) {
+          if (Game.NPC.shouldHideNpc && Game.NPC.shouldHideNpc(npc)) return null;
           return {
             id: npc.id,
             type: Game.NPC.getNpcServiceType(npc),
@@ -1264,14 +1571,16 @@ Game.Main = (function() {
             y: npc.y
           };
         }).filter(function(entry) {
-          return !!entry.type;
+          return !!(entry && entry.type);
         });
       }
     }
     payload.ui = {
       showJourneyBadge: Game.UI && Game.UI.isJourneyBadgeEnabled ? Game.UI.isJourneyBadgeEnabled() : true,
       eventTextSpeed: Game.UI && Game.UI.getEventTextSpeedLabel ? Game.UI.getEventTextSpeedLabel() : 'ふつう',
-      battleDialogueSpeed: Game.UI && Game.UI.getBattleDialogueSpeedLabel ? Game.UI.getBattleDialogueSpeedLabel() : 'ふつう'
+      battleDialogueSpeed: Game.UI && Game.UI.getBattleDialogueSpeedLabel ? Game.UI.getBattleDialogueSpeedLabel() : 'ふつう',
+      areaBanner: Game.UI && Game.UI.getAreaBannerDebugState ? Game.UI.getAreaBannerDebugState() : null,
+      environmentNote: Game.UI && Game.UI.getEnvironmentNoteDebugState ? Game.UI.getEnvironmentNoteDebugState() : null
     };
     if (Game.UI && Game.UI.getTitlePresentationState) {
       payload.title = Game.UI.getTitlePresentationState();
@@ -1288,11 +1597,33 @@ Game.Main = (function() {
     if (state === Game.Config.STATE.BATTLE && Game.Battle && Game.Battle.getStateSnapshot) {
       payload.battle = Game.Battle.getStateSnapshot();
     }
+    if (state === Game.Config.STATE.SHOP && Game.Shop && Game.Shop.getDebugState) {
+      payload.shop = Game.Shop.getDebugState();
+    }
+    if (state === Game.Config.STATE.PUZZLE && Game.Puzzle && Game.Puzzle.getDebugState) {
+      payload.puzzle = Game.Puzzle.getDebugState();
+    }
     if (state === Game.Config.STATE.EVENT && Game.Event && Game.Event.getStateSnapshot) {
       payload.event = Game.Event.getStateSnapshot();
     }
+    if (state === Game.Config.STATE.DIALOG) {
+      payload.dialog = {
+        speaker: Game.NPC && Game.NPC.getCurrentNpcDisplayName ? Game.NPC.getCurrentNpcDisplayName() : null,
+        text: dialogText || (Game.NPC && Game.NPC.getCurrentDialog ? Game.NPC.getCurrentDialog() : '')
+      };
+    }
     if (state === Game.Config.STATE.SKILL_LEARN && Game.UI && Game.UI.getSkillLearnDebugState) {
       payload.skillLearn = Game.UI.getSkillLearnDebugState();
+    }
+    if (state === Game.Config.STATE.TRANSITION) {
+      payload.transition = transitionData ? {
+        progress: transitionAlpha,
+        sourceMapId: transitionData.sourceMapId,
+        targetMapId: transitionData.targetMapId,
+        stopLabels: transitionData.stopLabels.slice(),
+        title: transitionData.title,
+        subtitle: transitionData.subtitle
+      } : null;
     }
     return JSON.stringify(payload);
   }
@@ -1362,6 +1693,8 @@ Game.Main = (function() {
     setState: setState,
     handleMapLoaded: markMapVisited,
     startStoryBattle: startStoryBattle,
-    applyDebugLaunchOptions: applyDebugLaunchOptions
+    applyDebugLaunchOptions: applyDebugLaunchOptions,
+    drawWorldBackdrop: drawWorldBackdrop,
+    startChapter: startChapter
   };
 })();

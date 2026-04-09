@@ -52,6 +52,134 @@ Game.NPC = (function() {
       frame: '#314768'
     }
   };
+  var companionDialogState = {};
+  var companionDialogDefs = {
+    akagi: {
+      defaultLines: [
+        ['道が急に静かになったら、境目が近い合図だ。先に息を整えろ。'],
+        ['群馬の道は、地図より先に気配で覚えた方が早い。風と匂いが道標になる。'],
+        ['赤城おろしの日は声が遠くへ逃げる。呼び止めるなら、短く言うのがいい。']
+      ],
+      contextEntries: [
+        {
+          mapIds: ['maebashi'],
+          lines: [
+            '前橋は人が多いぶん、知らない顔もすぐ見つかる。',
+            '困ったら、明るい店先と人の流れだけは見失うな。'
+          ]
+        },
+        {
+          mapIds: ['takasaki'],
+          lines: [
+            '高崎のだるまは、願いを入れる前の空洞がいちばん不気味だ。',
+            '音だけで近づいてくる時は、焦って踏み込むな。'
+          ]
+        },
+        {
+          mapIds: ['forest', 'tamura', 'konuma', 'onuma'],
+          lines: [
+            '森と霧の中では、近道ほどだいたい罠だ。',
+            '見える道より、戻れる道を先に覚えろ。'
+          ]
+        },
+        {
+          mapIds: ['akagi_ranch', 'akagi_shrine'],
+          lines: [
+            '赤城の上は昔から「風が先に人を選ぶ」って言う。',
+            '急ぐ時ほど立ち止まるくらいで、ちょうどいい。'
+          ]
+        },
+        {
+          flags: ['daruma_master_cleared'],
+          lines: [
+            'だるま師匠を越えたなら、もう最初の群馬じゃない。',
+            '景色の方も、こっちを覚え始めてる。'
+          ]
+        },
+        {
+          minChapter: 6,
+          lines: [
+            '一度石になったせいか、静かな場所の重みが前より分かる。',
+            '急がず行こう。急がなくても、ちゃんと進める。'
+          ]
+        }
+      ]
+    },
+    yamakawa: {
+      defaultLines: [
+        ['土地は見た目より、音と湿り気の方が正直です。足裏で読むと外れにくいですよ。'],
+        ['古い道は、消えたあとも少しだけ癖を残します。段差と風向きにそれが出ます。'],
+        ['地図は答えじゃなくて仮説です。歩いたあとで、ようやく正しい形になります。']
+      ],
+      contextEntries: [
+        {
+          mapIds: ['haruna_lake', 'oze_marsh'],
+          lines: [
+            '湖と湿地は、同じ水場でも足の取られ方が違います。',
+            '榛名は迷わせて、尾瀬は沈ませる。そこを見分けましょう。'
+          ]
+        },
+        {
+          mapIds: ['tanigawa_tunnel', 'minakami_valley', 'border_tunnel'],
+          lines: [
+            'トンネルや谷筋は、音の跳ね返りで距離感が狂いやすいです。',
+            '見えた位置より半歩ぶん遠いと思って動くと、崩れにくいです。'
+          ]
+        },
+        {
+          mapIds: ['jomo_gakuen'],
+          lines: [
+            '廃校の廊下は真っ直ぐでも、気配は直進しません。',
+            '角の先を読むより、逃げる方向を先に決めておくべき場所です。'
+          ]
+        },
+        {
+          flags: ['party_yamakawa'],
+          lines: [
+            '地名って、残ったものより失われたものの方をよく記録してるんです。',
+            'だから古い呼び名ほど、その土地の癖が残っていたりします。'
+          ]
+        }
+      ]
+    },
+    furuya: {
+      defaultLines: [
+        ['古い看板とか壊れた機械って、その土地の「やめ方」が残るんだよな。そこが結構好き。'],
+        ['ちゃんと終われなかった場所ほど、余韻だけが長く残る。群馬の深い方ってそういうの多い。'],
+        ['雑に見える道具でも、持ち主の癖は消えない。手つきって、けっこう景色に残るんだよ。']
+      ],
+      contextEntries: [
+        {
+          mapIds: ['jomo_gakuen', 'tanigawa_tunnel'],
+          lines: [
+            '学校もトンネルも、人が通う前提で作られてるだろ。',
+            '使う人がいなくなると、急に別のものみたいに見えてくる。'
+          ]
+        },
+        {
+          mapIds: ['minakami_valley', 'border_tunnel'],
+          lines: [
+            '終わりに近い場所ほど、落とし物が増えるんだよな。',
+            '戻る気だったやつほど、最後に手放した物が重い。'
+          ]
+        },
+        {
+          flags: ['furuya_phone_found'],
+          lines: [
+            '沈んだスマホって、画面が割れてても妙に生々しいんだ。',
+            '持ち主の時間だけ、そこに置きっぱなしになる感じがする。'
+          ]
+        },
+        {
+          flags: ['party_furuya'],
+          lines: [
+            '俺は理屈より先に手が出る方だけどさ、今はその前に一回だけ景色を見るようにしてる。',
+            'たぶん、その一拍ぶんで助かることがある。'
+          ]
+        }
+      ]
+    }
+  };
 
   function clampText(text, maxChars) {
     if (!text || text.length <= maxChars) return text || '';
@@ -99,9 +227,67 @@ Game.NPC = (function() {
 
   function buildDialogPages(text) {
     if (Game.UI && Game.UI.paginateDialogText) {
-      return Game.UI.paginateDialogText(text, 29, 3);
+      return Game.UI.paginateDialogText(text, 36, 4);
     }
-    return paginateDialogText(text, 29, 3);
+    return paginateDialogText(text, 36, 4);
+  }
+
+  function getCurrentMapId() {
+    return Game.Map && Game.Map.getCurrentMapId ? Game.Map.getCurrentMapId() : '';
+  }
+
+  function getCurrentChapter() {
+    return Game.Player && Game.Player.getData ? (Game.Player.getData().chapter || 1) : 1;
+  }
+
+  function getPartyCompanionById(memberId) {
+    if (!memberId || !Game.Player || !Game.Player.getPartyMembers) return null;
+    var partyMembers = Game.Player.getPartyMembers();
+    for (var i = 0; i < partyMembers.length; i++) {
+      if (partyMembers[i] && partyMembers[i].id === memberId) return partyMembers[i];
+    }
+    return null;
+  }
+
+  function companionContextMatches(entry) {
+    if (!entry) return false;
+    var mapId = getCurrentMapId();
+    var chapterNumber = getCurrentChapter();
+    if (entry.mapIds && entry.mapIds.length && entry.mapIds.indexOf(mapId) < 0) return false;
+    if (typeof entry.minChapter === 'number' && chapterNumber < entry.minChapter) return false;
+    if (typeof entry.maxChapter === 'number' && chapterNumber > entry.maxChapter) return false;
+    if (entry.flags && entry.flags.length) {
+      if (!Game.Story || !Game.Story.hasFlag) return false;
+      for (var i = 0; i < entry.flags.length; i++) {
+        if (!Game.Story.hasFlag(entry.flags[i])) return false;
+      }
+    }
+    if (entry.notFlags && entry.notFlags.length && Game.Story && Game.Story.hasFlag) {
+      for (var j = 0; j < entry.notFlags.length; j++) {
+        if (Game.Story.hasFlag(entry.notFlags[j])) return false;
+      }
+    }
+    return true;
+  }
+
+  function chooseCompanionDialogLines(memberId) {
+    var def = companionDialogDefs[memberId];
+    if (!def) return ['……。'];
+    var pool = [];
+    var i;
+    if (def.contextEntries && def.contextEntries.length) {
+      for (i = 0; i < def.contextEntries.length; i++) {
+        if (companionContextMatches(def.contextEntries[i])) {
+          pool.push(def.contextEntries[i].lines);
+        }
+      }
+    }
+    if (!pool.length) {
+      pool = def.defaultLines ? def.defaultLines.slice() : [];
+    }
+    if (!pool.length) return ['……。'];
+    companionDialogState[memberId] = (companionDialogState[memberId] || 0) + 1;
+    return pool[(companionDialogState[memberId] - 1) % pool.length].slice();
   }
 
   function resetDialogPagination() {
@@ -162,6 +348,21 @@ Game.NPC = (function() {
     npc.facing = state.facing;
   }
 
+  function getContextDialogEntry(npc, defeated) {
+    if (!npc || !npc.contextDialog || !npc.contextDialog.length || !Game.Story || !Game.Story.hasFlag) {
+      return null;
+    }
+    for (var i = 0; i < npc.contextDialog.length; i++) {
+      var entry = npc.contextDialog[i];
+      if (!entry) continue;
+      if (entry.defeatedOnly && !defeated) continue;
+      if (entry.excludeDefeated && defeated) continue;
+      if (entry.flag && !Game.Story.hasFlag(entry.flag)) continue;
+      return entry;
+    }
+    return null;
+  }
+
   function interact(npc) {
     if (!npc) return;
     faceNpcTowardPlayer(npc);
@@ -170,23 +371,28 @@ Game.NPC = (function() {
     resetDialogPagination();
 
     var checkpointFailedOnce = Game.Story && Game.Story.hasFlag && Game.Story.hasFlag('checkpoint_failed_once');
+    var contextDialog = getContextDialogEntry(npc, !!npc.defeated);
 
     if (npc.defeated) {
       // Shop NPCs always reopen
       if (npc.afterDialog && npc.afterDialog.indexOf('shop_') === 0) {
-        dialogLines = npc.dialog;
-        onDialogEnd = npc.afterDialog;
+        dialogLines = contextDialog && contextDialog.lines ? contextDialog.lines : npc.dialog;
+        onDialogEnd = contextDialog && contextDialog.action ? contextDialog.action : npc.afterDialog;
         return dialogLines[0];
       }
-      if (npc.defeatedDialog) {
+      if (contextDialog && contextDialog.lines) {
+        dialogLines = contextDialog.lines;
+        onDialogEnd = contextDialog.action || null;
+      } else if (npc.defeatedDialog) {
         dialogLines = npc.defeatedDialog;
+        onDialogEnd = null;
       } else {
         dialogLines = ['...'];
+        onDialogEnd = null;
       }
       if (npc.id === 'cabbageGuardian' && Game.Player.hasAllKeys()) {
         dialogLines = ['結界は既に解かれておる。県境を越えよ！'];
       }
-      onDialogEnd = null;
     } else if (npc.id === 'cabbageGuardian' && npc.allKeysDialog &&
                Game.Player.hasItem('onsenKey') && Game.Player.hasItem('darumaEye') &&
                Game.Player.hasItem('konnyakuPass')) {
@@ -201,6 +407,9 @@ Game.NPC = (function() {
     } else if (npc.id === 'cabbageGuardian') {
       dialogLines = npc.dialog;
       onDialogEnd = null;
+    } else if (contextDialog && contextDialog.lines) {
+      dialogLines = contextDialog.lines;
+      onDialogEnd = contextDialog.action || npc.afterDialog || null;
     } else {
       dialogLines = npc.dialog;
       onDialogEnd = npc.afterDialog || null;
@@ -210,13 +419,26 @@ Game.NPC = (function() {
     return getCurrentDialog();
   }
 
-  function openDialog(lines, action) {
-    currentNpc = null;
+  function openDialog(lines, action, speakerNpc) {
+    currentNpc = speakerNpc || null;
     dialogIndex = 0;
     dialogLines = (lines || []).slice ? lines.slice() : [lines || ''];
     onDialogEnd = action || null;
     setCurrentDialogPages();
     return getCurrentDialog();
+  }
+
+  function openCompanionDialog(memberId) {
+    var member = getPartyCompanionById(memberId);
+    if (!member) return '';
+    return openDialog(
+      chooseCompanionDialogLines(memberId),
+      null,
+      {
+        id: 'companion_' + member.id,
+        name: member.name
+      }
+    );
   }
 
   function advance() {
@@ -299,6 +521,21 @@ Game.NPC = (function() {
     return getNpcDisplayName(currentNpc);
   }
 
+  function shouldHideNpc(npc) {
+    if (!npc) return false;
+    if (npc.hideWhenDefeated && npc.defeated) return true;
+    if (npc.hideWhenFlag && Game.Story && Game.Story.hasFlag && Game.Story.hasFlag(npc.hideWhenFlag)) return true;
+    if (npc.hideWhenPartyMember && Game.Player && Game.Player.hasPartyMember && Game.Player.hasPartyMember(npc.hideWhenPartyMember)) {
+      return true;
+    }
+    if (npc.hideWhenAnyFlag && npc.hideWhenAnyFlag.length && Game.Story && Game.Story.hasFlag) {
+      for (var i = 0; i < npc.hideWhenAnyFlag.length; i++) {
+        if (Game.Story.hasFlag(npc.hideWhenAnyFlag[i])) return true;
+      }
+    }
+    return false;
+  }
+
   function getShopItemIdsFromAction(action) {
     if (!action || action.indexOf('shop_') !== 0) return [];
     var parts = action.substring(5).split('_');
@@ -344,7 +581,7 @@ Game.NPC = (function() {
 
     for (var i = 0; i < npcs.length; i++) {
       var other = npcs[i];
-      if (!other || other === npc) continue;
+      if (!other || other === npc || shouldHideNpc(other)) continue;
       var otherState = getMovementState(other);
       if (other.x === x && other.y === y) return false;
       if (otherState && otherState.moving && otherState.targetX === x && otherState.targetY === y) {
@@ -546,7 +783,7 @@ Game.NPC = (function() {
 
     for (var i = 0; i < npcs.length; i++) {
       var npc = npcs[i];
-      if (!npc || npc.defeated) continue;
+      if (!npc || npc.defeated || shouldHideNpc(npc)) continue;
       var state = getMovementState(npc);
       if (state.touchCooldown > 0) state.touchCooldown--;
 
@@ -631,7 +868,7 @@ Game.NPC = (function() {
         if (map.npcs) {
           for (var n = 0; n < map.npcs.length; n++) {
             var npc = map.npcs[n];
-            if (npc.hideWhenDefeated && npc.defeated) continue;
+            if (shouldHideNpc(npc)) continue;
             var renderPos = getNpcRenderPos(npc);
             var state = getMovementState(npc);
             var flipped = state && state.facing === 'right';
@@ -672,8 +909,10 @@ Game.NPC = (function() {
     getCurrentDialog: getCurrentDialog,
     getCurrentNpc: getCurrentNpc,
     getCurrentNpcDisplayName: getCurrentNpcDisplayName,
+    shouldHideNpc: shouldHideNpc,
     getNpcServiceType: getNpcServiceType,
     openDialog: openDialog,
+    openCompanionDialog: openCompanionDialog,
     updateMovement: updateMovement,
     getNpcRenderPos: getNpcRenderPos,
     initMovement: initMovement

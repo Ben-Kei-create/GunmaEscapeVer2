@@ -1,0 +1,238 @@
+{
+  "phases": [
+    {
+      "step": 0,
+      "mode": "battle",
+      "battlePhase": "menu",
+      "rewardSummary": null,
+      "gold": 0
+    },
+    {
+      "step": 1,
+      "mode": "battle",
+      "battlePhase": "diceRoll",
+      "rewardSummary": null,
+      "gold": 0
+    },
+    {
+      "step": 2,
+      "mode": "battle",
+      "battlePhase": "victory",
+      "rewardSummary": null,
+      "gold": 0
+    },
+    {
+      "step": 3,
+      "mode": "battle",
+      "battlePhase": "victory",
+      "rewardSummary": null,
+      "gold": 0
+    },
+    {
+      "step": 4,
+      "mode": "battle",
+      "battlePhase": "reward",
+      "rewardSummary": {
+        "gold": 8,
+        "exp": 20,
+        "items": [],
+        "supportLogs": [],
+        "afterglowText": "",
+        "enemyEchoText": "奪うしかなくなった運び屋の手つきが、風の中で静かにほどけた。"
+      },
+      "gold": 0
+    }
+  ],
+  "finalState": {
+    "mode": "battle",
+    "titleSelection": 0,
+    "map": "maebashi",
+    "mapLabel": "前橋中央通り",
+    "audio": {
+      "requestedBgm": null,
+      "currentBgm": null
+    },
+    "player": {
+      "tileX": 14,
+      "tileY": 8,
+      "direction": "down",
+      "hp": 96,
+      "maxHp": 96,
+      "attack": 999,
+      "defense": 6,
+      "experience": 0,
+      "journeyRank": 1,
+      "nextRankExperience": 80,
+      "gold": 0,
+      "chapter": 1,
+      "skillsKnown": [],
+      "skillCharges": {},
+      "inventory": []
+    },
+    "followers": [],
+    "journeyLabel": "第一章",
+    "journeyIndex": 1,
+    "chapterTitle": "前橋関所",
+    "objective": "前橋で儀式の作法を学び、最初の関所を越える準備を整える。",
+    "respectGauge": 0,
+    "catalystCount": 0,
+    "party": [],
+    "storyFlags": {
+      "checkpointFailedOnce": false,
+      "checkpointCleared": false,
+      "akagiJoinedSlice": false,
+      "darumaCleared": false,
+      "threadCleared": false
+    },
+    "continueSlot": null,
+    "hasAnySave": false,
+    "saveMenuContext": "field",
+    "quests": {
+      "open": false,
+      "tracked": null,
+      "active": [
+        {
+          "id": "onsen_tour",
+          "name": "温泉巡り",
+          "note": "",
+          "progress": 0,
+          "target": 3
+        },
+        {
+          "id": "joumo_karuta_collection",
+          "name": "上毛かるた収集",
+          "note": "",
+          "progress": 0,
+          "target": 5
+        },
+        {
+          "id": "daruma_perseverance",
+          "name": "だるま七転び八起き",
+          "note": "",
+          "progress": 0,
+          "target": 3
+        },
+        {
+          "id": "gunma_dialect_master",
+          "name": "群馬弁マスター",
+          "note": "",
+          "progress": 0,
+          "target": 5
+        }
+      ]
+    },
+    "services": [
+      {
+        "id": "shopkeeper",
+        "type": "item_shop",
+        "x": 23,
+        "y": 5
+      },
+      {
+        "id": "maebashiInnkeeper",
+        "type": "inn",
+        "x": 6,
+        "y": 5
+      }
+    ],
+    "ui": {
+      "showJourneyBadge": true,
+      "eventTextSpeed": "ふつう",
+      "battleDialogueSpeed": "ふつう",
+      "areaBanner": null,
+      "environmentNote": null
+    },
+    "title": {
+      "mode": "intro_movie",
+      "sceneId": "highway",
+      "sceneTitle": "深夜の関越道",
+      "sceneIndex": 0,
+      "sceneTimer": 9,
+      "totalTimer": 9,
+      "revealTimer": 0
+    },
+    "encounters": {
+      "mapId": "maebashi",
+      "eligibleSteps": 0,
+      "cooldown": 3,
+      "cycleIndex": 0
+    },
+    "achievements": {
+      "unlockedCount": 2,
+      "totalCount": 22,
+      "trackedMapCount": 21,
+      "visitedTrackedMapCount": 1
+    },
+    "battle": {
+      "phase": "reward",
+      "backdropId": "field_roadside",
+      "message": "997ダメージ！",
+      "supportAction": null,
+      "bossAction": null,
+      "enemyRoll": null,
+      "targetIndex": 0,
+      "enemy": {
+        "name": "境界の追いはぎ",
+        "hp": 0,
+        "maxHp": 66
+      },
+      "enemies": [
+        {
+          "index": 0,
+          "name": "境界の追いはぎ",
+          "hp": 0,
+          "maxHp": 66,
+          "active": true,
+          "tag": "境界狩り",
+          "role": ""
+        }
+      ],
+      "formation": null,
+      "menuEntries": [
+        "たたかう",
+        "アイテム",
+        "とくぎ",
+        "にげる"
+      ],
+      "itemMenu": null,
+      "skillMenu": null,
+      "supportMenu": null,
+      "companionSupport": [],
+      "playerEffects": [],
+      "enemyEffects": [],
+      "ritual": {
+        "mode": "hp",
+        "gauge": 0,
+        "targetZone": null,
+        "hintState": 0,
+        "slots": [],
+        "state": {
+          "eyeRepaired": false,
+          "hpZeroReached": false,
+          "lastLowDiceHit": false,
+          "overCoolPenalty": false,
+          "resonanceCreated": false,
+          "reviewPhaseIndex": 0,
+          "targetZoneRevealed": false,
+          "offeringOrder": [],
+          "lightDieReady": false,
+          "lightReleased": false,
+          "lightReleaseFrames": 0,
+          "afterglowCuePlayed": false,
+          "thankYouIndex": 0,
+          "lastAction": null
+        }
+      },
+      "dialogue": null,
+      "rewardSummary": {
+        "gold": 8,
+        "exp": 20,
+        "items": [],
+        "supportLogs": [],
+        "afterglowText": "",
+        "enemyEchoText": "奪うしかなくなった運び屋の手つきが、風の中で静かにほどけた。"
+      }
+    }
+  },
+  "consoleErrors": []
+}

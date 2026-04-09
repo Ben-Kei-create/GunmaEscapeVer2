@@ -269,8 +269,8 @@ Game.SaveMenu = (function() {
     R.drawRectAbsolute(0, 0, C.CANVAS_WIDTH, C.CANVAS_HEIGHT, 'rgba(4, 6, 18, 0.56)');
     R.drawDialogBox(44, 12, 392, 296);
     drawPanelAccent(44, 12, 392, 296, C.COLORS.GOLD);
-    R.drawTextJP(getPageTitle(), 240, 24, C.COLORS.GOLD, 14, 'center');
-    R.drawTextJP('記録とあいことばを、静かに整理する。', 240, 40, '#b7c3e3', 9, 'center');
+    R.drawTextJP(getPageTitle(), 240, 24, C.COLORS.GOLD, 13, 'center');
+    R.drawTextJP('記録とあいことばを、静かに整理する。', 240, 40, '#b7c3e3', 8, 'center');
     R.drawRectAbsolute(66, 54, 348, 1, '#446');
 
     switch (state.page) {
@@ -292,8 +292,12 @@ Game.SaveMenu = (function() {
     }
 
     if (state.messageTimer > 0 && state.message) {
-      drawInsetPanel(68, 270, 344, 22, '', '#8fb8ff', '#8fb8ff');
-      R.drawTextJP(clampText(state.message, 40), 80, 274, '#fff', 10);
+      var messageLines = wrapText(state.message, 38, 2);
+      var messageHeight = 12 + messageLines.length * 9;
+      drawInsetPanel(68, 292 - messageHeight, 344, messageHeight, '', '#8fb8ff', '#8fb8ff');
+      for (var mi = 0; mi < messageLines.length; mi++) {
+        R.drawTextJP(messageLines[mi], 80, 296 - messageHeight + mi * 9, '#fff', 8);
+      }
     }
   }
 
@@ -305,10 +309,10 @@ Game.SaveMenu = (function() {
     drawOptionList(options, 80, 86, 18, 112);
 
     drawInsetPanel(218, 66, 180, 146, '案内', '#8fb8ff', '#8fb8ff');
-    drawWrappedParagraph('この世界の記録は ここで預かる。', 228, 86, 20, 2, 12, '#ddd', 10);
-    drawWrappedParagraph('同じPC・同じブラウザなら「つづきから」でも戻れる。', 228, 114, 22, 2, 12, '#b7c3e3', 9);
-    drawWrappedParagraph('べつのPCへ移るなら、あいことばを必ずメモすること。', 228, 146, 22, 3, 12, '#b7c3e3', 9);
-    R.drawTextJP('Z 決定  X 戻る', 228, 192, '#7e8cac', 9);
+    drawWrappedParagraph('この世界の記録は ここで預かる。', 228, 86, 22, 2, 11, '#ddd', 9);
+    drawWrappedParagraph('同じPC・同じブラウザなら「つづきから」でも戻れる。', 228, 112, 24, 2, 11, '#b7c3e3', 8);
+    drawWrappedParagraph('べつのPCへ移るなら、あいことばを必ずメモすること。', 228, 142, 24, 3, 11, '#b7c3e3', 8);
+    R.drawTextJP('Z 決定  X 戻る', 228, 192, '#7e8cac', 8);
   }
 
   function drawSlotPage() {
@@ -320,21 +324,22 @@ Game.SaveMenu = (function() {
       var selected = state.selection === slot - 1;
 
       R.drawRectAbsolute(82, y, 308, 38, selected ? 'rgba(255,204,0,0.12)' : 'rgba(255,255,255,0.04)');
-      R.drawTextJP((selected ? '▶ ' : '  ') + getSlotLabel(slot), 92, y + 4, selected ? Game.Config.COLORS.GOLD : '#fff', 11);
+      R.drawTextJP((selected ? '▶ ' : '  ') + getSlotLabel(slot), 92, y + 4, selected ? Game.Config.COLORS.GOLD : '#fff', 10);
 
       if (!info) {
-        R.drawTextJP('きろくなし', 112, y + 20, '#666', 10);
+        R.drawTextJP('きろくなし', 112, y + 20, '#666', 9);
         continue;
       }
 
-      R.drawTextJP('章' + info.chapter + ' / ' + clampText(info.mapLabel, 12), 112, y + 18, '#ddd', 10);
-      R.drawTextJP('HP ' + info.hp + '/' + info.maxHp + '  ' + info.gold + 'G  ' + formatPlayTime(info.playTime), 232, y + 18, '#aaa', 9);
+      R.drawTextJP('章' + info.chapter + ' / ' + clampText(info.mapLabel, 16), 112, y + 17, '#ddd', 9);
+      R.drawTextJP('HP ' + info.hp + '/' + info.maxHp, 236, y + 17, '#aaa', 8);
+      R.drawTextJP(info.gold + 'G  ' + formatPlayTime(info.playTime), 382, y + 17, '#aaa', 8, 'right');
     }
 
     var backSelected = state.selection === 3;
     R.drawRectAbsolute(82, 234, 120, 18, backSelected ? 'rgba(255,204,0,0.12)' : 'rgba(255,255,255,0.04)');
-    R.drawTextJP((backSelected ? '▶ ' : '  ') + 'もどる', 92, 238, backSelected ? Game.Config.COLORS.GOLD : '#fff', 11);
-    R.drawTextJP(state.action === 'save' ? '保存先をえらんでください。' : '読み込む記録をえらんでください。', 218, 238, '#888', 9);
+    R.drawTextJP((backSelected ? '▶ ' : '  ') + 'もどる', 92, 238, backSelected ? Game.Config.COLORS.GOLD : '#fff', 10);
+    R.drawTextJP(state.action === 'save' ? '保存先をえらんでください。' : '読み込む記録をえらんでください。', 218, 238, '#888', 8);
   }
 
   function drawPassphrasePage() {
@@ -348,7 +353,7 @@ Game.SaveMenu = (function() {
     drawInsetPanel(234, 70, 164, 126, '説明', '#8fb8ff', '#8fb8ff');
     drawWrappedParagraph('あいことばは PC が変わっても使える持ち運び用の記録です。', 244, 90, 18, 3, 12, '#ddd', 9);
     drawWrappedParagraph('ただし手書きミスに弱いので、区切りごとに丁寧に写してください。', 244, 132, 18, 3, 12, '#b7c3e3', 9);
-    R.drawTextJP('Z 決定  X 戻る', 244, 180, '#7e8cac', 9);
+    R.drawTextJP('Z 決定  X 戻る', 244, 180, '#7e8cac', 8);
   }
 
   function drawPassphraseViewPage() {
@@ -356,7 +361,7 @@ Game.SaveMenu = (function() {
     var lines = wrapText(state.passphrase, 28);
 
     drawInsetPanel(70, 68, 328, 132, '控え用のあいことば', Game.Config.COLORS.GOLD, Game.Config.COLORS.GOLD);
-    R.drawTextJP('この あいことば を かならず メモ してください。', 82, 88, '#fff', 11);
+    R.drawTextJP('この あいことば を かならず メモ してください。', 82, 88, '#fff', 10);
     R.drawRectAbsolute(82, 108, 304, 1, '#446');
 
     for (var i = 0; i < lines.length && i < 6; i++) {
@@ -364,9 +369,9 @@ Game.SaveMenu = (function() {
     }
 
     drawInsetPanel(70, 212, 328, 46, '注意', '#8fb8ff', '#8fb8ff');
-    drawWrappedParagraph('同じPC・同じブラウザなら「つづきから」でも戻れます。', 82, 230, 30, 2, 11, '#aaa', 9);
-    drawWrappedParagraph('でも環境が変わると消えることがあるので、必ず控えてください。', 82, 242, 30, 2, 11, '#aaa', 9);
-    R.drawTextJP('Z もう一度ひらく  X 戻る', 82, 274, '#888', 9);
+    drawWrappedParagraph('同じPC・同じブラウザなら「つづきから」でも戻れます。', 82, 230, 32, 2, 10, '#aaa', 8);
+    drawWrappedParagraph('でも環境が変わると消えることがあるので、必ず控えてください。', 82, 242, 32, 2, 10, '#aaa', 8);
+    R.drawTextJP('Z もう一度ひらく  X 戻る', 82, 274, '#888', 8);
   }
 
   function drawHelpPage() {
@@ -383,9 +388,9 @@ Game.SaveMenu = (function() {
 
     drawInsetPanel(70, 68, 328, 180, '記録の使い分け', Game.Config.COLORS.GOLD, Game.Config.COLORS.GOLD);
     for (var i = 0; i < lines.length; i++) {
-      R.drawTextJP(lines[i], 82, 82 + i * 20, i === 0 || i === 4 ? Game.Config.COLORS.GOLD : '#ddd', 10);
+      R.drawTextJP(lines[i], 82, 82 + i * 20, i === 0 || i === 4 ? Game.Config.COLORS.GOLD : '#ddd', 9);
     }
-    R.drawTextJP('Z / X で 戻る', 82, 258, '#888', 9);
+    R.drawTextJP('Z / X で 戻る', 82, 258, '#888', 8);
   }
 
   function drawOptionList(options, startX, startY, lineHeight, highlightW) {
@@ -396,7 +401,7 @@ Game.SaveMenu = (function() {
       if (selected) {
         R.drawRectAbsolute(startX - 4, y - 1, highlightW || 120, 13, 'rgba(255,204,0,0.12)');
       }
-      R.drawTextJP((selected ? '▶ ' : '  ') + options[i], startX, y, selected ? Game.Config.COLORS.GOLD : '#fff', 11);
+      R.drawTextJP((selected ? '▶ ' : '  ') + options[i], startX, y, selected ? Game.Config.COLORS.GOLD : '#fff', 10);
     }
   }
 
@@ -421,7 +426,7 @@ Game.SaveMenu = (function() {
     R.drawRectAbsolute(x, y, 1, h, 'rgba(255,255,255,0.05)');
     R.drawRectAbsolute(x + 1, y + 1, w - 2, h - 2, 'rgba(255,255,255,0.015)');
     if (title) {
-      R.drawTextJP(title, x + 8, y + 5, titleColor || color, 10);
+      R.drawTextJP(title, x + 8, y + 5, titleColor || color, 9);
     }
   }
 
@@ -455,12 +460,33 @@ Game.SaveMenu = (function() {
     return value < 10 ? '0' + value : '' + value;
   }
 
-  function wrapText(text, width) {
+  function wrapText(text, width, maxLines) {
+    text = '' + (text || '');
     var lines = [];
-    var index = 0;
-    while (index < text.length) {
-      lines.push(text.substring(index, index + width));
-      index += width;
+    var punctuation = '、。！？…）)] ';
+    while (text.length > 0) {
+      if (text.length <= width) {
+        lines.push(text);
+        text = '';
+        break;
+      }
+      var slice = text.substring(0, width);
+      var splitAt = -1;
+      for (var i = slice.length - 1; i >= Math.max(0, slice.length - 8); i--) {
+        if (punctuation.indexOf(slice.charAt(i)) >= 0) {
+          splitAt = i + 1;
+          break;
+        }
+      }
+      if (splitAt <= 0) splitAt = width;
+      lines.push(text.substring(0, splitAt));
+      text = text.substring(splitAt);
+      if (maxLines && lines.length >= maxLines) {
+        if (text.length > 0) {
+          lines[lines.length - 1] = clampText(lines[lines.length - 1] + text, width);
+        }
+        break;
+      }
     }
     return lines;
   }

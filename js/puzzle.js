@@ -252,10 +252,26 @@ Game.Puzzle = (function() {
     currentQ: 0,
     selectedQuestions: [],
     score: 0,
+    requiredCorrect: 3,
     selectedChoice: 0,
     phase: 'question', // question, correct, wrong, success, fail
     messageTimer: 0
   };
+
+  function getQuizQuestionCount() {
+    return quiz.selectedQuestions && quiz.selectedQuestions.length ? quiz.selectedQuestions.length : 0;
+  }
+
+  function getQuizRequiredCorrect() {
+    var total = getQuizQuestionCount();
+    if (!total) return 0;
+    var required = typeof quiz.requiredCorrect === 'number' && isFinite(quiz.requiredCorrect)
+      ? Math.round(quiz.requiredCorrect)
+      : total;
+    if (required < 1) required = 1;
+    if (required > total) required = total;
+    return required;
+  }
 
   // Karuta matching
   var karuta = {
@@ -319,11 +335,18 @@ Game.Puzzle = (function() {
         }
         if (filtered.length >= 3) pool = filtered;
       }
-      var count = opts.count || 3;
+      var count = Math.max(1, Math.round(opts.count || 3));
       var shuffled = pool.slice().sort(function() { return Math.random() - 0.5; });
       quiz.selectedQuestions = shuffled.slice(0, count);
+      var actualCount = getQuizQuestionCount();
       quiz.currentQ = 0;
       quiz.score = 0;
+      quiz.requiredCorrect = Math.max(1, Math.min(
+        typeof opts.requiredCorrect === 'number' && isFinite(opts.requiredCorrect)
+          ? Math.round(opts.requiredCorrect)
+          : actualCount,
+        actualCount || 1
+      ));
       quiz.selectedChoice = 0;
       quiz.phase = 'question';
       quiz.messageTimer = 0;
@@ -448,7 +471,7 @@ Game.Puzzle = (function() {
         quiz.currentQ++;
         quiz.selectedChoice = 0;
         if (quiz.currentQ >= quiz.selectedQuestions.length) {
-          if (quiz.score >= 2) {
+          if (quiz.score >= getQuizRequiredCorrect()) {
             quiz.phase = 'success';
             quiz.messageTimer = 60;
           } else {
@@ -774,11 +797,14 @@ Game.Puzzle = (function() {
   }
 
   function drawQuiz(R, C) {
+    var totalQuestions = getQuizQuestionCount();
+    var requiredCorrect = getQuizRequiredCorrect();
+    var displayQuestion = totalQuestions ? Math.min(quiz.currentQ + 1, totalQuestions) : 0;
     R.drawTextJP('群馬県クイズ！', 170, 10, C.COLORS.GOLD, 18);
-    R.drawTextJP('問題 ' + (quiz.currentQ + 1) + ' / ' + quiz.selectedQuestions.length +
-      '  正解: ' + quiz.score, 160, 35, '#fff', 12);
+    R.drawTextJP('問題 ' + displayQuestion + ' / ' + totalQuestions +
+      '  正解 ' + quiz.score + ' / ' + requiredCorrect, 132, 35, '#fff', 12);
 
-    if (quiz.phase === 'question' && quiz.currentQ < quiz.selectedQuestions.length) {
+    if (quiz.phase === 'question' && quiz.currentQ < totalQuestions) {
       var q = quiz.selectedQuestions[quiz.currentQ];
 
       R.drawDialogBox(30, 60, 420, 50);
@@ -795,10 +821,35 @@ Game.Puzzle = (function() {
     } else if (quiz.phase === 'wrong') {
       R.drawTextJP('不正解...', 195, 150, C.COLORS.HP_RED, 24);
     } else if (quiz.phase === 'success') {
-      R.drawTextJP('合格！クイズクリア！', 140, 150, C.COLORS.GOLD, 20);
+      R.drawTextJP('合格！ ' + requiredCorrect + '問正解達成！', 120, 150, C.COLORS.GOLD, 18);
     } else if (quiz.phase === 'fail') {
-      R.drawTextJP('不合格...もう一度挑戦しよう', 110, 150, C.COLORS.HP_RED, 16);
+      R.drawTextJP(requiredCorrect + '問必要...もう一度挑戦しよう', 96, 150, C.COLORS.HP_RED, 16);
     }
+  }
+
+  function getDebugState() {
+    var state = {
+      active: active,
+      type: type
+    };
+    if (type === 'quiz') {
+      state.quiz = {
+        currentQ: quiz.currentQ,
+        totalQuestions: getQuizQuestionCount(),
+        requiredCorrect: getQuizRequiredCorrect(),
+        score: quiz.score,
+        selectedChoice: quiz.selectedChoice,
+        phase: quiz.phase,
+        messageTimer: quiz.messageTimer,
+        currentAnswer: quiz.selectedQuestions[quiz.currentQ] ? quiz.selectedQuestions[quiz.currentQ].answer : null,
+        currentChoices: quiz.selectedQuestions[quiz.currentQ] ? quiz.selectedQuestions[quiz.currentQ].choices.slice() : [],
+        currentQuestion: quiz.selectedQuestions[quiz.currentQ] ? quiz.selectedQuestions[quiz.currentQ].q : '',
+        selectedAnswers: quiz.selectedQuestions.map(function(question) {
+          return question.answer;
+        })
+      };
+    }
+    return state;
   }
 
   function drawKaruta(R, C) {
@@ -898,6 +949,7 @@ Game.Puzzle = (function() {
     start: start,
     update: update,
     draw: draw,
-    isActive: isActive
+    isActive: isActive,
+    getDebugState: getDebugState
   };
 })();

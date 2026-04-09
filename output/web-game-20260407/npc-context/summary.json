@@ -1,0 +1,46 @@
+{
+  "generatedAt": "2026-04-07T15:07:43.204Z",
+  "cases": [
+    {
+      "name": "musician-baseline",
+      "mode": "dialog",
+      "speaker": "上毛かるた少年",
+      "text": "高崎のだるまって、片目のまま並ぶとちょっと怖いよね。",
+      "matched": true
+    },
+    {
+      "name": "musician-context",
+      "mode": "dialog",
+      "speaker": "上毛かるた少年",
+      "text": "棚の前、立ち止まったんだね。",
+      "matched": true
+    },
+    {
+      "name": "tamura-weaver-context",
+      "mode": "dialog",
+      "speaker": "織物職人",
+      "text": "この村の音を聞いてきたか。",
+      "matched": true
+    },
+    {
+      "name": "library-context",
+      "mode": "dialog",
+      "speaker": "図書委員",
+      "text": "廊下の反射を見てきたのですね。",
+      "matched": true
+    },
+    {
+      "name": "border-star-context",
+      "mode": "dialog",
+      "speaker": "星を見る老人",
+      "text": "偽りと知って、まだ見上げたのか。",
+      "matched": true
+    },
+    {
+      "name": "ridge-peddler-context-to-shop",
+      "mode": "shop",
+      "matched": true
+    }
+  ],
+  "consoleErrors": []
+}

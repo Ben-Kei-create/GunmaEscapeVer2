@@ -1,0 +1,133 @@
+{
+  "initialGold": 60,
+  "initialShop": {
+    "active": true,
+    "shopName": "前橋道具屋",
+    "menuIndex": 0,
+    "confirmBuy": false,
+    "selectingSlot": false,
+    "message": "",
+    "items": [
+      {
+        "id": "healHerb",
+        "name": "薬草",
+        "price": 15,
+        "stock": 3,
+        "remaining": 3,
+        "soldOut": false
+      },
+      {
+        "id": "yakimanju",
+        "name": "焼きまんじゅう",
+        "price": 30,
+        "stock": 2,
+        "remaining": 2,
+        "soldOut": false
+      },
+      {
+        "id": "tempoCharm",
+        "name": "ゆるみ札",
+        "price": 35,
+        "stock": 2,
+        "remaining": 2,
+        "soldOut": false
+      },
+      {
+        "id": "leatherArmor",
+        "name": "皮の鎧",
+        "price": 40,
+        "stock": 1,
+        "remaining": 1,
+        "soldOut": false
+      }
+    ]
+  },
+  "afterThirdGold": 15,
+  "afterThirdShop": {
+    "active": true,
+    "shopName": "前橋道具屋",
+    "menuIndex": 0,
+    "confirmBuy": false,
+    "selectingSlot": false,
+    "message": "",
+    "items": [
+      {
+        "id": "healHerb",
+        "name": "薬草",
+        "price": 15,
+        "stock": 3,
+        "remaining": 0,
+        "soldOut": true
+      },
+      {
+        "id": "yakimanju",
+        "name": "焼きまんじゅう",
+        "price": 30,
+        "stock": 2,
+        "remaining": 2,
+        "soldOut": false
+      },
+      {
+        "id": "tempoCharm",
+        "name": "ゆるみ札",
+        "price": 35,
+        "stock": 2,
+        "remaining": 2,
+        "soldOut": false
+      },
+      {
+        "id": "leatherArmor",
+        "name": "皮の鎧",
+        "price": 40,
+        "stock": 1,
+        "remaining": 1,
+        "soldOut": false
+      }
+    ]
+  },
+  "soldOutMessage": "薬草はもう売り切れだ。",
+  "persistedGold": 15,
+  "persistedShop": {
+    "active": true,
+    "shopName": "前橋道具屋",
+    "menuIndex": 0,
+    "confirmBuy": false,
+    "selectingSlot": false,
+    "message": "",
+    "items": [
+      {
+        "id": "healHerb",
+        "name": "薬草",
+        "price": 15,
+        "stock": 3,
+        "remaining": 0,
+        "soldOut": true
+      },
+      {
+        "id": "yakimanju",
+        "name": "焼きまんじゅう",
+        "price": 30,
+        "stock": 2,
+        "remaining": 2,
+        "soldOut": false
+      },
+      {
+        "id": "tempoCharm",
+        "name": "ゆるみ札",
+        "price": 35,
+        "stock": 2,
+        "remaining": 2,
+        "soldOut": false
+      },
+      {
+        "id": "leatherArmor",
+        "name": "皮の鎧",
+        "price": 40,
+        "stock": 1,
+        "remaining": 1,
+        "soldOut": false
+      }
+    ]
+  },
+  "consoleErrors": []
+}

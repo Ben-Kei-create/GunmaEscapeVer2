@@ -14,8 +14,17 @@ Game.Event = (function() {
   var textComplete = false;
   var autoAdvanceTimer = 0;
   var renderHold = null;
-  var MAX_EVENT_CHARS_PER_LINE = 23;
+  var currentEventId = '';
+  var currentEventOptions = null;
+  var skipGraceFrames = 0;
+  var MAX_EVENT_CHARS_PER_LINE = 25;
   var TRAILING_PUNCTUATION = '、。！？…）)]」』】';
+  var EVENT_OPTIONS = {
+    opening: {
+      skipToCompleteOnConfirm: true,
+      graceFrames: 18
+    }
+  };
 
   // Scene format:
   // {
@@ -76,11 +85,26 @@ Game.Event = (function() {
         autoAdvance: 165
       },
       {
+        bg: '#162235',
+        motion: 'white_girl_dawn',
+        bgm: 'heroine_veil',
+        illustrationLabel: '夜明けの停留所',
+        speaker: '白い少女',
+        speakerColor: '#e8f5ff',
+        lines: [
+          '忘れないで。白線の向こうで、わたしは待ってる。',
+          '名前をなくしても、帰る約束だけは消えないから。'
+        ],
+        autoAdvance: 180
+      },
+      {
         bg: '#161326',
         motion: 'dawn_frontier',
+        bgm: 'sad',
         speaker: '主人公',
         speakerColor: '#88aaff',
         lines: [
+          '……いまの声は、誰だ。',
           '……ここは前橋？ どうして、ひとりなんだ。',
           '喉の奥に、知らない地名ばかりが引っかかっている。'
         ],
@@ -175,6 +199,46 @@ Game.Event = (function() {
       }
     ],
 
+    arrival_forest_auto: [
+      {
+        bg: '#0f1412',
+        speaker: null,
+        lines: [
+          '森へ踏み戻った瞬間、湿った土と古い石の匂いが一緒に立ち上がった。',
+          'ここは入口というより、誰かを選別したあとの余白みたいに静かだ。'
+        ]
+      },
+      {
+        bg: '#121821',
+        speaker: '主人公',
+        speakerColor: '#88aaff',
+        lines: [
+          '景色が暗いんじゃない。まだ名前のつかない不安だけが先に濃い。',
+          'この森を抜けるなら、道より先に土地の呼吸を覚えないといけない。'
+        ]
+      }
+    ],
+
+    arrival_tsumagoi_auto: [
+      {
+        bg: '#151d17',
+        speaker: null,
+        lines: [
+          '嬬恋の高原では、畑の列より先に風の押し方がこの土地の広さを教えてきた。',
+          '見晴らしはいいのに、背中だけがずっと前へ出ろと急かされる。'
+        ]
+      },
+      {
+        bg: '#17151f',
+        speaker: '主人公',
+        speakerColor: '#88aaff',
+        lines: [
+          '開けた場所ほど、立ち止まった理由まで目立つ。',
+          'ここでは景色を楽しむより、風に置いていかれない歩き方を選ぶべきだ。'
+        ]
+      }
+    ],
+
     arrival_takasaki_auto: [
       {
         bg: '#111726',
@@ -192,6 +256,26 @@ Game.Event = (function() {
         lines: [
           'この町は願掛けの抜け殻が多い。しゃべる前に、先に見ろ。',
           '赤い殻が多いほど、空っぽの祈りも多いってことだ。'
+        ]
+      }
+    ],
+
+    arrival_tamura_auto: [
+      {
+        bg: '#14130f',
+        speaker: null,
+        lines: [
+          'タムラ村へ入ると、家の明かりと畑の匂いが同じ温度で寄ってきた。',
+          '助けを求める声より先に、ここで守られてきた暮らしの輪郭が見える。'
+        ]
+      },
+      {
+        bg: '#121923',
+        speaker: '主人公',
+        speakerColor: '#88aaff',
+        lines: [
+          '休める場所のはずなのに、重さまで消えるわけじゃない。',
+          'この村で聞く話は、次の道の責任ごと背負うことになる。'
         ]
       }
     ],
@@ -217,6 +301,48 @@ Game.Event = (function() {
       }
     ],
 
+    arrival_konuma_auto: [
+      {
+        bg: '#10161a',
+        motion: 'akagi_approach',
+        speaker: null,
+        lines: [
+          '小沼の霧へ入る直前、アカギが前を横切って足を止めた。',
+          '湖面の白さより、見張られている感触のほうが先に肌へ貼りつく。'
+        ]
+      },
+      {
+        bg: '#15121d',
+        speaker: 'アカギ',
+        speakerColor: '#44aaff',
+        lines: [
+          'ここは隠れる場所に見えて、隠したものを全部覚えてる。',
+          '霧を信用するな。先に嘘をつくのは、だいたい景色のほうだ。'
+        ]
+      }
+    ],
+
+    arrival_onuma_auto: [
+      {
+        bg: '#10161c',
+        motion: 'akagi_approach',
+        speaker: null,
+        lines: [
+          '大沼へ抜けた瞬間、湖の広さが静けさじゃなく空席みたいに見えた。',
+          '遠くの水面まで、誰かが戻ってこないまま置かれた時間が張っている。'
+        ]
+      },
+      {
+        bg: '#16111f',
+        speaker: 'アカギ',
+        speakerColor: '#44aaff',
+        lines: [
+          'ここは広いぶん、失くしたものの輪郭まで隠せない。',
+          '痕跡を見つけたら目をそらすな。湖畔は見なかったことを許さない。'
+        ]
+      }
+    ],
+
     arrival_tomioka_auto: [
       {
         bg: '#10131d',
@@ -234,6 +360,26 @@ Game.Event = (function() {
         lines: [
           'ここは切るより、ほどく土地だ。',
           '強く引いたら負ける。手つきで覚えろ。'
+        ]
+      }
+    ],
+
+    arrival_akagi_shrine_auto: [
+      {
+        bg: '#120f16',
+        speaker: null,
+        lines: [
+          '赤城神社の参道には、祈りより先に運び終えられなかった気配が積もっていた。',
+          '奥へ行くほど静かになるのに、その静けさだけが妙に重い。'
+        ]
+      },
+      {
+        bg: '#16101d',
+        speaker: '主人公',
+        speakerColor: '#88aaff',
+        lines: [
+          'ここは決着の場所というより、遅れた配達が最後に集まる場所だ。',
+          '誰の痛みで塞がれているのか、ちゃんと見たまま進む。'
         ]
       }
     ],
@@ -682,8 +828,9 @@ Game.Event = (function() {
     // === Chapter 4 Opening / Ending ===
     ch4_opening: [
       { bg: '#1a2a3a', speaker: null, lines: ['草津温泉の深奥。', '視界を遮るほどの青白い蒸気が立ち込めている。', 'だが、その熱気にはどこか不自然な冷たさが混じっていた。'] },
-      { bg: '#1a2a3a', speaker: '龝櫻', speakerColor: '#555566', lines: ['気をつけるんじゃな。ここの湯煙は輪郭を溶かす。', '過剰な癒やしに溺れれば、己の存在すら忘れてしまうぞ。', 'お主のその「記憶喪失」も、ここの毒にあてられた結果かもしれん。'] },
-      { bg: '#1a2a3a', speaker: '主人公', speakerColor: '#88aaff', lines: ['自分の過去すら思い出せないのに、これ以上何を奪われるというのか。', 'だが、立ち止まるわけにはいかない。', '温泉の異常を止め、源泉の奥へと進むしかない。'], effect: 'fade' }
+      { bg: '#162235', motion: 'white_girl_platform', bgm: 'heroine_veil', illustrationLabel: '白青のホーム', speaker: '白い少女', speakerColor: '#e8f5ff', lines: ['熱に溶けないで。あなたは、まだこちら側へ帰れる。', '青い切符をなくしても、ホームの灯りまでは消えない。'] },
+      { bg: '#1a2a3a', bgm: null, speaker: '龝櫻', speakerColor: '#555566', lines: ['気をつけるんじゃな。ここの湯煙は輪郭を溶かす。', '過剰な癒やしに溺れれば、己の存在すら忘れてしまうぞ。', 'お主のその「記憶喪失」も、ここの毒にあてられた結果かもしれん。'] },
+      { bg: '#1a2a3a', speaker: '主人公', speakerColor: '#88aaff', lines: ['またあの少女か……。', '自分の過去すら思い出せないのに、これ以上何を奪われるというのか。', 'だが、立ち止まるわけにはいかない。温泉の異常を止め、源泉の奥へと進むしかない。'], effect: 'fade' }
     ],
     ch4_ending: [
       { bg: '#1a2a3a', speaker: null, lines: ['湯畑の守護者が崩れ落ちると同時、', '周囲を覆っていた異常な蒸気がスッと引いていった。', '源泉の鼓動が、本来のリズムを取り戻しつつある。'] },
@@ -730,8 +877,9 @@ Game.Event = (function() {
     // === Chapter 8 Opening / Ending ===
     ch8_opening: [
       { bg: '#1a2a1a', speaker: null, lines: ['尾瀬の湿原。', '美しいはずの自然は腐敗し、緑色の泥がどこまでも続いている。', '一歩踏み出すたびに、足が泥濘に深く沈み込んだ。'] },
-      { bg: '#1a2a1a', speaker: 'ジューク', speakerColor: '#ff4444', lines: ['おや、足元にはお気をつけください。', 'そこの泥は、一度沈めば二度と浮かび上がれませんから。', '正しいルートを選ばなければ、永遠にここで息継ぎですよ。'] },
-      { bg: '#1a2a1a', speaker: '主人公', speakerColor: '#88aaff', lines: ['挑発するようなジュークの言葉。', 'だが、進むしかない。この泥の海を越えなければ、', '群馬からの脱出はあり得ないのだから。'], effect: 'fade' }
+      { bg: '#13233a', motion: 'white_girl_platform', bgm: 'heroine_veil', illustrationLabel: '外側の記憶', speaker: '白い少女', speakerColor: '#e8f5ff', lines: ['やっと、声が届いた。', 'あなたが思い出せないぶん、わたしが外で覚えてる。'] },
+      { bg: '#1a2a1a', bgm: null, speaker: 'ジューク', speakerColor: '#ff4444', lines: ['おや、足元にはお気をつけください。', 'そこの泥は、一度沈めば二度と浮かび上がれませんから。', '正しいルートを選ばなければ、永遠にここで息継ぎですよ。'] },
+      { bg: '#1a2a1a', speaker: '主人公', speakerColor: '#88aaff', lines: ['挑発するようなジュークの言葉。', 'だが、さっきの声は幻じゃない。この泥の海を越えなければ、', '群馬からの脱出も、外で待つ誰かのところへ帰ることもできない。'], effect: 'fade' }
     ],
     ch8_ending: [
       { bg: '#1a2a1a', speaker: null, lines: ['泥異形が崩れ落ちると同時、周囲の泥濘が少しだけ固さを取り戻した。', 'ふと、泥の中に落ちている見慣れたスマートフォンを見つける。', '画面には泥がこびりついているが、電源は入っている。'] },
@@ -754,8 +902,9 @@ Game.Event = (function() {
     // === Chapter 10 Opening / Ending ===
     ch10_opening: [
       { bg: '#000000', speaker: null, lines: ['国境のトンネル。', 'どこまで歩いても終わらない、現実と虚構が入り混じる境界線。', 'ここは、群馬であって群馬ではない、世界の狭間だ。'] },
-      { bg: '#111111', speaker: 'アカギ', speakerColor: '#cc6633', lines: ['空気が違う。ここまでの結界とは比べ物にならない重圧だ。', 'だが、恐れることはない。我々にはこれまでの絆がある。', '行くぞ！ 全ての因縁をここで断ち切るのだ！'] },
-      { bg: '#111111', speaker: '主人公', speakerColor: '#88aaff', lines: ['失われた記憶が戻る保証はない。', 'それでも、この仲間たちと過ごした旅の時間は本物だ。', '群馬からの脱出。その答えを、俺自身の手で掴み取る！'], effect: 'fade' }
+      { bg: '#08111f', motion: 'white_girl_threshold', bgm: 'heroine_veil', illustrationLabel: '境界の駅', speaker: '白い少女', speakerColor: '#e8f5ff', lines: ['帰ってきて。今度はちゃんと、あなたの名前で呼ぶから。', '白と青の朝を、あの駅で待ってる。'] },
+      { bg: '#111111', bgm: 'ch10_border', speaker: 'アカギ', speakerColor: '#cc6633', lines: ['空気が違う。ここまでの結界とは比べ物にならない重圧だ。', 'だが、恐れることはない。我々にはこれまでの絆がある。', '行くぞ！ 全ての因縁をここで断ち切るのだ！'] },
+      { bg: '#111111', speaker: '主人公', speakerColor: '#88aaff', lines: ['失われた記憶が戻る保証はない。', 'それでも、あの子まで含めて、この旅で掴んだ時間は本物だ。', '群馬からの脱出。その答えを、俺自身の手で掴み取る！'], effect: 'fade' }
     ],
     ep_constellation_offering_intro: [
       {
@@ -919,11 +1068,12 @@ Game.Event = (function() {
     autoAdvanceTimer = 0;
     renderHold = null;
     charSpeed = getConfiguredCharSpeed();
+    currentEventId = eventId || '';
+    currentEventOptions = EVENT_OPTIONS[currentEventId] || null;
+    skipGraceFrames = currentEventOptions && currentEventOptions.graceFrames ? currentEventOptions.graceFrames : 0;
     onComplete = callback || null;
 
-    var firstScene = scenes[0];
-    if (firstScene.bgm) Game.Audio.playBgm(firstScene.bgm);
-    if (firstScene.sfx) Game.Audio.playSfx(firstScene.sfx);
+    applySceneAudio(scenes[0]);
   }
 
   function wrapEventText(text, maxChars) {
@@ -966,6 +1116,13 @@ Game.Event = (function() {
   function update() {
     if (!active) return null;
     charSpeed = getConfiguredCharSpeed();
+    if (skipGraceFrames > 0) skipGraceFrames--;
+
+    if (shouldSkipEventImmediately()) {
+      Game.Audio.playSfx('confirm');
+      finishEventNow();
+      return { result: 'done' };
+    }
 
     // Handle fade
     if (fadeDir !== 0) {
@@ -979,9 +1136,7 @@ Game.Event = (function() {
         fadeDir = 0;
         // If fading out (between scenes), advance
         if (sceneIndex >= scenes.length) {
-          renderHold = null;
-          active = false;
-          if (onComplete) onComplete();
+          finishEventNow();
           return { result: 'done' };
         }
       }
@@ -995,9 +1150,7 @@ Game.Event = (function() {
 
     var scene = scenes[sceneIndex];
     if (!scene) {
-      renderHold = null;
-      active = false;
-      if (onComplete) onComplete();
+      finishEventNow();
       return { result: 'done' };
     }
 
@@ -1050,6 +1203,18 @@ Game.Event = (function() {
     var drawState = getDrawState();
     if (!drawState || !drawState.scene) return;
     var scene = drawState.scene;
+    var terminalMapReveal = !!(fadeDir > 0 && sceneIndex >= scenes.length && renderHold &&
+      Game.Main && Game.Main.drawWorldBackdrop);
+    var illustrationKey = Game.Illustrations && Game.Illustrations.getEventKey
+      ? Game.Illustrations.getEventKey(scene, currentEventId)
+      : '';
+    var hasIllustration = !!illustrationKey;
+
+    if (terminalMapReveal) {
+      Game.Main.drawWorldBackdrop(true);
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, 1 - fadeAlpha);
+    }
 
     // Background
     var bg = scene.bg || '#000011';
@@ -1072,20 +1237,35 @@ Game.Event = (function() {
       shakeOffsetY = (Math.random() - 0.5) * 3;
     }
 
+    if (hasIllustration && Game.Illustrations.drawCardAbsolute) {
+      Game.Illustrations.drawCardAbsolute(
+        illustrationKey,
+        268 + shakeOffsetX,
+        72 + shakeOffsetY,
+        188,
+        110,
+        {
+          accent: scene.speakerColor || '#8fb8ff',
+          matteAlpha: 0.08,
+          label: scene.illustrationLabel || scene.motion || currentEventId || ''
+        }
+      );
+    }
+
     // Top decorative line
     R.drawRectAbsolute(20, 60, C.CANVAS_WIDTH - 40, 1, '#334');
 
     // Speaker name
     if (scene.speaker) {
       var speakerColor = scene.speakerColor || C.COLORS.GOLD;
-      R.drawTextJP(scene.speaker, 40 + shakeOffsetX, 42 + shakeOffsetY, speakerColor, 16);
+      R.drawTextJP(scene.speaker, 40 + shakeOffsetX, 42 + shakeOffsetY, speakerColor, 14);
     }
 
     // Text area - show all previous lines + current line with typewriter
-    var textStartY = 80;
-    var lineHeight = 24;
-    var maxDisplayLines = 7;
-    var maxCharsPerLine = MAX_EVENT_CHARS_PER_LINE;
+    var textStartY = 78;
+    var lineHeight = hasIllustration ? 20 : 22;
+    var maxDisplayLines = hasIllustration ? 9 : 7;
+    var maxCharsPerLine = hasIllustration ? 15 : MAX_EVENT_CHARS_PER_LINE;
     var visualLines = [];
 
     for (var i = 0; i <= drawState.lineIndex && i < scene.lines.length; i++) {
@@ -1104,7 +1284,7 @@ Game.Event = (function() {
       var y = textStartY + (v - startVisualLine) * lineHeight + shakeOffsetY;
       var x = 50 + shakeOffsetX;
       var visual = visualLines[v];
-      R.drawTextJP(visual.text, x, y, visual.isCurrent ? '#ffffff' : '#aaaacc', 15);
+      R.drawTextJP(visual.text, x, y, visual.isCurrent ? '#ffffff' : '#aaaacc', 14);
     }
 
     // Bottom decorative line
@@ -1114,7 +1294,7 @@ Game.Event = (function() {
     if (textComplete) {
       var blinkT = Date.now() / 400;
       var promptColor = Math.sin(blinkT) > 0 ? '#d7dced' : '#939db8';
-      R.drawTextJP('Z / Enterで進む', C.CANVAS_WIDTH - 132, C.CANVAS_HEIGHT - 50, promptColor, 9);
+      R.drawTextJP('Z / Enterで進む', C.CANVAS_WIDTH - 128, C.CANVAS_HEIGHT - 50, promptColor, 8);
       if (scene.autoAdvance) {
         var remainingFrames = autoAdvanceTimer > 0 ? autoAdvanceTimer : scene.autoAdvance;
         var remainingSeconds = Math.max(0, remainingFrames / 60);
@@ -1123,10 +1303,16 @@ Game.Event = (function() {
     }
 
     // Scene counter (small)
-    R.drawTextJP((sceneIndex + 1) + '/' + scenes.length, 20, C.CANVAS_HEIGHT - 18, '#333', 10);
+    R.drawTextJP((sceneIndex + 1) + '/' + scenes.length, 20, C.CANVAS_HEIGHT - 18, '#333', 9);
+
+    if (terminalMapReveal) {
+      ctx.restore();
+      ctx.fillStyle = 'rgba(4, 6, 18, ' + Math.min(0.18, fadeAlpha * 0.14).toFixed(3) + ')';
+      ctx.fillRect(0, 0, C.CANVAS_WIDTH, C.CANVAS_HEIGHT);
+    }
 
     // Fade overlay
-    if (fadeAlpha > 0) {
+    if (fadeAlpha > 0 && !terminalMapReveal) {
       R.fadeOverlay(fadeAlpha);
     }
   }
@@ -1149,19 +1335,13 @@ Game.Event = (function() {
           holdTerminalScene(scene);
           fadeDir = 1;
         } else {
-          renderHold = null;
-          active = false;
-          if (onComplete) onComplete();
+          finishEventNow();
         }
         return;
       }
 
       var nextScene = scenes[sceneIndex];
-      if (nextScene.bgm) {
-        Game.Audio.stopBgm();
-        Game.Audio.playBgm(nextScene.bgm);
-      }
-      if (nextScene.sfx) Game.Audio.playSfx(nextScene.sfx);
+      applySceneAudio(nextScene);
 
       if (scene.effect === 'fade') {
         fadeDir = 1;
@@ -1723,6 +1903,43 @@ Game.Event = (function() {
     };
   }
 
+  function applySceneAudio(scene) {
+    if (!scene || !Game.Audio) return;
+    if (Object.prototype.hasOwnProperty.call(scene, 'bgm')) {
+      Game.Audio.stopBgm();
+      if (scene.bgm) Game.Audio.playBgm(scene.bgm);
+    }
+    if (scene.sfx) Game.Audio.playSfx(scene.sfx);
+  }
+
+  function shouldSkipEventImmediately() {
+    if (!active || !currentEventOptions || !currentEventOptions.skipToCompleteOnConfirm) return false;
+    if (skipGraceFrames > 0 || !Game.Input || !Game.Input.isPressed) return false;
+    if (!Game.Input.isPressed('confirm') && !Game.Input.isPressed('cancel')) return false;
+    return true;
+  }
+
+  function finishEventNow() {
+    var callback = onComplete;
+    active = false;
+    scenes = [];
+    sceneIndex = 0;
+    lineIndex = 0;
+    charIndex = 0;
+    charTimer = 0;
+    fadeAlpha = 0;
+    fadeDir = 0;
+    waitTimer = 0;
+    textComplete = false;
+    autoAdvanceTimer = 0;
+    renderHold = null;
+    currentEventId = '';
+    currentEventOptions = null;
+    skipGraceFrames = 0;
+    onComplete = null;
+    if (callback) callback();
+  }
+
   function getDrawState() {
     var scene = scenes[sceneIndex];
     if (scene) {
@@ -1746,6 +1963,7 @@ Game.Event = (function() {
     var scene = scenes[sceneIndex];
     return {
       active: active,
+      eventId: currentEventId,
       sceneIndex: sceneIndex,
       sceneCount: scenes.length,
       lineIndex: lineIndex,
@@ -1755,7 +1973,11 @@ Game.Event = (function() {
       autoAdvanceTimer: autoAdvanceTimer,
       speaker: scene ? scene.speaker : null,
       lines: scene && scene.lines ? scene.lines.slice() : [],
-      autoAdvance: scene ? (scene.autoAdvance || 0) : 0
+      autoAdvance: scene ? (scene.autoAdvance || 0) : 0,
+      illustrationKey: scene && Game.Illustrations && Game.Illustrations.getEventKey
+        ? Game.Illustrations.getEventKey(scene, currentEventId)
+        : '',
+      skippable: !!(currentEventOptions && currentEventOptions.skipToCompleteOnConfirm)
     };
   }
 

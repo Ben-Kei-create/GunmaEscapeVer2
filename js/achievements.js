@@ -201,7 +201,9 @@ Game.Achievements = (function() {
     }
 
     for (i = 0; i < equippedDice.length; i++) {
-      uniqueDice[equippedDice[i]] = true;
+      if (equippedDice[i]) {
+        uniqueDice[equippedDice[i]] = true;
+      }
     }
 
     if (foundKeys >= 4) {

@@ -31,6 +31,15 @@ Game.UI = (function() {
     chapterTitle: '',
     mapLabel: '',
     mapSubtitle: '',
+    detailLine: '',
+    accent: '#ffcc00'
+  };
+  var environmentNote = {
+    active: false,
+    timer: 0,
+    maxTimer: 0,
+    title: '',
+    lines: [],
     accent: '#ffcc00'
   };
   var fieldMenuState = {
@@ -63,6 +72,10 @@ Game.UI = (function() {
     'あいことばで旅の続きへ戻る。',
     '実績と解放状況を確認する。'
   ];
+  var DIALOG_TEXT_MAX_CHARS = 36;
+  var DIALOG_TEXT_MAX_LINES = 4;
+  var DIALOG_TEXT_SIZE = 11;
+  var DIALOG_LINE_HEIGHT = 14;
   var INTRO_MOVIE_SCENES = [
     { id: 'highway', duration: 210, title: '深夜の関越道', subtitle: 'くだらない笑い声だけが、闇の道を滑っていく。', accent: '#8fe0ff' },
     { id: 'signs', duration: 180, title: '群馬が近づく', subtitle: '見慣れた地名が、少しずつ異界の響きに変わる。', accent: '#ffd66b' },
@@ -205,6 +218,11 @@ Game.UI = (function() {
     return text.substring(0, Math.max(0, maxChars - 1)) + '…';
   }
 
+  function shouldCountNpc(npc) {
+    if (Game.NPC && Game.NPC.shouldHideNpc) return !Game.NPC.shouldHideNpc(npc);
+    return !npc.defeated;
+  }
+
   function getItemTypeLabel(type) {
     if (type === 'heal') return '回復';
     if (type === 'battle') return '戦闘用';
@@ -334,13 +352,15 @@ Game.UI = (function() {
     var R = Game.Renderer;
     if (!scene) return;
     var titleX = 24;
-    var titleY = 224;
-    R.drawRectAbsolute(18, 214, 282, 48, 'rgba(6, 10, 22, 0.58)');
-    R.drawRectAbsolute(18, 214, 282, 1, 'rgba(255,255,255,0.08)');
-    R.drawTextJP(scene.title, titleX + 1, titleY + 1, 'rgba(0,0,0,0.85)', 17);
-    R.drawTextJP(scene.title, titleX, titleY, scene.accent || '#fff', 17);
-    drawWrappedTextBlock(scene.subtitle, titleX, titleY + 18, 28, 2, 12, '#eef3ff', 9);
-    R.drawTextJP('クリック / Space / Z / Enter でタイトルへ', 458, 292, '#cdd6ee', 8, 'right');
+    var titleY = 221;
+    R.drawRectAbsolute(18, 208, 292, 56, 'rgba(4, 8, 18, 0.76)');
+    R.drawRectAbsolute(18, 208, 292, 2, scene.accent || 'rgba(255,255,255,0.35)');
+    R.drawRectAbsolute(18, 210, 292, 1, 'rgba(255,255,255,0.10)');
+    R.drawTextJP(scene.title, titleX + 1, titleY + 1, 'rgba(0,0,0,0.90)', 18);
+    R.drawTextJP(scene.title, titleX, titleY, scene.accent || '#fff', 18);
+    drawWrappedTextBlock(scene.subtitle, titleX, titleY + 20, 28, 2, 12, '#f1f5ff', 9);
+    R.drawRectAbsolute(304, 282, 158, 12, 'rgba(4,8,18,0.72)');
+    R.drawTextJP('クリック / Space / Z / Enter でタイトルへ', 458, 284, '#ecf1ff', 8, 'right');
   }
 
   function drawIntroHighwayScene(ctx, t) {
@@ -827,13 +847,17 @@ Game.UI = (function() {
     var journeyState = getJourneyState();
     var accent = chapterInfo.accent || Game.Config.COLORS.GOLD;
 
+    if (areaBanner.active) {
+      return;
+    }
+
     if (map) {
-      R.drawDialogBox(5, 5, 176, 34);
-      drawPanelAccent(5, 5, 176, 34, accent);
-      R.drawTextJP(chapterInfo.act + ' / ' + chapterInfo.displayLabel, 12, 8, accent, 9);
-      R.drawTextJP((mapInfo && mapInfo.label) || map.name, 12, 18, '#fff', 11);
+      R.drawDialogBox(5, 5, 170, 34);
+      drawPanelAccent(5, 5, 170, 34, accent);
+      R.drawTextJP(chapterInfo.act + ' / ' + chapterInfo.displayLabel, 12, 8, accent, 8);
+      R.drawTextJP((mapInfo && mapInfo.label) || map.name, 12, 18, '#fff', 10);
       if ((mapInfo && mapInfo.subtitle) || chapterInfo.subtitle) {
-        R.drawTextJP(clampText((mapInfo && mapInfo.subtitle) || chapterInfo.subtitle, 16), 12, 28, '#91a2c8', 8);
+        R.drawTextJP(clampText((mapInfo && mapInfo.subtitle) || chapterInfo.subtitle, 18), 12, 28, '#91a2c8', 7);
       }
     }
 
@@ -853,14 +877,14 @@ Game.UI = (function() {
 
     R.drawDialogBox(hudX, hudY, hudW, hudH);
     drawPanelAccent(hudX, hudY, hudW, hudH, '#8fb8ff');
-    R.drawTextJP('HP', hudX + 9, hudY + 5, '#fff', 9);
+    R.drawTextJP('HP', hudX + 9, hudY + 5, '#fff', 8);
     R.drawText(pd.hp + '/' + pd.maxHp, hudX + 58, hudY + 5, '#d9e6ff', 8);
     R.drawText(pd.gold + 'G', hudX + hudW - 10, hudY + 5, '#ffdd44', 8, 'right');
     var hpRatio = pd.hp / pd.maxHp;
     R.drawRectAbsolute(hpBarX, hpBarY, hpBarW, 8, '#243147');
     R.drawRectAbsolute(hpBarX, hpBarY, hpBarW * hpRatio, 8,
       hpRatio > 0.3 ? Game.Config.COLORS.HP_GREEN : Game.Config.COLORS.HP_RED);
-    R.drawTextJP('敬意', hudX + 9, hudY + 31, '#ffe08f', 8);
+    R.drawTextJP('敬意', hudX + 9, hudY + 31, '#ffe08f', 7);
     R.drawRectAbsolute(hudX + 35, hudY + 31, 58, 5, '#243147');
     R.drawRectAbsolute(hudX + 35, hudY + 31, 58 * respectRatio, 5, '#ffd66b');
     R.drawText(Math.min(respectGauge, 999), hudX + hudW - 10, hudY + 29, '#ffe08f', 8, 'right');
@@ -882,13 +906,13 @@ Game.UI = (function() {
     if (speakerName) {
       R.drawDialogBox(10, Game.Config.CANVAS_HEIGHT - 104, 114, 20);
       drawPanelAccent(10, Game.Config.CANVAS_HEIGHT - 104, 114, 20, accent);
-      R.drawTextJP(speakerName, 20, Game.Config.CANVAS_HEIGHT - 100, accent, 12);
+      R.drawTextJP(clampText(speakerName, 10), 20, Game.Config.CANVAS_HEIGHT - 100, accent, 10);
     }
 
-    var lines = wrapTextSmart(text, 29, 3);
+    var lines = wrapTextSmart(text, DIALOG_TEXT_MAX_CHARS, DIALOG_TEXT_MAX_LINES);
 
-    for (var i = 0; i < lines.length && i < 3; i++) {
-      R.drawTextJP(lines[i], 24, Game.Config.CANVAS_HEIGHT - 75 + i * 19, '#fff', 14);
+    for (var i = 0; i < lines.length && i < DIALOG_TEXT_MAX_LINES; i++) {
+      R.drawTextJP(lines[i], 24, Game.Config.CANVAS_HEIGHT - 77 + i * DIALOG_LINE_HEIGHT, '#fff', DIALOG_TEXT_SIZE);
     }
 
     // Advance indicator
@@ -944,37 +968,37 @@ Game.UI = (function() {
     R.drawRectAbsolute(0, 0, C.CANVAS_WIDTH, C.CANVAS_HEIGHT, 'rgba(4, 6, 18, 0.5)');
     R.drawDialogBox(boxX, boxY, boxW, boxH);
     drawPanelAccent(boxX, boxY, boxW, boxH, accent);
-    R.drawTextJP(chapterInfo.act + ' / ' + chapterInfo.displayLabel + ' ' + chapterInfo.title, 240, 20, accent, 13, 'center');
-    R.drawTextJP(clampText(chapterInfo.subtitle || ((mapInfo && mapInfo.subtitle) || ''), 24), 240, 38, '#cfd7f2', 9, 'center');
+    R.drawTextJP(chapterInfo.act + ' / ' + chapterInfo.displayLabel + ' ' + chapterInfo.title, 240, 20, accent, 12, 'center');
+    R.drawTextJP(clampText(chapterInfo.subtitle || ((mapInfo && mapInfo.subtitle) || ''), 28), 240, 38, '#cfd7f2', 8, 'center');
     R.drawRectAbsolute(68, 54, 344, 1, '#33415f');
 
     drawInsetPanel(leftCardX, cardY, cardW, cardH, '旅人の状態', accent, accent);
-    R.drawTextJP('HP', leftCardX + 10, cardY + 20, '#dfe8ff', 10);
-    R.drawTextJP(pd.hp + '/' + pd.maxHp, leftCardX + 42, cardY + 18, '#ffffff', 13);
+    R.drawTextJP('HP', leftCardX + 10, cardY + 20, '#dfe8ff', 9);
+    R.drawTextJP(pd.hp + '/' + pd.maxHp, leftCardX + 42, cardY + 18, '#ffffff', 12);
     R.drawRectAbsolute(leftCardX + 10, cardY + 36, 118, 8, '#273349');
     R.drawRectAbsolute(leftCardX + 11, cardY + 37, Math.max(0, Math.floor(116 * (pd.hp / pd.maxHp))), 6, pd.hp / pd.maxHp > 0.3 ? C.COLORS.HP_GREEN : C.COLORS.HP_RED);
     var moneyValueX = leftCardX + cardW - 12;
-    R.drawTextJP('防御', leftCardX + 10, cardY + 50, '#8fb8ff', 10);
-    R.drawTextJP('' + Game.Player.getDefense(), leftCardX + 46, cardY + 48, '#ffffff', 11);
+    R.drawTextJP('防御', leftCardX + 10, cardY + 50, '#8fb8ff', 9);
+    R.drawTextJP('' + Game.Player.getDefense(), leftCardX + 46, cardY + 48, '#ffffff', 10);
     R.drawTextJP('所持金', moneyValueX, cardY + 14, '#d8c163', 8, 'right');
-    R.drawTextJP(pd.gold + 'G', moneyValueX, cardY + 24, '#ffdd44', 10, 'right');
+    R.drawTextJP(pd.gold + 'G', moneyValueX, cardY + 24, '#ffdd44', 9, 'right');
 
     drawInsetPanel(rightCardX, cardY, cardW, cardH, '補助情報', '#8fe0ff', '#8fe0ff');
     R.drawTextJP('進行 ' + currentJourney + '/' + totalJourney, rightCardX + 148, cardY + 6, '#9ed7ff', 8, 'right');
-    R.drawTextJP('防具', rightCardX + 10, cardY + 20, '#9ed7ff', 10);
-    R.drawTextJP(clampText(aName, 10), rightCardX + 46, cardY + 18, '#ffffff', 11);
-    R.drawTextJP('触媒', rightCardX + 102, cardY + 20, '#9ed7ff', 10);
-    R.drawTextJP('' + (((journeyState.catalysts && journeyState.catalysts.length) || 0)), rightCardX + 144, cardY + 18, '#ffffff', 11, 'right');
-    R.drawTextJP('同行', rightCardX + 10, cardY + 36, '#8fe0ff', 10);
+    R.drawTextJP('防具', rightCardX + 10, cardY + 20, '#9ed7ff', 9);
+    R.drawTextJP(clampText(aName, 11), rightCardX + 46, cardY + 18, '#ffffff', 10);
+    R.drawTextJP('触媒', rightCardX + 102, cardY + 20, '#9ed7ff', 9);
+    R.drawTextJP('' + (((journeyState.catalysts && journeyState.catalysts.length) || 0)), rightCardX + 144, cardY + 18, '#ffffff', 10, 'right');
+    R.drawTextJP('同行', rightCardX + 10, cardY + 36, '#8fe0ff', 9);
     R.drawTextJP(clampText(partyText, 16), rightCardX + 46, cardY + 34, '#d7e6ff', 9);
-    R.drawTextJP('敬意', rightCardX + 10, cardY + 50, '#ffe08f', 10);
-    R.drawTextJP('' + respectValue, rightCardX + 144, cardY + 48, '#ffe08f', 11, 'right');
+    R.drawTextJP('敬意', rightCardX + 10, cardY + 50, '#ffe08f', 9);
+    R.drawTextJP('' + respectValue, rightCardX + 144, cardY + 48, '#ffe08f', 10, 'right');
 
     drawInsetPanel(infoX, infoY, infoW, infoH, '現在地 / 目標', '#7d8fb8', '#8fb8ff');
-    R.drawTextJP('現在地', infoX + 10, infoY + 17, '#8fb8ff', 10);
-    R.drawTextJP(clampText(currentMapLabel, 18), infoX + 52, infoY + 17, '#ffffff', 10);
-    R.drawTextJP('目標', infoX + 10, infoY + 29, '#8fb8ff', 10);
-    drawWrappedTextBlock(getCurrentObjective(), infoX + 52, infoY + 29, 18, 3, 9, '#dce6ff', 9);
+    R.drawTextJP('現在地', infoX + 10, infoY + 17, '#8fb8ff', 9);
+    R.drawTextJP(clampText(currentMapLabel, 21), infoX + 52, infoY + 17, '#ffffff', 9);
+    R.drawTextJP('目標', infoX + 10, infoY + 29, '#8fb8ff', 9);
+    drawWrappedTextBlock(getCurrentObjective(), infoX + 52, infoY + 29, 21, 3, 8, '#dce6ff', 8);
 
     // Tabs
     for (var t = 0; t < tabs.length; t++) {
@@ -984,7 +1008,7 @@ Game.UI = (function() {
       if (activeTab) {
         R.drawRectAbsolute(tx + 5, tabY + 3, tabW - 14, 1, accent);
       }
-      R.drawTextJP(tabs[t], tx + 8, tabY + 5, activeTab ? C.COLORS.GOLD : '#b5bfd8', 10);
+      R.drawTextJP(tabs[t], tx + 8, tabY + 5, activeTab ? C.COLORS.GOLD : '#b5bfd8', 9);
     }
     R.drawRectAbsolute(70, 218, 338, 1, '#446');
 
@@ -1010,7 +1034,7 @@ Game.UI = (function() {
     var footerText = fieldMenuState.messageTimer > 0 && fieldMenuState.message
       ? clampText(fieldMenuState.message, 40)
       : sectionHints[fieldMenuState.section];
-    R.drawTextJP(footerText, 72, 286, fieldMenuState.messageTimer > 0 ? '#ffffff' : '#9aa7c9', 9);
+    R.drawTextJP(footerText, 72, 286, fieldMenuState.messageTimer > 0 ? '#ffffff' : '#9aa7c9', 8);
     R.drawTextJP('←→ 切替  ↑↓ 選択  Z/Space 決定  X 戻る', 240, 296, '#6f7c9d', 8, 'center');
   }
 
@@ -1068,7 +1092,8 @@ Game.UI = (function() {
   }
 
   function drawDiceMenuSection(R, C, pd, equipped) {
-    var ownedDice = getOwnedDiceOptions();
+    var loadout = Game.Player.getDiceLoadout ? Game.Player.getDiceLoadout() : equipped;
+    var ownedDice = getOwnedDiceOptions(fieldMenuState.diceSlotIndex, loadout);
     var visibleDice = 4;
     var listX = 70;
     var detailX = 222;
@@ -1083,7 +1108,8 @@ Game.UI = (function() {
     for (var s = 0; s < pd.diceSlots; s++) {
       var slotY = panelY + 18 + s * 12;
       var selectedSlot = (s === fieldMenuState.diceSlotIndex);
-      var di = Game.Items.get(equipped[s] || 'normalDice');
+      var diceId = loadout[s] || null;
+      var di = diceId ? Game.Items.get(diceId) : null;
       if (selectedSlot) {
         R.drawRectAbsolute(listX + 6, slotY - 1, listW - 12, 11, 'rgba(255,204,0,0.12)');
       }
@@ -1091,15 +1117,31 @@ Game.UI = (function() {
       if (di) {
         R.drawRectAbsolute(listX + 62, slotY + 1, 8, 8, di.color || '#fff');
         R.drawTextJP(clampText(di.name, 7), listX + 76, slotY, '#d4dcf6', 9);
+      } else {
+        R.drawTextJP('未装備', listX + 76, slotY, '#7987aa', 9);
       }
     }
 
-    var selectedDie = Game.Items.get(equipped[fieldMenuState.diceSlotIndex] || 'normalDice');
+    var selectedDieId = loadout[fieldMenuState.diceSlotIndex] || null;
+    var selectedDie = selectedDieId ? Game.Items.get(selectedDieId) : null;
     if (!fieldMenuState.diceEquipActive) {
       if (selectedDie) {
         R.drawTextJP(selectedDie.name, detailX + 10, panelY + 18, '#ffffff', 11);
         R.drawTextJP('出目 ' + selectedDie.faces.join(' / '), detailX + 10, panelY + 30, '#88dd88', 9);
         drawWrappedTextBlock(selectedDie.desc || '説明なし', detailX + 10, panelY + 42, 19, 2, 10, '#b7c3e3', 9);
+      } else {
+        R.drawTextJP('未装備', detailX + 10, panelY + 18, '#ffffff', 11);
+        R.drawTextJP('この枠はまだ空いている。', detailX + 10, panelY + 32, '#b7c3e3', 9);
+        R.drawTextJP('サイコロを買って装備すると戦闘で使える。', detailX + 10, panelY + 44, '#88dd88', 8);
+      }
+      return;
+    }
+
+    if (!ownedDice.length) {
+      R.drawTextJP('候補なし', detailX + 10, panelY + 18, '#ffffff', 11);
+      R.drawTextJP('手持ちのサイコロが足りない。', detailX + 10, panelY + 32, '#b7c3e3', 9);
+      if (fieldMenuState.diceSlotIndex > 0 && selectedDie) {
+        R.drawTextJP('Xで戻ると今の装備のままにできる。', detailX + 10, panelY + 44, '#88dd88', 8);
       }
       return;
     }
@@ -1116,8 +1158,12 @@ Game.UI = (function() {
       }
       R.drawTextJP((selected ? '▶ ' : '  ') + clampText(label, 12), detailX + 10, lineY, selected ? C.COLORS.GOLD : '#fff', 10);
     }
-    if (ownedDice[fieldMenuState.diceEquipIndex] && ownedDice[fieldMenuState.diceEquipIndex].item) {
-      R.drawTextJP('出目 ' + ownedDice[fieldMenuState.diceEquipIndex].item.faces.join('-'), detailX + 10, panelY + 52, '#88dd88', 9);
+    if (ownedDice[fieldMenuState.diceEquipIndex]) {
+      if (ownedDice[fieldMenuState.diceEquipIndex].mode === 'unequip') {
+        R.drawTextJP('この枠からサイコロを外す', detailX + 10, panelY + 52, '#88dd88', 9);
+      } else if (ownedDice[fieldMenuState.diceEquipIndex].item) {
+        R.drawTextJP('出目 ' + ownedDice[fieldMenuState.diceEquipIndex].item.faces.join('-'), detailX + 10, panelY + 52, '#88dd88', 9);
+      }
     }
   }
 
@@ -1174,7 +1220,7 @@ Game.UI = (function() {
 
     if (map && map.npcs) {
       for (var ni = 0; ni < map.npcs.length; ni++) {
-        if (!map.npcs[ni].defeated) activeNpcCount++;
+        if (shouldCountNpc(map.npcs[ni])) activeNpcCount++;
       }
     }
 
@@ -1369,13 +1415,19 @@ Game.UI = (function() {
     fieldMenuState.messageTimer = timer || 45;
   }
 
-  function getOwnedDiceOptions() {
+  function getOwnedDiceOptions(slotIndex, loadout) {
     var inventory = Game.Player.getData().inventory;
-    var options = [{ id: 'normalDice', item: Game.Items.get('normalDice'), name: 'ふつうのサイコロ' }];
+    var options = [];
+    loadout = loadout || (Game.Player.getDiceLoadout ? Game.Player.getDiceLoadout() : []);
+    if (slotIndex === 0) {
+      options.push({ id: 'normalDice', item: Game.Items.get('normalDice'), name: 'ふつうのサイコロ', mode: 'equip' });
+    } else if (loadout[slotIndex]) {
+      options.push({ id: null, item: null, name: 'はずす', mode: 'unequip' });
+    }
     for (var i = 0; i < inventory.length; i++) {
       var item = Game.Items.get(inventory[i]);
       if (item && item.type === 'dice') {
-        options.push({ id: inventory[i], item: item, name: item.name });
+        options.push({ id: inventory[i], item: item, name: item.name, mode: 'equip' });
       }
     }
     return options;
@@ -1652,7 +1704,8 @@ Game.UI = (function() {
   }
 
   function updateDiceMenu(pd) {
-    var ownedDice = getOwnedDiceOptions();
+    var loadout = Game.Player.getDiceLoadout ? Game.Player.getDiceLoadout() : Game.Player.getEquippedDice();
+    var ownedDice = getOwnedDiceOptions(fieldMenuState.diceSlotIndex, loadout);
     if (!fieldMenuState.diceEquipActive) {
       if (Game.Input.isPressed('up')) {
         fieldMenuState.diceSlotIndex = (fieldMenuState.diceSlotIndex - 1 + pd.diceSlots) % pd.diceSlots;
@@ -1663,12 +1716,26 @@ Game.UI = (function() {
         Game.Audio.playSfx('confirm');
       }
       if (Game.Input.isPressed('confirm')) {
+        if (!ownedDice.length) {
+          setFieldMenuMessage('装備できるサイコロがない。', 45);
+          Game.Audio.playSfx('cancel');
+          return null;
+        }
         fieldMenuState.diceEquipActive = true;
         fieldMenuState.diceEquipIndex = 0;
         Game.Audio.playSfx('confirm');
       }
       if (Game.Input.isPressed('cancel')) {
         return { close: true };
+      }
+      return null;
+    }
+
+    if (!ownedDice.length) {
+      if (Game.Input.isPressed('cancel')) {
+        fieldMenuState.diceEquipActive = false;
+        fieldMenuState.diceEquipIndex = 0;
+        Game.Audio.playSfx('cancel');
       }
       return null;
     }
@@ -1690,6 +1757,13 @@ Game.UI = (function() {
     if (!Game.Input.isPressed('confirm')) return null;
 
     var selected = ownedDice[fieldMenuState.diceEquipIndex];
+    if (selected && selected.mode === 'unequip' && Game.Player.unequipDice(fieldMenuState.diceSlotIndex)) {
+      fieldMenuState.diceEquipActive = false;
+      fieldMenuState.diceEquipIndex = 0;
+      setFieldMenuMessage('スロット' + (fieldMenuState.diceSlotIndex + 1) + 'の装備を外した。', 55);
+      Game.Audio.playSfx('item');
+      return null;
+    }
     if (selected && Game.Player.equipDice(selected.id, fieldMenuState.diceSlotIndex)) {
       fieldMenuState.diceEquipActive = false;
       fieldMenuState.diceEquipIndex = 0;
@@ -1874,21 +1948,178 @@ Game.UI = (function() {
     }
   }
 
-  function drawTransition(alpha) {
-    Game.Renderer.fadeOverlay(alpha);
+  function easeInOutCubic(value) {
+    var t = Math.max(0, Math.min(1, value));
+    return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
   }
 
-  function showAreaBanner(mapId) {
+  function getTravelRoutePoints(stops) {
+    var count = Math.max(2, stops && stops.length ? stops.length : 2);
+    var startX = 408;
+    var startY = 268;
+    var endX = 92;
+    var endY = 84;
+    var points = [];
+    for (var i = 0; i < count; i++) {
+      var ratio = count === 1 ? 1 : i / (count - 1);
+      var curve = Math.sin(ratio * Math.PI) * 18;
+      points.push({
+        x: startX + (endX - startX) * ratio,
+        y: startY + (endY - startY) * ratio - curve
+      });
+    }
+    return points;
+  }
+
+  function getTravelBusState(progress, points) {
+    var route = (points && points.length) ? points.slice() : getTravelRoutePoints([]);
+    var offscreenStart = { x: 530, y: 340 };
+    var offscreenEnd = { x: -90, y: 32 };
+    var nodes = [offscreenStart].concat(route).concat([offscreenEnd]);
+    var segmentCount = Math.max(1, nodes.length - 1);
+    var pausePortion = 0.06;
+    var movePortion = Math.max(0.08, (1 - pausePortion * (nodes.length - 2)) / segmentCount);
+    var t = Math.max(0, Math.min(1, progress));
+    var cursor = 0;
+
+    for (var i = 0; i < segmentCount; i++) {
+      var moveStart = cursor;
+      var moveEnd = moveStart + movePortion;
+      if (t <= moveEnd || i === segmentCount - 1) {
+        var local = moveEnd <= moveStart ? 1 : (t - moveStart) / (moveEnd - moveStart);
+        local = easeInOutCubic(local);
+        return {
+          x: nodes[i].x + (nodes[i + 1].x - nodes[i].x) * local,
+          y: nodes[i].y + (nodes[i + 1].y - nodes[i].y) * local,
+          stopIndex: Math.max(0, Math.min(route.length - 1, i - 1)),
+          dwell: false
+        };
+      }
+      cursor = moveEnd;
+
+      if (i > 0 && i < segmentCount - 1) {
+        var pauseEnd = cursor + pausePortion;
+        if (t <= pauseEnd) {
+          return {
+            x: nodes[i + 1].x,
+            y: nodes[i + 1].y,
+            stopIndex: Math.max(0, Math.min(route.length - 1, i)),
+            dwell: true
+          };
+        }
+        cursor = pauseEnd;
+      }
+    }
+
+    return {
+      x: offscreenEnd.x,
+      y: offscreenEnd.y,
+      stopIndex: Math.max(0, route.length - 1),
+      dwell: false
+    };
+  }
+
+  function drawTravelBus(ctx, x, y, accent) {
+    var bodyColor = accent || '#2a8d63';
+    ctx.fillStyle = bodyColor;
+    ctx.fillRect(x - 20, y - 10, 40, 18);
+    ctx.fillStyle = '#dceccf';
+    ctx.fillRect(x - 14, y - 7, 9, 6);
+    ctx.fillRect(x - 2, y - 7, 9, 6);
+    ctx.fillRect(x + 10, y - 7, 6, 6);
+    ctx.fillStyle = '#f0c86a';
+    ctx.fillRect(x - 13, y - 12, 20, 3);
+    ctx.fillStyle = '#11211d';
+    ctx.fillRect(x + 10, y - 4, 5, 9);
+    ctx.fillStyle = '#101726';
+    ctx.fillRect(x - 13, y + 3, 8, 5);
+    ctx.fillRect(x - 1, y + 3, 8, 5);
+    ctx.fillStyle = '#0e1117';
+    ctx.fillRect(x - 12, y + 8, 7, 3);
+    ctx.fillRect(x + 5, y + 8, 7, 3);
+  }
+
+  function drawTransition(alpha, transitionInfo) {
+    var R = Game.Renderer;
+    var C = Game.Config;
+    var ctx = R.getContext();
+    var progress = Math.max(0, Math.min(1, alpha || 0));
+    var eased = easeInOutCubic(progress);
+
+    if (!transitionInfo || transitionInfo.busMovie === false) {
+      Game.Renderer.fadeOverlay(progress);
+      return;
+    }
+
+    var stops = transitionInfo.stopLabels && transitionInfo.stopLabels.length
+      ? transitionInfo.stopLabels
+      : [transitionInfo.targetLabel || '停留所'];
+    var routePoints = getTravelRoutePoints(stops);
+    var busState = getTravelBusState(eased, routePoints);
+    var panelAlpha = 0.28 + eased * 0.38;
+    var routeGlow = 0.16 + Math.sin(Date.now() / 240) * 0.04;
+
+    ctx.fillStyle = 'rgba(4, 6, 18, ' + panelAlpha.toFixed(3) + ')';
+    ctx.fillRect(0, 0, C.CANVAS_WIDTH, C.CANVAS_HEIGHT);
+
+    R.drawDialogBox(58, 28, 364, 76);
+    drawPanelAccent(58, 28, 364, 76, transitionInfo.accent || '#8fd7a1');
+    R.drawTextJP(transitionInfo.title || 'ぐるりん回送中', 78, 42, transitionInfo.accent || '#8fd7a1', 13);
+    R.drawTextJP(clampText(transitionInfo.subtitle || '次の停留所へ向かっている。', 30), 78, 58, '#dce6ff', 9);
+    if (transitionInfo.targetLabel) {
+      R.drawTextJP('次: ' + clampText(transitionInfo.targetLabel, 14), 404, 42, '#ffe08f', 9, 'right');
+    }
+    R.drawTextJP('停車所 ' + (Math.min(stops.length, Math.max(1, busState.stopIndex + 1))) + '/' + stops.length, 404, 58, '#8fb8ff', 8, 'right');
+
+    ctx.strokeStyle = 'rgba(95, 212, 151, ' + routeGlow.toFixed(3) + ')';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(routePoints[0].x, routePoints[0].y);
+    for (var i = 1; i < routePoints.length; i++) {
+      ctx.lineTo(routePoints[i].x, routePoints[i].y);
+    }
+    ctx.stroke();
+
+    for (var si = 0; si < routePoints.length; si++) {
+      var point = routePoints[si];
+      var activeStop = si === busState.stopIndex;
+      var pulse = activeStop ? (0.7 + Math.sin(Date.now() / 160) * 0.18) : 0.38;
+      ctx.fillStyle = 'rgba(242, 201, 109,' + pulse.toFixed(3) + ')';
+      ctx.beginPath();
+      ctx.arc(point.x, point.y, activeStop ? 6 : 4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = activeStop ? '#fff4c8' : '#d2dbf5';
+      R.drawTextJP(clampText(stops[si], 8), point.x, point.y - 15, ctx.fillStyle, activeStop ? 9 : 8, 'center');
+    }
+
+    if (busState.dwell) {
+      ctx.fillStyle = 'rgba(255, 236, 176, 0.2)';
+      ctx.beginPath();
+      ctx.arc(busState.x, busState.y, 22, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    drawTravelBus(ctx, busState.x, busState.y, transitionInfo.accent || '#2a8d63');
+
+    ctx.fillStyle = 'rgba(255,255,255,0.05)';
+    for (var p = 0; p < 12; p++) {
+      ctx.fillRect((p * 43 + Math.floor(Date.now() / 24)) % C.CANVAS_WIDTH, 120 + ((p * 19) % 120), 2, 2);
+    }
+  }
+
+  function showAreaBanner(mapId, options) {
+    options = options || {};
     var chapterInfo = getChapterInfo();
     var mapInfo = Game.Chapters && Game.Chapters.getMap ? Game.Chapters.getMap(mapId) : null;
     var map = Game.Map && Game.Map.getCurrentMap ? Game.Map.getCurrentMap() : null;
     areaBanner.active = true;
-    areaBanner.timer = 150;
-    areaBanner.maxTimer = 150;
+    areaBanner.timer = options.detailLine ? 172 : 150;
+    areaBanner.maxTimer = areaBanner.timer;
     areaBanner.chapterNumber = chapterInfo.journeyIndex || chapterInfo.number || 1;
     areaBanner.chapterTitle = chapterInfo.displayLabel + ' ' + (chapterInfo.title || '');
     areaBanner.mapLabel = mapInfo && mapInfo.label ? mapInfo.label : (map && map.name ? map.name : '');
     areaBanner.mapSubtitle = mapInfo && mapInfo.subtitle ? mapInfo.subtitle : '';
+    areaBanner.detailLine = options.detailLine || '';
     areaBanner.accent = chapterInfo.accent || Game.Config.COLORS.GOLD;
   }
 
@@ -1907,13 +2138,71 @@ Game.UI = (function() {
     var progress = areaBanner.timer / areaBanner.maxTimer;
     var fade = Math.min(1, progress * 2.2);
     var slide = progress > 0.5 ? (1 - progress) * 26 : 0;
+    var hasDetailLine = !!areaBanner.detailLine;
+    var detailLines = hasDetailLine ? wrapTextSmart(areaBanner.detailLine, 28, 2) : [];
+    var boxHeight = hasDetailLine ? 66 + Math.max(0, detailLines.length - 1) * 10 : 46;
+    var boxX = 88;
+    var boxW = 304;
+    var boxY = 54 + slide;
 
     ctx.globalAlpha = fade;
-    R.drawDialogBox(96, 52 + slide, 288, 46);
-    drawPanelAccent(96, 52 + slide, 288, 46, areaBanner.accent);
-    R.drawTextJP(areaBanner.chapterTitle, 116, 61 + slide, areaBanner.accent, 12);
-    R.drawTextJP(areaBanner.mapLabel, 116, 77 + slide, '#ffffff', 14);
-    R.drawTextJP(areaBanner.mapSubtitle, 116, 92 + slide, '#9fb0d6', 9);
+    R.drawDialogBox(boxX, boxY, boxW, boxHeight);
+    drawPanelAccent(boxX, boxY, boxW, boxHeight, areaBanner.accent);
+    R.drawTextJP(clampText(areaBanner.chapterTitle, 22), boxX + 18, boxY + 10, areaBanner.accent, 11);
+    R.drawTextJP(clampText(areaBanner.mapLabel, 18), boxX + 18, boxY + 25, '#ffffff', 13);
+    if (areaBanner.mapSubtitle) {
+      R.drawTextJP(clampText(areaBanner.mapSubtitle, 22), boxX + 18, boxY + 40, '#9fb0d6', 8);
+    }
+    if (detailLines.length) {
+      for (var i = 0; i < detailLines.length; i++) {
+        R.drawTextJP(detailLines[i], boxX + 18, boxY + 50 + i * 10, '#dce6ff', 7);
+      }
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function showEnvironmentNote(note, mapId) {
+    note = note || {};
+    var chapterInfo = getChapterInfo();
+    var mapInfo = mapId && Game.Chapters && Game.Chapters.getMap ? Game.Chapters.getMap(mapId) : getMapInfo();
+    var fallbackTitle = mapInfo && mapInfo.label ? mapInfo.label : '土地の気配';
+    var lines = Array.isArray(note.lines) ? note.lines.slice(0, 2) : [];
+    if (!lines.length && note.text) {
+      lines = [clampText(note.text, 30)];
+    }
+    environmentNote.active = true;
+    environmentNote.timer = 190;
+    environmentNote.maxTimer = 190;
+    environmentNote.title = note.title || fallbackTitle;
+    environmentNote.lines = lines;
+    environmentNote.accent = note.accent || chapterInfo.accent || Game.Config.COLORS.GOLD;
+  }
+
+  function updateEnvironmentNote() {
+    if (!environmentNote.active) return;
+    environmentNote.timer--;
+    if (environmentNote.timer <= 0) {
+      environmentNote.active = false;
+      environmentNote.lines = [];
+    }
+  }
+
+  function drawEnvironmentNote() {
+    if (!environmentNote.active) return;
+    var R = Game.Renderer;
+    var ctx = R.getContext();
+    var lifetime = environmentNote.maxTimer || 1;
+    var progress = environmentNote.timer / lifetime;
+    var fade = Math.min(1, Math.min((1 - progress) * 4, progress * 2.8));
+    var slide = Math.max(0, (1 - fade) * 10);
+    var boxY = 218 + slide;
+
+    ctx.globalAlpha = fade;
+    R.drawDialogBox(18, boxY, 252, 44);
+    drawPanelAccent(18, boxY, 252, 44, environmentNote.accent);
+    R.drawTextJP(environmentNote.title, 32, boxY + 8, environmentNote.accent, 11);
+    if (environmentNote.lines[0]) R.drawTextJP(environmentNote.lines[0], 32, boxY + 22, '#f4f7ff', 10);
+    if (environmentNote.lines[1]) R.drawTextJP(environmentNote.lines[1], 32, boxY + 33, '#b7c4e0', 9);
     ctx.globalAlpha = 1;
   }
 
@@ -1959,7 +2248,7 @@ Game.UI = (function() {
     // NPC positions
     if (map.npcs) {
       for (var n = 0; n < map.npcs.length; n++) {
-        if (!map.npcs[n].defeated) {
+        if (shouldCountNpc(map.npcs[n])) {
           R.drawRectAbsolute(mx + map.npcs[n].x * pw, my + map.npcs[n].y * ph, npcMarkerSize, npcMarkerSize, '#ffdd00');
         }
       }
@@ -2162,6 +2451,28 @@ Game.UI = (function() {
     };
   }
 
+  function getEnvironmentNoteDebugState() {
+    if (!environmentNote.active) return null;
+    return {
+      title: environmentNote.title,
+      lines: environmentNote.lines.slice(),
+      timer: environmentNote.timer,
+      maxTimer: environmentNote.maxTimer
+    };
+  }
+
+  function getAreaBannerDebugState() {
+    if (!areaBanner.active) return null;
+    return {
+      chapterTitle: areaBanner.chapterTitle,
+      mapLabel: areaBanner.mapLabel,
+      mapSubtitle: areaBanner.mapSubtitle,
+      detailLine: areaBanner.detailLine,
+      timer: areaBanner.timer,
+      maxTimer: areaBanner.maxTimer
+    };
+  }
+
   function setFieldMenuSectionForDebug(section) {
     fieldMenuState.section = Math.max(0, Math.min(4, section | 0));
     clampFieldMenuSelection();
@@ -2182,6 +2493,9 @@ Game.UI = (function() {
     showAreaBanner: showAreaBanner,
     updateAreaBanner: updateAreaBanner,
     drawAreaBanner: drawAreaBanner,
+    showEnvironmentNote: showEnvironmentNote,
+    updateEnvironmentNote: updateEnvironmentNote,
+    drawEnvironmentNote: drawEnvironmentNote,
     startIntroMovie: startIntroMovie,
     updateIntroMovie: updateIntroMovie,
     isTitleIntroLocked: isTitleIntroLocked,
@@ -2206,6 +2520,8 @@ Game.UI = (function() {
     getBattleDialogueSpeedFrames: getBattleDialogueSpeedFrames,
     getBattleDialogueSpeedLabel: getBattleDialogueSpeedLabel,
     getFieldMenuDebugState: getFieldMenuDebugState,
+    getAreaBannerDebugState: getAreaBannerDebugState,
+    getEnvironmentNoteDebugState: getEnvironmentNoteDebugState,
     setFieldMenuSectionForDebug: setFieldMenuSectionForDebug
   };
 })();

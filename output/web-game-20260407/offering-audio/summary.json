@@ -1,0 +1,186 @@
+{
+  "ready": {
+    "phase": "menu",
+    "audio": {
+      "requestedBgm": "ch10_border",
+      "currentBgm": "ch10_border"
+    },
+    "ritualState": {
+      "eyeRepaired": false,
+      "hpZeroReached": false,
+      "lastLowDiceHit": false,
+      "overCoolPenalty": false,
+      "resonanceCreated": false,
+      "reviewPhaseIndex": 0,
+      "targetZoneRevealed": false,
+      "offeringOrder": [
+        "darumaEye",
+        "konnyakuPass",
+        "silkBundle",
+        "onsenKey",
+        "akagiKey"
+      ],
+      "lightDieReady": true,
+      "lightReleased": false,
+      "lightReleaseFrames": 0,
+      "afterglowCuePlayed": false,
+      "thankYouIndex": 0,
+      "lastAction": {
+        "kind": "light_ready",
+        "itemId": "akagiKey",
+        "slotLabel": "赤城の鍵"
+      }
+    }
+  },
+  "release": {
+    "phase": "ritualMoment",
+    "audio": {
+      "requestedBgm": null,
+      "currentBgm": null
+    },
+    "ritualState": {
+      "eyeRepaired": false,
+      "hpZeroReached": false,
+      "lastLowDiceHit": false,
+      "overCoolPenalty": false,
+      "resonanceCreated": false,
+      "reviewPhaseIndex": 0,
+      "targetZoneRevealed": false,
+      "offeringOrder": [
+        "darumaEye",
+        "konnyakuPass",
+        "silkBundle",
+        "onsenKey",
+        "akagiKey"
+      ],
+      "lightDieReady": true,
+      "lightReleased": true,
+      "lightReleaseFrames": 77,
+      "afterglowCuePlayed": false,
+      "thankYouIndex": 0,
+      "lastAction": {
+        "kind": "light_release"
+      }
+    }
+  },
+  "silence": {
+    "phase": "ritualMoment",
+    "audio": {
+      "requestedBgm": null,
+      "currentBgm": null
+    },
+    "ritualState": {
+      "eyeRepaired": false,
+      "hpZeroReached": false,
+      "lastLowDiceHit": false,
+      "overCoolPenalty": false,
+      "resonanceCreated": false,
+      "reviewPhaseIndex": 0,
+      "targetZoneRevealed": false,
+      "offeringOrder": [
+        "darumaEye",
+        "konnyakuPass",
+        "silkBundle",
+        "onsenKey",
+        "akagiKey"
+      ],
+      "lightDieReady": true,
+      "lightReleased": true,
+      "lightReleaseFrames": 41,
+      "afterglowCuePlayed": false,
+      "thankYouIndex": 3,
+      "lastAction": {
+        "kind": "light_release"
+      }
+    }
+  },
+  "victory": {
+    "phase": "victory",
+    "audio": {
+      "requestedBgm": null,
+      "currentBgm": null
+    },
+    "ritualState": {
+      "eyeRepaired": false,
+      "hpZeroReached": false,
+      "lastLowDiceHit": false,
+      "overCoolPenalty": false,
+      "resonanceCreated": false,
+      "reviewPhaseIndex": 0,
+      "targetZoneRevealed": false,
+      "offeringOrder": [
+        "darumaEye",
+        "konnyakuPass",
+        "silkBundle",
+        "onsenKey",
+        "akagiKey"
+      ],
+      "lightDieReady": true,
+      "lightReleased": true,
+      "lightReleaseFrames": 0,
+      "afterglowCuePlayed": true,
+      "thankYouIndex": 5,
+      "lastAction": {
+        "kind": "light_release"
+      }
+    }
+  },
+  "reward": {
+    "phase": "reward",
+    "audio": {
+      "requestedBgm": null,
+      "currentBgm": null
+    },
+    "ritualState": {
+      "eyeRepaired": false,
+      "hpZeroReached": false,
+      "lastLowDiceHit": false,
+      "overCoolPenalty": false,
+      "resonanceCreated": false,
+      "reviewPhaseIndex": 0,
+      "targetZoneRevealed": false,
+      "offeringOrder": [
+        "darumaEye",
+        "konnyakuPass",
+        "silkBundle",
+        "onsenKey",
+        "akagiKey"
+      ],
+      "lightDieReady": true,
+      "lightReleased": true,
+      "lightReleaseFrames": 0,
+      "afterglowCuePlayed": true,
+      "thankYouIndex": 5,
+      "lastAction": {
+        "kind": "light_release"
+      }
+    },
+    "rewardSummary": {
+      "gold": 0,
+      "exp": 0,
+      "items": [],
+      "supportLogs": [],
+      "afterglowText": "空っぽの祈りは満たされ、風だけがやさしく残った。",
+      "enemyEchoText": "返し終えた記憶のあいだから、夜明け前の静かな風だけが残った。"
+    }
+  },
+  "logs": {
+    "sfxLog": [
+      "ritual_chime",
+      "ritual_chime",
+      "ritual_chime",
+      "ritual_chime",
+      "ritual_chime",
+      "ritual_release",
+      "ritual_afterglow"
+    ],
+    "stopBgmLog": [
+      {
+        "fadeOut": 0.18
+      },
+      null
+    ]
+  },
+  "consoleErrors": [],
+  "pageErrors": []
+}

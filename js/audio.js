@@ -227,6 +227,12 @@ Game.Audio = (function() {
       [294, 0.18], [262, 0.22], [220, 0.32], [196, 0.42],
       [220, 0.26], [247, 0.22], [220, 0.22], [196, 0.68]
     ],
+    heroine_veil: [ // 白と青の少女が現れるときの細い祈り
+      [392, 0.34], [523, 0.18], [587, 0.38], [659, 0.22],
+      [587, 0.18], [523, 0.26], [440, 0.44], [0, 0.16],
+      [392, 0.26], [440, 0.2], [523, 0.34], [587, 0.22],
+      [659, 0.18], [523, 0.3], [440, 0.56]
+    ],
     kusatsu_bushi: [
       [392, 0.2], [440, 0.2], [392, 0.2], [349, 0.2],
       [294, 0.25], [262, 0.25], [294, 0.2], [349, 0.2],
@@ -538,7 +544,8 @@ Game.Audio = (function() {
     ch10_border: { wave: 'square', gain: 0.07 },
     melancholy_intro: { wave: 'triangle', gain: 0.072 },
     melancholy_battle: { wave: 'triangle', gain: 0.082 },
-    melancholy_victory: { wave: 'triangle', gain: 0.078 }
+    melancholy_victory: { wave: 'triangle', gain: 0.078 },
+    heroine_veil: { wave: 'triangle', gain: 0.062 }
   };
 
   var fieldBgmByMap = {
@@ -722,6 +729,13 @@ Game.Audio = (function() {
         playNote(659, 0.15, 'square', now + 0.15, 0.15);
         playNote(784, 0.15, 'square', now + 0.3, 0.15);
         playNote(1047, 0.4, 'square', now + 0.45, 0.15);
+        break;
+      case 'level_up':
+        playNote(392, 0.08, 'triangle', now, 0.09);
+        playNote(523, 0.08, 'triangle', now + 0.07, 0.09);
+        playNote(659, 0.1, 'square', now + 0.14, 0.11);
+        playNote(784, 0.14, 'square', now + 0.22, 0.12);
+        playSweep(784, 1175, 0.28, 'triangle', now + 0.24, 0.08);
         break;
       case 'walk':
         playNote(100, 0.05, 'triangle', now, 0.05);

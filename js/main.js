@@ -6,10 +6,14 @@ Game.Main = (function() {
   var transitionTarget = null;
   var transitionSpawnX = 0;
   var transitionSpawnY = 0;
+  var transitionLoaded = false;
+  var transitionData = null;
   var dialogText = '';
   var pendingAction = null;
   var storyBattleContext = null;
   var pendingArrivalCheck = '';
+  var TRANSITION_SPEED = 0.028;
+  var TRANSITION_LOAD_PROGRESS = 0.5;
   var ARRIVAL_EVENT_MAP = {
     forest: { flag: 'arrival_forest_auto', eventId: 'arrival_forest_auto' },
     takasaki: { flag: 'arrival_takasaki_auto', eventId: 'arrival_takasaki_auto' },
@@ -171,6 +175,88 @@ Game.Main = (function() {
     return Game.Story.getChapterStartPlan(chapterNumber);
   }
 
+  function getMapTravelLabel(mapId) {
+    if (!mapId) return '停留所';
+    if (Game.Chapters && Game.Chapters.getMap) {
+      var mapInfo = Game.Chapters.getMap(mapId);
+      if (mapInfo && mapInfo.label) return mapInfo.label;
+    }
+    if (Game.Maps && Game.Maps[mapId] && Game.Maps[mapId].name) {
+      return Game.Maps[mapId].name;
+    }
+    return mapId;
+  }
+
+  function buildTransitionStops(sourceMapId, targetMapId, options) {
+    options = options || {};
+    var rawStops = options.stopLabels && options.stopLabels.length ? options.stopLabels.slice() : [];
+    if (!rawStops.length) {
+      if (sourceMapId) rawStops.push(getMapTravelLabel(sourceMapId));
+      if (options.midLabel) rawStops.push(options.midLabel);
+      if (targetMapId && targetMapId !== sourceMapId) rawStops.push(getMapTravelLabel(targetMapId));
+    }
+
+    var stops = [];
+    for (var i = 0; i < rawStops.length; i++) {
+      var label = rawStops[i];
+      if (!label || (stops.length && stops[stops.length - 1] === label)) continue;
+      stops.push(label);
+    }
+    if (!stops.length) {
+      stops.push(targetMapId ? getMapTravelLabel(targetMapId) : '停留所');
+    }
+    return stops;
+  }
+
+  function applyMapLoad(target, spawnX, spawnY) {
+    if (!target) return;
+    Game.Map.load(target, spawnX, spawnY);
+    if (Game.Save && Game.Save.autoSave) Game.Save.autoSave();
+    if (Game.Weather && Game.Weather.setMapWeather) {
+      var curMap = Game.Map.getCurrentMap();
+      if (curMap) Game.Weather.setMapWeather(curMap.name);
+    }
+  }
+
+  function applyChapterStartPlan(plan, chapterNumber) {
+    if (!plan) return false;
+    if (plan.achievementId && Game.Achievements && Game.Achievements.check) {
+      Game.Achievements.check(plan.achievementId);
+    }
+
+    var pd = Game.Player.getData();
+    pd.chapter = chapterNumber;
+    if (Game.Quests && Game.Quests.activateChapter) {
+      Game.Quests.activateChapter(chapterNumber);
+    }
+    clearChapterKeyItems(pd);
+    resetMapStateList(plan.resetMaps || []);
+    applyMapLoad(plan.mapId, plan.spawnX, plan.spawnY);
+    return true;
+  }
+
+  function beginTravelTransition(options) {
+    options = options || {};
+    transitionTarget = options.targetMapId || null;
+    transitionSpawnX = typeof options.spawnX === 'number' ? options.spawnX : 0;
+    transitionSpawnY = typeof options.spawnY === 'number' ? options.spawnY : 0;
+    transitionAlpha = 0;
+    transitionLoaded = false;
+    transitionData = {
+      title: options.title || 'ぐるりん回送中',
+      subtitle: options.subtitle || '停留所をまたぎ、次の景色へ向かう。',
+      accent: options.accent || '#8fd7a1',
+      sourceMapId: options.sourceMapId || (Game.Map && Game.Map.getCurrentMapId ? Game.Map.getCurrentMapId() : ''),
+      targetMapId: options.targetMapId || '',
+      stopLabels: buildTransitionStops(options.sourceMapId || (Game.Map && Game.Map.getCurrentMapId ? Game.Map.getCurrentMapId() : ''), options.targetMapId || '', options),
+      targetLabel: options.targetLabel || getMapTravelLabel(options.targetMapId || ''),
+      onLoad: options.onLoad || null,
+      onComplete: options.onComplete || null,
+      busMovie: options.busMovie !== false
+    };
+    setState(Game.Config.STATE.TRANSITION);
+  }
+
   function showChapterArrivalBanner(mapId, chapterNumber) {
     if (!Game.UI || !Game.UI.showAreaBanner) return;
     var chapterInfo = Game.Chapters && Game.Chapters.getChapter ? Game.Chapters.getChapter(chapterNumber || 1, mapId) : null;
@@ -205,24 +291,25 @@ Game.Main = (function() {
   function startChapter(chapterNumber) {
     var plan = getChapterStartPlan(chapterNumber);
     if (!plan) return false;
-
-    if (plan.achievementId && Game.Achievements && Game.Achievements.check) {
-      Game.Achievements.check(plan.achievementId);
-    }
-
-    var pd = Game.Player.getData();
-    pd.chapter = chapterNumber;
-    if (Game.Quests && Game.Quests.activateChapter) {
-      Game.Quests.activateChapter(chapterNumber);
-    }
-    clearChapterKeyItems(pd);
-    resetMapStateList(plan.resetMaps || []);
-    Game.Map.load(plan.mapId, plan.spawnX, plan.spawnY);
-    setState(Game.Config.STATE.EVENT);
-    Game.Event.start(plan.openingEventId, function() {
-      setState(Game.Config.STATE.EXPLORING);
-      showChapterArrivalBanner(plan.mapId, chapterNumber);
-      Game.Audio.playBgm('field');
+    beginTravelTransition({
+      sourceMapId: Game.Map && Game.Map.getCurrentMapId ? Game.Map.getCurrentMapId() : '',
+      targetMapId: plan.mapId,
+      spawnX: plan.spawnX,
+      spawnY: plan.spawnY,
+      title: 'ぐるりん回送中',
+      subtitle: getMapTravelLabel(plan.mapId) + ' へ向かっている。',
+      midLabel: '回送',
+      onLoad: function() {
+        applyChapterStartPlan(plan, chapterNumber);
+      },
+      onComplete: function() {
+        setState(Game.Config.STATE.EVENT);
+        Game.Event.start(plan.openingEventId, function() {
+          setState(Game.Config.STATE.EXPLORING);
+          showChapterArrivalBanner(plan.mapId, chapterNumber);
+          Game.Audio.playBgm('field');
+        });
+      }
     });
     return true;
   }
@@ -465,9 +552,12 @@ Game.Main = (function() {
       }
     };
 
-    if (expSummary && expSummary.levelUps && expSummary.levelUps.length && Game.UI && Game.UI.addDamagePopup) {
-      var lastRank = expSummary.levelUps[expSummary.levelUps.length - 1].rank;
-      Game.UI.addDamagePopup('RANK ' + lastRank, 176, 34, '#ffdd66');
+    if (expSummary && expSummary.levelUps && expSummary.levelUps.length) {
+      Game.Audio.playSfx('level_up');
+      if (Game.UI && Game.UI.addDamagePopup) {
+        var lastRank = expSummary.levelUps[expSummary.levelUps.length - 1].rank;
+        Game.UI.addDamagePopup('RANK ' + lastRank, 176, 34, '#ffdd66');
+      }
     }
 
     pendingAction = { type: 'postBattleVictory', resume: finishVictory };
@@ -627,6 +717,13 @@ Game.Main = (function() {
               Game.Quests.talkToNpc(npc.id, Game.Map.getCurrentMapId());
             }
             setState(Game.Config.STATE.DIALOG);
+          } else if (Game.Player.getTalkablePartyMember && Game.NPC.openCompanionDialog) {
+            var companion = Game.Player.getTalkablePartyMember(facing.x, facing.y);
+            if (companion) {
+              Game.Audio.playSfx('confirm');
+              dialogText = Game.NPC.openCompanionDialog(companion.id);
+              setState(Game.Config.STATE.DIALOG);
+            }
           }
         }
 
@@ -725,8 +822,11 @@ Game.Main = (function() {
         var eventResult = Game.Event.update();
         if (eventResult) {
           if (eventResult.result === 'done') {
-            setState(Game.Config.STATE.EXPLORING);
-            if (!Game.Audio.isBgmPlaying()) {
+            var eventStillActive = Game.Event && Game.Event.isActive ? Game.Event.isActive() : false;
+            if (!eventStillActive && state === Game.Config.STATE.EVENT) {
+              setState(Game.Config.STATE.EXPLORING);
+            }
+            if (state === Game.Config.STATE.EXPLORING && !Game.Audio.isBgmPlaying()) {
               Game.Audio.playBgm('field');
             }
           }
@@ -769,26 +869,25 @@ Game.Main = (function() {
         break;
 
       case Game.Config.STATE.TRANSITION:
-        transitionAlpha += 0.05;
-        if (transitionAlpha >= 1) {
-          Game.Map.load(transitionTarget, transitionSpawnX, transitionSpawnY);
-          // Auto-save on map transition
-          if (Game.Save && Game.Save.autoSave) Game.Save.autoSave();
-          // Set weather for new map
-          if (Game.Weather && Game.Weather.setMapWeather) {
-            var curMap = Game.Map.getCurrentMap();
-            if (curMap) Game.Weather.setMapWeather(curMap.name);
+        transitionAlpha += TRANSITION_SPEED;
+        if (!transitionLoaded && transitionAlpha >= TRANSITION_LOAD_PROGRESS) {
+          transitionLoaded = true;
+          if (transitionData && transitionData.onLoad) {
+            transitionData.onLoad();
+          } else {
+            applyMapLoad(transitionTarget, transitionSpawnX, transitionSpawnY);
           }
-          transitionAlpha = 1;
-          state = 'transition_out';
         }
-        break;
-
-      case 'transition_out':
-        transitionAlpha -= 0.05;
-        if (transitionAlpha <= 0) {
+        if (transitionAlpha >= 1) {
+          var transitionComplete = transitionData && transitionData.onComplete ? transitionData.onComplete : null;
           transitionAlpha = 0;
-          setState(Game.Config.STATE.EXPLORING);
+          transitionLoaded = false;
+          transitionData = null;
+          if (transitionComplete) {
+            transitionComplete();
+          } else {
+            setState(Game.Config.STATE.EXPLORING);
+          }
         }
         break;
 
@@ -1168,8 +1267,8 @@ Game.Main = (function() {
 
     // Reset player
     var pd = Game.Player.getData();
-    pd.hp = 96;
-    pd.maxHp = 96;
+    pd.hp = 80;
+    pd.maxHp = 80;
     pd.attack = 12;
     pd.defense = 6;
     pd.experience = 0;
@@ -1254,11 +1353,15 @@ Game.Main = (function() {
   }
 
   function startTransition(target, spawnX, spawnY) {
-    transitionTarget = target;
-    transitionSpawnX = spawnX;
-    transitionSpawnY = spawnY;
-    transitionAlpha = 0;
-    setState(Game.Config.STATE.TRANSITION);
+    beginTravelTransition({
+      sourceMapId: Game.Map && Game.Map.getCurrentMapId ? Game.Map.getCurrentMapId() : '',
+      targetMapId: target,
+      spawnX: spawnX,
+      spawnY: spawnY,
+      title: 'ぐるりん回送中',
+      subtitle: getMapTravelLabel(target) + ' へ向かっている。',
+      midLabel: '停車待ち'
+    });
   }
 
   function render() {
@@ -1314,9 +1417,8 @@ Game.Main = (function() {
         break;
 
       case Game.Config.STATE.TRANSITION:
-      case 'transition_out':
-        renderExploring();
-        Game.UI.drawTransition(transitionAlpha);
+        renderExploring(true);
+        Game.UI.drawTransition(transitionAlpha, transitionData);
         break;
 
       case Game.Config.STATE.GAMEOVER:
@@ -1354,6 +1456,10 @@ Game.Main = (function() {
     }
     if (Game.UI.drawPopups) Game.UI.drawPopups();
     if (Game.Quests && Game.Quests.draw) Game.Quests.draw();
+  }
+
+  function drawWorldBackdrop(overlayMode) {
+    renderExploring(overlayMode !== false);
   }
 
   function advanceTime(ms) {
@@ -1494,6 +1600,9 @@ Game.Main = (function() {
     if (state === Game.Config.STATE.SHOP && Game.Shop && Game.Shop.getDebugState) {
       payload.shop = Game.Shop.getDebugState();
     }
+    if (state === Game.Config.STATE.PUZZLE && Game.Puzzle && Game.Puzzle.getDebugState) {
+      payload.puzzle = Game.Puzzle.getDebugState();
+    }
     if (state === Game.Config.STATE.EVENT && Game.Event && Game.Event.getStateSnapshot) {
       payload.event = Game.Event.getStateSnapshot();
     }
@@ -1505,6 +1614,16 @@ Game.Main = (function() {
     }
     if (state === Game.Config.STATE.SKILL_LEARN && Game.UI && Game.UI.getSkillLearnDebugState) {
       payload.skillLearn = Game.UI.getSkillLearnDebugState();
+    }
+    if (state === Game.Config.STATE.TRANSITION) {
+      payload.transition = transitionData ? {
+        progress: transitionAlpha,
+        sourceMapId: transitionData.sourceMapId,
+        targetMapId: transitionData.targetMapId,
+        stopLabels: transitionData.stopLabels.slice(),
+        title: transitionData.title,
+        subtitle: transitionData.subtitle
+      } : null;
     }
     return JSON.stringify(payload);
   }
@@ -1574,6 +1693,8 @@ Game.Main = (function() {
     setState: setState,
     handleMapLoaded: markMapVisited,
     startStoryBattle: startStoryBattle,
-    applyDebugLaunchOptions: applyDebugLaunchOptions
+    applyDebugLaunchOptions: applyDebugLaunchOptions,
+    drawWorldBackdrop: drawWorldBackdrop,
+    startChapter: startChapter
   };
 })();

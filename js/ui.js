@@ -352,13 +352,15 @@ Game.UI = (function() {
     var R = Game.Renderer;
     if (!scene) return;
     var titleX = 24;
-    var titleY = 224;
-    R.drawRectAbsolute(18, 214, 282, 48, 'rgba(6, 10, 22, 0.58)');
-    R.drawRectAbsolute(18, 214, 282, 1, 'rgba(255,255,255,0.08)');
-    R.drawTextJP(scene.title, titleX + 1, titleY + 1, 'rgba(0,0,0,0.85)', 17);
-    R.drawTextJP(scene.title, titleX, titleY, scene.accent || '#fff', 17);
-    drawWrappedTextBlock(scene.subtitle, titleX, titleY + 18, 28, 2, 12, '#eef3ff', 9);
-    R.drawTextJP('クリック / Space / Z / Enter でタイトルへ', 458, 292, '#cdd6ee', 8, 'right');
+    var titleY = 221;
+    R.drawRectAbsolute(18, 208, 292, 56, 'rgba(4, 8, 18, 0.76)');
+    R.drawRectAbsolute(18, 208, 292, 2, scene.accent || 'rgba(255,255,255,0.35)');
+    R.drawRectAbsolute(18, 210, 292, 1, 'rgba(255,255,255,0.10)');
+    R.drawTextJP(scene.title, titleX + 1, titleY + 1, 'rgba(0,0,0,0.90)', 18);
+    R.drawTextJP(scene.title, titleX, titleY, scene.accent || '#fff', 18);
+    drawWrappedTextBlock(scene.subtitle, titleX, titleY + 20, 28, 2, 12, '#f1f5ff', 9);
+    R.drawRectAbsolute(304, 282, 158, 12, 'rgba(4,8,18,0.72)');
+    R.drawTextJP('クリック / Space / Z / Enter でタイトルへ', 458, 284, '#ecf1ff', 8, 'right');
   }
 
   function drawIntroHighwayScene(ctx, t) {
@@ -1946,8 +1948,163 @@ Game.UI = (function() {
     }
   }
 
-  function drawTransition(alpha) {
-    Game.Renderer.fadeOverlay(alpha);
+  function easeInOutCubic(value) {
+    var t = Math.max(0, Math.min(1, value));
+    return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+  }
+
+  function getTravelRoutePoints(stops) {
+    var count = Math.max(2, stops && stops.length ? stops.length : 2);
+    var startX = 408;
+    var startY = 268;
+    var endX = 92;
+    var endY = 84;
+    var points = [];
+    for (var i = 0; i < count; i++) {
+      var ratio = count === 1 ? 1 : i / (count - 1);
+      var curve = Math.sin(ratio * Math.PI) * 18;
+      points.push({
+        x: startX + (endX - startX) * ratio,
+        y: startY + (endY - startY) * ratio - curve
+      });
+    }
+    return points;
+  }
+
+  function getTravelBusState(progress, points) {
+    var route = (points && points.length) ? points.slice() : getTravelRoutePoints([]);
+    var offscreenStart = { x: 530, y: 340 };
+    var offscreenEnd = { x: -90, y: 32 };
+    var nodes = [offscreenStart].concat(route).concat([offscreenEnd]);
+    var segmentCount = Math.max(1, nodes.length - 1);
+    var pausePortion = 0.06;
+    var movePortion = Math.max(0.08, (1 - pausePortion * (nodes.length - 2)) / segmentCount);
+    var t = Math.max(0, Math.min(1, progress));
+    var cursor = 0;
+
+    for (var i = 0; i < segmentCount; i++) {
+      var moveStart = cursor;
+      var moveEnd = moveStart + movePortion;
+      if (t <= moveEnd || i === segmentCount - 1) {
+        var local = moveEnd <= moveStart ? 1 : (t - moveStart) / (moveEnd - moveStart);
+        local = easeInOutCubic(local);
+        return {
+          x: nodes[i].x + (nodes[i + 1].x - nodes[i].x) * local,
+          y: nodes[i].y + (nodes[i + 1].y - nodes[i].y) * local,
+          stopIndex: Math.max(0, Math.min(route.length - 1, i - 1)),
+          dwell: false
+        };
+      }
+      cursor = moveEnd;
+
+      if (i > 0 && i < segmentCount - 1) {
+        var pauseEnd = cursor + pausePortion;
+        if (t <= pauseEnd) {
+          return {
+            x: nodes[i + 1].x,
+            y: nodes[i + 1].y,
+            stopIndex: Math.max(0, Math.min(route.length - 1, i)),
+            dwell: true
+          };
+        }
+        cursor = pauseEnd;
+      }
+    }
+
+    return {
+      x: offscreenEnd.x,
+      y: offscreenEnd.y,
+      stopIndex: Math.max(0, route.length - 1),
+      dwell: false
+    };
+  }
+
+  function drawTravelBus(ctx, x, y, accent) {
+    var bodyColor = accent || '#2a8d63';
+    ctx.fillStyle = bodyColor;
+    ctx.fillRect(x - 20, y - 10, 40, 18);
+    ctx.fillStyle = '#dceccf';
+    ctx.fillRect(x - 14, y - 7, 9, 6);
+    ctx.fillRect(x - 2, y - 7, 9, 6);
+    ctx.fillRect(x + 10, y - 7, 6, 6);
+    ctx.fillStyle = '#f0c86a';
+    ctx.fillRect(x - 13, y - 12, 20, 3);
+    ctx.fillStyle = '#11211d';
+    ctx.fillRect(x + 10, y - 4, 5, 9);
+    ctx.fillStyle = '#101726';
+    ctx.fillRect(x - 13, y + 3, 8, 5);
+    ctx.fillRect(x - 1, y + 3, 8, 5);
+    ctx.fillStyle = '#0e1117';
+    ctx.fillRect(x - 12, y + 8, 7, 3);
+    ctx.fillRect(x + 5, y + 8, 7, 3);
+  }
+
+  function drawTransition(alpha, transitionInfo) {
+    var R = Game.Renderer;
+    var C = Game.Config;
+    var ctx = R.getContext();
+    var progress = Math.max(0, Math.min(1, alpha || 0));
+    var eased = easeInOutCubic(progress);
+
+    if (!transitionInfo || transitionInfo.busMovie === false) {
+      Game.Renderer.fadeOverlay(progress);
+      return;
+    }
+
+    var stops = transitionInfo.stopLabels && transitionInfo.stopLabels.length
+      ? transitionInfo.stopLabels
+      : [transitionInfo.targetLabel || '停留所'];
+    var routePoints = getTravelRoutePoints(stops);
+    var busState = getTravelBusState(eased, routePoints);
+    var panelAlpha = 0.28 + eased * 0.38;
+    var routeGlow = 0.16 + Math.sin(Date.now() / 240) * 0.04;
+
+    ctx.fillStyle = 'rgba(4, 6, 18, ' + panelAlpha.toFixed(3) + ')';
+    ctx.fillRect(0, 0, C.CANVAS_WIDTH, C.CANVAS_HEIGHT);
+
+    R.drawDialogBox(58, 28, 364, 76);
+    drawPanelAccent(58, 28, 364, 76, transitionInfo.accent || '#8fd7a1');
+    R.drawTextJP(transitionInfo.title || 'ぐるりん回送中', 78, 42, transitionInfo.accent || '#8fd7a1', 13);
+    R.drawTextJP(clampText(transitionInfo.subtitle || '次の停留所へ向かっている。', 30), 78, 58, '#dce6ff', 9);
+    if (transitionInfo.targetLabel) {
+      R.drawTextJP('次: ' + clampText(transitionInfo.targetLabel, 14), 404, 42, '#ffe08f', 9, 'right');
+    }
+    R.drawTextJP('停車所 ' + (Math.min(stops.length, Math.max(1, busState.stopIndex + 1))) + '/' + stops.length, 404, 58, '#8fb8ff', 8, 'right');
+
+    ctx.strokeStyle = 'rgba(95, 212, 151, ' + routeGlow.toFixed(3) + ')';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(routePoints[0].x, routePoints[0].y);
+    for (var i = 1; i < routePoints.length; i++) {
+      ctx.lineTo(routePoints[i].x, routePoints[i].y);
+    }
+    ctx.stroke();
+
+    for (var si = 0; si < routePoints.length; si++) {
+      var point = routePoints[si];
+      var activeStop = si === busState.stopIndex;
+      var pulse = activeStop ? (0.7 + Math.sin(Date.now() / 160) * 0.18) : 0.38;
+      ctx.fillStyle = 'rgba(242, 201, 109,' + pulse.toFixed(3) + ')';
+      ctx.beginPath();
+      ctx.arc(point.x, point.y, activeStop ? 6 : 4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = activeStop ? '#fff4c8' : '#d2dbf5';
+      R.drawTextJP(clampText(stops[si], 8), point.x, point.y - 15, ctx.fillStyle, activeStop ? 9 : 8, 'center');
+    }
+
+    if (busState.dwell) {
+      ctx.fillStyle = 'rgba(255, 236, 176, 0.2)';
+      ctx.beginPath();
+      ctx.arc(busState.x, busState.y, 22, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    drawTravelBus(ctx, busState.x, busState.y, transitionInfo.accent || '#2a8d63');
+
+    ctx.fillStyle = 'rgba(255,255,255,0.05)';
+    for (var p = 0; p < 12; p++) {
+      ctx.fillRect((p * 43 + Math.floor(Date.now() / 24)) % C.CANVAS_WIDTH, 120 + ((p * 19) % 120), 2, 2);
+    }
   }
 
   function showAreaBanner(mapId, options) {

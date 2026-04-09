@@ -22,6 +22,8 @@ Game.Battle = (function() {
   var skillUses = {};
   var companionSupportState = {};
   var supportActionOverlay = null;
+  var companionAttackState = null;
+  var companionAttackEligible = true;
 
   // Dice system
   var battleDice = [];     // array of dice definitions for this battle
@@ -73,6 +75,10 @@ Game.Battle = (function() {
   var ENEMY_ROLL_SLOW_BONUS_FRAMES = 18;
   var PLAYER_DICE_RESULT_FRAMES = 38;
   var PLAYER_ACTION_RECOVERY_FRAMES = 14;
+  var COMPANION_ATTACK_WINDUP_FRAMES = 8;
+  var COMPANION_ATTACK_ROLL_FRAMES = 18;
+  var COMPANION_ATTACK_SETTLE_FRAMES = 8;
+  var COMPANION_ATTACK_RESULT_FRAMES = 18;
   var GOLD_REWARD_SCALE = 0.4;
   var BATTLE_DIALOG_MAX_CHARS = 36;
   var BATTLE_DIALOG_MAX_LINES = 2;
@@ -817,6 +823,206 @@ Game.Battle = (function() {
     return true;
   }
 
+  function canTriggerCompanionAttackTurn() {
+    return !ritualRuntime || ritualRuntime.ritualMode === 'hp';
+  }
+
+  function getCompanionStrikeProfile(member) {
+    if (!member || !member.companionStrike) return null;
+    return {
+      faces: Array.isArray(member.companionStrike.faces) && member.companionStrike.faces.length
+        ? member.companionStrike.faces.slice()
+        : [1, 2, 2, 3, 3, 4],
+      label: member.companionStrike.label || '援',
+      color: member.companionStrike.color || member.color || '#dce6ff',
+      dotColor: member.companionStrike.dotColor || '#1f2433',
+      shortDesc: member.companionStrike.shortDesc || (member.role || '同行の一投')
+    };
+  }
+
+  function buildCompanionAttackQueue() {
+    var partyMembers = Game.Player.getPartyMembers ? Game.Player.getPartyMembers() : [];
+    var queue = [];
+    for (var i = 0; i < partyMembers.length; i++) {
+      var member = partyMembers[i];
+      var strike = getCompanionStrikeProfile(member);
+      if (!member || !strike) continue;
+      queue.push({
+        member: member,
+        strike: strike
+      });
+    }
+    return queue;
+  }
+
+  function createCompanionDie(member, strike) {
+    return {
+      id: 'companion_' + member.id,
+      name: member.name + 'の賽',
+      faces: strike.faces.slice(),
+      color: strike.color,
+      dotColor: strike.dotColor,
+      glyph: strike.label
+    };
+  }
+
+  function getCompanionAttackStage(state) {
+    var elapsed = state.maxTimer - state.timer;
+    if (elapsed < state.windupFrames) return 'windup';
+    if (elapsed < state.windupFrames + state.rollFrames) return 'roll';
+    if (elapsed < state.windupFrames + state.rollFrames + state.settleFrames) return 'settle';
+    return 'result';
+  }
+
+  function startNextCompanionAttack() {
+    if (!companionAttackState || !companionAttackState.queue.length) {
+      companionAttackState = null;
+      return false;
+    }
+    companionAttackState.index++;
+    if (companionAttackState.index >= companionAttackState.queue.length) {
+      companionAttackState = null;
+      return false;
+    }
+
+    var entry = companionAttackState.queue[companionAttackState.index];
+    var member = entry.member;
+    var strike = entry.strike;
+    var die = createCompanionDie(member, strike);
+    var totalFrames = COMPANION_ATTACK_WINDUP_FRAMES + COMPANION_ATTACK_ROLL_FRAMES +
+      COMPANION_ATTACK_SETTLE_FRAMES + COMPANION_ATTACK_RESULT_FRAMES;
+
+    companionAttackState.current = {
+      member: member,
+      strike: strike,
+      die: die,
+      timer: totalFrames,
+      maxTimer: totalFrames,
+      windupFrames: COMPANION_ATTACK_WINDUP_FRAMES,
+      rollFrames: COMPANION_ATTACK_ROLL_FRAMES,
+      settleFrames: COMPANION_ATTACK_SETTLE_FRAMES,
+      resultFrames: COMPANION_ATTACK_RESULT_FRAMES,
+      faceIndex: 0,
+      resultIndex: Math.floor(Math.random() * die.faces.length),
+      rollSfxPlayed: false,
+      resolved: false,
+      damage: 0,
+      targetName: enemy ? enemy.name : ''
+    };
+    message = member.name + 'が援護の賽を構える…';
+    messageTimer = 0;
+    return true;
+  }
+
+  function beginCompanionAttackTurn() {
+    var queue = buildCompanionAttackQueue();
+    if (!queue.length || !enemy || enemy.hp <= 0 || !canTriggerCompanionAttackTurn() || !companionAttackEligible) return false;
+    companionAttackState = {
+      queue: queue,
+      index: -1,
+      current: null
+    };
+    startNextCompanionAttack();
+    phase = 'companionAttack';
+    animTimer = 0;
+    return true;
+  }
+
+  function finishCompanionAttackTurn() {
+    companionAttackState = null;
+    var attackPreview = previewEnemyPartyAttack();
+    phase = 'enemyAttack';
+    if (attackPreview.activeAttackers.length > 0) {
+      pendingEnemyAttack = attackPreview;
+      startEnemyRollAnimation(attackPreview);
+    } else {
+      pendingEnemyAttack = null;
+      applyEnemyPartyAttack(attackPreview);
+      syncCurrentEnemy();
+    }
+  }
+
+  function applyCompanionAttackResult(current) {
+    if (!current || current.resolved) return false;
+    current.resolved = true;
+    current.faceIndex = current.resultIndex;
+
+    syncCurrentEnemy();
+    if (!enemy || enemy.hp <= 0) {
+      return false;
+    }
+
+    var face = current.die.faces[current.resultIndex];
+    var parsed = parseFace(face);
+    var damage = Math.max(0, parsed.type === 'damage' ? parsed.value : 0);
+    current.damage = damage;
+
+    if (damage > 0) {
+      enemy.hp = Math.max(0, enemy.hp - damage);
+      message = current.member.name + 'の援護！ ' + damage + 'ダメージ！';
+      addBattlePopup('-' + damage, 286, 68, '#ff9b8d');
+      emitBattleParticles('damage', 282, 86, { count: 5 });
+      Game.Audio.playSfx(damage >= 4 ? 'slash_hit' : 'glancing_hit');
+      shakeX = Math.max(shakeX, 3);
+    } else {
+      message = current.member.name + 'の援護！ だが届かない。';
+      Game.Audio.playSfx('glancing_hit');
+    }
+
+    if (enemy.hp <= 0) {
+      enemy.hp = 0;
+      enemy._effects = [];
+      enemyEffects = enemy._effects;
+      var defeatedName = enemy.name;
+      if (handleEnemyPartyDefeat()) {
+        enterVictoryPhase(message + ' ' + defeatedName + 'を倒した！ ' + getTotalEnemyGoldReward() + 'G獲得！');
+        companionAttackState = null;
+        emitBattleParticles('victory', 240, 100, { count: 24 });
+        return true;
+      }
+      message = message + ' ' + defeatedName + 'を倒した！ 次は' + enemy.name + 'だ。';
+    }
+    return false;
+  }
+
+  function updateCompanionAttackState() {
+    if (!companionAttackState || !companionAttackState.current) return false;
+    var current = companionAttackState.current;
+    var elapsed = current.maxTimer - current.timer;
+    var stage = getCompanionAttackStage(current);
+
+    if (Game.Input && elapsed >= current.windupFrames + 6 &&
+        (Game.Input.isPressed('confirm') || Game.Input.isPressed('cancel'))) {
+      current.timer = Math.min(current.timer, current.resultFrames + 4);
+    }
+
+    if (stage === 'roll') {
+      if (!current.rollSfxPlayed) {
+        Game.Audio.playSfx('dice_stop');
+        current.rollSfxPlayed = true;
+      }
+      if (elapsed % 3 === 0) {
+        current.faceIndex = (current.faceIndex + 1) % current.die.faces.length;
+      }
+    } else if (stage === 'settle' || stage === 'result') {
+      current.faceIndex = current.resultIndex;
+    }
+
+    if (stage === 'result') {
+      var finishedBattle = applyCompanionAttackResult(current);
+      if (finishedBattle) return true;
+    }
+
+    current.timer--;
+    if (current.timer > 0) return true;
+
+    if (!startNextCompanionAttack()) {
+      finishCompanionAttackTurn();
+      return false;
+    }
+    return true;
+  }
+
   function isCompanionSupportOverlayVisible() {
     return !!(supportActionOverlay && supportActionOverlay.timer > 0);
   }
@@ -1121,6 +1327,103 @@ Game.Battle = (function() {
     addEffect(playerEffects, type, turnsLeft, value, { delayTick: 1 });
   }
 
+  function addBattlePopup(text, x, y, color) {
+    if (!text || !Game.UI || !Game.UI.addDamagePopup) return;
+    Game.UI.addDamagePopup(text, x, y, color || '#ffffff');
+  }
+
+  function emitBattleParticles(type, x, y, options) {
+    if (!type || !Game.Particles || !Game.Particles.emit) return;
+    Game.Particles.emit(type, x, y, options || {});
+  }
+
+  function showPlayerBattleFeedback(text, color, options) {
+    options = options || {};
+    var popupX = 90 + (options.xOffset || 0);
+    var popupY = 188 - (options.offsetY || 0);
+    addBattlePopup(text, popupX, popupY, color);
+    emitBattleParticles(options.particle, 102 + (options.xOffset || 0), 208 - (options.offsetY || 0), options.particleOptions);
+  }
+
+  function showEnemyBattleFeedback(text, color, options) {
+    options = options || {};
+    var popupX = 286 + (options.xOffset || 0);
+    var popupY = 58 - (options.offsetY || 0);
+    addBattlePopup(text, popupX, popupY, color);
+    emitBattleParticles(options.particle, 282 + (options.xOffset || 0), 82 - (options.offsetY || 0), options.particleOptions);
+  }
+
+  function showEffectFeedback(target, effectType, value, options) {
+    options = options || {};
+    var config = null;
+    switch (effectType) {
+      case 'heal':
+        config = { text: 'HP+' + value, color: '#84ffab', particle: 'heal', particleOptions: { count: 7 } };
+        break;
+      case 'recoil':
+        config = { text: '-' + value, color: '#ff7878', particle: 'damage', particleOptions: { count: 6 } };
+        break;
+      case 'onsen_heal':
+        config = { text: '湯+' + value, color: '#9be4ff', particle: 'onsen_steam', particleOptions: { count: 7 } };
+        break;
+      case 'attack_up':
+        config = { text: '攻+' + value, color: '#ff8c66', particle: 'thunder', particleOptions: { count: 6 } };
+        break;
+      case 'defense_up':
+        config = { text: '防+' + value, color: '#66aaff', particle: 'heal', particleOptions: { count: 4 } };
+        break;
+      case 'dice_bonus':
+        config = { text: '賽+' + value, color: '#5cc4ff', particle: 'dice_roll', particleOptions: { count: 6 } };
+        break;
+      case 'slow_roll':
+        config = { text: '緩', color: '#8fe0ff', particle: 'dice_roll', particleOptions: { count: 5 } };
+        break;
+      case 'steady_floor':
+        config = { text: '底' + value, color: '#dfe6ff', particle: 'dice_roll', particleOptions: { count: 5 } };
+        break;
+      case 'ward':
+        config = { text: '返+' + value, color: '#d9b7ff', particle: 'heal', particleOptions: { count: 4 } };
+        break;
+      case 'ignite_next':
+        config = { text: '火付', color: '#ff915c', particle: 'fire', particleOptions: { count: 7 } };
+        break;
+      case 'enemy_roll_slow':
+        config = { text: '敵鈍', color: '#b8edff', particle: 'dice_roll', particleOptions: { count: 5 } };
+        break;
+      case 'stun':
+        config = { text: '痺', color: '#ffe16a', particle: 'thunder', particleOptions: { count: 5 } };
+        break;
+      case 'burn':
+        config = { text: '炎', color: '#ff7448', particle: 'fire', particleOptions: { count: 7 } };
+        break;
+      case 'cleanse':
+        config = { text: '解', color: '#f1ece4', particle: 'onsen_steam', particleOptions: { count: 6 } };
+        break;
+      default:
+        break;
+    }
+    if (!config) return;
+    if (options.text) config.text = options.text;
+    if (options.color) config.color = options.color;
+    if (options.particle) config.particle = options.particle;
+    if (options.particleOptions) config.particleOptions = options.particleOptions;
+    if (target === 'enemy') {
+      showEnemyBattleFeedback(config.text, config.color, {
+        offsetY: options.offsetY || 0,
+        xOffset: options.xOffset || 0,
+        particle: config.particle,
+        particleOptions: config.particleOptions
+      });
+      return;
+    }
+    showPlayerBattleFeedback(config.text, config.color, {
+      offsetY: options.offsetY || 0,
+      xOffset: options.xOffset || 0,
+      particle: config.particle,
+      particleOptions: config.particleOptions
+    });
+  }
+
   function removeEffect(list, type) {
     var removed = false;
     for (var i = list.length - 1; i >= 0; i--) {
@@ -1377,6 +1680,9 @@ Game.Battle = (function() {
 
   function enterVictoryPhase(victoryMessage) {
     finalizeEnemyPartyVictoryState();
+    companionAttackState = null;
+    enemyRollAnimation = null;
+    pendingEnemyAttack = null;
     phase = 'victory';
     if (typeof victoryMessage === 'string') {
       message = victoryMessage;
@@ -1956,6 +2262,8 @@ Game.Battle = (function() {
     skillUses = {};
     companionSupportState = {};
     supportActionOverlay = null;
+    companionAttackState = null;
+    companionAttackEligible = true;
 
     // Initialize foreground atmosphere effects
     initAtmosphere();
@@ -2326,6 +2634,7 @@ Game.Battle = (function() {
       case 'diceRoll': phaseResult = handleDiceRollPhase(); break;
       case 'diceResult': phaseResult = handleDiceResultPhase(); break;
       case 'playerAttack': phaseResult = handlePlayerAttackPhase(); break;
+      case 'companionAttack': phaseResult = handleCompanionAttackPhase(); break;
       case 'enemyAttack': phaseResult = handleEnemyAttackPhase(); break;
       case 'ritualMoment': phaseResult = handleRitualMomentPhase(); break;
       case 'victory': phaseResult = handleVictoryPhase(); break;
@@ -2513,18 +2822,24 @@ Game.Battle = (function() {
   function handlePlayerAttackPhase() {
         animTimer--;
         if (animTimer <= 0) {
-          var attackPreview = previewEnemyPartyAttack();
-          phase = 'enemyAttack';
-          if (attackPreview.activeAttackers.length > 0) {
-            pendingEnemyAttack = attackPreview;
-            startEnemyRollAnimation(attackPreview);
-          } else {
-            pendingEnemyAttack = null;
-            applyEnemyPartyAttack(attackPreview);
-            syncCurrentEnemy();
+          if (!enemy || enemy.hp <= 0 || getLivingEnemies().length <= 0) {
+            enterVictoryPhase(message);
+            return;
           }
+          if (beginCompanionAttackTurn()) {
+            return;
+          }
+          finishCompanionAttackTurn();
         }
 
+  }
+
+  function handleCompanionAttackPhase() {
+        if (!companionAttackState || !companionAttackState.current) {
+          finishCompanionAttackTurn();
+          return;
+        }
+        updateCompanionAttackState();
   }
 
   function handleEnemyAttackPhase() {
@@ -2617,6 +2932,7 @@ Game.Battle = (function() {
           }
         }
 
+        companionAttackEligible = true;
         phase = 'menu';
 
   }
@@ -2700,6 +3016,7 @@ Game.Battle = (function() {
           enemyRollAnimation = null;
           pendingEnemyAttack = null;
           supportActionOverlay = null;
+          companionAttackState = null;
           supportMenuEntries = [];
           enemyParty = [];
           Game.Audio.playSfx('confirm');
@@ -2725,6 +3042,7 @@ Game.Battle = (function() {
         enemyRollAnimation = null;
         pendingEnemyAttack = null;
         supportActionOverlay = null;
+        companionAttackState = null;
         supportMenuEntries = [];
         enemyParty = [];
         rewardSummary = null;
@@ -2740,6 +3058,7 @@ Game.Battle = (function() {
         enemyRollAnimation = null;
         pendingEnemyAttack = null;
         supportActionOverlay = null;
+        companionAttackState = null;
         supportMenuEntries = [];
         enemyParty = [];
         rewardSummary = null;
@@ -2753,15 +3072,14 @@ Game.Battle = (function() {
   }
 
   function handleUseItemPhase() {
-        var attackPreview = previewEnemyPartyAttack();
-        phase = 'enemyAttack';
-        if (attackPreview.activeAttackers.length > 0) {
-          pendingEnemyAttack = attackPreview;
-          startEnemyRollAnimation(attackPreview);
-        } else {
-          pendingEnemyAttack = null;
-          applyEnemyPartyAttack(attackPreview);
+        if (!enemy || enemy.hp <= 0 || getLivingEnemies().length <= 0) {
+          enterVictoryPhase(message);
+          return;
         }
+        if (beginCompanionAttackTurn()) {
+          return;
+        }
+        finishCompanionAttackTurn();
 
   }
 
@@ -2773,6 +3091,7 @@ Game.Battle = (function() {
         enemyRollAnimation = null;
         pendingEnemyAttack = null;
         supportActionOverlay = null;
+        companionAttackState = null;
         supportMenuEntries = [];
         enemyParty = [];
         rewardSummary = null;
@@ -2790,6 +3109,7 @@ Game.Battle = (function() {
     }
 
     var entry = menuEntry || getMenuEntries()[index] || { id: 'attack' };
+    companionAttackEligible = true;
     switch (entry.id) {
       case 'attack':
         startDiceRoll();
@@ -2804,6 +3124,7 @@ Game.Battle = (function() {
         openSupportMenu();
         break;
       case 'flee':
+        companionAttackEligible = false;
         if (Math.random() < 0.5) {
           message = '逃げ出した！';
           messageTimer = 30;
@@ -2893,34 +3214,48 @@ Game.Battle = (function() {
       if (selected.item.effect === 'slow_roll') {
         addCarryPlayerEffect('slow_roll', 1, 1);
         message = selected.item.name + 'を使った！ 手元の景色がゆっくり見える。';
+        showEffectFeedback('player', 'slow_roll', 1);
       } else if (selected.item.effect === 'focus_bundle') {
         addCarryPlayerEffect('slow_roll', 1, 1);
         addCarryPlayerEffect('steady_floor', 1, selected.item.value || 4);
         message = selected.item.name + 'を鳴らした。次の一投へ心拍が揃う。';
+        showEffectFeedback('player', 'slow_roll', 1, { offsetY: 12 });
+        showEffectFeedback('player', 'steady_floor', selected.item.value || 4);
       } else if (selected.item.effect === 'steady_floor') {
         addCarryPlayerEffect('steady_floor', 1, selected.item.value || 3);
         message = selected.item.name + 'を使った！ 低い目を見切る備えが整った。';
+        showEffectFeedback('player', 'steady_floor', selected.item.value || 3);
       } else if (selected.item.effect === 'dice_bonus') {
         addCarryPlayerEffect('dice_bonus', 1, selected.item.value || 2);
         message = selected.item.name + 'を使った！ 次の出目に勘が乗る。';
+        showEffectFeedback('player', 'dice_bonus', selected.item.value || 2);
       } else if (selected.item.effect === 'silk_focus') {
         addCarryPlayerEffect('slow_roll', 1, 1);
         addCarryPlayerEffect('dice_bonus', 1, selected.item.value || 2);
         message = selected.item.name + 'をしおり代わりにかざした。白糸が目を導く。';
+        showEffectFeedback('player', 'slow_roll', 1, { offsetY: 12 });
+        showEffectFeedback('player', 'dice_bonus', selected.item.value || 2);
       } else if (selected.item.effect === 'enemy_roll_slow') {
         addEffectToLivingEnemies('enemy_roll_slow', 1, selected.item.value || 6);
         message = selected.item.name + 'を使った！ 敵の白い賽が重く鈍る。';
+        showEffectFeedback('enemy', 'enemy_roll_slow', selected.item.value || 6);
       } else if (selected.item.effect === 'defense_up') {
         addEffect(playerEffects, 'defense_up', selected.item.turns || 2, selected.item.value || 4);
         message = selected.item.name + 'を使った！ 守りの間合いが整った。';
+        showEffectFeedback('player', 'defense_up', selected.item.value || 4);
       } else if (selected.item.effect === 'attack_up') {
         addEffect(playerEffects, 'attack_up', selected.item.turns || 2, selected.item.value || 5);
         message = selected.item.name + 'を使った！ 攻めの気配が研ぎ澄まされた。';
+        showEffectFeedback('player', 'attack_up', selected.item.value || 5);
       } else if (selected.item.effect === 'steam_reset') {
         var soothed = removeEffect(playerEffects, 'slow');
         soothed = removeEffect(playerEffects, 'heal_seal') || soothed;
         addEffect(playerEffects, 'onsen_heal', selected.item.turns || 2, selected.item.value || 4);
         var restoredCharges = Game.Player && Game.Player.restoreAllSkillCharges ? Game.Player.restoreAllSkillCharges(1) : 0;
+        if (soothed) {
+          showEffectFeedback('player', 'cleanse', 0, { offsetY: 12 });
+        }
+        showEffectFeedback('player', 'onsen_heal', selected.item.value || 4);
         if (soothed && restoredCharges > 0) {
           message = selected.item.name + 'を開いた。鈍りがほどけ、型の記憶も少し戻った。';
         } else if (soothed) {
@@ -2933,9 +3268,11 @@ Game.Battle = (function() {
       } else if (selected.item.effect === 'ward') {
         addEffect(playerEffects, 'ward', 1, selected.item.value || 8);
         message = selected.item.name + 'を使った！ 返しの余白が足元に宿る。';
+        showEffectFeedback('player', 'ward', selected.item.value || 8);
       } else if (selected.item.effect === 'ignite_next') {
         addEffect(playerEffects, 'ignite_next', 1, 5);
         message = selected.item.name + 'を使った！ 次の一投が熱を帯びる。';
+        showEffectFeedback('player', 'ignite_next', 5);
       } else {
         message = selected.item.name + 'を使った。';
       }
@@ -2953,6 +3290,7 @@ Game.Battle = (function() {
     Game.Player.removeItem(selected.id);
     Game.Player.heal(selected.item.healAmount);
     message = selected.item.name + 'を使った！ HPが' + selected.item.healAmount + '回復！';
+    showEffectFeedback('player', 'heal', selected.item.healAmount);
     messageTimer = 45;
     Game.Audio.playSfx('item');
     itemMenuItems = [];
@@ -2981,6 +3319,7 @@ Game.Battle = (function() {
     }
 
     var skill = selected.skill;
+    var skillSfx = 'confirm';
     if (!Game.Player || !Game.Player.consumeSkillCharge || !Game.Player.consumeSkillCharge(skill.id, 1)) {
       message = skill.name + 'はもう使い切った。';
       messageTimer = 40;
@@ -2991,52 +3330,93 @@ Game.Battle = (function() {
     if (skill.id === 'mikiashi') {
       addCarryPlayerEffect('slow_roll', 1, 1);
       message = '見切り足。白い目の動きがゆるむ。';
+      showEffectFeedback('player', 'slow_roll', 1);
     } else if (skill.id === 'kasanekan') {
       addCarryPlayerEffect('dice_bonus', 1, 2);
       message = '重ね勘。次の目に手応えが乗る。';
+      showEffectFeedback('player', 'dice_bonus', 2);
     } else if (skill.id === 'migamae') {
       addEffect(playerEffects, 'defense_up', 2, 4);
       message = '身構え。肩の力を抜いて守りを作る。';
+      showEffectFeedback('player', 'defense_up', 4);
+    } else if (skill.id === 'ikitsugi') {
+      Game.Player.heal(12);
+      addCarryPlayerEffect('slow_roll', 1, 1);
+      message = '息継ぎ。HPが12戻り、次の賽も少し見切りやすくなる。';
+      showEffectFeedback('player', 'heal', 12, { offsetY: 12 });
+      showEffectFeedback('player', 'slow_roll', 1);
+      skillSfx = 'item';
     } else if (skill.id === 'hibashiri') {
       addCarryPlayerEffect('ignite_next', 1, 5);
       message = '火走り。賽の縁がほの赤く灯る。';
+      showEffectFeedback('player', 'ignite_next', 5);
     } else if (skill.id === 'shirosenyomi') {
       addEffect(enemyEffects, 'stun', 1, 0);
       message = '白線読み。相手の踏み出しが半歩遅れた。';
+      showEffectFeedback('enemy', 'stun', 0);
     } else if (skill.id === 'tsumugibreathe') {
       var cleared = removeEffect(playerEffects, 'slow');
       cleared = removeEffect(playerEffects, 'heal_seal') || cleared;
       addEffect(playerEffects, 'onsen_heal', 2, 4);
       message = cleared ? '紡ぎ息。鈍りと封じがほどけた。' : '紡ぎ息。呼吸が整い、体が軽い。';
+      if (cleared) {
+        showEffectFeedback('player', 'cleanse', 0, { offsetY: 12 });
+      }
+      showEffectFeedback('player', 'onsen_heal', 4);
+      skillSfx = 'item';
     } else if (skill.id === 'kaminariyobi') {
       addEffect(playerEffects, 'attack_up', 2, 6);
       addCarryPlayerEffect('dice_bonus', 1, 1);
       message = '雷呼び。空気がぴりりと尖る。';
+      showEffectFeedback('player', 'attack_up', 6, { offsetY: 12 });
+      showEffectFeedback('player', 'dice_bonus', 1);
     } else if (skill.id === 'kaeriashi') {
       addEffect(playerEffects, 'ward', 1, 8);
       message = '返り足。受け流す余白を足元に残した。';
+      showEffectFeedback('player', 'ward', 8);
+    } else if (skill.id === 'yukuguri') {
+      Game.Player.heal(18);
+      addEffect(playerEffects, 'onsen_heal', 2, 2);
+      message = '湯くぐり。HPが18戻り、湯気があとから静かに効いてくる。';
+      showEffectFeedback('player', 'heal', 18, { offsetY: 12 });
+      showEffectFeedback('player', 'onsen_heal', 2);
+      skillSfx = 'item';
     } else if (skill.id === 'sokomiki') {
       addCarryPlayerEffect('steady_floor', 1, 4);
       addEffect(playerEffects, 'ward', 1, 6);
       message = '底見切り。低い目でも崩れない芯を作った。';
+      showEffectFeedback('player', 'steady_floor', 4, { offsetY: 12 });
+      showEffectFeedback('player', 'ward', 6);
     } else if (skill.id === 'yunomatoi') {
       var soothed = removeEffect(playerEffects, 'slow');
       soothed = removeEffect(playerEffects, 'heal_seal') || soothed;
       addEffect(playerEffects, 'defense_up', 2, 3);
       addEffect(playerEffects, 'onsen_heal', 2, 3);
       message = soothed ? '湯まとい。鈍りがほどけ、守りに湯気が残る。' : '湯まとい。薄い湯気が体を包み、守りが整う。';
+      if (soothed) {
+        showEffectFeedback('player', 'cleanse', 0, { offsetY: 24 });
+      }
+      showEffectFeedback('player', 'defense_up', 3, { offsetY: 12 });
+      showEffectFeedback('player', 'onsen_heal', 3);
+      skillSfx = 'item';
     } else if (skill.id === 'hakokuzushi') {
       addEffect(enemyEffects, 'stun', 1, 0);
       addCarryPlayerEffect('dice_bonus', 1, 1);
       message = '荷崩し。相手の重心がわずかに浮いた。';
+      showEffectFeedback('enemy', 'stun', 0, { offsetY: 12 });
+      showEffectFeedback('player', 'dice_bonus', 1);
     } else if (skill.id === 'karakaze') {
       addCarryPlayerEffect('slow_roll', 1, 1);
       addEffect(playerEffects, 'attack_up', 2, 4);
       message = '空っ風。呼吸が研がれ、踏み込みが軽くなる。';
+      showEffectFeedback('player', 'slow_roll', 1, { offsetY: 12 });
+      showEffectFeedback('player', 'attack_up', 4);
     } else if (skill.id === 'itoyurai') {
       addEffectToLivingEnemies('enemy_roll_slow', 2, 6);
       addCarryPlayerEffect('dice_bonus', 1, 1);
       message = '糸ゆらい。敵の白い賽が細く揺れて鈍る。';
+      showEffectFeedback('enemy', 'enemy_roll_slow', 6, { offsetY: 12 });
+      showEffectFeedback('player', 'dice_bonus', 1);
     } else {
       message = skill.name + 'を放った。';
     }
@@ -3044,7 +3424,7 @@ Game.Battle = (function() {
     messageTimer = 45;
     phase = 'playerAttack';
     animTimer = PLAYER_ACTION_RECOVERY_FRAMES;
-    Game.Audio.playSfx('confirm');
+    Game.Audio.playSfx(skillSfx);
   }
 
   // Draw a single die with custom color and face value
@@ -3192,6 +3572,130 @@ Game.Battle = (function() {
           : (enemyRollAnimation.slowed ? 'ゴロゴロ…' : 'コロコロ…'));
       R.drawTextJP(attackerLabel, 116, 106, '#aebcd8', 8);
       R.drawTextJP(cue, 346, 104, '#dfe7f7', 9);
+    }
+  }
+
+  function drawCompanionAttackAnimation(R, ctx, C) {
+    if (!companionAttackState || !companionAttackState.current) return;
+    var current = companionAttackState.current;
+    var stage = getCompanionAttackStage(current);
+    var elapsed = current.maxTimer - current.timer;
+    var accent = current.member.color || current.strike.color || '#8fe0ff';
+    var panelX = 222;
+    var panelY = 142;
+    var panelW = 238;
+    var panelH = 82;
+    var queueIndex = companionAttackState.index + 1;
+    var queueCount = companionAttackState.queue.length;
+    var charge = current.windupFrames > 0 ? Math.min(1, elapsed / current.windupFrames) : 1;
+    var dieX = panelX + 18;
+    var dieY = panelY + 20 + (stage === 'windup' ? Math.round((1 - charge) * 3) : 0);
+    var dieFlash = stage === 'roll'
+      ? (elapsed % 4 < 2)
+      : (stage === 'result' && current.damage > 0 && current.timer % 4 < 2);
+    var cue = '';
+    var detailLines = wrapBattleText(current.strike.shortDesc || current.member.role, 19, 2);
+
+    if (stage === 'windup') {
+      cue = '構え';
+    } else if (stage === 'roll') {
+      cue = 'ころ…';
+    } else if (stage === 'settle') {
+      cue = '止まる';
+    } else if (current.damage > 0) {
+      cue = faceText(current.die.faces[current.resultIndex]) + ' / ' + current.damage + '打';
+    } else {
+      cue = faceText(current.die.faces[current.resultIndex]) + ' / 届かず';
+    }
+
+    ctx.fillStyle = hexToRgba(current.strike.color || accent, stage === 'windup' ? 0.10 + charge * 0.08 : 0.16);
+    ctx.fillRect(panelX, panelY, panelW, panelH);
+    ctx.strokeStyle = hexToRgba(accent, 0.35);
+    ctx.lineWidth = 1;
+    ctx.strokeRect(panelX + 0.5, panelY + 0.5, panelW - 1, panelH - 1);
+    ctx.fillStyle = hexToRgba(accent, 0.16);
+    ctx.fillRect(panelX + 12, panelY + panelH - 12, Math.floor((panelW - 24) * (stage === 'windup' ? charge : 1)), 2);
+
+    if (stage !== 'windup' && enemy) {
+      ctx.strokeStyle = hexToRgba(accent, 0.22);
+      ctx.beginPath();
+      ctx.moveTo(dieX + 42, dieY + 20);
+      ctx.lineTo(314, 104);
+      ctx.stroke();
+    }
+
+    R.drawTextJP('同行の一投', panelX + 12, panelY + 6, accent, 10);
+    R.drawTextJP(queueIndex + '/' + queueCount, panelX + panelW - 12, panelY + 6, '#dbe3ff', 9, 'right');
+    drawDie(R, ctx, dieX, dieY, current.die, current.faceIndex, 42, stage !== 'roll', dieFlash);
+    R.drawTextJP(current.member.name, panelX + 78, panelY + 18, accent, 12);
+    R.drawTextJP(clampBattleText(cue, 12), panelX + panelW - 12, panelY + 18, '#f4eed7', 10, 'right');
+    drawBattleWrappedLines(R, detailLines, panelX + 78, panelY + 34, 10, '#dbe3ff', 9);
+
+    if (queueCount > 1) {
+      var listY = panelY + 62;
+      var chipX = panelX + 78;
+      for (var i = 0; i < queueCount; i++) {
+        var entry = companionAttackState.queue[i];
+        var isCurrent = i === companionAttackState.index;
+        R.drawRectAbsolute(chipX - 2, listY - 2, 46, 12, isCurrent ? hexToRgba(entry.member.color || '#8fe0ff', 0.16) : 'rgba(10,14,24,0.42)');
+        R.drawTextJP(clampBattleText(entry.member.name, 4), chipX, listY, isCurrent ? (entry.member.color || '#8fe0ff') : '#9ea9c8', 8);
+        chipX += 50;
+      }
+    }
+  }
+
+  function getTurnFlowSteps() {
+    var partyMembers = Game.Player.getPartyMembers ? Game.Player.getPartyMembers() : [];
+    var steps = [
+      { id: 'player', label: '旅人', color: '#ffd66b' }
+    ];
+    if (partyMembers.length > 0 && canTriggerCompanionAttackTurn()) {
+      steps.push({
+        id: 'companion',
+        label: companionAttackState && companionAttackState.current ? companionAttackState.current.member.name : '同行',
+        color: '#8fe0ff'
+      });
+    }
+    steps.push({ id: 'enemy', label: '敵', color: '#ffb18b' });
+    return steps;
+  }
+
+  function drawTurnFlowPanel(R) {
+    var steps = getTurnFlowSteps();
+    var activeId = getTurnFlowLabel();
+    var x = 242;
+    var y = 8;
+    var w = 228;
+    var innerX = x + 10;
+    var innerW = w - 20;
+    var gap = 6;
+    var stepW = Math.floor((innerW - gap * (steps.length - 1)) / steps.length);
+    var cursorX = innerX;
+    var activeIndex = 0;
+    var i;
+
+    for (i = 0; i < steps.length; i++) {
+      if (steps[i].id === activeId) {
+        activeIndex = i;
+        break;
+      }
+    }
+
+    R.drawDialogBox(x, y, w, 18);
+    drawBattlePanelAccent(R, x, y, w, 18, steps[activeIndex].color);
+
+    for (i = 0; i < steps.length; i++) {
+      var step = steps[i];
+      var isActive = step.id === activeId;
+      var isPast = i < activeIndex;
+      var fill = isActive ? hexToRgba(step.color, 0.18) : (isPast ? 'rgba(255,255,255,0.06)' : 'rgba(10,14,24,0.36)');
+      var labelColor = isActive ? step.color : (isPast ? '#d9deeb' : '#7e88a2');
+      R.drawRectAbsolute(cursorX, y + 5, stepW, 8, fill);
+      R.drawTextJP(clampBattleText(step.label, 4), cursorX + Math.floor(stepW / 2), y + 6, labelColor, 8, 'center');
+      if (i < steps.length - 1) {
+        R.drawTextJP('→', cursorX + stepW + 1, y + 6, '#7e88a2', 8);
+      }
+      cursorX += stepW + gap;
     }
   }
 
@@ -3373,6 +3877,17 @@ Game.Battle = (function() {
 
   function isBattleMessageVisible() {
     return !!(message && phase !== 'reward' && !isBossActionOverlayVisible());
+  }
+
+  function getBattleMessageLabel() {
+    if (isSpecialRitualBattle()) return '儀式の声';
+    if (phase === 'companionAttack') return '同行の一投';
+    if (phase === 'enemyAttack') return '敵の手';
+    if (phase === 'menu' || phase === 'itemMenu' || phase === 'skillMenu' || phase === 'supportMenu' ||
+        phase === 'diceRoll' || phase === 'diceResult' || phase === 'playerAttack' || phase === 'useItem') {
+      return '旅人の手';
+    }
+    return '戦況';
   }
 
   function isDialogueOverlayVisible() {
@@ -4278,27 +4793,28 @@ Game.Battle = (function() {
       ? Game.Illustrations.getBossKey(enemy._enemyId)
       : '';
     var hasBossArt = !!bossArtKey;
+    var overlayAlpha = hasBossArt ? 0.84 : 0.68;
 
-    ctx.fillStyle = 'rgba(5,8,20,0.62)';
+    ctx.fillStyle = 'rgba(5,8,20,' + overlayAlpha.toFixed(3) + ')';
     ctx.fillRect(0, 0, C.CANVAS_WIDTH, C.CANVAS_HEIGHT);
 
     if (hasBossArt && Game.Illustrations.drawCardAbsolute) {
       Game.Illustrations.drawCardAbsolute(
         bossArtKey,
-        114,
-        36,
-        252,
-        132,
+        110,
+        28,
+        260,
+        136,
         {
           accent: introAccent,
-          matteAlpha: 0.04,
+          matteAlpha: 0.02,
           label: enemy.name
         }
       );
-      ctx.fillStyle = 'rgba(6,10,24,0.88)';
-      ctx.fillRect(98, 180, 284, 52);
+      ctx.fillStyle = 'rgba(6,10,24,0.97)';
+      ctx.fillRect(84, 174, 312, 64);
       ctx.fillStyle = introAccent;
-      ctx.fillRect(112, 188, 256, 2);
+      ctx.fillRect(102, 184, 276, 2);
     } else {
       ctx.fillStyle = '#060a17';
       ctx.fillRect(leftX, 86, bandWidth, 30);
@@ -4314,9 +4830,9 @@ Game.Battle = (function() {
       ctx.fillRect(0, 0, C.CANVAS_WIDTH, C.CANVAS_HEIGHT);
     }
 
-    var labelY = hasBossArt ? 188 : 96;
-    var midY = hasBossArt ? 206 : 120;
-    var subY = hasBossArt ? 222 : 146;
+    var labelY = hasBossArt ? 190 : 96;
+    var midY = hasBossArt ? 208 : 120;
+    var subY = hasBossArt ? 224 : 146;
     var introLabelColor = hasBossArt ? '#f6e3a1' : introAccent;
     var introMidColor = hasBossArt ? '#c1d1ff' : '#a9b5d9';
     R.drawTextJP(clampBattleText(introLabel, 18), 240, labelY, introLabelColor, 15, 'center');
@@ -4327,10 +4843,17 @@ Game.Battle = (function() {
     }
   }
 
+  function getTurnFlowLabel() {
+    if (phase === 'enemyAttack') return 'enemy';
+    if (phase === 'companionAttack') return 'companion';
+    return 'player';
+  }
+
   function getStateSnapshot() {
     if (!active || !enemy) return null;
     return {
       phase: phase,
+      turnFlow: getTurnFlowLabel(),
       backdropId: getBattleBackdropId(),
       illustrationKey: phase === 'intro' && Game.Illustrations && Game.Illustrations.getBossKey
         ? Game.Illustrations.getBossKey(enemy._enemyId)
@@ -4356,6 +4879,17 @@ Game.Battle = (function() {
         timer: enemyRollAnimation.timer,
         attackers: enemyRollAnimation.attackers ? enemyRollAnimation.attackers.slice() : [],
         diceCount: enemyRollAnimation.dice ? enemyRollAnimation.dice.length : 0
+      } : null,
+      companionAttack: companionAttackState && companionAttackState.current ? {
+        memberId: companionAttackState.current.member.id,
+        memberName: companionAttackState.current.member.name,
+        label: companionAttackState.current.strike.label,
+        shortDesc: companionAttackState.current.strike.shortDesc,
+        face: faceText(companionAttackState.current.die.faces[companionAttackState.current.faceIndex]),
+        resolved: companionAttackState.current.resolved,
+        queueIndex: companionAttackState.index,
+        queueLength: companionAttackState.queue.length,
+        timer: companionAttackState.current.timer
       } : null,
       targetIndex: currentTargetIndex,
       enemy: {
@@ -4465,6 +4999,7 @@ Game.Battle = (function() {
       ? getBattleHeaderLabel() + ' ' + getLivingEnemies().length + '体'
       : getBattleHeaderLabel();
     R.drawTextJP(clampBattleText(battleHeaderText, 11), 20, 12, getBattleAccentColor(), 10);
+    drawTurnFlowPanel(R);
 
     // Enemy
     if (enemy) {
@@ -4550,6 +5085,7 @@ Game.Battle = (function() {
 
     drawForegroundAtmosphere(R, ctx, C);
     drawEnemyRollAnimation(R, ctx, C);
+    drawCompanionAttackAnimation(R, ctx, C);
 
     // Player stats
     var pd = Game.Player.getData();
@@ -4596,13 +5132,17 @@ Game.Battle = (function() {
         var member = partyMembers[pmi];
         var chipX = 20 + pmi * 44;
         var ready = !companionSupportState[member.id];
-        var isActing = isCompanionSupportOverlayVisible() && supportActionOverlay.memberId === member.id;
+        var isActing = (isCompanionSupportOverlayVisible() && supportActionOverlay.memberId === member.id) ||
+          (companionAttackState && companionAttackState.current && companionAttackState.current.member.id === member.id);
+        var companionPhaseActive = phase === 'companionAttack' && companionAttackState && companionAttackState.current;
+        var chipStatus = isActing ? '一投中' : (companionPhaseActive ? '待機' : (ready ? '支援可' : '使用済'));
+        var chipStatusColor = isActing ? (member.color || '#dce6ff') : (companionPhaseActive ? '#dbe3ff' : (ready ? '#dbe7ff' : '#6f7790'));
         if (isActing) {
           R.drawRectAbsolute(chipX - 4, 158, 38, 24, hexToRgba(member.color || '#dce6ff', 0.16));
         }
         R.drawRectAbsolute(chipX, 162, 4, 4, member.color || '#dce6ff');
         R.drawTextJP(member.name, chipX, 162, member.color || '#dce6ff', 9);
-        R.drawTextJP(ready ? '支援可' : '使用済', chipX, 174, ready ? '#dbe7ff' : '#6f7790', 7);
+        R.drawTextJP(chipStatus, chipX, 174, chipStatusColor, 7);
       }
     }
 
@@ -4869,7 +5409,7 @@ Game.Battle = (function() {
       var messageLines = wrapBattleText(message, 42, 2);
       R.drawDialogBox(10, 278, 460, 39);
       drawBattlePanelAccent(R, 10, 278, 460, 39, isSpecialRitualBattle() ? '#ffd66b' : '#8fb8ff');
-      R.drawTextJP(isSpecialRitualBattle() ? '儀式の声' : '戦況', 20, 286, isSpecialRitualBattle() ? '#ffd66b' : '#8fb8ff', 10);
+      R.drawTextJP(getBattleMessageLabel(), 20, 286, isSpecialRitualBattle() ? '#ffd66b' : '#8fb8ff', 10);
       drawBattleWrappedLines(R, messageLines, 20, 294, 10, '#fff', 10);
     }
 
@@ -4987,6 +5527,7 @@ Game.Battle = (function() {
                 var playerDataHI = Game.Player.getData();
                 playerDataHI.hp -= invertDmg;
                 message += ' 回復反転！' + invertDmg + 'ダメージ！';
+                showEffectFeedback('player', 'recoil', invertDmg);
                 Game.Audio.playSfx('damage');
                 if (Game.Particles) Game.Particles.emit('damage', 100, 220, { count: 6 });
                 if (playerDataHI.hp <= 0) {
@@ -4999,6 +5540,7 @@ Game.Battle = (function() {
                 }
               } else {
                 Game.Player.heal(healTotal + onsenHeal);
+                showEffectFeedback('player', 'heal', healTotal + onsenHeal);
                 if (Game.Particles) Game.Particles.emit('heal', 100, 210, { count: 5 });
               }
             }
@@ -5010,25 +5552,31 @@ Game.Battle = (function() {
               var diceId = battleDice[d].id || '';
               if (diceId === 'fireDice' && dp.type === 'damage' && dp.value >= 7) {
                 addEffect(enemyEffects, 'burn', 3, 5);
+                showEffectFeedback('enemy', 'burn', 5);
               }
               if (diceId === 'onsenDice' && dp.type === 'heal') {
                 addEffect(playerEffects, 'onsen_heal', 2, 3);
+                showEffectFeedback('player', 'onsen_heal', 3, { offsetY: 14 });
               }
               if (diceId === 'konnyakuDice' && dp.type === 'damage' && dp.value >= 10) {
                 addEffect(enemyEffects, 'stun', 1, 0);
+                showEffectFeedback('enemy', 'stun', 0, { offsetY: 14 });
               }
               if (diceId === 'gunmaDice' && dp.type === 'damage' && dp.value >= 10) {
                 addEffect(playerEffects, 'attack_up', 2, 5);
+                showEffectFeedback('player', 'attack_up', 5, { offsetY: 14 });
                 if (Game.Particles) Game.Particles.emit('thunder', 240, 100, { count: 12 });
               }
               if (diceId === 'cabbageDice' && dp.type === 'damage' && dp.value >= 15) {
                 addEffect(playerEffects, 'defense_up', 2, 5);
+                showEffectFeedback('player', 'defense_up', 5, { offsetY: 14 });
               }
             }
 
             var igniteNext = hasEffect(playerEffects, 'ignite_next');
             if (igniteNext && dmg > 0) {
               addEffect(enemyEffects, 'burn', 3, Math.max(4, igniteNext.value || 5));
+              showEffectFeedback('enemy', 'burn', Math.max(4, igniteNext.value || 5), { offsetY: 28 });
               removeEffect(playerEffects, 'ignite_next');
             }
 

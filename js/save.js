@@ -124,6 +124,50 @@ Game.Save = (function() {
     return null;
   }
 
+  function hasActiveStoryFlags(storyFlags) {
+    if (!storyFlags || typeof storyFlags !== 'object') return false;
+    for (var flag in storyFlags) {
+      if (!storyFlags.hasOwnProperty(flag)) continue;
+      if (storyFlags[flag]) return true;
+    }
+    return false;
+  }
+
+  function isLegacyOpeningEconomySnapshot(data) {
+    if (!data || !data.player) return false;
+
+    var player = data.player;
+    var chapter = data.chapter || player.chapter || 1;
+    var inventory = player.inventory || [];
+    var partyMembers = player.partyMembers || [];
+    var skillsKnown = player.skillsKnown || [];
+    var keyItems = player.keyItems || [];
+    var diceSlots = Math.max(1, player.diceSlots || 1);
+
+    return data.mapName === 'maebashi' &&
+      chapter === 1 &&
+      (player.experience || 0) === 0 &&
+      !player.armor &&
+      diceSlots === 1 &&
+      !inventory.length &&
+      !partyMembers.length &&
+      !skillsKnown.length &&
+      !keyItems.length &&
+      !hasActiveStoryFlags(data.storyFlags || {});
+  }
+
+  function normalizeOpeningEconomy(data) {
+    if (!data || !data.player) return data;
+    if (!isLegacyOpeningEconomySnapshot(data)) return data;
+
+    var normalizedGold = 60;
+    if ((data.player.gold || 0) <= normalizedGold) return data;
+
+    var normalized = clone(data);
+    normalized.player.gold = normalizedGold;
+    return normalized;
+  }
+
   function getShopState() {
     if (Game.Shop && Game.Shop.exportState) {
       return Game.Shop.exportState();
@@ -158,7 +202,7 @@ Game.Save = (function() {
     var raw = localStorage.getItem(getStorageKey(slot));
     if (!raw) return null;
     try {
-      return JSON.parse(raw);
+      return normalizeOpeningEconomy(JSON.parse(raw));
     } catch (err) {
       return null;
     }
@@ -763,7 +807,7 @@ Game.Save = (function() {
       if (!expanded) {
         return { success: false, error: 'このあいことばは使えない。' };
       }
-      return { success: true, data: expanded };
+      return { success: true, data: normalizeOpeningEconomy(expanded) };
     } catch (err) {
       return { success: false, error: 'あいことばを読み取れない。' };
     }

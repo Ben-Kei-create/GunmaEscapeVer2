@@ -4,11 +4,13 @@ Game.Skills = (function() {
     'mikiashi',
     'kasanekan',
     'migamae',
+    'ikitsugi',
     'hibashiri',
     'shirosenyomi',
     'tsumugibreathe',
     'kaminariyobi',
-    'kaeriashi'
+    'kaeriashi',
+    'yukuguri'
   ];
 
   var victoryOffers = {
@@ -66,6 +68,15 @@ Game.Skills = (function() {
       stockCap: 8,
       color: '#8fdca0'
     },
+    ikitsugi: {
+      id: 'ikitsugi',
+      name: '息継ぎ',
+      desc: '一歩ぶんだけ呼吸を取り戻し、HPを12回復する。次の一投も少し見切りやすくなる。',
+      shortDesc: 'HP12回復、次のダイス速度を少し緩める',
+      stockGain: 3,
+      stockCap: 7,
+      color: '#9ff7d8'
+    },
     hibashiri: {
       id: 'hibashiri',
       name: '火走り',
@@ -110,6 +121,15 @@ Game.Skills = (function() {
       stockGain: 2,
       stockCap: 6,
       color: '#d8bfff'
+    },
+    yukuguri: {
+      id: 'yukuguri',
+      name: '湯くぐり',
+      desc: '浅い湯気をくぐり、HPを18回復する。さらに2ターン、じわりと体力が戻る。',
+      shortDesc: 'HP18回復、2ターン継続回復',
+      stockGain: 2,
+      stockCap: 5,
+      color: '#9be4ff'
     },
     sokomiki: {
       id: 'sokomiki',

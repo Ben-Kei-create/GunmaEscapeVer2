@@ -404,6 +404,17 @@ Game.Items = (function() {
       price: 70
     },
 
+    breatherDice: {
+      id: 'breatherDice',
+      name: '息継ぎサイコロ',
+      desc: '出目: 1-2-2-3-H2-H3 小さく立て直す',
+      type: 'dice',
+      faces: [1, 2, 2, 3, 'H2', 'H3'],
+      color: '#dfffea',
+      dotColor: '#2b8d63',
+      price: 45
+    },
+
     // Heal dice: some faces heal instead of damage
     healDice: {
       id: 'healDice',

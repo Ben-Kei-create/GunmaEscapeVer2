@@ -9,6 +9,9 @@ Game.Illustrations = (function() {
     border_glitch: 'border_glitch',
     forest_wake: 'forest_wake',
     dawn_frontier: 'frontier_dawn',
+    white_girl_dawn: 'white_girl_dawn',
+    white_girl_platform: 'white_girl_platform',
+    white_girl_threshold: 'white_girl_threshold',
     gururin_stop: 'gururin_loop',
     gururin_loop: 'gururin_loop',
     akagi_approach: 'akagi_approach',
@@ -142,6 +145,27 @@ Game.Illustrations = (function() {
     fillRect(ctx, x + 4, y + 12, 2, 5, palette.leg || '#2b2a31');
   }
 
+  function drawAngelGirl(ctx, x, y, palette) {
+    palette = palette || {};
+    fillRect(ctx, x + 4, y, 4, 5, palette.hair || '#f3f7ff');
+    fillRect(ctx, x + 3, y + 1, 6, 4, palette.skin || '#e8d8cd');
+    fillRect(ctx, x + 1, y + 4, 10, 4, palette.hair || '#f3f7ff');
+    fillRect(ctx, x, y + 7, 12, 3, palette.halo || '#d9ecff');
+    fillRect(ctx, x - 4, y + 8, 4, 10, palette.wing || '#dce8ff');
+    fillRect(ctx, x + 12, y + 8, 4, 10, palette.wing || '#dce8ff');
+    fillRect(ctx, x - 2, y + 10, 16, 3, palette.wingShadow || '#a7c2ea');
+    fillRect(ctx, x + 3, y + 6, 6, 3, palette.collar || '#8cb9ff');
+    fillRect(ctx, x + 2, y + 9, 8, 11, palette.dress || '#f8fbff');
+    fillRect(ctx, x + 1, y + 14, 10, 7, palette.skirt || '#d7ebff');
+    fillRect(ctx, x + 3, y + 21, 2, 5, palette.leg || '#d8dbe7');
+    fillRect(ctx, x + 7, y + 21, 2, 5, palette.leg || '#d8dbe7');
+    fillRect(ctx, x + 2, y + 25, 3, 2, palette.shoe || '#5c76a8');
+    fillRect(ctx, x + 7, y + 25, 3, 2, palette.shoe || '#5c76a8');
+    fillRect(ctx, x + 4, y + 10, 1, 1, palette.eye || '#3b5f97');
+    fillRect(ctx, x + 7, y + 10, 1, 1, palette.eye || '#3b5f97');
+    fillRect(ctx, x + 5, y + 12, 2, 1, palette.mouth || '#cda9b3');
+  }
+
   function drawSteamPlumes(ctx, color, alphaColor) {
     for (var i = 0; i < 6; i++) {
       var x = 16 + i * 24;
@@ -259,6 +283,79 @@ Game.Illustrations = (function() {
         fillRect(ctx, 18, 48, 22, 18, '#433c48');
         fillRect(ctx, 42, 44, 14, 22, '#2a3146');
         fillRect(ctx, 23, 54, 5, 5, '#f6c963');
+        break;
+      case 'white_girl_dawn':
+        drawBands(ctx, ['#12182c', '#25355c', '#6b83bb', '#b9d3ff', '#eef6ff']);
+        drawMountainLayer(ctx, 48, [10, 14, 8, 16, 7, 13, 9], '#20304f');
+        fillRect(ctx, 0, 58, ART_WIDTH, 38, '#5d6f8f');
+        drawRoad(ctx, 54, ART_HEIGHT, 18, 72, '#6a6475');
+        fillRect(ctx, 20, 46, 4, 30, '#6d7898');
+        fillRect(ctx, 14, 44, 18, 6, '#edf5ff');
+        fillRect(ctx, 118, 42, 26, 14, '#24304a');
+        fillRect(ctx, 122, 46, 18, 6, '#9bd0ff');
+        fillRect(ctx, 112, 56, 8, 26, '#2e3b55');
+        fillRect(ctx, 0, 76, ART_WIDTH, 20, '#39465f');
+        fillRect(ctx, 108, 64, 34, 2, '#f2f7ff');
+        drawAngelGirl(ctx, 70, 38, {
+          hair: '#f6fbff',
+          skin: '#ecd9d2',
+          wing: '#f1f6ff',
+          wingShadow: '#b7ccf4',
+          collar: '#8ab8ff',
+          dress: '#ffffff',
+          skirt: '#d9edff',
+          shoe: '#5d78ae'
+        });
+        fillRect(ctx, 66, 34, 20, 2, 'rgba(255,255,255,0.6)');
+        break;
+      case 'white_girl_platform':
+        drawBands(ctx, ['#08101f', '#10203b', '#1b3558', '#315784']);
+        fillRect(ctx, 0, 62, ART_WIDTH, 34, '#182433');
+        fillRect(ctx, 0, 70, ART_WIDTH, 2, '#f4f8ff');
+        fillRect(ctx, 0, 74, ART_WIDTH, 18, '#39475d');
+        fillRect(ctx, 124, 18, 5, 56, '#5d6986');
+        fillRect(ctx, 112, 18, 30, 7, '#edf5ff');
+        fillRect(ctx, 32, 42, 34, 6, '#52607a');
+        fillRect(ctx, 34, 48, 4, 10, '#404e68');
+        fillRect(ctx, 58, 48, 4, 10, '#404e68');
+        for (var p = 0; p < 5; p++) {
+          fillRect(ctx, 14 + p * 30, 28 + (p % 2) * 8, 3, 1, '#dfefff');
+        }
+        drawAngelGirl(ctx, 82, 34, {
+          hair: '#eef6ff',
+          skin: '#ecd9d2',
+          wing: '#eef5ff',
+          wingShadow: '#abc3eb',
+          collar: '#78aef8',
+          dress: '#ffffff',
+          skirt: '#d5e9ff',
+          shoe: '#4e6b98'
+        });
+        fillRect(ctx, 74, 61, 24, 3, '#aacdff');
+        break;
+      case 'white_girl_threshold':
+        drawBands(ctx, ['#040814', '#0a1022', '#12203a', '#1b2d50']);
+        fillRect(ctx, 0, 58, ART_WIDTH, 38, '#121829');
+        fillRect(ctx, 18, 20, 140, 6, '#d8ebff');
+        fillRect(ctx, 28, 26, 6, 48, '#394762');
+        fillRect(ctx, 142, 26, 6, 48, '#394762');
+        fillRect(ctx, 44, 56, 88, 4, '#f4f7ff');
+        fillRect(ctx, 44, 62, 88, 2, '#91bcff');
+        for (var b = 0; b < 6; b++) {
+          fillRect(ctx, 30 + b * 20, 34 + (b % 3) * 7, 10, 1, b % 2 ? '#8ecbff' : '#ffffff');
+        }
+        drawAngelGirl(ctx, 78, 30, {
+          hair: '#f7fbff',
+          skin: '#efdcd4',
+          wing: '#f2f7ff',
+          wingShadow: '#aac6f3',
+          collar: '#7fb2ff',
+          dress: '#ffffff',
+          skirt: '#dceeff',
+          shoe: '#5873a6'
+        });
+        fillRect(ctx, 66, 26, 24, 2, 'rgba(210,232,255,0.75)');
+        fillRect(ctx, 74, 70, 16, 2, '#f8fbff');
         break;
       case 'gururin_loop':
         drawBands(ctx, ['#0a0d16', '#10172a', '#16223a', '#1d273b']);

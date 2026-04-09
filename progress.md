@@ -1146,3 +1146,198 @@ Original prompt: そうだね。セーブできる村役場みたいなところ
   - 同 summary で、高崎修練は `rank=3 / exp=58 / gold=0`、水上修練は `rank=14 / exp=126 / gold=0` の設計になっており、群れプロフィールと各役割が battle intro へ渡ることを確認した。
   - `takasaki-battle.png` と `minakami-battle.png` を目視し、修練戦が通常ボス導入とは別の群れ演出として成立していることを確認した。
   - 修練NPCの実機会話確認中に、水上の修験者を既存NPCと同座標へ置いて会話が食い違う不具合を発見し、`(17,7)` へ移して解消した。最終確認では console error / pageerror は 0 件。
+- 2026-04-08: 初期所持金まわりの安全策を追加。
+  - `js/save.js`
+    - 新規開始の初期値自体はすでに `60G` だったため、数値そのものは維持したまま、旧バランスの超序盤セーブだけを読み込み時に正規化する `normalizeOpeningEconomy()` を追加した。
+    - 判定条件は `chapter 1 / maebashi / experience 0 / inventory 空 / party 空 / skills 空 / armor なし / dice slot 1 / story flag なし` に限定し、進行済みセーブや普通の金策状態には触れないようにした。
+    - `readSave()` と `loadPassphrase()` の両方で同補正を通すようにして、ローカル記録とあいことばの両経路で古い `180G` 開幕を持ち越さないようにした。
+- 2026-04-08: 初期所持金ガードの検証結果
+  - `node --check js/save.js` と `git diff --check` 通過。
+  - `develop-web-game` の Playwright client を `output/web-game-20260408/opening-economy-guard` で実行し、新規開始から前橋へ出た直後の `player.gold = 60` を `state-0.json` で確認した。
+  - `shot-0.png` も確認し、前橋到着直後の通常画面で所持金以外の起動導線に崩れがないことを目視した。
+  - `legacy-save-normalization.json` では、意図的に `180G` の旧序盤セーブを `slot1` へ差し込んだ状態でも、`Game.Save.getSlotInfo(1).gold = 60`、`Game.Save.load(1)` 後の `player.gold = 60` に補正されることを確認した。
+  - 前橋道具屋の総在庫価格は `215G` (`薬草 3 x 15`, `焼きまんじゅう 2 x 30`, `ゆるみ札 2 x 35`, `皮の鎧 1 x 40`) なので、現在の `60G` 開幕では最初の店を丸ごと買い切れない。
+- 2026-04-08: イベント終端の暗転とロード演出を改修。
+  - `js/event.js`
+    - イベントの最終 `fade` が終わる瞬間に黒一色へ落とすのではなく、現在のフィールド描画へクロスフェードするよう変更した。
+    - これで `ぐるりん` のような同マップ復帰イベントで、マップに戻る直前だけ真っ暗になる見え方を避けられるようにした。
+  - `js/main.js`
+    - `EVENT` 完了時に main loop が無条件で `exploring` へ戻していた処理を見直し、callback 側が `EVENT / ENDING / TRANSITION` へ切り替えた場合に上書きしないようにした。
+    - 既存の `startTransition()` を単純な黒フェードから「回送ムービー付きの移動演出」へ差し替えた。
+    - `startChapter()` も即ロードではなく、ぐるりん回送ムービーの途中でロードを挟み、その後に章導入イベントへ入る流れへ変更した。
+    - `render_game_to_text` に `transition` 情報を追加し、移動中の停留所名や進行率を検証しやすくした。
+  - `js/ui.js`
+    - `drawTransition()` を刷新し、右下から走り込むぐるりん、停留所ラベル、次の行き先表示を持つ回送ムービーに差し替えた。
+    - フィールドを薄く残したままオーバーレイする構成にして、ロード前後でも「どこからどこへ向かっているか」が視認できるようにした。
+- 2026-04-08: 暗転 / 回送演出の検証結果
+  - `node --check js/main.js js/ui.js js/event.js` と `git diff --check` 通過。
+  - `develop-web-game` の Playwright client を `output/web-game-20260408/event-transition-smoke` で実行し、新規開始から前橋表示までの通常スモークで新規 `console error / pageerror` が出ていないことを確認した。
+  - `output/web-game-20260408/event-transition-targeted/chapter-transition-bus.png` を目視し、章移動中に `高崎だるま街 -> 回送 -> 廃墟の森` の停留所表示つきぐるりん回送ムービーが描画されることを確認した。
+  - 同 summary の `transition.progress / stopLabels / targetMapId` から、章移動中に `mode = transition` で `targetMapId = forest` が維持され、ロード後は `ch2_opening` へ自然につながることを確認した。
+  - `gururin-final-check.png` と `special-dice-final-check.png` では、同マップ復帰後に真っ黒な静止状態へ落ちず、そのまま次の表示へ進んでいることを確認した。確認時はいずれも `arrival_takasaki_auto` が続けて立ち上がっており、少なくとも「黒画面で停止」は再現していない。
+- 2026-04-08: レベルアップ回復と初期HP、SEを調整。
+  - `js/player.js`
+    - 旅路ランク1の基準HPを `96 -> 80` へ下げ、プレイヤー初期値も `80 / 80` に揃えた。
+    - `addExperience()` でランク上昇が発生したとき、加算回復ではなく `HP = MaxHP` の全快へ変更した。
+    - レベルアップ結果に `healedToFull` を返すようにして、検証しやすくした。
+  - `js/main.js`
+    - 新規開始リセット時の `hp / maxHp` を `80` に変更した。
+    - 戦闘勝利後にランクアップがあった場合、`RANK` ポップアップと同時に `level_up` SE を鳴らすようにした。
+  - `js/audio.js`
+    - `level_up` SE を追加し、短い上昇フレーズ + 仕上げのスイープで「成長した」感じが分かる音にした。
+- 2026-04-08: レベルアップ回復と初期HPの検証結果
+  - `node --check js/player.js js/main.js js/audio.js` と `git diff --check` 通過。
+  - `develop-web-game` の Playwright client を `output/web-game-20260408/levelup-hp-smoke` で実行し、起動時 `player.hp = 80 / maxHp = 80 / gold = 60` を `state-0.json` で確認した。
+  - `output/web-game-20260408/levelup-hp-smoke/shot-0.png` と `output/web-game-20260408/levelup-balance/title-initial-hp.png` を目視し、起動直後の画面崩れがないことを確認した。
+  - `output/web-game-20260408/levelup-balance/summary.json` では、`experience 79 -> 80` のレベルアップで `journeyRank 1 -> 2`、`hp 7 -> 90`、`maxHp 90`、`healedToFull = true`、`soundCalls = ['level_up']` を確認した。
+  - 上記検証では `console error / pageerror = 0`。
+- 2026-04-08: 回復技と小回復ダイス、技演出の手応えを強化。
+  - `js/skills.js`
+    - 覚える技に `息継ぎ` と `湯くぐり` を追加した。
+    - `息継ぎ` は `HP12回復 + 次の賽を少し緩める`、`湯くぐり` は `HP18回復 + 2ターン継続回復`。
+    - 習得順を更新し、回復系の手札がランク進行の中でも自然に混ざるようにした。
+  - `js/items.js`
+    - `息継ぎサイコロ` を追加。`1-2-2-3-H2-H3` の軽い立て直し用ダイスとして定義した。
+  - `js/maps/maebashi.js`, `js/maps/tamura.js`
+    - 前橋道具屋と田村のサイコロ工房で `息継ぎサイコロ` を扱うようにした。
+  - `js/battle.js`
+    - 技 / 戦闘用アイテム / 特殊ダイスの効果発動時に、`HP+`, `湯+`, `攻+`, `防+`, `賽+`, `敵鈍`, `痺`, `炎` などのポップアップと粒子を出すようにした。
+    - これで「何が効いたのか」が、メッセージだけでなくその場の表示でも分かるようにした。
+- 2026-04-08: 回復技と小回復ダイスの検証結果
+  - `node --check js/skills.js js/items.js js/maps/maebashi.js js/maps/tamura.js js/battle.js` と `git diff --check` 通過。
+  - `develop-web-game` の Playwright client を `output/web-game-20260408/heal-skill-dice-smoke` で実行し、通常起動スモークで新規 `console error / pageerror` が出ていないことを確認した。
+  - `output/web-game-20260408/heal-skill-dice-check/summary.json` では、前橋道具屋と田村サイコロ工房の販売リストに `breatherDice` が入り、定義が `1-2-2-3-H2-H3 / price 45` であることを確認した。
+  - 同 summary で、`息継ぎ` 使用時は `HP 18 -> 30`, `slow_roll` 付与, popup `HP+12 / 緩`、`湯くぐり` 使用時は `HP 14 -> 32`, `onsen_heal(2)` 付与, popup `HP+18 / 湯+2` を確認した。
+  - `ikitsugi-battle.png` と `yukuguri-battle.png` を目視し、回復量と追加効果のポップアップが戦闘画面へ載ることを確認した。
+  - 上記検証では `console error / pageerror = 0`。
+- 2026-04-08: 同行仲間の通常攻撃ターンを追加。
+  - `js/player.js`
+    - `アカギ / 山川 / 古谷` に `companionStrike` を持たせ、同行中は各自が固定の小ダメージ用ダイスを1個振るようにした。
+    - プレイヤー本体の `attack` へ同行者の攻撃力を直接足さないように戻し、火力の見え方を「本人の一投」と「同行の一投」に分けた。
+  - `js/battle.js`
+    - 通常戦の1ラウンドを `旅人 -> 同行 -> 敵` で見せる `companionAttack` フェーズを追加した。
+    - 同行者は現在のパーティ順で1人ずつ小ダメージダイスを振り、全員分が終わってから敵ターンへ進む。
+    - `アカギ` は `1,1,2,2,3,4` の軽い援護ダイスとして接続し、序盤から「少しだけ削ってくれる同行者」として効くようにした。
+    - 戦闘上部にターン流れバー、中央右に `同行の一投` パネル、同行チップの `一投中 / 待機 / 支援可` 表示を追加し、誰の手番か分かりやすくした。
+    - `にげる` 失敗時は同行追撃を入れず、そのまま敵ターンへ渡すようにした。
+- 2026-04-08: 同行攻撃ターンの検証結果
+  - `node --check js/player.js js/battle.js` と `git diff --check` 通過。
+  - `develop-web-game` の Playwright client を `output/web-game-20260408/companion-turn-smoke` で実行し、通常起動で新規 `console error / pageerror` が出ていないことを確認した。
+  - `output/web-game-20260408/companion-turn-check/summary.json` では、`training_daruma_shell` 戦に `アカギ` だけ同行させた状態で `menu(turnFlow=player) -> companionAttack(turnFlow=companion, memberId=akagi) -> enemyAttack(turnFlow=enemy)` と遷移し、敵HPが `50 -> 49` へ減ることを確認した。
+  - 同じく `output/web-game-20260408/companion-turn-multi-check/summary.json` では、`アカギ -> 山川 -> 敵` の順に `queueLength = 2` で流れ、敵HPが `50 -> 48 -> 47` と順番に減ることを確認した。
+  - 上記確認では `console error / pageerror = 0`。
+- 2026-04-08: 探索中の仲間会話を追加。
+  - `js/player.js`
+    - 追従中の仲間をタイル座標へ変換する `getFollowerTileStates()` を追加した。
+    - 正面タイル優先で、見つからなければプレイヤー隣接の同行者を拾う `getTalkablePartyMember()` を追加し、探索中の `confirm` で仲間へ話しかけられるようにした。
+  - `js/npc.js`
+    - `アカギ / 山川 / 古谷` それぞれに、通常会話とマップ・章・フラグに応じた文脈会話テーブルを追加した。
+    - `openDialog()` に話者指定を足し、仲間を仮想NPCとして会話名札へ表示できるようにした。
+    - `openCompanionDialog(memberId)` を追加し、同行中の仲間会話を `NPC` ダイアログ導線へ自然に接続した。
+  - `js/main.js`
+    - 探索中の `confirm` で、正面NPCがいないときは同行仲間との会話を優先して開く分岐を追加した。
+- 2026-04-08: 仲間会話の検証結果
+  - `node --check js/player.js js/npc.js js/main.js` と `git diff --check` 通過。
+  - `develop-web-game` の Playwright client を `output/web-game-20260408/companion-dialog-smoke` で実行し、通常起動スモークで新規 `console error / pageerror` が出ていないことを確認した。
+  - `output/web-game-20260408/companion-dialog-check/summary.json` では、探索状態から `confirm` で `mode = dialog / speaker = アカギ` に遷移し、本文 `前橋は人が多いぶん、知らない顔もすぐ見つかる。` が表示されることを確認した。
+  - 同 summary の会話サンプルでは、`アカギ=高崎のだるまは...`, `山川=湖と湿地は...`, `古谷=終わりに近い場所ほど...` と、同行者ごとに文脈の違う話題が出ることを確認した。
+  - `akagi-dialog.png` を目視し、名前札と本文がダイアログ内に収まり、探索画面へ重ねても読めることを確認した。
+  - 上記確認では `console error / pageerror = 0`。
+- 2026-04-09: 白と青の少女の物語導線を追加。
+  - `js/audio.js`
+    - 少女との対話専用BGM `heroine_veil` を追加した。
+  - `js/illustrations.js`
+    - 白青基調で天使めいた装いの少女カード `white_girl_dawn / white_girl_platform / white_girl_threshold` を追加した。
+    - 既存のイベントカード仕組みへ新モーションキーを接続した。
+  - `js/event.js`
+    - `opening` に少女の初出を追加し、境界の向こうで待つ存在として印象づけた。
+    - `ch4_opening / ch8_opening / ch10_opening` に少女の再登場を追加し、「境界の向こうの幻」から「現実側で待つ大事な人」へ少しずつ寄る会話へした。
+    - イベントシーン側へ `bgm: null` を解釈する共通音声切り替えを追加し、少女の場面だけ `heroine_veil` を鳴らして、その後は `sad / 無音 / ch10_border` へ自然に戻せるようにした。
+    - カード下ラベルが内部キーのまま出ないよう、`illustrationLabel` を追加して `夜明けの停留所 / 白青のホーム / 外側の記憶 / 境界の駅` を表示するようにした。
+  - `js/story.js`
+    - 将来のストーリーイベント再利用用に `白い少女` のポートレート定義を追加した。
+- 2026-04-09: 白い少女演出の検証結果
+  - `node --check js/audio.js js/illustrations.js js/event.js js/story.js` と `git diff --check` 通過。
+  - `develop-web-game` の Playwright client を `output/web-game-20260409/heroine-smoke` で実行し、少なくとも通常起動で新規 `console error / pageerror` が出ていないことを確認した。
+  - `output/web-game-20260409/heroine-scenes/summary.json` では、`opening / ch4_opening / ch8_opening / ch10_opening` で `speaker = 白い少女`, `audio.currentBgm = heroine_veil`, 対応する `illustrationKey` が立つことを確認した。
+  - 同 summary で、少女の直後は `opening -> sad`, `ch4 -> null`, `ch8 -> null`, `ch10 -> ch10_border` とBGMが切り替わることを確認した。
+  - `opening-white-girl.png` を目視し、白青のカード、少女名札、ラベル `夜明けの停留所` が画面上で読めることを確認した。
+  - 上記確認では `console error / pageerror = 0`。
+- 2026-04-09: クイズの合格条件を厳密化。
+  - `js/puzzle.js`
+    - クイズの合格判定が固定で `2問以上` になっていたため、`count: 3` でも `2/3` で通る不具合を修正。
+    - `requiredCorrect` をクイズ状態に保持し、デフォルトでは `出題数と同数` を要求するように変更。
+    - 見出しを `正解 現在値 / 必要数` 表示へ更新し、成功・失敗画面でも必要正解数が分かるようにした。
+    - 終了画面で `問題 4 / 3` のように見える表示ズレも、表示用の問題番号をクランプして修正した。
+    - `getDebugState()` を追加し、現在の出題数・必要正解数・正答・選択肢を `render_game_to_text` から確認できるようにした。
+  - `js/main.js`
+    - `STATE.PUZZLE` 中の `render_game_to_text` に `payload.puzzle` を追加し、Playwright でクイズ内部状態を追跡可能にした。
+- 2026-04-09: クイズ合格条件の検証結果
+  - `node --check js/puzzle.js js/main.js` と `git diff --check` 通過。
+  - `develop-web-game` の Playwright client を `output/web-game-20260409/quiz-threshold-smoke` で実行し、通常起動スモークで新規 `console error / pageerror` が出ていないことを確認した。
+  - `output/web-game-20260409/quiz-threshold-check/summary.json` で個別検証を実施。
+  - 確認結果:
+    - `count: 3` で `2/3` は `fail`
+    - `count: 3` で `3/3` は `success`
+    - `count: 4` で `3/4` は `fail`
+  - `quiz-2-of-3.png` を目視し、失敗画面が `問題 3 / 3  正解 2 / 3` と表示され、閾値も画面上で読めることを確認した。
+  - `Game.Puzzle.start('quiz', npc)` と `story.js` の `start_quiz` はどちらも同じ `Game.Puzzle.start()` を通るため、今回の修正は通常クイズとイベントクイズの両方へ横展開される。
+- 2026-04-09: itch公開前のQA観点で主要フローを再確認。
+  - `develop-web-game` の Playwright client を `output/web-game-20260409/pre-itch-opening-smoke` で実行し、タイトル導入から `前橋中央通り` へ遷移する実プレイスモークを確認した。
+  - `state-0.json` では最終状態が `mode: exploring / map: maebashi / currentBgm: field_maebashi` になっており、開幕の黒画面停止は再現しなかった。
+  - 個別機能の重点確認として `output/web-game-20260409/pre-itch-targeted/summary.json` を取得し、`shop / save / regular battle / ritual battle / quiz` を直接起動して `console error / pageerror = 0` を確認した。
+  - 目視確認:
+    - `pre-itch-opening-smoke/shot-0.png`: 開幕後に前橋マップが正常表示される。
+    - `pre-itch-targeted/save-open.png`: 記録帳の説明文と選択肢はダイアログ内に収まる。
+    - `pre-itch-targeted/battle-regular.png`: 通常戦の導入文、敵名、HP帯は読める。
+    - `pre-itch-targeted/quiz-open.png`: クイズの問題文・選択肢・必要正解数表示は収まる。
+    - `pre-itch-shop-real/shop-real.png`: 前橋道具屋の実在庫と価格表示は `60G` の序盤バランス前提で読める。
+  - itch公開前の残課題メモ:
+    - リポジトリ内に `CREDITS` / `LICENSE` / `webmanifest` / favicon 実体ファイルはまだ見当たらないため、公開ページ用の素材表記・クレジット整理は別途必要。
+    - 配布用ZIPは `index.html`, `js/` を中心に絞り、`docs/`, `output/`, `.git/`, `.DS_Store` は含めない方がよい。
+- 2026-04-09: itch公開前QAを2フェーズで整理。
+  - Phase 1 `進行と安定性`
+    - 対象: `opening -> maebashi`, `shop`, `save`, `regular battle`, `ritual battle`, `quiz`
+    - 結果: 主要フローは通過。`console error / pageerror = 0`。
+    - 根拠:
+      - `output/web-game-20260409/pre-itch-opening-smoke/state-0.json`
+      - `output/web-game-20260409/pre-itch-targeted/summary.json`
+    - 所見: 即ブロッカーは見つからず。開幕黒画面も今回の再確認では再現しなかった。
+  - Phase 2 `UI / 読感 / 公開品質`
+    - 小さめの viewport `840x700` で `shop / save / regular battle / ritual battle / quiz / title intro` を確認。
+    - `output/web-game-20260409/qa-phase2-release-polish/summary.json` では全画面で `canvas.fullyVisible = true`、`console error / pageerror = 0` を確認。
+    - 目視確認:
+      - `save-840x700.png`: 記録帳の説明文と選択肢は収まる。
+      - `shop-840x700.png`: 価格・残数・装備欄は読める。
+      - `quiz-840x700.png`: 問題文、選択肢、必要正解数は読める。
+      - `title-840x700.png`: 導入字幕は表示される。
+      - `battle-ritual-840x700.png`: 大崩れはないが、ボス導入カードと周辺HUDは少し情報量が高め。
+    - 所見: Phase 2 でも公開を止めるほどの破綻はなし。磨き候補は `ボス導入時の情報整理`, `タイトル導入左上テキストのコントラスト/存在感`, `公開ページ用クレジット整理`。
+- 2026-04-09: itch公開向けの配布準備を追加。
+  - `index.html`
+    - `theme-color`, `favicon.svg`, `site.webmanifest` を読み込むようにした。
+  - `favicon.svg`
+    - 群馬ロードムービーらしい簡易アイコンを追加した。
+  - `site.webmanifest`
+    - PWA最小情報を追加した。
+  - `scripts/package_itch_release.sh`
+    - `index.html / js / favicon.svg / site.webmanifest` だけをまとめる配布用ZIP作成スクリプトを追加した。
+  - `docs/itch_release_checklist.md`
+    - itch公開前の確認項目を整理した。
+  - `README.md`
+    - 配布用ZIP作成手順を追記した。
+- 2026-04-09: 仕上げの見え方調整
+  - `js/ui.js`
+    - タイトル導入キャプションのパネル濃度、見出しサイズ、操作案内の見え方を強めた。
+  - `js/battle.js`
+    - ボス導入オーバーレイの遮光を少し強め、カード下の情報プレートを厚くして、背景HUDの干渉を抑えた。
+- 2026-04-09: 配布準備と追加QAの検証結果
+  - `node --check js/ui.js js/battle.js` と `git diff --check` 通過。
+  - `bash scripts/package_itch_release.sh` で `release/itch/GunmaEscapeVer2-itch-20260409-191407.zip` を生成し、ZIP内容が `index.html / js / favicon.svg / site.webmanifest` のみであることを確認した。
+  - `develop-web-game` の Playwright client を `output/web-game-20260409/post-polish-opening-smoke` で実行し、開幕から `maebashi` へ正常遷移することを再確認した。
+  - `output/web-game-20260409/post-polish-visual-check/title-840x700.png` を目視し、タイトル導入文の存在感が以前より上がっていることを確認した。
+  - `output/web-game-20260409/post-polish-visual-check/battle-ritual-840x700-tightened.png` を目視し、ボス導入の背景干渉が少し落ち着いたことを確認した。
+  - 観点追加QAとして `output/web-game-20260409/qa-phase3-persistence-release/summary.json` を取得。
+    - `save(1) -> load(1)` で HP / 所持金 / 経験値 / inventory / mapId が戻ることを確認。
+    - `createPassphrase() -> loadPassphrase()` でも同じ値が復元されることを確認。
+    - `console error / pageerror = 0`。

@@ -85,11 +85,26 @@ Game.Event = (function() {
         autoAdvance: 165
       },
       {
+        bg: '#162235',
+        motion: 'white_girl_dawn',
+        bgm: 'heroine_veil',
+        illustrationLabel: '夜明けの停留所',
+        speaker: '白い少女',
+        speakerColor: '#e8f5ff',
+        lines: [
+          '忘れないで。白線の向こうで、わたしは待ってる。',
+          '名前をなくしても、帰る約束だけは消えないから。'
+        ],
+        autoAdvance: 180
+      },
+      {
         bg: '#161326',
         motion: 'dawn_frontier',
+        bgm: 'sad',
         speaker: '主人公',
         speakerColor: '#88aaff',
         lines: [
+          '……いまの声は、誰だ。',
           '……ここは前橋？ どうして、ひとりなんだ。',
           '喉の奥に、知らない地名ばかりが引っかかっている。'
         ],
@@ -813,8 +828,9 @@ Game.Event = (function() {
     // === Chapter 4 Opening / Ending ===
     ch4_opening: [
       { bg: '#1a2a3a', speaker: null, lines: ['草津温泉の深奥。', '視界を遮るほどの青白い蒸気が立ち込めている。', 'だが、その熱気にはどこか不自然な冷たさが混じっていた。'] },
-      { bg: '#1a2a3a', speaker: '龝櫻', speakerColor: '#555566', lines: ['気をつけるんじゃな。ここの湯煙は輪郭を溶かす。', '過剰な癒やしに溺れれば、己の存在すら忘れてしまうぞ。', 'お主のその「記憶喪失」も、ここの毒にあてられた結果かもしれん。'] },
-      { bg: '#1a2a3a', speaker: '主人公', speakerColor: '#88aaff', lines: ['自分の過去すら思い出せないのに、これ以上何を奪われるというのか。', 'だが、立ち止まるわけにはいかない。', '温泉の異常を止め、源泉の奥へと進むしかない。'], effect: 'fade' }
+      { bg: '#162235', motion: 'white_girl_platform', bgm: 'heroine_veil', illustrationLabel: '白青のホーム', speaker: '白い少女', speakerColor: '#e8f5ff', lines: ['熱に溶けないで。あなたは、まだこちら側へ帰れる。', '青い切符をなくしても、ホームの灯りまでは消えない。'] },
+      { bg: '#1a2a3a', bgm: null, speaker: '龝櫻', speakerColor: '#555566', lines: ['気をつけるんじゃな。ここの湯煙は輪郭を溶かす。', '過剰な癒やしに溺れれば、己の存在すら忘れてしまうぞ。', 'お主のその「記憶喪失」も、ここの毒にあてられた結果かもしれん。'] },
+      { bg: '#1a2a3a', speaker: '主人公', speakerColor: '#88aaff', lines: ['またあの少女か……。', '自分の過去すら思い出せないのに、これ以上何を奪われるというのか。', 'だが、立ち止まるわけにはいかない。温泉の異常を止め、源泉の奥へと進むしかない。'], effect: 'fade' }
     ],
     ch4_ending: [
       { bg: '#1a2a3a', speaker: null, lines: ['湯畑の守護者が崩れ落ちると同時、', '周囲を覆っていた異常な蒸気がスッと引いていった。', '源泉の鼓動が、本来のリズムを取り戻しつつある。'] },
@@ -861,8 +877,9 @@ Game.Event = (function() {
     // === Chapter 8 Opening / Ending ===
     ch8_opening: [
       { bg: '#1a2a1a', speaker: null, lines: ['尾瀬の湿原。', '美しいはずの自然は腐敗し、緑色の泥がどこまでも続いている。', '一歩踏み出すたびに、足が泥濘に深く沈み込んだ。'] },
-      { bg: '#1a2a1a', speaker: 'ジューク', speakerColor: '#ff4444', lines: ['おや、足元にはお気をつけください。', 'そこの泥は、一度沈めば二度と浮かび上がれませんから。', '正しいルートを選ばなければ、永遠にここで息継ぎですよ。'] },
-      { bg: '#1a2a1a', speaker: '主人公', speakerColor: '#88aaff', lines: ['挑発するようなジュークの言葉。', 'だが、進むしかない。この泥の海を越えなければ、', '群馬からの脱出はあり得ないのだから。'], effect: 'fade' }
+      { bg: '#13233a', motion: 'white_girl_platform', bgm: 'heroine_veil', illustrationLabel: '外側の記憶', speaker: '白い少女', speakerColor: '#e8f5ff', lines: ['やっと、声が届いた。', 'あなたが思い出せないぶん、わたしが外で覚えてる。'] },
+      { bg: '#1a2a1a', bgm: null, speaker: 'ジューク', speakerColor: '#ff4444', lines: ['おや、足元にはお気をつけください。', 'そこの泥は、一度沈めば二度と浮かび上がれませんから。', '正しいルートを選ばなければ、永遠にここで息継ぎですよ。'] },
+      { bg: '#1a2a1a', speaker: '主人公', speakerColor: '#88aaff', lines: ['挑発するようなジュークの言葉。', 'だが、さっきの声は幻じゃない。この泥の海を越えなければ、', '群馬からの脱出も、外で待つ誰かのところへ帰ることもできない。'], effect: 'fade' }
     ],
     ch8_ending: [
       { bg: '#1a2a1a', speaker: null, lines: ['泥異形が崩れ落ちると同時、周囲の泥濘が少しだけ固さを取り戻した。', 'ふと、泥の中に落ちている見慣れたスマートフォンを見つける。', '画面には泥がこびりついているが、電源は入っている。'] },
@@ -885,8 +902,9 @@ Game.Event = (function() {
     // === Chapter 10 Opening / Ending ===
     ch10_opening: [
       { bg: '#000000', speaker: null, lines: ['国境のトンネル。', 'どこまで歩いても終わらない、現実と虚構が入り混じる境界線。', 'ここは、群馬であって群馬ではない、世界の狭間だ。'] },
-      { bg: '#111111', speaker: 'アカギ', speakerColor: '#cc6633', lines: ['空気が違う。ここまでの結界とは比べ物にならない重圧だ。', 'だが、恐れることはない。我々にはこれまでの絆がある。', '行くぞ！ 全ての因縁をここで断ち切るのだ！'] },
-      { bg: '#111111', speaker: '主人公', speakerColor: '#88aaff', lines: ['失われた記憶が戻る保証はない。', 'それでも、この仲間たちと過ごした旅の時間は本物だ。', '群馬からの脱出。その答えを、俺自身の手で掴み取る！'], effect: 'fade' }
+      { bg: '#08111f', motion: 'white_girl_threshold', bgm: 'heroine_veil', illustrationLabel: '境界の駅', speaker: '白い少女', speakerColor: '#e8f5ff', lines: ['帰ってきて。今度はちゃんと、あなたの名前で呼ぶから。', '白と青の朝を、あの駅で待ってる。'] },
+      { bg: '#111111', bgm: 'ch10_border', speaker: 'アカギ', speakerColor: '#cc6633', lines: ['空気が違う。ここまでの結界とは比べ物にならない重圧だ。', 'だが、恐れることはない。我々にはこれまでの絆がある。', '行くぞ！ 全ての因縁をここで断ち切るのだ！'] },
+      { bg: '#111111', speaker: '主人公', speakerColor: '#88aaff', lines: ['失われた記憶が戻る保証はない。', 'それでも、あの子まで含めて、この旅で掴んだ時間は本物だ。', '群馬からの脱出。その答えを、俺自身の手で掴み取る！'], effect: 'fade' }
     ],
     ep_constellation_offering_intro: [
       {
@@ -1055,9 +1073,7 @@ Game.Event = (function() {
     skipGraceFrames = currentEventOptions && currentEventOptions.graceFrames ? currentEventOptions.graceFrames : 0;
     onComplete = callback || null;
 
-    var firstScene = scenes[0];
-    if (firstScene.bgm) Game.Audio.playBgm(firstScene.bgm);
-    if (firstScene.sfx) Game.Audio.playSfx(firstScene.sfx);
+    applySceneAudio(scenes[0]);
   }
 
   function wrapEventText(text, maxChars) {
@@ -1187,10 +1203,18 @@ Game.Event = (function() {
     var drawState = getDrawState();
     if (!drawState || !drawState.scene) return;
     var scene = drawState.scene;
+    var terminalMapReveal = !!(fadeDir > 0 && sceneIndex >= scenes.length && renderHold &&
+      Game.Main && Game.Main.drawWorldBackdrop);
     var illustrationKey = Game.Illustrations && Game.Illustrations.getEventKey
       ? Game.Illustrations.getEventKey(scene, currentEventId)
       : '';
     var hasIllustration = !!illustrationKey;
+
+    if (terminalMapReveal) {
+      Game.Main.drawWorldBackdrop(true);
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, 1 - fadeAlpha);
+    }
 
     // Background
     var bg = scene.bg || '#000011';
@@ -1223,7 +1247,7 @@ Game.Event = (function() {
         {
           accent: scene.speakerColor || '#8fb8ff',
           matteAlpha: 0.08,
-          label: scene.motion || currentEventId || ''
+          label: scene.illustrationLabel || scene.motion || currentEventId || ''
         }
       );
     }
@@ -1281,8 +1305,14 @@ Game.Event = (function() {
     // Scene counter (small)
     R.drawTextJP((sceneIndex + 1) + '/' + scenes.length, 20, C.CANVAS_HEIGHT - 18, '#333', 9);
 
+    if (terminalMapReveal) {
+      ctx.restore();
+      ctx.fillStyle = 'rgba(4, 6, 18, ' + Math.min(0.18, fadeAlpha * 0.14).toFixed(3) + ')';
+      ctx.fillRect(0, 0, C.CANVAS_WIDTH, C.CANVAS_HEIGHT);
+    }
+
     // Fade overlay
-    if (fadeAlpha > 0) {
+    if (fadeAlpha > 0 && !terminalMapReveal) {
       R.fadeOverlay(fadeAlpha);
     }
   }
@@ -1311,11 +1341,7 @@ Game.Event = (function() {
       }
 
       var nextScene = scenes[sceneIndex];
-      if (nextScene.bgm) {
-        Game.Audio.stopBgm();
-        Game.Audio.playBgm(nextScene.bgm);
-      }
-      if (nextScene.sfx) Game.Audio.playSfx(nextScene.sfx);
+      applySceneAudio(nextScene);
 
       if (scene.effect === 'fade') {
         fadeDir = 1;
@@ -1875,6 +1901,15 @@ Game.Event = (function() {
       lineIndex: holdLineIndex,
       charIndex: holdLine.length
     };
+  }
+
+  function applySceneAudio(scene) {
+    if (!scene || !Game.Audio) return;
+    if (Object.prototype.hasOwnProperty.call(scene, 'bgm')) {
+      Game.Audio.stopBgm();
+      if (scene.bgm) Game.Audio.playBgm(scene.bgm);
+    }
+    if (scene.sfx) Game.Audio.playSfx(scene.sfx);
   }
 
   function shouldSkipEventImmediately() {

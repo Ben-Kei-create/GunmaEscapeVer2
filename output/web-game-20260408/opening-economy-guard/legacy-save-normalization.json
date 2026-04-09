@@ -1,0 +1,28 @@
+{
+  "slotInfoBeforeLoad": {
+    "slot": 1,
+    "chapter": 1,
+    "mapName": "maebashi",
+    "mapLabel": "前橋中央通り",
+    "playTime": 0,
+    "hp": 96,
+    "maxHp": 96,
+    "gold": 60,
+    "savedAt": 1775654426146
+  },
+  "loadSuccess": true,
+  "playerGoldAfterLoad": 60,
+  "mapAfterLoad": "maebashi",
+  "hasAnySave": true,
+  "continueSlot": {
+    "slot": 1,
+    "chapter": 1,
+    "mapName": "maebashi",
+    "mapLabel": "前橋中央通り",
+    "playTime": 0,
+    "hp": 96,
+    "maxHp": 96,
+    "gold": 60,
+    "savedAt": 1775654426146
+  }
+}

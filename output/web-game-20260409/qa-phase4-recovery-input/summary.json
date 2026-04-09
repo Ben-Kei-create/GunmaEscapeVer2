@@ -1,0 +1,159 @@
+{
+  "timestamp": "2026-04-09T13:59:12.841Z",
+  "scenarios": {
+    "opening_skip_to_first_town": {
+      "startMode": "event",
+      "midMode": "event",
+      "finalMode": "exploring",
+      "map": "maebashi",
+      "bgm": "field_maebashi",
+      "canvas": {
+        "avgLuma": 96.49,
+        "nonBlackFraction": 0.9934,
+        "opaquePixels": 4096
+      },
+      "pass": true
+    },
+    "save_fixture": {
+      "passphrase": "GM2 VFT6 PMRH MIR2 HEWC E5BC HI2T CMBZ FQRG 2IR2 GEYC YITQ EI5F WMZX FQ4D ALBR GIWD MLBV GUWD CMRT FQYT ILBY FQYS YMJM GEWC 2MJM LMZT AXJM LMYT MXJM LNOS YW25 FRNV 2XJM EJXC EORC GAYD AMBQ GAYD AMBQ GAYD AMBQ GAYD AMBQ GAYD AMBC FQRG SIR2 EIYD AMBQ GAYD AMBC FQRH GIR2 LMRH M2LT NF2G KZC7 NVQW KYTB ONUG SIS5 FQRG QIR2 PN6S YITK EI5F WMBM LNOV 27I",
+      "slot": {
+        "slot": 1,
+        "chapter": 1,
+        "mapName": "maebashi",
+        "mapLabel": "前橋",
+        "playTime": 5108,
+        "hp": 37,
+        "maxHp": 80,
+        "gold": 123,
+        "savedAt": 1775743158938
+      }
+    },
+    "title_continue": {
+      "mode": "exploring",
+      "map": "maebashi",
+      "hp": 37,
+      "maxHp": 80,
+      "gold": 123,
+      "experience": 55,
+      "inventory": [
+        "healHerb"
+      ],
+      "pass": true
+    },
+    "title_passphrase_cancel": {
+      "menuMode": "save",
+      "afterPromptMode": "save",
+      "promptCalls": 1,
+      "returnedToTitle": true,
+      "pass": true
+    },
+    "title_passphrase_success": {
+      "mode": "exploring",
+      "map": "maebashi",
+      "hp": 37,
+      "gold": 123,
+      "experience": 55,
+      "promptCalls": 1,
+      "pass": true
+    },
+    "field_save_cancel": {
+      "menuMode": "menu",
+      "openedSaveMode": "save",
+      "saveContext": "field",
+      "returnMode": "exploring",
+      "pass": true
+    },
+    "shop_stock_save_load": {
+      "before": {
+        "active": true,
+        "shopName": "前橋道具屋",
+        "menuIndex": 0,
+        "confirmBuy": false,
+        "selectingSlot": false,
+        "message": "",
+        "items": [
+          {
+            "id": "healHerb",
+            "name": "薬草",
+            "price": 15,
+            "stock": 3,
+            "remaining": 3,
+            "soldOut": false
+          }
+        ]
+      },
+      "afterFirst": {
+        "active": true,
+        "shopName": "前橋道具屋",
+        "menuIndex": 0,
+        "confirmBuy": false,
+        "selectingSlot": false,
+        "message": "薬草を買った！ 残り2。",
+        "items": [
+          {
+            "id": "healHerb",
+            "name": "薬草",
+            "price": 15,
+            "stock": 3,
+            "remaining": 2,
+            "soldOut": false
+          }
+        ]
+      },
+      "afterSecond": {
+        "active": true,
+        "shopName": "前橋道具屋",
+        "menuIndex": 0,
+        "confirmBuy": false,
+        "selectingSlot": false,
+        "message": "薬草を買った！ 残り1。",
+        "items": [
+          {
+            "id": "healHerb",
+            "name": "薬草",
+            "price": 15,
+            "stock": 3,
+            "remaining": 1,
+            "soldOut": false
+          }
+        ]
+      },
+      "afterLoad": {
+        "active": true,
+        "shopName": "前橋道具屋",
+        "menuIndex": 0,
+        "confirmBuy": false,
+        "selectingSlot": false,
+        "message": "",
+        "items": [
+          {
+            "id": "healHerb",
+            "name": "薬草",
+            "price": 15,
+            "stock": 3,
+            "remaining": 2,
+            "soldOut": false
+          }
+        ]
+      },
+      "goldAfterLoad": 185,
+      "pass": true
+    },
+    "gameover_return": {
+      "gameOverMode": "gameover",
+      "titleMode": "title",
+      "titlePresentation": {
+        "mode": "title_menu",
+        "sceneId": "highway",
+        "sceneTitle": "深夜の関越道",
+        "sceneIndex": 0,
+        "sceneTimer": 0,
+        "totalTimer": 0,
+        "revealTimer": 0
+      },
+      "pass": true
+    }
+  },
+  "consoleErrors": [],
+  "allPassed": true
+}

@@ -1,0 +1,142 @@
+{
+  "generatedAt": "2026-04-08T23:12:27.660Z",
+  "scenarios": [
+    {
+      "name": "quiz-2-of-3",
+      "options": {
+        "count": 3
+      },
+      "correctnessPlan": [
+        true,
+        true,
+        false
+      ],
+      "totalQuestions": 3,
+      "requiredCorrect": 3,
+      "finalPhase": "fail",
+      "finalScore": 2,
+      "steps": [
+        {
+          "questionIndex": 1,
+          "answeredCorrectly": true,
+          "answerUsed": 0,
+          "expectedAnswer": 0,
+          "phaseAfterAdvance": "question",
+          "scoreAfterAdvance": 1
+        },
+        {
+          "questionIndex": 2,
+          "answeredCorrectly": true,
+          "answerUsed": 0,
+          "expectedAnswer": 0,
+          "phaseAfterAdvance": "question",
+          "scoreAfterAdvance": 2
+        },
+        {
+          "questionIndex": 3,
+          "answeredCorrectly": false,
+          "answerUsed": 1,
+          "expectedAnswer": 0,
+          "phaseAfterAdvance": "fail",
+          "scoreAfterAdvance": 2
+        }
+      ],
+      "screenshot": "/Users/fumiaki/Desktop/GunmaEscapeVer2/output/web-game-20260409/quiz-threshold-check/quiz-2-of-3.png"
+    },
+    {
+      "name": "quiz-3-of-3",
+      "options": {
+        "count": 3
+      },
+      "correctnessPlan": [
+        true,
+        true,
+        true
+      ],
+      "totalQuestions": 3,
+      "requiredCorrect": 3,
+      "finalPhase": "success",
+      "finalScore": 3,
+      "steps": [
+        {
+          "questionIndex": 1,
+          "answeredCorrectly": true,
+          "answerUsed": 1,
+          "expectedAnswer": 1,
+          "phaseAfterAdvance": "question",
+          "scoreAfterAdvance": 1
+        },
+        {
+          "questionIndex": 2,
+          "answeredCorrectly": true,
+          "answerUsed": 0,
+          "expectedAnswer": 0,
+          "phaseAfterAdvance": "question",
+          "scoreAfterAdvance": 2
+        },
+        {
+          "questionIndex": 3,
+          "answeredCorrectly": true,
+          "answerUsed": 0,
+          "expectedAnswer": 0,
+          "phaseAfterAdvance": "success",
+          "scoreAfterAdvance": 3
+        }
+      ],
+      "screenshot": "/Users/fumiaki/Desktop/GunmaEscapeVer2/output/web-game-20260409/quiz-threshold-check/quiz-3-of-3.png"
+    },
+    {
+      "name": "quiz-3-of-4",
+      "options": {
+        "count": 4
+      },
+      "correctnessPlan": [
+        true,
+        true,
+        true,
+        false
+      ],
+      "totalQuestions": 4,
+      "requiredCorrect": 4,
+      "finalPhase": "fail",
+      "finalScore": 3,
+      "steps": [
+        {
+          "questionIndex": 1,
+          "answeredCorrectly": true,
+          "answerUsed": 0,
+          "expectedAnswer": 0,
+          "phaseAfterAdvance": "question",
+          "scoreAfterAdvance": 1
+        },
+        {
+          "questionIndex": 2,
+          "answeredCorrectly": true,
+          "answerUsed": 1,
+          "expectedAnswer": 1,
+          "phaseAfterAdvance": "question",
+          "scoreAfterAdvance": 2
+        },
+        {
+          "questionIndex": 3,
+          "answeredCorrectly": true,
+          "answerUsed": 0,
+          "expectedAnswer": 0,
+          "phaseAfterAdvance": "question",
+          "scoreAfterAdvance": 3
+        },
+        {
+          "questionIndex": 4,
+          "answeredCorrectly": false,
+          "answerUsed": 1,
+          "expectedAnswer": 0,
+          "phaseAfterAdvance": "fail",
+          "scoreAfterAdvance": 3
+        }
+      ],
+      "screenshot": "/Users/fumiaki/Desktop/GunmaEscapeVer2/output/web-game-20260409/quiz-threshold-check/quiz-3-of-4.png"
+    }
+  ],
+  "consoleErrors": [],
+  "pageErrors": []
+}

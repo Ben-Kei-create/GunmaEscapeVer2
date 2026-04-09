@@ -1,0 +1,65 @@
+{
+  "openingGirl": {
+    "found": true,
+    "frames": 858,
+    "speaker": "白い少女",
+    "bgm": "heroine_veil",
+    "illustrationKey": "white_girl_dawn",
+    "lines": [
+      "忘れないで。白線の向こうで、わたしは待ってる。",
+      "名前をなくしても、帰る約束だけは消えないから。"
+    ]
+  },
+  "openingAfter": {
+    "found": true,
+    "speaker": "主人公",
+    "bgm": "sad"
+  },
+  "ch4Girl": {
+    "found": true,
+    "speaker": "白い少女",
+    "bgm": "heroine_veil",
+    "illustrationKey": "white_girl_platform",
+    "lines": [
+      "熱に溶けないで。あなたは、まだこちら側へ帰れる。",
+      "青い切符をなくしても、ホームの灯りまでは消えない。"
+    ]
+  },
+  "ch8Girl": {
+    "found": true,
+    "speaker": "白い少女",
+    "bgm": "heroine_veil",
+    "illustrationKey": "white_girl_platform",
+    "lines": [
+      "やっと、声が届いた。",
+      "あなたが思い出せないぶん、わたしが外で覚えてる。"
+    ]
+  },
+  "ch10Girl": {
+    "found": true,
+    "speaker": "白い少女",
+    "bgm": "heroine_veil",
+    "illustrationKey": "white_girl_threshold",
+    "lines": [
+      "帰ってきて。今度はちゃんと、あなたの名前で呼ぶから。",
+      "白と青の朝を、あの駅で待ってる。"
+    ]
+  },
+  "consoleErrors": [],
+  "pageErrors": [],
+  "ch4After": {
+    "found": true,
+    "speaker": "龝櫻",
+    "bgm": null
+  },
+  "ch8After": {
+    "found": true,
+    "speaker": "ジューク",
+    "bgm": null
+  },
+  "ch10After": {
+    "found": true,
+    "speaker": "アカギ",
+    "bgm": "ch10_border"
+  }
+}

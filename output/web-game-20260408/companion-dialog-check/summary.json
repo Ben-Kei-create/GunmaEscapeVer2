@@ -1,0 +1,29 @@
+{
+  "checkedAt": "2026-04-08T14:17:25.111Z",
+  "setup": {
+    "x": 1,
+    "y": 1
+  },
+  "beforeTalk": {
+    "mode": "exploring",
+    "map": "maebashi",
+    "followerIds": [
+      "akagi"
+    ]
+  },
+  "dialog": {
+    "mode": "dialog",
+    "speaker": "アカギ",
+    "text": "前橋は人が多いぶん、知らない顔もすぐ見つかる。"
+  },
+  "samples": {
+    "akagi": "高崎のだるまは、願いを入れる前の空洞がいちばん不気味だ。",
+    "yamakawa": "湖と湿地は、同じ水場でも足の取られ方が違います。",
+    "furuya": "終わりに近い場所ほど、落とし物が増えるんだよな。"
+  },
+  "consoleErrors": [],
+  "pageErrors": [],
+  "screenshots": [
+    "/Users/fumiaki/Desktop/GunmaEscapeVer2/output/web-game-20260408/companion-dialog-check/akagi-dialog.png"
+  ]
+}

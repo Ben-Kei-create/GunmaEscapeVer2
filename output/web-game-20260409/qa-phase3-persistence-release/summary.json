@@ -1,0 +1,417 @@
+{
+  "generatedAt": "2026-04-09T10:15:11.051Z",
+  "latestZip": "/Users/fumiaki/Desktop/GunmaEscapeVer2/release/itch/GunmaEscapeVer2-itch-20260409-191407.zip",
+  "zipList": [
+    "index.html",
+    "favicon.svg",
+    "site.webmanifest",
+    "js/",
+    "js/maps/",
+    "js/maps/tamura.js",
+    "js/maps/border_tunnel.js",
+    "js/maps/tomioka.js",
+    "js/maps/takasaki.js",
+    "js/maps/ikaho.js",
+    "js/maps/haruna_lake.js",
+    "js/maps/onuma.js",
+    "js/maps/oze_marsh.js",
+    "js/maps/maebashi.js",
+    "js/maps/forest.js",
+    "js/maps/shirane_trail.js",
+    "js/maps/kusatsu_deep.js",
+    "js/maps/tanigawa_tunnel.js",
+    "js/maps/akagi_ranch.js",
+    "js/maps/minakami_valley.js",
+    "js/maps/kusatsu.js",
+    "js/maps/shimonita.js",
+    "js/maps/akagi_shrine.js",
+    "js/maps/tsumagoi.js",
+    "js/maps/jomo_gakuen.js",
+    "js/maps/konuma.js",
+    "js/quests.js",
+    "js/puzzle.js",
+    "js/renderer.js",
+    "js/ui.js",
+    "js/chapter_data.js",
+    "js/save_menu.js",
+    "js/ritual_battles.js",
+    "js/weather.js",
+    "js/event.js",
+    "js/story.js",
+    "js/save.js",
+    "js/illustrations.js",
+    "js/skills.js",
+    "js/config.js",
+    "js/legacy.js",
+    "js/npc.js",
+    "js/main.js",
+    "js/audio.js",
+    "js/achievements.js",
+    "js/battle.js",
+    "js/encounters.js",
+    "js/battle_data.js",
+    "js/items.js",
+    "js/shop.js",
+    "js/player.js",
+    "js/particles.js",
+    "js/map.js",
+    "js/input.js"
+  ],
+  "persistence": {
+    "saveOk": true,
+    "loadOk": true,
+    "phraseLength": 348,
+    "phraseResult": {
+      "success": true,
+      "data": {
+        "version": 9,
+        "savedAt": 1775729711044,
+        "playTime": 913,
+        "chapter": 1,
+        "mapName": "maebashi",
+        "mapLabel": "前橋",
+        "player": {
+          "hp": 47,
+          "maxHp": 80,
+          "attack": 12,
+          "defense": 6,
+          "experience": 24,
+          "gold": 73,
+          "tileX": 14,
+          "tileY": 10,
+          "x": 224,
+          "y": 160,
+          "direction": "down",
+          "diceSlots": 1,
+          "chapter": 1,
+          "armor": null,
+          "equippedDice": [
+            "normalDice"
+          ],
+          "inventory": [
+            "healHerb",
+            "breatherDice"
+          ],
+          "keyItems": [],
+          "partyMembers": [],
+          "skillsKnown": [],
+          "skillCharges": {}
+        },
+        "npcStates": {
+          "akagi_ranch": {
+            "ranchShop": false,
+            "kunisada_chuji": false
+          },
+          "akagi_shrine": {
+            "angura_boss": false,
+            "hana": false
+          },
+          "border_tunnel": {
+            "juke_final": false,
+            "tower_guide": false,
+            "star_oldman": false,
+            "lost_traveler": false
+          },
+          "forest": {
+            "forestSpirit": false,
+            "lostTraveler": false
+          },
+          "haruna_lake": {
+            "haruna_beast": false,
+            "ghost_worker": false,
+            "guard_oldman": false,
+            "lost_child": false,
+            "harunaTrainer": false
+          },
+          "ikaho": {
+            "ishidanGuard": false,
+            "yuMori": false,
+            "ishidanInnkeeper": false,
+            "yumejiFan": false,
+            "manjuuVendor": false,
+            "letterBathKeeper": false
+          },
+          "jomo_gakuen": {
+            "juke_gakuen": false,
+            "student_ghost": false,
+            "cafeteria_lady": false,
+            "library_committee": false,
+            "school_kiosk": false
+          },
+          "konuma": {
+            "konumaShop": false,
+            "angura_guard": false
+          },
+          "kusatsu": {
+            "onsenMonkey": false,
+            "onsenShop": false,
+            "yumomiGirl": false
+          },
+          "kusatsu_deep": {
+            "yubatake_guardian": false,
+            "akizakura_ch4": false,
+            "toujikyaku": false,
+            "yumomi_merchant": false
+          },
+          "maebashi": {
+            "grandma": false,
+            "ruined_checkpoint": false,
+            "shopkeeper": false,
+            "akagiGuide": false,
+            "save_priest": false,
+            "maebashiInnkeeper": false,
+            "signpost": false,
+            "poet": false,
+            "boundaryPaint": false,
+            "nimonoCook": false
+          },
+          "minakami_valley": {
+            "juke_minakami": false,
+            "praying_woman": false,
+            "sooty_child": false,
+            "temple_guard": false,
+            "ridge_peddler": false,
+            "minakamiTrainer": false
+          },
+          "onuma": {
+            "wagon_sign": false,
+            "oldFisherman": false,
+            "onumaTrainer": false
+          },
+          "oze_marsh": {
+            "oze_wraith": false,
+            "akizakura_ch8": false,
+            "water_bottom_resident": false,
+            "wet_merchant": false
+          },
+          "shimonita": {
+            "konnyakuKing": false,
+            "shimonitaShop": false,
+            "silkWorker": false,
+            "freightCrate": false
+          },
+          "shirane_trail": {
+            "kumako_steam": false,
+            "old_miner": false,
+            "onsen_researcher": false,
+            "shiraneTrainer": false
+          },
+          "takasaki": {
+            "darumaMaster": false,
+            "weaponShop": false,
+            "musician": false,
+            "takasakiTrainer": false,
+            "gururinStop": false,
+            "darumaShelf": false,
+            "darumaBinder": false
+          },
+          "tamura": {
+            "shuuou": false,
+            "akagi_npc": false,
+            "weaver": false,
+            "diceShop": false,
+            "farmer": false
+          },
+          "tanigawa_tunnel": {
+            "sato_kumako": false,
+            "echo_guardian": false,
+            "akizakura_ch6": false,
+            "kazegaeshi": false,
+            "sakaigoe_merchant": false
+          },
+          "tomioka": {
+            "brunat": false,
+            "factoryHead": false,
+            "cocoonGuard": false,
+            "threadMaiden": false,
+            "heritageGuide": false,
+            "tomiokaInnkeeper": false,
+            "silkworm": false,
+            "silentReel": false
+          },
+          "tsumagoi": {
+            "cabbageGuardian": false,
+            "cabbageFarmer": false
+          }
+        },
+        "itemStates": {
+          "akagi_ranch": [
+            {
+              "id": "yakimanju",
+              "taken": false
+            }
+          ],
+          "akagi_shrine": [],
+          "border_tunnel": [
+            {
+              "id": "powerDice",
+              "taken": false
+            }
+          ],
+          "forest": [
+            {
+              "id": "healHerb",
+              "taken": false
+            }
+          ],
+          "haruna_lake": [
+            {
+              "id": "healHerb",
+              "taken": false
+            },
+            {
+              "id": "powerDice",
+              "taken": false
+            }
+          ],
+          "ikaho": [
+            {
+              "id": "yakimanju",
+              "taken": false
+            },
+            {
+              "id": "herb",
+              "taken": false
+            }
+          ],
+          "jomo_gakuen": [
+            {
+              "id": "yakimanju",
+              "taken": false
+            },
+            {
+              "id": "healHerb",
+              "taken": false
+            }
+          ],
+          "konuma": [
+            {
+              "id": "yakimanju",
+              "taken": false
+            }
+          ],
+          "kusatsu": [
+            {
+              "id": "healHerb",
+              "taken": false
+            }
+          ],
+          "kusatsu_deep": [
+            {
+              "id": "yakimanju",
+              "taken": false
+            }
+          ],
+          "maebashi": [
+            {
+              "id": "yakimanju",
+              "taken": false
+            }
+          ],
+          "minakami_valley": [
+            {
+              "id": "healHerb",
+              "taken": false
+            }
+          ],
+          "onuma": [
+            {
+              "id": "healHerb",
+              "taken": false
+            }
+          ],
+          "oze_marsh": [
+            {
+              "id": "yakimanju",
+              "taken": false
+            }
+          ],
+          "shimonita": [
+            {
+              "id": "yakimanju",
+              "taken": false
+            }
+          ],
+          "shirane_trail": [
+            {
+              "id": "healHerb",
+              "taken": false
+            },
+            {
+              "id": "powerDice",
+              "taken": false
+            }
+          ],
+          "takasaki": [
+            {
+              "id": "healHerb",
+              "taken": false
+            }
+          ],
+          "tamura": [
+            {
+              "id": "yakimanju",
+              "taken": false
+            },
+            {
+              "id": "healHerb",
+              "taken": false
+            }
+          ],
+          "tanigawa_tunnel": [
+            {
+              "id": "healHerb",
+              "taken": false
+            }
+          ],
+          "tomioka": [
+            {
+              "id": "herb",
+              "taken": false
+            },
+            {
+              "id": "yakimanju",
+              "taken": false
+            }
+          ],
+          "tsumagoi": [
+            {
+              "id": "yakimanju",
+              "taken": false
+            }
+          ]
+        },
+        "storyFlags": {
+          "visited_maebashi": true
+        },
+        "shopState": {},
+        "journeyState": {
+          "respectGauge": 0,
+          "catalysts": []
+        }
+      }
+    },
+    "afterLoad": {
+      "hp": 47,
+      "gold": 73,
+      "experience": 24,
+      "inventory": [
+        "healHerb",
+        "breatherDice"
+      ],
+      "mapId": "maebashi"
+    },
+    "afterPhrase": {
+      "hp": 47,
+      "gold": 73,
+      "experience": 24,
+      "inventory": [
+        "healHerb",
+        "breatherDice"
+      ],
+      "mapId": "maebashi"
+    }
+  },
+  "consoleErrors": [],
+  "pageErrors": []
+}

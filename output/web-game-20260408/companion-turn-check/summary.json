@@ -1,0 +1,48 @@
+{
+  "checkedAt": "2026-04-08T14:08:47.312Z",
+  "menu": {
+    "phase": "menu",
+    "turnFlow": "player",
+    "menuEntries": [
+      "たたかう",
+      "アイテム",
+      "とくぎ",
+      "支援",
+      "にげる"
+    ]
+  },
+  "companion": {
+    "phase": "companionAttack",
+    "turnFlow": "companion",
+    "memberId": "akagi",
+    "memberName": "アカギ",
+    "face": "1",
+    "enemyHpAtCompanionStart": 50
+  },
+  "enemyTurn": {
+    "phase": "enemyAttack",
+    "turnFlow": "enemy",
+    "enemyHpAfterCompanion": 49,
+    "pendingEnemyRoll": {
+      "timer": 85,
+      "attackers": [
+        "足慣らしの願殻"
+      ],
+      "diceCount": 2
+    }
+  },
+  "nextMenu": {
+    "phase": "menu",
+    "turnFlow": "player",
+    "playerHp": 74,
+    "enemyHp": 49
+  },
+  "hpDeltaFromCompanionTurn": 1,
+  "consoleErrors": [],
+  "pageErrors": [],
+  "screenshots": [
+    "/Users/fumiaki/Desktop/GunmaEscapeVer2/output/web-game-20260408/companion-turn-check/menu-akagi.png",
+    "/Users/fumiaki/Desktop/GunmaEscapeVer2/output/web-game-20260408/companion-turn-check/companion-akagi.png",
+    "/Users/fumiaki/Desktop/GunmaEscapeVer2/output/web-game-20260408/companion-turn-check/enemy-turn.png"
+  ]
+}

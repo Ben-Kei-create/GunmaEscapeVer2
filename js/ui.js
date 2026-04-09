@@ -2143,7 +2143,10 @@ Game.UI = (function() {
     var boxHeight = hasDetailLine ? 66 + Math.max(0, detailLines.length - 1) * 10 : 46;
     var boxX = 88;
     var boxW = 304;
-    var boxY = 54 + slide;
+    var notificationBottom = Game.Achievements && Game.Achievements.getNotificationBottom
+      ? Game.Achievements.getNotificationBottom()
+      : 0;
+    var boxY = Math.max(54 + slide, notificationBottom + 8);
 
     ctx.globalAlpha = fade;
     R.drawDialogBox(boxX, boxY, boxW, boxHeight);

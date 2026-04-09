@@ -1,0 +1,29 @@
+{
+  "summary": {
+    "initialPlayer": {
+      "hp": 80,
+      "maxHp": 80,
+      "gold": 60,
+      "journeyRank": 1
+    },
+    "afterLevelUp": {
+      "hp": 90,
+      "maxHp": 90,
+      "experience": 80,
+      "journeyRank": 2,
+      "healedToFull": true,
+      "levelUps": [
+        {
+          "rank": 2,
+          "hpGain": 10,
+          "attackGain": 1,
+          "defenseGain": 0
+        }
+      ],
+      "soundCalls": [
+        "level_up"
+      ]
+    }
+  },
+  "consoleErrors": []
+}

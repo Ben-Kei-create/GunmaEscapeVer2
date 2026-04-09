@@ -1,0 +1,90 @@
+{
+  "shopInfo": {
+    "maebashiShop": "shop_前橋道具屋_healHerb,yakimanju,tempoCharm,breatherDice,leatherArmor",
+    "tamuraShop": "shop_サイコロ工房_breatherDice,powerDice,steadyDice,healDice",
+    "breatherDice": {
+      "id": "breatherDice",
+      "name": "息継ぎサイコロ",
+      "desc": "出目: 1-2-2-3-H2-H3 小さく立て直す",
+      "type": "dice",
+      "faces": [
+        1,
+        2,
+        2,
+        3,
+        "H2",
+        "H3"
+      ],
+      "color": "#dfffea",
+      "dotColor": "#2b8d63",
+      "price": 45
+    },
+    "learnOrder": [
+      "mikiashi",
+      "kasanekan",
+      "migamae",
+      "ikitsugi",
+      "hibashiri",
+      "shirosenyomi",
+      "tsumugibreathe",
+      "kaminariyobi",
+      "kaeriashi",
+      "yukuguri"
+    ]
+  },
+  "ikitsugiResult": {
+    "phase": "enemyAttack",
+    "message": "境界の追いはぎが白い賽を鳴らす…",
+    "playerHp": 30,
+    "playerMaxHp": 80,
+    "playerEffects": [
+      {
+        "type": "slow_roll",
+        "turnsLeft": 1,
+        "value": 1
+      }
+    ],
+    "popups": [
+      {
+        "text": "HP+12",
+        "x": 90,
+        "y": 176,
+        "color": "#84ffab"
+      },
+      {
+        "text": "緩",
+        "x": 90,
+        "y": 188,
+        "color": "#8fe0ff"
+      }
+    ]
+  },
+  "yukuguriResult": {
+    "phase": "enemyAttack",
+    "message": "境界の追いはぎが白い賽を鳴らす…",
+    "playerHp": 32,
+    "playerMaxHp": 80,
+    "playerEffects": [
+      {
+        "type": "onsen_heal",
+        "turnsLeft": 2,
+        "value": 2
+      }
+    ],
+    "popups": [
+      {
+        "text": "HP+18",
+        "x": 90,
+        "y": 176,
+        "color": "#84ffab"
+      },
+      {
+        "text": "湯+2",
+        "x": 90,
+        "y": 188,
+        "color": "#9be4ff"
+      }
+    ]
+  },
+  "consoleErrors": []
+}

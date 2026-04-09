@@ -1341,3 +1341,24 @@ Original prompt: そうだね。セーブできる村役場みたいなところ
     - `save(1) -> load(1)` で HP / 所持金 / 経験値 / inventory / mapId が戻ることを確認。
     - `createPassphrase() -> loadPassphrase()` でも同じ値が復元されることを確認。
     - `console error / pageerror = 0`。
+- 2026-04-09: 復帰系 / 入力系の追加QAを実施。
+  - `/tmp/qa_phase4_recovery_input.mjs` を使って `output/web-game-20260409/qa-phase4-recovery-input/summary.json` を生成。
+  - 確認した観点:
+    - オープニングをスキップして前橋へ遷移
+    - タイトルの `つづきから`
+    - タイトルの `あいことば` 入力キャンセル
+    - タイトルの `あいことば` 復帰成功
+    - フィールドの `記録帳` を開いてキャンセル復帰
+    - 店の在庫消費 -> セーブ -> ロード後の在庫復元
+    - GAME OVER -> タイトル復帰
+  - 上記7観点はすべて成功。`console error / pageerror = 0`。
+  - `shop_stock_save_load` では `薬草 3 -> 2 -> 1` の在庫減少と、ロード後に `残り2 / gold 185` へ復元されることを確認。
+  - `opening_skip_to_first_town` では `mode: exploring / map: maebashi / currentBgm: field_maebashi` に到達し、キャンバスの `nonBlackFraction: 0.9934` を確認。
+- 2026-04-09: オープニング明けのトースト重なりを軽減。
+  - `js/achievements.js`
+    - 実績トーストの下端を返す `getNotificationBottom()` を追加。
+  - `js/ui.js`
+    - エリアバナー描画時、実績トーストが出ているあいだはトースト下端 + 8px ぶん下へずらすよう更新。
+  - `node --check js/achievements.js js/ui.js` 通過。
+  - `output/web-game-20260409/qa-phase4-recovery-input/opening-after-skip.png` を目視し、前橋到着直後の実績トーストとエリアバナーが直接重ならないことを確認。
+  - 追加で `develop-web-game` の Playwright client を `output/web-game-20260409/post-fix-opening-smoke` に再実行し、修正後も `mode: exploring / map: maebashi` になることを確認。

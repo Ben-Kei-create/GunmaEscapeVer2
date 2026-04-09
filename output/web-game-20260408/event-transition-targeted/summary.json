@@ -1,0 +1,940 @@
+{
+  "specialDice": {
+    "before": {
+      "mode": "event",
+      "titleSelection": 0,
+      "map": "takasaki",
+      "mapLabel": "高崎だるま街",
+      "audio": {
+        "requestedBgm": null,
+        "currentBgm": null
+      },
+      "player": {
+        "tileX": 15,
+        "tileY": 11,
+        "direction": "down",
+        "hp": 96,
+        "maxHp": 96,
+        "attack": 12,
+        "defense": 6,
+        "experience": 0,
+        "journeyRank": 1,
+        "nextRankExperience": 80,
+        "gold": 60,
+        "chapter": 1,
+        "skillsKnown": [],
+        "skillCharges": {},
+        "inventory": []
+      },
+      "followers": [],
+      "journeyLabel": "第二章",
+      "journeyIndex": 2,
+      "chapterTitle": "路線の町と最初の敬意",
+      "objective": "だるまの関所を越え、町の誇りにふさわしい旅人と認められる。",
+      "respectGauge": 0,
+      "catalystCount": 0,
+      "party": [],
+      "storyFlags": {
+        "checkpointFailedOnce": false,
+        "checkpointCleared": false,
+        "akagiJoinedSlice": false,
+        "darumaCleared": false,
+        "threadCleared": false,
+        "trainingTakasaki": false,
+        "trainingOnuma": false,
+        "trainingShirane": false,
+        "trainingHaruna": false,
+        "trainingMinakami": false
+      },
+      "continueSlot": null,
+      "hasAnySave": false,
+      "saveMenuContext": "field",
+      "quests": {
+        "open": false,
+        "tracked": null,
+        "active": [
+          {
+            "id": "onsen_tour",
+            "name": "温泉巡り",
+            "note": "",
+            "progress": 0,
+            "target": 3
+          },
+          {
+            "id": "joumo_karuta_collection",
+            "name": "上毛かるた収集",
+            "note": "",
+            "progress": 0,
+            "target": 5
+          },
+          {
+            "id": "daruma_perseverance",
+            "name": "だるま七転び八起き",
+            "note": "",
+            "progress": 0,
+            "target": 3
+          },
+          {
+            "id": "gunma_dialect_master",
+            "name": "群馬弁マスター",
+            "note": "",
+            "progress": 0,
+            "target": 5
+          }
+        ]
+      },
+      "services": [
+        {
+          "id": "weaponShop",
+          "type": "dice_shop",
+          "x": 5,
+          "y": 9
+        }
+      ],
+      "ui": {
+        "showJourneyBadge": true,
+        "eventTextSpeed": "ふつう",
+        "battleDialogueSpeed": "ふつう",
+        "areaBanner": {
+          "chapterTitle": "第二章 路線の町と最初の敬意",
+          "mapLabel": "高崎だるま街",
+          "mapSubtitle": "願掛けの町",
+          "detailLine": "",
+          "timer": 141,
+          "maxTimer": 150
+        },
+        "environmentNote": null
+      },
+      "title": {
+        "mode": "intro_movie",
+        "sceneId": "highway",
+        "sceneTitle": "深夜の関越道",
+        "sceneIndex": 0,
+        "sceneTimer": 2,
+        "totalTimer": 2,
+        "revealTimer": 0
+      },
+      "encounters": {
+        "mapId": "takasaki",
+        "eligibleSteps": 0,
+        "cooldown": 3,
+        "cycleIndex": 0
+      },
+      "achievements": {
+        "unlockedCount": 1,
+        "totalCount": 22,
+        "trackedMapCount": 21,
+        "visitedTrackedMapCount": 1
+      },
+      "event": {
+        "active": true,
+        "eventId": "special_dice_intro",
+        "sceneIndex": 0,
+        "sceneCount": 3,
+        "lineIndex": 0,
+        "charIndex": 0,
+        "charSpeed": 2,
+        "textComplete": false,
+        "autoAdvanceTimer": 0,
+        "speaker": null,
+        "lines": [
+          "手のひらのだるまサイコロが、白い熱を帯びて脈打った。",
+          "ただ目が強いだけじゃない。",
+          "この土地の願い癖そのものが、出目に染みついている。"
+        ],
+        "autoAdvance": 0,
+        "illustrationKey": "frontier_dawn",
+        "skippable": false
+      }
+    },
+    "after": {
+      "mode": "event",
+      "titleSelection": 0,
+      "map": "takasaki",
+      "mapLabel": "高崎だるま街",
+      "audio": {
+        "requestedBgm": null,
+        "currentBgm": null
+      },
+      "player": {
+        "tileX": 15,
+        "tileY": 11,
+        "direction": "down",
+        "hp": 96,
+        "maxHp": 96,
+        "attack": 12,
+        "defense": 6,
+        "experience": 0,
+        "journeyRank": 1,
+        "nextRankExperience": 80,
+        "gold": 60,
+        "chapter": 1,
+        "skillsKnown": [],
+        "skillCharges": {},
+        "inventory": []
+      },
+      "followers": [],
+      "journeyLabel": "第二章",
+      "journeyIndex": 2,
+      "chapterTitle": "路線の町と最初の敬意",
+      "objective": "だるまの関所を越え、町の誇りにふさわしい旅人と認められる。",
+      "respectGauge": 0,
+      "catalystCount": 0,
+      "party": [],
+      "storyFlags": {
+        "checkpointFailedOnce": false,
+        "checkpointCleared": false,
+        "akagiJoinedSlice": false,
+        "darumaCleared": false,
+        "threadCleared": false,
+        "trainingTakasaki": false,
+        "trainingOnuma": false,
+        "trainingShirane": false,
+        "trainingHaruna": false,
+        "trainingMinakami": false
+      },
+      "continueSlot": null,
+      "hasAnySave": false,
+      "saveMenuContext": "field",
+      "quests": {
+        "open": false,
+        "tracked": null,
+        "active": [
+          {
+            "id": "onsen_tour",
+            "name": "温泉巡り",
+            "note": "",
+            "progress": 0,
+            "target": 3
+          },
+          {
+            "id": "joumo_karuta_collection",
+            "name": "上毛かるた収集",
+            "note": "",
+            "progress": 0,
+            "target": 5
+          },
+          {
+            "id": "daruma_perseverance",
+            "name": "だるま七転び八起き",
+            "note": "",
+            "progress": 0,
+            "target": 3
+          },
+          {
+            "id": "gunma_dialect_master",
+            "name": "群馬弁マスター",
+            "note": "",
+            "progress": 0,
+            "target": 5
+          }
+        ]
+      },
+      "services": [
+        {
+          "id": "weaponShop",
+          "type": "dice_shop",
+          "x": 5,
+          "y": 9
+        }
+      ],
+      "ui": {
+        "showJourneyBadge": true,
+        "eventTextSpeed": "ふつう",
+        "battleDialogueSpeed": "ふつう",
+        "areaBanner": null,
+        "environmentNote": null
+      },
+      "title": {
+        "mode": "intro_movie",
+        "sceneId": "highway",
+        "sceneTitle": "深夜の関越道",
+        "sceneIndex": 0,
+        "sceneTimer": 2,
+        "totalTimer": 2,
+        "revealTimer": 0
+      },
+      "encounters": {
+        "mapId": "takasaki",
+        "eligibleSteps": 0,
+        "cooldown": 3,
+        "cycleIndex": 0
+      },
+      "achievements": {
+        "unlockedCount": 1,
+        "totalCount": 22,
+        "trackedMapCount": 21,
+        "visitedTrackedMapCount": 1
+      },
+      "event": {
+        "active": true,
+        "eventId": "special_dice_intro",
+        "sceneIndex": 0,
+        "sceneCount": 3,
+        "lineIndex": 1,
+        "charIndex": 13,
+        "charSpeed": 2,
+        "textComplete": true,
+        "autoAdvanceTimer": 0,
+        "speaker": null,
+        "lines": [
+          "手のひらのだるまサイコロが、白い熱を帯びて脈打った。",
+          "ただ目が強いだけじゃない。",
+          "この土地の願い癖そのものが、出目に染みついている。"
+        ],
+        "autoAdvance": 0,
+        "illustrationKey": "frontier_dawn",
+        "skippable": false
+      }
+    }
+  },
+  "gururin": {
+    "before": {
+      "mode": "event",
+      "titleSelection": 0,
+      "map": "takasaki",
+      "mapLabel": "高崎だるま街",
+      "audio": {
+        "requestedBgm": null,
+        "currentBgm": null
+      },
+      "player": {
+        "tileX": 15,
+        "tileY": 11,
+        "direction": "down",
+        "hp": 96,
+        "maxHp": 96,
+        "attack": 12,
+        "defense": 6,
+        "experience": 0,
+        "journeyRank": 1,
+        "nextRankExperience": 80,
+        "gold": 60,
+        "chapter": 1,
+        "skillsKnown": [],
+        "skillCharges": {},
+        "inventory": []
+      },
+      "followers": [],
+      "journeyLabel": "第二章",
+      "journeyIndex": 2,
+      "chapterTitle": "路線の町と最初の敬意",
+      "objective": "だるまの関所を越え、町の誇りにふさわしい旅人と認められる。",
+      "respectGauge": 0,
+      "catalystCount": 0,
+      "party": [],
+      "storyFlags": {
+        "checkpointFailedOnce": false,
+        "checkpointCleared": false,
+        "akagiJoinedSlice": false,
+        "darumaCleared": false,
+        "threadCleared": false,
+        "trainingTakasaki": false,
+        "trainingOnuma": false,
+        "trainingShirane": false,
+        "trainingHaruna": false,
+        "trainingMinakami": false
+      },
+      "continueSlot": null,
+      "hasAnySave": false,
+      "saveMenuContext": "field",
+      "quests": {
+        "open": false,
+        "tracked": null,
+        "active": [
+          {
+            "id": "onsen_tour",
+            "name": "温泉巡り",
+            "note": "",
+            "progress": 0,
+            "target": 3
+          },
+          {
+            "id": "joumo_karuta_collection",
+            "name": "上毛かるた収集",
+            "note": "",
+            "progress": 0,
+            "target": 5
+          },
+          {
+            "id": "daruma_perseverance",
+            "name": "だるま七転び八起き",
+            "note": "",
+            "progress": 0,
+            "target": 3
+          },
+          {
+            "id": "gunma_dialect_master",
+            "name": "群馬弁マスター",
+            "note": "",
+            "progress": 0,
+            "target": 5
+          }
+        ]
+      },
+      "services": [
+        {
+          "id": "weaponShop",
+          "type": "dice_shop",
+          "x": 5,
+          "y": 9
+        }
+      ],
+      "ui": {
+        "showJourneyBadge": true,
+        "eventTextSpeed": "ふつう",
+        "battleDialogueSpeed": "ふつう",
+        "areaBanner": {
+          "chapterTitle": "第二章 路線の町と最初の敬意",
+          "mapLabel": "高崎だるま街",
+          "mapSubtitle": "願掛けの町",
+          "detailLine": "",
+          "timer": 140,
+          "maxTimer": 150
+        },
+        "environmentNote": null
+      },
+      "title": {
+        "mode": "intro_movie",
+        "sceneId": "highway",
+        "sceneTitle": "深夜の関越道",
+        "sceneIndex": 0,
+        "sceneTimer": 2,
+        "totalTimer": 2,
+        "revealTimer": 0
+      },
+      "encounters": {
+        "mapId": "takasaki",
+        "eligibleSteps": 0,
+        "cooldown": 3,
+        "cycleIndex": 0
+      },
+      "achievements": {
+        "unlockedCount": 1,
+        "totalCount": 22,
+        "trackedMapCount": 21,
+        "visitedTrackedMapCount": 1
+      },
+      "event": {
+        "active": true,
+        "eventId": "gururin",
+        "sceneIndex": 0,
+        "sceneCount": 4,
+        "lineIndex": 0,
+        "charIndex": 0,
+        "charSpeed": 2,
+        "textComplete": false,
+        "autoAdvanceTimer": 0,
+        "speaker": null,
+        "lines": [
+          "高崎の交差点に、緑の車体が音もなく滑り込んできた。",
+          "フロントガラスの行き先表示には、丸い文字で「ぐるりん」と浮かんでいる。"
+        ],
+        "autoAdvance": 0,
+        "illustrationKey": "gururin_loop",
+        "skippable": false
+      }
+    },
+    "after": {
+      "mode": "event",
+      "titleSelection": 0,
+      "map": "takasaki",
+      "mapLabel": "高崎だるま街",
+      "audio": {
+        "requestedBgm": null,
+        "currentBgm": null
+      },
+      "player": {
+        "tileX": 15,
+        "tileY": 11,
+        "direction": "down",
+        "hp": 96,
+        "maxHp": 96,
+        "attack": 12,
+        "defense": 6,
+        "experience": 0,
+        "journeyRank": 1,
+        "nextRankExperience": 80,
+        "gold": 60,
+        "chapter": 1,
+        "skillsKnown": [],
+        "skillCharges": {},
+        "inventory": []
+      },
+      "followers": [],
+      "journeyLabel": "第二章",
+      "journeyIndex": 2,
+      "chapterTitle": "路線の町と最初の敬意",
+      "objective": "だるまの関所を越え、町の誇りにふさわしい旅人と認められる。",
+      "respectGauge": 0,
+      "catalystCount": 0,
+      "party": [],
+      "storyFlags": {
+        "checkpointFailedOnce": false,
+        "checkpointCleared": false,
+        "akagiJoinedSlice": false,
+        "darumaCleared": false,
+        "threadCleared": false,
+        "trainingTakasaki": false,
+        "trainingOnuma": false,
+        "trainingShirane": false,
+        "trainingHaruna": false,
+        "trainingMinakami": false
+      },
+      "continueSlot": null,
+      "hasAnySave": false,
+      "saveMenuContext": "field",
+      "quests": {
+        "open": false,
+        "tracked": null,
+        "active": [
+          {
+            "id": "onsen_tour",
+            "name": "温泉巡り",
+            "note": "",
+            "progress": 0,
+            "target": 3
+          },
+          {
+            "id": "joumo_karuta_collection",
+            "name": "上毛かるた収集",
+            "note": "",
+            "progress": 0,
+            "target": 5
+          },
+          {
+            "id": "daruma_perseverance",
+            "name": "だるま七転び八起き",
+            "note": "",
+            "progress": 0,
+            "target": 3
+          },
+          {
+            "id": "gunma_dialect_master",
+            "name": "群馬弁マスター",
+            "note": "",
+            "progress": 0,
+            "target": 5
+          }
+        ]
+      },
+      "services": [
+        {
+          "id": "weaponShop",
+          "type": "dice_shop",
+          "x": 5,
+          "y": 9
+        }
+      ],
+      "ui": {
+        "showJourneyBadge": true,
+        "eventTextSpeed": "ふつう",
+        "battleDialogueSpeed": "ふつう",
+        "areaBanner": null,
+        "environmentNote": null
+      },
+      "title": {
+        "mode": "intro_movie",
+        "sceneId": "highway",
+        "sceneTitle": "深夜の関越道",
+        "sceneIndex": 0,
+        "sceneTimer": 2,
+        "totalTimer": 2,
+        "revealTimer": 0
+      },
+      "encounters": {
+        "mapId": "takasaki",
+        "eligibleSteps": 0,
+        "cooldown": 3,
+        "cycleIndex": 0
+      },
+      "achievements": {
+        "unlockedCount": 1,
+        "totalCount": 22,
+        "trackedMapCount": 21,
+        "visitedTrackedMapCount": 1
+      },
+      "event": {
+        "active": true,
+        "eventId": "gururin",
+        "sceneIndex": 1,
+        "sceneCount": 4,
+        "lineIndex": 0,
+        "charIndex": 27,
+        "charSpeed": 2,
+        "textComplete": true,
+        "autoAdvanceTimer": 0,
+        "speaker": "車内アナウンス",
+        "lines": [
+          "まもなく、もてなし広場前。高崎中心市街地を巡回します。",
+          "外へ向かうように見えて、路線図は町の内側を円でなぞるばかりだった。"
+        ],
+        "autoAdvance": 0,
+        "illustrationKey": "gururin_loop",
+        "skippable": false
+      }
+    }
+  },
+  "chapterTransition": {
+    "during": {
+      "mode": "transition",
+      "titleSelection": 0,
+      "map": "forest",
+      "mapLabel": "廃墟の森",
+      "audio": {
+        "requestedBgm": null,
+        "currentBgm": null
+      },
+      "player": {
+        "tileX": 10,
+        "tileY": 10,
+        "direction": "down",
+        "hp": 96,
+        "maxHp": 96,
+        "attack": 12,
+        "defense": 6,
+        "experience": 0,
+        "journeyRank": 1,
+        "nextRankExperience": 80,
+        "gold": 60,
+        "chapter": 2,
+        "skillsKnown": [],
+        "skillCharges": {},
+        "inventory": []
+      },
+      "followers": [],
+      "journeyLabel": "第三章",
+      "journeyIndex": 3,
+      "chapterTitle": "赤城の運び屋たち",
+      "objective": "赤城の異界へ足を踏み入れ、運び屋たちの痕跡を追い始める。",
+      "respectGauge": 0,
+      "catalystCount": 0,
+      "party": [],
+      "storyFlags": {
+        "checkpointFailedOnce": false,
+        "checkpointCleared": false,
+        "akagiJoinedSlice": false,
+        "darumaCleared": false,
+        "threadCleared": false,
+        "trainingTakasaki": false,
+        "trainingOnuma": false,
+        "trainingShirane": false,
+        "trainingHaruna": false,
+        "trainingMinakami": false
+      },
+      "continueSlot": {
+        "slot": 1,
+        "chapter": 2,
+        "mapName": "forest",
+        "mapLabel": "廃墟の森",
+        "playTime": 6137,
+        "hp": 96,
+        "maxHp": 96,
+        "gold": 60,
+        "savedAt": 1775655057330
+      },
+      "hasAnySave": true,
+      "saveMenuContext": "field",
+      "quests": {
+        "open": false,
+        "tracked": null,
+        "active": [
+          {
+            "id": "onsen_tour",
+            "name": "温泉巡り",
+            "note": "",
+            "progress": 0,
+            "target": 3
+          },
+          {
+            "id": "joumo_karuta_collection",
+            "name": "上毛かるた収集",
+            "note": "",
+            "progress": 0,
+            "target": 5
+          },
+          {
+            "id": "daruma_perseverance",
+            "name": "だるま七転び八起き",
+            "note": "",
+            "progress": 0,
+            "target": 3
+          },
+          {
+            "id": "gunma_dialect_master",
+            "name": "群馬弁マスター",
+            "note": "",
+            "progress": 0,
+            "target": 5
+          },
+          {
+            "id": "legendary_blacksmith",
+            "name": "伝説の刀鍛冶",
+            "note": "",
+            "progress": 0,
+            "target": 4
+          },
+          {
+            "id": "search_for_hana",
+            "name": "花の捜索",
+            "note": "",
+            "progress": 0,
+            "target": 1
+          },
+          {
+            "id": "fishing_master",
+            "name": "釣り名人",
+            "note": "",
+            "progress": 0,
+            "target": 3
+          },
+          {
+            "id": "angura_secret",
+            "name": "アングラの秘密",
+            "note": "",
+            "progress": 0,
+            "target": 3
+          },
+          {
+            "id": "way_of_the_dice",
+            "name": "サイコロ道",
+            "note": "",
+            "progress": 0,
+            "target": 10
+          }
+        ]
+      },
+      "services": [],
+      "ui": {
+        "showJourneyBadge": true,
+        "eventTextSpeed": "ふつう",
+        "battleDialogueSpeed": "ふつう",
+        "areaBanner": {
+          "chapterTitle": "第三章 赤城の運び屋たち",
+          "mapLabel": "廃墟の森",
+          "mapSubtitle": "侵入者を選ぶ入口",
+          "detailLine": "",
+          "timer": 139,
+          "maxTimer": 150
+        },
+        "environmentNote": null
+      },
+      "title": {
+        "mode": "intro_movie",
+        "sceneId": "highway",
+        "sceneTitle": "深夜の関越道",
+        "sceneIndex": 0,
+        "sceneTimer": 2,
+        "totalTimer": 2,
+        "revealTimer": 0
+      },
+      "encounters": {
+        "mapId": "forest",
+        "eligibleSteps": 0,
+        "cooldown": 3,
+        "cycleIndex": 0
+      },
+      "achievements": {
+        "unlockedCount": 2,
+        "totalCount": 22,
+        "trackedMapCount": 21,
+        "visitedTrackedMapCount": 2
+      },
+      "transition": {
+        "progress": 0.8120000000000005,
+        "sourceMapId": "takasaki",
+        "targetMapId": "forest",
+        "stopLabels": [
+          "高崎だるま街",
+          "回送",
+          "廃墟の森"
+        ],
+        "title": "ぐるりん回送中",
+        "subtitle": "廃墟の森 へ向かっている。"
+      }
+    },
+    "afterLoad": {
+      "mode": "event",
+      "titleSelection": 0,
+      "map": "forest",
+      "mapLabel": "廃墟の森",
+      "audio": {
+        "requestedBgm": null,
+        "currentBgm": null
+      },
+      "player": {
+        "tileX": 10,
+        "tileY": 10,
+        "direction": "down",
+        "hp": 96,
+        "maxHp": 96,
+        "attack": 12,
+        "defense": 6,
+        "experience": 0,
+        "journeyRank": 1,
+        "nextRankExperience": 80,
+        "gold": 60,
+        "chapter": 2,
+        "skillsKnown": [],
+        "skillCharges": {},
+        "inventory": []
+      },
+      "followers": [],
+      "journeyLabel": "第三章",
+      "journeyIndex": 3,
+      "chapterTitle": "赤城の運び屋たち",
+      "objective": "赤城の異界へ足を踏み入れ、運び屋たちの痕跡を追い始める。",
+      "respectGauge": 0,
+      "catalystCount": 0,
+      "party": [],
+      "storyFlags": {
+        "checkpointFailedOnce": false,
+        "checkpointCleared": false,
+        "akagiJoinedSlice": false,
+        "darumaCleared": false,
+        "threadCleared": false,
+        "trainingTakasaki": false,
+        "trainingOnuma": false,
+        "trainingShirane": false,
+        "trainingHaruna": false,
+        "trainingMinakami": false
+      },
+      "continueSlot": {
+        "slot": 1,
+        "chapter": 2,
+        "mapName": "forest",
+        "mapLabel": "廃墟の森",
+        "playTime": 6137,
+        "hp": 96,
+        "maxHp": 96,
+        "gold": 60,
+        "savedAt": 1775655057330
+      },
+      "hasAnySave": true,
+      "saveMenuContext": "field",
+      "quests": {
+        "open": false,
+        "tracked": null,
+        "active": [
+          {
+            "id": "onsen_tour",
+            "name": "温泉巡り",
+            "note": "",
+            "progress": 0,
+            "target": 3
+          },
+          {
+            "id": "joumo_karuta_collection",
+            "name": "上毛かるた収集",
+            "note": "",
+            "progress": 0,
+            "target": 5
+          },
+          {
+            "id": "daruma_perseverance",
+            "name": "だるま七転び八起き",
+            "note": "",
+            "progress": 0,
+            "target": 3
+          },
+          {
+            "id": "gunma_dialect_master",
+            "name": "群馬弁マスター",
+            "note": "",
+            "progress": 0,
+            "target": 5
+          },
+          {
+            "id": "legendary_blacksmith",
+            "name": "伝説の刀鍛冶",
+            "note": "",
+            "progress": 0,
+            "target": 4
+          },
+          {
+            "id": "search_for_hana",
+            "name": "花の捜索",
+            "note": "",
+            "progress": 0,
+            "target": 1
+          },
+          {
+            "id": "fishing_master",
+            "name": "釣り名人",
+            "note": "",
+            "progress": 0,
+            "target": 3
+          },
+          {
+            "id": "angura_secret",
+            "name": "アングラの秘密",
+            "note": "",
+            "progress": 0,
+            "target": 3
+          },
+          {
+            "id": "way_of_the_dice",
+            "name": "サイコロ道",
+            "note": "",
+            "progress": 0,
+            "target": 10
+          }
+        ]
+      },
+      "services": [],
+      "ui": {
+        "showJourneyBadge": true,
+        "eventTextSpeed": "ふつう",
+        "battleDialogueSpeed": "ふつう",
+        "areaBanner": {
+          "chapterTitle": "第三章 赤城の運び屋たち",
+          "mapLabel": "廃墟の森",
+          "mapSubtitle": "侵入者を選ぶ入口",
+          "detailLine": "",
+          "timer": 62,
+          "maxTimer": 150
+        },
+        "environmentNote": null
+      },
+      "title": {
+        "mode": "intro_movie",
+        "sceneId": "highway",
+        "sceneTitle": "深夜の関越道",
+        "sceneIndex": 0,
+        "sceneTimer": 2,
+        "totalTimer": 2,
+        "revealTimer": 0
+      },
+      "encounters": {
+        "mapId": "forest",
+        "eligibleSteps": 0,
+        "cooldown": 3,
+        "cycleIndex": 0
+      },
+      "achievements": {
+        "unlockedCount": 2,
+        "totalCount": 22,
+        "trackedMapCount": 21,
+        "visitedTrackedMapCount": 2
+      },
+      "event": {
+        "active": true,
+        "eventId": "ch2_opening",
+        "sceneIndex": 0,
+        "sceneCount": 5,
+        "lineIndex": 0,
+        "charIndex": 9,
+        "charSpeed": 2,
+        "textComplete": true,
+        "autoAdvanceTimer": 0,
+        "speaker": null,
+        "lines": [
+          "第二章 赤城の闇編"
+        ],
+        "autoAdvance": 0,
+        "illustrationKey": "",
+        "skippable": false
+      }
+    }
+  }
+}

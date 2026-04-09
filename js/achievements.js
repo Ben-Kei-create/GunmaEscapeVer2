@@ -337,6 +337,11 @@ Game.Achievements = (function() {
     return -70 + inProgress * 80 - outProgress * 80;
   }
 
+  function getNotificationBottom() {
+    if (!currentNotification) return 0;
+    return getNotificationY(currentNotification) + 60;
+  }
+
   function draw() {
     if (!currentNotification) return;
 
@@ -377,6 +382,7 @@ Game.Achievements = (function() {
     getAll: getAll,
     getUnlocked: getUnlocked,
     getDebugState: getDebugState,
+    getNotificationBottom: getNotificationBottom,
     update: update,
     draw: draw,
     drawList: drawList

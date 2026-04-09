@@ -1,0 +1,26 @@
+{
+  "checkedAt": "2026-04-08T14:09:24.988Z",
+  "akagi": {
+    "memberId": "akagi",
+    "queueLength": 2,
+    "face": "1",
+    "enemyHp": 50
+  },
+  "yamakawa": {
+    "memberId": "yamakawa",
+    "queueLength": 2,
+    "face": "1",
+    "enemyHp": 48
+  },
+  "enemyTurn": {
+    "phase": "enemyAttack",
+    "turnFlow": "enemy",
+    "enemyHp": 47
+  },
+  "hpDeltaThroughPartyTurn": 3,
+  "consoleErrors": [],
+  "pageErrors": [],
+  "screenshots": [
+    "/Users/fumiaki/Desktop/GunmaEscapeVer2/output/web-game-20260408/companion-turn-multi-check/multi-companion.png"
+  ]
+}

@@ -2070,6 +2070,7 @@ Game.UI = (function() {
       R.drawTextJP('次: ' + clampText(transitionInfo.targetLabel, 14), 404, 42, '#ffe08f', 9, 'right');
     }
     R.drawTextJP('停車所 ' + (Math.min(stops.length, Math.max(1, busState.stopIndex + 1))) + '/' + stops.length, 404, 58, '#8fb8ff', 8, 'right');
+    R.drawTextJP('Z / Enterで到着を早める', 404, 72, '#7e89ad', 7, 'right');
 
     ctx.strokeStyle = 'rgba(95, 212, 151, ' + routeGlow.toFixed(3) + ')';
     ctx.lineWidth = 4;

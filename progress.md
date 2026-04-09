@@ -1362,3 +1362,27 @@ Original prompt: そうだね。セーブできる村役場みたいなところ
   - `node --check js/achievements.js js/ui.js` 通過。
   - `output/web-game-20260409/qa-phase4-recovery-input/opening-after-skip.png` を目視し、前橋到着直後の実績トーストとエリアバナーが直接重ならないことを確認。
   - 追加で `develop-web-game` の Playwright client を `output/web-game-20260409/post-fix-opening-smoke` に再実行し、修正後も `mode: exploring / map: maebashi` になることを確認。
+- 2026-04-10: 中盤イベントの暗転・遷移待ちを横展開で修正。
+  - 原因メモ:
+    - `js/event.js` のフェード処理は、場面間で `fade-out` したあとに `fade-in` へ戻す導線がなく、暗転中でも内部だけ次の行へ進める余地があった。
+    - `js/main.js` の `STATE.TRANSITION` は完全な時間待ちで、confirm/cancel を押しても到着を早められなかった。
+  - 対応:
+    - `js/event.js`
+      - confirm/cancel の共通判定 `isAdvancePressed()` を追加。
+      - フェード中は confirm/cancel で即座に次段階へ進めるよう更新。
+      - 場面間の `waitTimer` 終了後に `fadeDir = -1` を立て、暗転から確実に復帰するよう修正。
+    - `js/main.js`
+      - `STATE.TRANSITION` 中に confirm/cancel が押されたら `transitionAlpha = 1` にして即到着できるよう更新。
+    - `js/ui.js`
+      - 回送ムービー右上に `Z / Enterで到着を早める` を追加。
+  - 検証:
+    - `node --check js/event.js js/main.js js/ui.js` 通過。
+    - `output/web-game-20260410/qa-phase5-event-movies-focus/summary.json`
+      - `special_dice_intro -> exploring(takasaki)`
+      - `gururin -> exploring(takasaki)`
+      - `ch1_ending -> transition -> ch2_opening -> exploring(forest)`
+      - `gururin_network -> ch5_ending -> transition -> ch6_opening -> exploring(tanigawa_tunnel)`
+      - 4観点とも `console error / pageerror = 0`。
+      - 章移動シナリオでは `transitionProgress` が即進み、ボタン入力で到着待ちを短縮できることを確認。
+    - `develop-web-game` の Playwright client を `output/web-game-20260410/post-fix-opening-client-2` で再実行し、`state-0.json` が `mode: exploring / map: maebashi / currentBgm: field_maebashi` になることを確認。
+    - `output/web-game-20260410/post-fix-opening-client-2/shot-0.png` を目視し、前橋の初期表示まで正常に到達することを確認。

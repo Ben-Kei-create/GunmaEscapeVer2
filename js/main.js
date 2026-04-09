@@ -143,6 +143,11 @@ Game.Main = (function() {
     state = newState;
   }
 
+  function shouldFastForwardTransition() {
+    return !!(Game.Input && Game.Input.isPressed &&
+      (Game.Input.isPressed('confirm') || Game.Input.isPressed('cancel')));
+  }
+
   function markMapVisited(mapId) {
     if (!mapId) return;
     pendingArrivalCheck = mapId;
@@ -869,7 +874,11 @@ Game.Main = (function() {
         break;
 
       case Game.Config.STATE.TRANSITION:
-        transitionAlpha += TRANSITION_SPEED;
+        if (shouldFastForwardTransition()) {
+          transitionAlpha = 1;
+        } else {
+          transitionAlpha += TRANSITION_SPEED;
+        }
         if (!transitionLoaded && transitionAlpha >= TRANSITION_LOAD_PROGRESS) {
           transitionLoaded = true;
           if (transitionData && transitionData.onLoad) {

@@ -1,0 +1,1024 @@
+{
+  "timestamp": "2026-04-09T15:50:44.996Z",
+  "errors": [],
+  "scenarios": {
+    "special_dice_intro": {
+      "label": "special-dice-intro",
+      "presses": 24,
+      "finalMode": "exploring",
+      "finalMap": "takasaki",
+      "finalAudio": "field_takasaki",
+      "finalEvent": null,
+      "finalTransition": null,
+      "finalCanvas": {
+        "avgLuma": 112.34,
+        "nonBlackFraction": 0.9961,
+        "opaquePixels": 9216
+      },
+      "timeline": [
+        {
+          "frame": 0,
+          "mode": "event",
+          "map": "takasaki",
+          "eventId": "special_dice_intro",
+          "sceneIndex": 0,
+          "lineIndex": 0,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 6,
+          "mode": "event",
+          "map": "takasaki",
+          "eventId": "special_dice_intro",
+          "sceneIndex": 0,
+          "lineIndex": 1,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 9,
+          "mode": "event",
+          "map": "takasaki",
+          "eventId": "special_dice_intro",
+          "sceneIndex": 0,
+          "lineIndex": 2,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 12,
+          "mode": "event",
+          "map": "takasaki",
+          "eventId": "special_dice_intro",
+          "sceneIndex": 1,
+          "lineIndex": 0,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 24,
+          "mode": "event",
+          "map": "takasaki",
+          "eventId": "special_dice_intro",
+          "sceneIndex": 1,
+          "lineIndex": 1,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 27,
+          "mode": "event",
+          "map": "takasaki",
+          "eventId": "special_dice_intro",
+          "sceneIndex": 1,
+          "lineIndex": 2,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 30,
+          "mode": "event",
+          "map": "takasaki",
+          "eventId": "special_dice_intro",
+          "sceneIndex": 2,
+          "lineIndex": 0,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 33,
+          "mode": "event",
+          "map": "takasaki",
+          "eventId": "special_dice_intro",
+          "sceneIndex": 2,
+          "lineIndex": 1,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 36,
+          "mode": "event",
+          "map": "takasaki",
+          "eventId": "arrival_takasaki_auto",
+          "sceneIndex": 0,
+          "lineIndex": 0,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 43,
+          "mode": "event",
+          "map": "takasaki",
+          "eventId": "arrival_takasaki_auto",
+          "sceneIndex": 0,
+          "lineIndex": 1,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 46,
+          "mode": "event",
+          "map": "takasaki",
+          "eventId": "arrival_takasaki_auto",
+          "sceneIndex": 1,
+          "lineIndex": 0,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 49,
+          "mode": "event",
+          "map": "takasaki",
+          "eventId": "arrival_takasaki_auto",
+          "sceneIndex": 1,
+          "lineIndex": 1,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 52,
+          "mode": "exploring",
+          "map": "takasaki",
+          "eventId": null,
+          "sceneIndex": null,
+          "lineIndex": null,
+          "textComplete": null,
+          "transitionProgress": null
+        }
+      ],
+      "pass": true
+    },
+    "gururin": {
+      "label": "gururin",
+      "presses": 24,
+      "finalMode": "exploring",
+      "finalMap": "takasaki",
+      "finalAudio": "field_takasaki",
+      "finalEvent": null,
+      "finalTransition": null,
+      "finalCanvas": {
+        "avgLuma": 112.38,
+        "nonBlackFraction": 0.9961,
+        "opaquePixels": 9216
+      },
+      "timeline": [
+        {
+          "frame": 0,
+          "mode": "event",
+          "map": "takasaki",
+          "eventId": "gururin",
+          "sceneIndex": 0,
+          "lineIndex": 0,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 6,
+          "mode": "event",
+          "map": "takasaki",
+          "eventId": "gururin",
+          "sceneIndex": 0,
+          "lineIndex": 1,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 9,
+          "mode": "event",
+          "map": "takasaki",
+          "eventId": "gururin",
+          "sceneIndex": 1,
+          "lineIndex": 0,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 22,
+          "mode": "event",
+          "map": "takasaki",
+          "eventId": "gururin",
+          "sceneIndex": 1,
+          "lineIndex": 1,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 25,
+          "mode": "event",
+          "map": "takasaki",
+          "eventId": "gururin",
+          "sceneIndex": 2,
+          "lineIndex": 0,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 28,
+          "mode": "event",
+          "map": "takasaki",
+          "eventId": "gururin",
+          "sceneIndex": 2,
+          "lineIndex": 1,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 31,
+          "mode": "event",
+          "map": "takasaki",
+          "eventId": "gururin",
+          "sceneIndex": 3,
+          "lineIndex": 0,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 34,
+          "mode": "event",
+          "map": "takasaki",
+          "eventId": "gururin",
+          "sceneIndex": 3,
+          "lineIndex": 1,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 37,
+          "mode": "event",
+          "map": "takasaki",
+          "eventId": "gururin",
+          "sceneIndex": 4,
+          "lineIndex": 0,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 41,
+          "mode": "event",
+          "map": "takasaki",
+          "eventId": "arrival_takasaki_auto",
+          "sceneIndex": 0,
+          "lineIndex": 0,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 47,
+          "mode": "event",
+          "map": "takasaki",
+          "eventId": "arrival_takasaki_auto",
+          "sceneIndex": 0,
+          "lineIndex": 1,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 50,
+          "mode": "event",
+          "map": "takasaki",
+          "eventId": "arrival_takasaki_auto",
+          "sceneIndex": 1,
+          "lineIndex": 0,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 53,
+          "mode": "event",
+          "map": "takasaki",
+          "eventId": "arrival_takasaki_auto",
+          "sceneIndex": 1,
+          "lineIndex": 1,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 56,
+          "mode": "exploring",
+          "map": "takasaki",
+          "eventId": null,
+          "sceneIndex": null,
+          "lineIndex": null,
+          "textComplete": null,
+          "transitionProgress": null
+        }
+      ],
+      "pass": true
+    },
+    "chapter1_to_2": {
+      "label": "chapter1-to-2",
+      "presses": 64,
+      "finalMode": "exploring",
+      "finalMap": "forest",
+      "finalAudio": "field_forest",
+      "finalEvent": null,
+      "finalTransition": null,
+      "finalCanvas": {
+        "avgLuma": 139.96,
+        "nonBlackFraction": 1,
+        "opaquePixels": 9216
+      },
+      "timeline": [
+        {
+          "frame": 0,
+          "mode": "event",
+          "map": "boundary",
+          "eventId": "ch1_ending",
+          "sceneIndex": 0,
+          "lineIndex": 0,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 7,
+          "mode": "event",
+          "map": "boundary",
+          "eventId": "ch1_ending",
+          "sceneIndex": 0,
+          "lineIndex": 1,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 10,
+          "mode": "event",
+          "map": "boundary",
+          "eventId": "ch1_ending",
+          "sceneIndex": 0,
+          "lineIndex": 2,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 13,
+          "mode": "event",
+          "map": "boundary",
+          "eventId": "ch1_ending",
+          "sceneIndex": 1,
+          "lineIndex": 0,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 16,
+          "mode": "event",
+          "map": "boundary",
+          "eventId": "ch1_ending",
+          "sceneIndex": 1,
+          "lineIndex": 1,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 19,
+          "mode": "event",
+          "map": "boundary",
+          "eventId": "ch1_ending",
+          "sceneIndex": 1,
+          "lineIndex": 2,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 22,
+          "mode": "event",
+          "map": "boundary",
+          "eventId": "ch1_ending",
+          "sceneIndex": 2,
+          "lineIndex": 0,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 25,
+          "mode": "event",
+          "map": "boundary",
+          "eventId": "ch1_ending",
+          "sceneIndex": 2,
+          "lineIndex": 1,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 28,
+          "mode": "event",
+          "map": "boundary",
+          "eventId": "ch1_ending",
+          "sceneIndex": 2,
+          "lineIndex": 2,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 31,
+          "mode": "event",
+          "map": "boundary",
+          "eventId": "ch1_ending",
+          "sceneIndex": 3,
+          "lineIndex": 0,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 34,
+          "mode": "event",
+          "map": "boundary",
+          "eventId": "ch1_ending",
+          "sceneIndex": 3,
+          "lineIndex": 1,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 36,
+          "mode": "event",
+          "map": "boundary",
+          "eventId": "ch1_ending",
+          "sceneIndex": 3,
+          "lineIndex": 2,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 39,
+          "mode": "event",
+          "map": "boundary",
+          "eventId": "ch1_ending",
+          "sceneIndex": 4,
+          "lineIndex": 0,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 42,
+          "mode": "event",
+          "map": "boundary",
+          "eventId": "ch1_ending",
+          "sceneIndex": 5,
+          "lineIndex": 0,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 45,
+          "mode": "transition",
+          "map": "boundary",
+          "eventId": null,
+          "sceneIndex": null,
+          "lineIndex": null,
+          "textComplete": null,
+          "transitionProgress": 0
+        },
+        {
+          "frame": 46,
+          "mode": "event",
+          "map": "forest",
+          "eventId": "ch2_opening",
+          "sceneIndex": 0,
+          "lineIndex": 0,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 52,
+          "mode": "event",
+          "map": "forest",
+          "eventId": "ch2_opening",
+          "sceneIndex": 1,
+          "lineIndex": 0,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 55,
+          "mode": "event",
+          "map": "forest",
+          "eventId": "ch2_opening",
+          "sceneIndex": 1,
+          "lineIndex": 1,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 58,
+          "mode": "event",
+          "map": "forest",
+          "eventId": "ch2_opening",
+          "sceneIndex": 1,
+          "lineIndex": 2,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 61,
+          "mode": "event",
+          "map": "forest",
+          "eventId": "ch2_opening",
+          "sceneIndex": 2,
+          "lineIndex": 0,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 64,
+          "mode": "event",
+          "map": "forest",
+          "eventId": "ch2_opening",
+          "sceneIndex": 2,
+          "lineIndex": 1,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 67,
+          "mode": "event",
+          "map": "forest",
+          "eventId": "ch2_opening",
+          "sceneIndex": 2,
+          "lineIndex": 2,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 70,
+          "mode": "event",
+          "map": "forest",
+          "eventId": "ch2_opening",
+          "sceneIndex": 2,
+          "lineIndex": 3,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 73,
+          "mode": "event",
+          "map": "forest",
+          "eventId": "ch2_opening",
+          "sceneIndex": 2,
+          "lineIndex": 4,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 76,
+          "mode": "event",
+          "map": "forest",
+          "eventId": "ch2_opening",
+          "sceneIndex": 3,
+          "lineIndex": 0,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 79,
+          "mode": "event",
+          "map": "forest",
+          "eventId": "ch2_opening",
+          "sceneIndex": 3,
+          "lineIndex": 1,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 82,
+          "mode": "event",
+          "map": "forest",
+          "eventId": "ch2_opening",
+          "sceneIndex": 3,
+          "lineIndex": 2,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 85,
+          "mode": "event",
+          "map": "forest",
+          "eventId": "ch2_opening",
+          "sceneIndex": 3,
+          "lineIndex": 3,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 88,
+          "mode": "event",
+          "map": "forest",
+          "eventId": "ch2_opening",
+          "sceneIndex": 4,
+          "lineIndex": 0,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 91,
+          "mode": "event",
+          "map": "forest",
+          "eventId": "ch2_opening",
+          "sceneIndex": 4,
+          "lineIndex": 1,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 94,
+          "mode": "event",
+          "map": "forest",
+          "eventId": "ch2_opening",
+          "sceneIndex": 5,
+          "lineIndex": 0,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 98,
+          "mode": "event",
+          "map": "forest",
+          "eventId": "arrival_forest_auto",
+          "sceneIndex": 0,
+          "lineIndex": 0,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 105,
+          "mode": "event",
+          "map": "forest",
+          "eventId": "arrival_forest_auto",
+          "sceneIndex": 0,
+          "lineIndex": 1,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 108,
+          "mode": "event",
+          "map": "forest",
+          "eventId": "arrival_forest_auto",
+          "sceneIndex": 1,
+          "lineIndex": 0,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 111,
+          "mode": "event",
+          "map": "forest",
+          "eventId": "arrival_forest_auto",
+          "sceneIndex": 1,
+          "lineIndex": 1,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 114,
+          "mode": "exploring",
+          "map": "forest",
+          "eventId": null,
+          "sceneIndex": null,
+          "lineIndex": null,
+          "textComplete": null,
+          "transitionProgress": null
+        }
+      ],
+      "pass": true
+    },
+    "gururin_midgame_to_ch6": {
+      "label": "gururin-midgame-to-ch6",
+      "presses": 57,
+      "finalMode": "exploring",
+      "finalMap": "tanigawa_tunnel",
+      "finalAudio": "ch6_tunnel",
+      "finalEvent": null,
+      "finalTransition": null,
+      "finalCanvas": {
+        "avgLuma": 93.61,
+        "nonBlackFraction": 1,
+        "opaquePixels": 9216
+      },
+      "timeline": [
+        {
+          "frame": 0,
+          "mode": "event",
+          "map": "jukeBox",
+          "eventId": "gururin_network",
+          "sceneIndex": 0,
+          "lineIndex": 0,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 6,
+          "mode": "event",
+          "map": "jukeBox",
+          "eventId": "gururin_network",
+          "sceneIndex": 0,
+          "lineIndex": 1,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 9,
+          "mode": "event",
+          "map": "jukeBox",
+          "eventId": "gururin_network",
+          "sceneIndex": 1,
+          "lineIndex": 0,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 12,
+          "mode": "event",
+          "map": "jukeBox",
+          "eventId": "gururin_network",
+          "sceneIndex": 1,
+          "lineIndex": 1,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 15,
+          "mode": "event",
+          "map": "jukeBox",
+          "eventId": "gururin_network",
+          "sceneIndex": 2,
+          "lineIndex": 0,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 18,
+          "mode": "event",
+          "map": "jukeBox",
+          "eventId": "gururin_network",
+          "sceneIndex": 2,
+          "lineIndex": 1,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 21,
+          "mode": "event",
+          "map": "jukeBox",
+          "eventId": "ch5_ending",
+          "sceneIndex": 0,
+          "lineIndex": 0,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 29,
+          "mode": "event",
+          "map": "jukeBox",
+          "eventId": "ch5_ending",
+          "sceneIndex": 0,
+          "lineIndex": 1,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 32,
+          "mode": "event",
+          "map": "jukeBox",
+          "eventId": "ch5_ending",
+          "sceneIndex": 0,
+          "lineIndex": 2,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 35,
+          "mode": "event",
+          "map": "jukeBox",
+          "eventId": "ch5_ending",
+          "sceneIndex": 1,
+          "lineIndex": 0,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 38,
+          "mode": "event",
+          "map": "jukeBox",
+          "eventId": "ch5_ending",
+          "sceneIndex": 1,
+          "lineIndex": 1,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 41,
+          "mode": "event",
+          "map": "jukeBox",
+          "eventId": "ch5_ending",
+          "sceneIndex": 1,
+          "lineIndex": 2,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 44,
+          "mode": "event",
+          "map": "jukeBox",
+          "eventId": "ch5_ending",
+          "sceneIndex": 2,
+          "lineIndex": 0,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 47,
+          "mode": "event",
+          "map": "jukeBox",
+          "eventId": "ch5_ending",
+          "sceneIndex": 2,
+          "lineIndex": 1,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 50,
+          "mode": "event",
+          "map": "jukeBox",
+          "eventId": "ch5_ending",
+          "sceneIndex": 2,
+          "lineIndex": 2,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 53,
+          "mode": "event",
+          "map": "jukeBox",
+          "eventId": "ch5_ending",
+          "sceneIndex": 3,
+          "lineIndex": 0,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 57,
+          "mode": "transition",
+          "map": "jukeBox",
+          "eventId": null,
+          "sceneIndex": null,
+          "lineIndex": null,
+          "textComplete": null,
+          "transitionProgress": 0.14
+        },
+        {
+          "frame": 58,
+          "mode": "event",
+          "map": "tanigawa_tunnel",
+          "eventId": "ch6_opening",
+          "sceneIndex": 0,
+          "lineIndex": 0,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 64,
+          "mode": "event",
+          "map": "tanigawa_tunnel",
+          "eventId": "ch6_opening",
+          "sceneIndex": 0,
+          "lineIndex": 1,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 67,
+          "mode": "event",
+          "map": "tanigawa_tunnel",
+          "eventId": "ch6_opening",
+          "sceneIndex": 0,
+          "lineIndex": 2,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 70,
+          "mode": "event",
+          "map": "tanigawa_tunnel",
+          "eventId": "ch6_opening",
+          "sceneIndex": 1,
+          "lineIndex": 0,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 73,
+          "mode": "event",
+          "map": "tanigawa_tunnel",
+          "eventId": "ch6_opening",
+          "sceneIndex": 1,
+          "lineIndex": 1,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 76,
+          "mode": "event",
+          "map": "tanigawa_tunnel",
+          "eventId": "ch6_opening",
+          "sceneIndex": 1,
+          "lineIndex": 2,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 79,
+          "mode": "event",
+          "map": "tanigawa_tunnel",
+          "eventId": "ch6_opening",
+          "sceneIndex": 2,
+          "lineIndex": 0,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 82,
+          "mode": "event",
+          "map": "tanigawa_tunnel",
+          "eventId": "ch6_opening",
+          "sceneIndex": 2,
+          "lineIndex": 1,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 85,
+          "mode": "event",
+          "map": "tanigawa_tunnel",
+          "eventId": "ch6_opening",
+          "sceneIndex": 2,
+          "lineIndex": 2,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 88,
+          "mode": "event",
+          "map": "tanigawa_tunnel",
+          "eventId": "ch6_opening",
+          "sceneIndex": 3,
+          "lineIndex": 0,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 92,
+          "mode": "event",
+          "map": "tanigawa_tunnel",
+          "eventId": "arrival_tanigawa_tunnel_auto",
+          "sceneIndex": 0,
+          "lineIndex": 0,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 99,
+          "mode": "event",
+          "map": "tanigawa_tunnel",
+          "eventId": "arrival_tanigawa_tunnel_auto",
+          "sceneIndex": 0,
+          "lineIndex": 1,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 102,
+          "mode": "event",
+          "map": "tanigawa_tunnel",
+          "eventId": "arrival_tanigawa_tunnel_auto",
+          "sceneIndex": 1,
+          "lineIndex": 0,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 105,
+          "mode": "event",
+          "map": "tanigawa_tunnel",
+          "eventId": "arrival_tanigawa_tunnel_auto",
+          "sceneIndex": 1,
+          "lineIndex": 1,
+          "textComplete": false,
+          "transitionProgress": null
+        },
+        {
+          "frame": 108,
+          "mode": "exploring",
+          "map": "tanigawa_tunnel",
+          "eventId": null,
+          "sceneIndex": null,
+          "lineIndex": null,
+          "textComplete": null,
+          "transitionProgress": null
+        }
+      ],
+      "pass": true
+    }
+  }
+}

@@ -1126,7 +1126,11 @@ Game.Event = (function() {
 
     // Handle fade
     if (fadeDir !== 0) {
-      fadeAlpha += fadeDir * 0.03;
+      if (isAdvancePressed()) {
+        fadeAlpha = fadeDir > 0 ? 1 : 0;
+      } else {
+        fadeAlpha += fadeDir * 0.03;
+      }
       if (fadeAlpha <= 0) {
         fadeAlpha = 0;
         fadeDir = 0;
@@ -1144,7 +1148,14 @@ Game.Event = (function() {
     }
 
     if (waitTimer > 0) {
-      waitTimer--;
+      if (isAdvancePressed()) {
+        waitTimer = 0;
+      } else {
+        waitTimer--;
+      }
+      if (waitTimer <= 0 && fadeAlpha > 0 && sceneIndex < scenes.length) {
+        fadeDir = -1;
+      }
       return null;
     }
 
@@ -1912,11 +1923,15 @@ Game.Event = (function() {
     if (scene.sfx) Game.Audio.playSfx(scene.sfx);
   }
 
+  function isAdvancePressed() {
+    if (!Game.Input || !Game.Input.isPressed) return false;
+    return !!(Game.Input.isPressed('confirm') || Game.Input.isPressed('cancel'));
+  }
+
   function shouldSkipEventImmediately() {
     if (!active || !currentEventOptions || !currentEventOptions.skipToCompleteOnConfirm) return false;
-    if (skipGraceFrames > 0 || !Game.Input || !Game.Input.isPressed) return false;
-    if (!Game.Input.isPressed('confirm') && !Game.Input.isPressed('cancel')) return false;
-    return true;
+    if (skipGraceFrames > 0) return false;
+    return isAdvancePressed();
   }
 
   function finishEventNow() {

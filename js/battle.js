@@ -15,6 +15,7 @@ Game.Battle = (function() {
   var itemMenuItems = [];
   var itemMenuMode = 'heal';
   var ritualMenuActionId = null;
+  var hitStopTimer = 0;
   var skillMenuIndex = 0;
   var skillMenuEntries = [];
   var supportMenuIndex = 0;
@@ -964,6 +965,8 @@ Game.Battle = (function() {
       emitBattleParticles('damage', 282, 86, { count: 5 });
       Game.Audio.playSfx(damage >= 4 ? 'slash_hit' : 'glancing_hit');
       shakeX = Math.max(shakeX, 3);
+      // ▼ 追加: 同行者の攻撃ヒットストップ（ダメージに応じて）
+      hitStopTimer = damage >= 4 ? 4 : 2;
     } else {
       message = current.member.name + 'の援護！ だが届かない。';
       Game.Audio.playSfx('glancing_hit');
@@ -2216,6 +2219,9 @@ Game.Battle = (function() {
     shakeX = 5 + activeAttackers.length;
     if (Game.Particles) Game.Particles.emit('damage', 100, 220, { count: 6 + activeAttackers.length });
 
+    // ▼ 追加: 敵の通常攻撃被弾時（大ダメージ時は重く）
+    hitStopTimer = 4 + (totalDamage >= 20 ? 4 : 0);
+    
     if (playerData.hp <= 0) {
       if (consumeLastStand('黄泉返しが働き、HP1で踏みとどまった！')) {
         messageTimer = 64;
@@ -2389,6 +2395,7 @@ Game.Battle = (function() {
     bossActionOverlay = null;
     enemyRollAnimation = null;
     pendingEnemyAttack = null;
+    hitStopTimer = 0;
     // Initialize boss gimmick
     currentGimmick = isGroupBattle() ? null : (bossGimmicks[enemy._enemyId] || null);
     turnCount = 0;
@@ -2699,7 +2706,11 @@ Game.Battle = (function() {
 
   function update() {
     if (!active) return null;
-
+    if (hitStopTimer > 0) {
+          hitStopTimer--;
+          return null;
+    }
+    
     var bossActionActive = updateBossActionOverlay();
     if (bossActionActive) {
       if (shakeX > 0.5) {
@@ -3002,6 +3013,10 @@ Game.Battle = (function() {
               Game.Audio.playSfx('damage');
               shakeX = 8;
               if (Game.Particles) Game.Particles.emit('damage', 100, 220, { count: 10 });
+              // ▼ 追加: プレイヤー攻撃時のヒットストップ（コンボ時はさらに重く）
+              // ▼ 追加: ボスの大技被弾時の重いヒットストップ
+              hitStopTimer = 10;
+              hitStopTimer = 6 + (comboMultiplier >= 1.5 ? 4 : 0);
               specialParts.push(finalSpDmg + 'ダメージ');
               if (playerData3.hp <= 0) {
                 if (consumeLastStand('黄泉返しが働き、HP1で踏みとどまった！')) {
@@ -3646,78 +3661,93 @@ Game.Battle = (function() {
   }
 
   // Draw a single die with custom color and face value
+// Draw a single die with custom color and face value (呪符・和風デザインに改修)
   function drawDie(R, ctx, x, y, diceItem, faceIdx, size, stopped, flash) {
     var s = size || 48;
     var face = diceItem.faces[faceIdx % diceItem.faces.length];
     var parsed = parseFace(face);
-    var dieColor = diceItem.color || '#ffffff';
-    var dotCol = diceItem.dotColor || '#111111';
+    
+    // 世界観に合わせた「和紙」や「古い木」のようなベースカラー
+    var dieColor = diceItem.color || '#e8e4d9';
+    var dotCol = diceItem.dotColor || '#4a1010'; // 血や古い朱肉のような暗い赤
 
-    // Shadow
-    R.drawRectAbsolute(x + 2, y + 2, s, s, '#222233');
+    // 落ちる影（少し重みを持たせる）
+    R.drawRectAbsolute(x + 2, y + 3, s, s, 'rgba(10, 8, 15, 0.7)');
 
-    // Die face color
-    var faceColor = flash ? '#ffffee' : dieColor;
+    var faceColor = flash ? '#ffffff' : dieColor;
     if (stopped && !flash) {
-      // Slightly darken when stopped
       faceColor = dieColor;
     }
-    R.drawRectAbsolute(x, y, s, s, faceColor);
+    
+    // 御札のベース（角を少し削る）
+    R.drawRectAbsolute(x + 1, y, s - 2, s, faceColor);
+    R.drawRectAbsolute(x, y + 1, s, s - 2, faceColor);
 
-    // Border
-    ctx.strokeStyle = stopped ? '#886622' : '#444466';
+    // 古びた汚れ・呪符の和紙のテクスチャ感
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+    ctx.fillRect(x + 2, y + 2, s - 4, s - 4);
+    ctx.fillStyle = 'rgba(80, 20, 20, 0.08)'; // うっすらとした血痕のようなシミ
+    ctx.fillRect(x + 4, y + 4, s - 8, 2);
+    ctx.fillRect(x + 4, y + s - 6, s - 8, 2);
+
+    // 枠線（かすれた墨のような線）
+    ctx.strokeStyle = stopped ? '#8a1c1c' : '#554444';
     ctx.lineWidth = 2;
-    ctx.strokeRect(x, y, s, s);
+    ctx.strokeRect(x + 1, y + 1, s - 2, s - 2);
 
-    // Corners
-    var cc = '#888888';
-    R.drawRectAbsolute(x, y, 2, 2, cc);
-    R.drawRectAbsolute(x + s - 2, y, 2, 2, cc);
-    R.drawRectAbsolute(x, y + s - 2, 2, 2, cc);
-    R.drawRectAbsolute(x + s - 2, y + s - 2, 2, 2, cc);
+    // 四隅の呪詛の印（結界の釘のような表現）
+    var cc = stopped ? '#b32424' : '#665555';
+    R.drawRectAbsolute(x + 3, y + 3, 3, 3, cc);
+    R.drawRectAbsolute(x + s - 6, y + 3, 3, 3, cc);
+    R.drawRectAbsolute(x + 3, y + s - 6, 3, 3, cc);
+    R.drawRectAbsolute(x + s - 6, y + s - 6, 3, 3, cc);
 
-    // Draw the value as a number in the center (for custom faces)
     var displayVal = parsed.value;
     var displayStr = '' + displayVal;
     var textColor = dotCol;
 
     if (parsed.type === 'heal') {
-      // Heal faces: show green with + sign
-      textColor = '#22aa22';
-      displayStr = '+' + displayVal;
+      textColor = '#2a6a3b'; // 苔や薬草のような深い緑
+      displayStr = '癒' + displayVal; // Hの代わりに漢字を使用
     }
 
-    // For values 1-6, draw traditional dot pattern too
+    // サイコロの目（ドット）を「梵字」や「呪印の筆跡」のように描画
     if (parsed.type === 'damage' && displayVal >= 1 && displayVal <= 6) {
       var dotPositions = {
         1: [[3,3]],
-        2: [[1,1],[5,5]],
-        3: [[1,1],[3,3],[5,5]],
-        4: [[1,1],[1,5],[5,1],[5,5]],
-        5: [[1,1],[1,5],[3,3],[5,1],[5,5]],
-        6: [[1,1],[1,3],[1,5],[5,1],[5,3],[5,5]]
+        2: [[1.5,1.5],[4.5,4.5]],
+        3: [[1.5,1.5],[3,3],[4.5,4.5]],
+        4: [[1.5,1.5],[1.5,4.5],[4.5,1.5],[4.5,4.5]],
+        5: [[1.5,1.5],[1.5,4.5],[3,3],[4.5,1.5],[4.5,4.5]],
+        6: [[1.5,1.5],[1.5,3],[1.5,4.5],[4.5,1.5],[4.5,3],[4.5,4.5]]
       };
       var dots = dotPositions[displayVal];
-      var dotSize = Math.floor(s / 7);
+      var dotSize = Math.floor(s / 6);
+      
       for (var i = 0; i < dots.length; i++) {
-        var dx = x + Math.floor(dots[i][0] * s / 7) + Math.floor(dotSize / 4);
-        var dy = y + Math.floor(dots[i][1] * s / 7) + Math.floor(dotSize / 4);
-        R.drawRectAbsolute(dx, dy, dotSize, dotSize, dotCol);
+        var dx = x + Math.floor(dots[i][0] * s / 6);
+        var dy = y + Math.floor(dots[i][1] * s / 6);
+        
+        // 単なる四角ではなく、筆で打ったような形（少しズラして重ねる）
+        R.drawRectAbsolute(dx, dy, dotSize, dotSize - 1, dotCol);
+        R.drawRectAbsolute(dx + 1, dy + 1, dotSize - 2, dotSize, 'rgba(0,0,0,0.5)'); // 墨の滲み・影
       }
     } else {
-      // For large numbers or heal, draw the number text
-      var fontSize = s > 34 ? 18 : 14;
-      R.drawTextJP(displayStr, x + Math.floor(s / 2) - (displayStr.length * fontSize / 4),
-        y + Math.floor(s / 2) - Math.floor(fontSize / 2), textColor, fontSize);
+      // 大きな数字や回復の描画（少し筆文字っぽく見せるためシャドウをつける）
+      var fontSize = s > 34 ? 16 : 12;
+      var tx = x + Math.floor(s / 2) - (displayStr.length * fontSize / 4);
+      var ty = y + Math.floor(s / 2) - Math.floor(fontSize / 2);
+      R.drawTextJP(displayStr, tx + 1, ty + 1, 'rgba(0,0,0,0.4)', fontSize); // 影
+      R.drawTextJP(displayStr, tx, ty, textColor, fontSize);
     }
 
-    // Die name label (tiny, below die)
+    // サイコロの名前ラベル（渋い色に変更）
     if (stopped && diceItem.id !== 'normalDice') {
       var shortName = diceItem.name.substring(0, 4);
-      R.drawTextJP(shortName, x, y + s + 1, '#888', 7);
+      R.drawTextJP(shortName, x, y + s + 2, '#a59e8c', 8);
     }
   }
-
+  
   function drawMiniEnemyDie(ctx, die) {
     var dotPositions = {
       1: [[0, 0]],
@@ -5916,6 +5946,8 @@ Game.Battle = (function() {
                 queueBossActionDialogue('phase_change', currentGimmick.phase_change, pcMsg);
                 shakeX = 10;
                 if (Game.Particles) Game.Particles.emit('damage', 280, 60, { count: 15 });
+                
+                hitStopTimer = 12;
               }
             }
 

@@ -1,107 +1,258 @@
 <!DOCTYPE html>
+
 <html lang="ja">
+
 <head>
+
   <meta charset="UTF-8">
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <title>群馬県からの脱出</title>
+
   <meta name="theme-color" content="#0d1020">
+
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
+
   <link rel="manifest" href="site.webmanifest">
+
   <style>
+
     * { margin: 0; padding: 0; box-sizing: border-box; }
+
     html,
+
     body {
+
       width: 100%;
+
       min-height: 100%;
+
       background: #111;
+
       overflow: hidden;
+
     }
+
     body {
+
       min-height: 100vh;
+
       min-height: 100dvh;
+
     }
+
     .game-shell {
+
+      position: fixed;
+
+      inset: 0;
+
+      display: grid;
+
+      place-items: center;
+
+      width: 100vw;
+
+      height: 100vh;
+
+      height: 100dvh;
+
+      padding: 16px;
+
+      background: #111;
+
+    }
+
+    canvas {
+
+      display: block;
+
+      image-rendering: pixelated;
+
+      image-rendering: crisp-edges;
+
+      width: min(960px, calc(100vw - 32px), calc((100dvh - 32px) * 1.5));
+
+      height: auto;
+
+      max-width: calc(100vw - 32px);
+
+      max-height: calc(100dvh - 32px);
+
+      margin: auto;
+
+    }
+
+    :fullscreen .game-shell,
+
+    :-webkit-full-screen .game-shell {
+
+      width: 100vw;
+
+      height: 100vh;
+
+      height: 100dvh;
+
+      padding: 24px;
+
+    }
+
+.game-shell {
       position: fixed;
       inset: 0;
       display: grid;
       place-items: center;
-      width: 100vw;
-      height: 100vh;
-      height: 100dvh;
-      padding: 16px;
-      background: #111;
+      background: #000; /* 背景を完全な黒に */
+      overflow: hidden;
     }
+
+    /* Canvasの親コンテナを作成 */
+    .canvas-container {
+      position: relative;
+      width: min(960px, calc(100vw - 32px), calc((100dvh - 32px) * 1.5));
+      aspect-ratio: 3 / 2;
+    }
+
     canvas {
+      width: 50%;
+      height: 60%;
       display: block;
       image-rendering: pixelated;
-      image-rendering: crisp-edges;
-      width: min(960px, calc(100vw - 32px), calc((100dvh - 32px) * 1.5));
-      height: auto;
-      max-width: calc(100vw - 32px);
-      max-height: calc(100dvh - 32px);
-      margin: auto;
     }
-    :fullscreen .game-shell,
-    :-webkit-full-screen .game-shell {
-      width: 100vw;
-      height: 100vh;
-      height: 100dvh;
-      padding: 24px;
+
+    /* ポストエフェクト: ビネット（四隅の影） */
+    .vignette {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: radial-gradient(circle, transparent 50%, rgba(0,0,0,0.8) 150%);
+      z-index: 10;
+    }
+
+    /* ポストエフェクト: スキャンライン（ブラウン管の横縞） */
+    .scanlines {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: linear-gradient(
+        to bottom,
+        rgba(18, 16, 16, 0) 50%,
+        rgba(0, 0, 0, 0.2) 50%
+      );
+      background-size: 100% 4px; /* ラインの太さ */
+      z-index: 11;
     }
   </style>
+
 </head>
+
 <body>
+
   <main class="game-shell">
+
     <canvas id="game" width="480" height="320"></canvas>
+
   </main>
+
   <script src="js/config.js"></script>
+
   <script src="js/chapter_data.js"></script>
+
   <script src="js/input.js"></script>
+
   <script src="js/renderer.js"></script>
+
   <script src="js/illustrations.js"></script>
+
   <script src="js/weather.js"></script>
+
   <script src="js/particles.js"></script>
+
   <script src="js/audio.js"></script>
+
   <script src="js/items.js"></script>
+
   <script src="js/skills.js"></script>
+
   <script src="js/player.js"></script>
+
   <script src="js/save.js"></script>
+
   <script src="js/maps/maebashi.js"></script>
+
   <script src="js/maps/takasaki.js"></script>
+
   <script src="js/maps/kusatsu.js"></script>
+
   <script src="js/maps/ikaho.js"></script>
+
   <script src="js/maps/shimonita.js"></script>
+
   <script src="js/maps/tomioka.js"></script>
+
   <script src="js/maps/tsumagoi.js"></script>
+
   <script src="js/maps/tamura.js"></script>
+
   <script src="js/maps/forest.js"></script>
+
   <script src="js/maps/konuma.js"></script>
+
   <script src="js/maps/onuma.js"></script>
+
   <script src="js/maps/akagi_ranch.js"></script>
+
   <script src="js/maps/akagi_shrine.js"></script>
+
   <script src="js/maps/shirane_trail.js"></script>
+
   <script src="js/maps/kusatsu_deep.js"></script>
+
   <script src="js/maps/jomo_gakuen.js"></script>
+
   <script src="js/maps/tanigawa_tunnel.js"></script>
+
   <script src="js/maps/haruna_lake.js"></script>
+
   <script src="js/maps/oze_marsh.js"></script>
+
   <script src="js/maps/minakami_valley.js"></script>
+
   <script src="js/maps/border_tunnel.js"></script>
+
   <script src="js/map.js"></script>
+
   <script src="js/encounters.js"></script>
+
   <script src="js/npc.js"></script>
+
   <script src="js/ritual_battles.js"></script>
+
   <script src="js/battle_data.js"></script>
+
   <script src="js/battle.js"></script>
+
   <script src="js/puzzle.js"></script>
+
   <script src="js/shop.js"></script>
+
   <script src="js/event.js"></script>
+
   <script src="js/story.js"></script>
+
   <script src="js/achievements.js"></script>
+
   <script src="js/legacy.js"></script>
+
   <script src="js/quests.js"></script>
+
   <script src="js/ui.js"></script>
+
   <script src="js/save_menu.js"></script>
+
   <script src="js/main.js"></script>
+
 </body>
+
 </html>

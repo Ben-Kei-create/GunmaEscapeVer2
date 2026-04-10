@@ -57,15 +57,17 @@ Game.Renderer = (function() {
     ctx.textBaseline = 'top';
     ctx.fillText(text, x, y);
   }
-
-  function drawTextJP(text, x, y, color, size, align) {
-    ctx.fillStyle = color || '#fff';
-    ctx.font = (size || 14) + 'px "Hiragino Kaku Gothic ProN", "Meiryo", "MS Gothic", sans-serif';
-    ctx.textAlign = align || 'left';
-    ctx.textBaseline = 'top';
-    ctx.fillText(text, x, y);
-  }
-
+    // Game.Renderer 内の drawTextJP を修正
+    function drawTextJP(text, x, y, color, size, align) {
+      ctx.fillStyle = color || '#fff';
+      // フォントファミリーを "DotGothic16" に変更
+      // 日本語フォントは読み込みに時間がかかるため、
+      // 未ロード時は代替として sans-serif が使われます
+      ctx.font = (size || 14) + 'px "DotGothic16", sans-serif';
+      ctx.textAlign = align || 'left';
+      ctx.textBaseline = 'top';
+      ctx.fillText(text, x, y);
+    }
   function drawSprite(spriteData, x, y, palette, flipped) {
     var px = Math.floor(x - cameraX);
     var py = Math.floor(y - cameraY);

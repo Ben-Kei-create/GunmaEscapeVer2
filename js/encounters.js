@@ -42,7 +42,7 @@ Game.Encounters = (function() {
         roles: ['押し役', '掠め役']
       })
     ] },
-    kusatsu: { stepInterval: 10, cooldown: 4, tiles: [0, 5], formations: ['steamMonkey', 'bathhouseRemnant',
+    kusatsu: { stepInterval: 10, cooldown: 4, tiles: [0, 5], formations: ['steamMonkey', 'bathhouseRemnant', 'kusatsu_bucket',
       formation(['steamMonkey', 'bathhouseRemnant'], {
         packName: '湯けむりの荒らし組',
         omen: '硫黄の向こうで、湯気と古傷が同じ拍で揺れている。',
@@ -60,9 +60,27 @@ Game.Encounters = (function() {
         layout: 'wedge',
         accent: '#ff9b70',
         roles: ['先走り', '当て役']
+      }),
+      formation(['kusatsu_bucket', 'steamMonkey'], {
+        packName: '忘れ湯のぬくもり',
+        omen: '古い木桶の湯気が、荒い爪音より半歩だけ遅れて漂ってくる。',
+        directive: '湯気で傷をぬるくつなぎ、熱の勢いで押し込む。',
+        entryText: '忘れ湯のぬくもりが、硫黄の白さをまとって寄ってきた。',
+        layout: 'screen',
+        accent: '#f1b48a',
+        roles: ['湯気役', '荒らし手']
+      }),
+      formation(['kusatsu_bucket', 'bathhouseRemnant'], {
+        packName: '湯守りの残響',
+        omen: '癒やしたかった手つきが、古い桶のぬくもりにまだ残っている。',
+        directive: '熱を保ちながら、じわりと間合いを押し返す。',
+        entryText: '湯守りの残響が、白い湯畑の縁から静かに姿を結んだ。',
+        layout: 'stagger',
+        accent: '#efc09b',
+        roles: ['ぬくもり', '押し返し']
       })
     ] },
-    shimonita: { stepInterval: 15, cooldown: 6, tiles: [0, 6], formations: ['konnyakuCrawler', 'shimonita_packer', 'shimonita_neglected_daruma',
+    shimonita: { stepInterval: 15, cooldown: 6, tiles: [0, 6], formations: ['konnyakuCrawler', 'shimonita_packer', 'shimonita_neglected_daruma', 'shimonita_reject', 'yokokawa_lantern',
       formation(['konnyakuCrawler', 'tomioka_tangled'], {
         packName: 'ぬめる搬送痕',
         omen: '畑土と糸くずが、同じ泥の温度で絡み合っている。',
@@ -80,9 +98,27 @@ Game.Encounters = (function() {
         layout: 'pincer',
         accent: '#ffb07d',
         roles: ['抱え役', '掠め役']
+      }),
+      formation(['shimonita_reject', 'shimonita_packer'], {
+        packName: 'はぐれ荷の弾み影',
+        omen: '捨てられた弾力と空箱の軋みが、峠風の下で寄り添っている。',
+        directive: '弾みで時間を稼ぎ、空っぽの重みをぶつけてくる。',
+        entryText: 'はぐれ荷の弾み影が、畑土を跳ね上げながら近づいてきた。',
+        layout: 'stagger',
+        accent: '#b8b2a4',
+        roles: ['弾み役', '抱え役']
+      }),
+      formation(['yokokawa_lantern', 'shimonita_reject'], {
+        packName: '峠待ちの灯',
+        omen: '古びた灯りが、誰も来ない線路の記憶ごとこちらへ揺れてくる。',
+        directive: '薄い灯で呼吸を曇らせ、弾みで足元をずらす。',
+        entryText: '峠待ちの灯が、山あいの闇からちかちかと現れた。',
+        layout: 'screen',
+        accent: '#f0b36b',
+        roles: ['灯守り', '足止め']
       })
     ] },
-    tomioka: { stepInterval: 13, cooldown: 5, tiles: [0, 1], formations: ['silkShade', 'tomioka_weaver', 'tomioka_inspector',
+    tomioka: { stepInterval: 13, cooldown: 5, tiles: [0, 1], formations: ['silkShade', 'tomioka_weaver', 'tomioka_inspector', 'tomioka_moth',
       formation(['tomioka_tangled', 'silkShade'], {
         packName: '製糸の居残り',
         omen: '切れ残った白糸が、歩幅ごとにまだこちらを測っている。',
@@ -100,9 +136,27 @@ Game.Encounters = (function() {
         layout: 'wedge',
         accent: '#c8bbff',
         roles: ['鈍らせ役', '縫い止め']
+      }),
+      formation(['tomioka_moth', 'tomioka_weaver'], {
+        packName: '白羽の居残り',
+        omen: '飛べない羽音と、止まれない機械音が同じ工場跡で震えている。',
+        directive: '鱗粉で手元を乱し、白糸でその隙へ入り込む。',
+        entryText: '白羽の居残りが、製糸場の高窓の白さからほどけてきた。',
+        layout: 'screen',
+        accent: '#ead8ff',
+        roles: ['散らし羽', '縫い手']
+      }),
+      formation(['tomioka_moth', 'tomioka_tangled'], {
+        packName: 'ほどけぬ羽糸',
+        omen: '糸に縛られた羽と、絡まり切った記憶が互いを離せずにいる。',
+        directive: '散らした視線へ絡まりを重ね、呼吸ごと止めてくる。',
+        entryText: 'ほどけぬ羽糸が、白い粉と一緒に寄り集まった。',
+        layout: 'wedge',
+        accent: '#ddd6ef',
+        roles: ['散らし羽', '絡め手']
       })
     ] },
-    tsumagoi: { stepInterval: 9, cooldown: 4, tiles: [0, 6], formations: ['cabbageWisp',
+    tsumagoi: { stepInterval: 9, cooldown: 4, tiles: [0, 6], formations: ['cabbageWisp', 'tsumagoi_cabbage',
       formation(['cabbageWisp', 'roadsideBandit'], {
         packName: '畑荒らしの風切り',
         omen: '葉擦れに紛れた足音が、ひとつ多く混ざっている。',
@@ -120,6 +174,15 @@ Game.Encounters = (function() {
         layout: 'screen',
         accent: '#8fd96f',
         roles: ['先風', '返し風']
+      }),
+      formation(['tsumagoi_cabbage', 'cabbageWisp'], {
+        packName: '雪待ちの畝影',
+        omen: '凍った葉と軽いざわめきが、寒風の段差ごとこちらへ重なる。',
+        directive: '厚い葉で受け、軽い葉影で間合いを揺らす。',
+        entryText: '雪待ちの畝影が、白い畑土の上で身を寄せていた。',
+        layout: 'stagger',
+        accent: '#b7ddae',
+        roles: ['受け葉', '揺らし葉']
       })
     ] },
     forest: { stepInterval: 7, cooldown: 3, tiles: [0, 1], formations: ['roadsideBandit', 'lanternKeeper',
@@ -214,7 +277,7 @@ Game.Encounters = (function() {
         roles: ['押し役', '切り込み']
       })
     ] },
-    kusatsu_deep: { stepInterval: 6, cooldown: 3, tiles: [0, 1, 5], formations: ['steamMonkey', 'bathhouseRemnant',
+    kusatsu_deep: { stepInterval: 6, cooldown: 3, tiles: [0, 1, 5], formations: ['steamMonkey', 'bathhouseRemnant', 'kusatsu_bucket',
       formation(['steamMonkey', 'silkShade'], {
         packName: '深湯の裂き糸',
         omen: '白い湯けむりの奥で、糸だけが妙に乾いた音を立てる。',
@@ -232,6 +295,15 @@ Game.Encounters = (function() {
         layout: 'wedge',
         accent: '#f7c0a2',
         roles: ['押し役', '絡め手', '詰め手']
+      }),
+      formation(['kusatsu_bucket', 'bathhouseRemnant'], {
+        packName: '深湯の置き桶',
+        omen: '熱が引ききらない古い湯気が、置き去りの手つきに寄り添っている。',
+        directive: 'ぬるい湯気で傷をつなぎ、遅れて熱の壁を押しつける。',
+        entryText: '深湯の置き桶が、蒸気の底でゆっくり揺れた。',
+        layout: 'screen',
+        accent: '#f1c7a6',
+        roles: ['湯気役', '押し役']
       })
     ] },
     tanigawa_tunnel: { stepInterval: 6, cooldown: 3, tiles: [1, 9], formations: ['echoShard', 'ferryBellEcho',
@@ -331,6 +403,10 @@ Game.Encounters = (function() {
     return tables[mapId] || null;
   }
 
+  function hasTable(mapId) {
+    return !!getTable(mapId);
+  }
+
   function isEncounterTile(table, tileType) {
     return !!table && table.tiles.indexOf(tileType) >= 0;
   }
@@ -371,6 +447,7 @@ Game.Encounters = (function() {
   return {
     onMapLoaded: onMapLoaded,
     consumeStep: consumeStep,
-    getState: getState
+    getState: getState,
+    hasTable: hasTable
   };
 })();

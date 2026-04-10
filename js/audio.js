@@ -2,6 +2,12 @@
 Game.Audio = (function() {
   var audioCtx = null;
   var masterGain = null;
+  var bgmGain = null;
+  var sfxGain = null;
+  var filterNode = null;
+  var delayNode = null;
+  var feedbackNode = null;
+  var delayMixGain = null;
   var currentBgm = null;
   var currentBgmNodes = [];
   var currentBgmRequestedName = null;
@@ -12,7 +18,28 @@ Game.Audio = (function() {
     try {
       audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       masterGain = audioCtx.createGain();
-      masterGain.gain.value = 0.3;
+      masterGain.gain.value = 0.28;
+      bgmGain = audioCtx.createGain();
+      sfxGain = audioCtx.createGain();
+      filterNode = audioCtx.createBiquadFilter();
+      filterNode.type = 'lowpass';
+      filterNode.frequency.value = 2200;
+      filterNode.Q.value = 0.35;
+      delayNode = audioCtx.createDelay(1.0);
+      delayNode.delayTime.value = 0.35;
+      feedbackNode = audioCtx.createGain();
+      feedbackNode.gain.value = 0.32;
+      delayMixGain = audioCtx.createGain();
+      delayMixGain.gain.value = 0.52;
+
+      bgmGain.connect(filterNode);
+      bgmGain.connect(delayNode);
+      delayNode.connect(feedbackNode);
+      feedbackNode.connect(delayNode);
+      delayNode.connect(delayMixGain);
+      delayMixGain.connect(filterNode);
+      filterNode.connect(masterGain);
+      sfxGain.connect(masterGain);
       masterGain.connect(audioCtx.destination);
     } catch (e) {
       // Audio not supported
@@ -23,6 +50,14 @@ Game.Audio = (function() {
     if (audioCtx && audioCtx.state === 'suspended') {
       audioCtx.resume();
     }
+  }
+
+  function getSfxOutputGain() {
+    return sfxGain || masterGain;
+  }
+
+  function getBgmOutputGain() {
+    return bgmGain || masterGain;
   }
 
   function playNote(freq, duration, type, startTime, gain) {
@@ -36,7 +71,7 @@ Game.Audio = (function() {
     g.gain.setValueAtTime(gain || 0.15, startTime);
     g.gain.exponentialRampToValueAtTime(0.001, startTime + duration - 0.01);
     osc.connect(g);
-    g.connect(masterGain);
+    g.connect(getSfxOutputGain());
     osc.start(startTime);
     osc.stop(startTime + duration);
   }
@@ -52,7 +87,7 @@ Game.Audio = (function() {
     g.gain.setValueAtTime(gain || 0.15, startTime);
     g.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
     osc.connect(g);
-    g.connect(masterGain);
+    g.connect(getSfxOutputGain());
     osc.start(startTime);
     osc.stop(startTime + duration);
   }
@@ -70,7 +105,7 @@ Game.Audio = (function() {
     g.gain.setValueAtTime(gain || 0.18, startTime);
     g.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
     osc.connect(g);
-    g.connect(masterGain);
+    g.connect(getSfxOutputGain());
     osc.start(startTime);
     osc.stop(startTime + duration);
   }
@@ -92,17 +127,19 @@ Game.Audio = (function() {
     var g = audioCtx.createGain();
     osc.type = type || 'square';
     osc.frequency.value = freq;
-    g.gain.value = gain || 0.15;
-    g.gain.setValueAtTime(gain || 0.15, startTime);
-    g.gain.exponentialRampToValueAtTime(0.001, startTime + duration - 0.01);
+    var peakGain = typeof gain === 'number' ? gain : 0.15;
+    g.gain.setValueAtTime(0.001, startTime);
+    g.gain.exponentialRampToValueAtTime(peakGain, startTime + 0.03);
+    g.gain.setValueAtTime(peakGain, startTime + duration * 0.7);
+    g.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
     osc.connect(g);
-    g.connect(masterGain);
+    g.connect(getBgmOutputGain());
     trackBgmNode(osc, g);
     osc.start(startTime);
     osc.stop(startTime + duration);
   }
 
-  // Simple melodies defined as [freq, duration] arrays
+  // Melodies are defined as [freq, duration, wave?, gain?] notes or multi-track arrays.
   var melodies = {
     title: [
       [262, 0.2], [330, 0.2], [392, 0.2], [523, 0.4],
@@ -215,12 +252,22 @@ Game.Audio = (function() {
       [247, 0.32], [262, 0.26], [220, 0.64]
     ],
     melancholy_battle: [ // 霧の牧場に残った義賊の哀愁
-      [220, 0.28], [247, 0.18], [262, 0.24], [294, 0.34],
-      [330, 0.22], [294, 0.18], [262, 0.22], [220, 0.4],
-      [196, 0.28], [220, 0.18], [247, 0.22], [262, 0.32],
-      [294, 0.22], [262, 0.18], [220, 0.24], [196, 0.46],
-      [175, 0.28], [196, 0.18], [220, 0.22], [247, 0.28],
-      [262, 0.22], [247, 0.18], [220, 0.24], [196, 0.54]
+      [
+        [220, 0.28], [247, 0.18], [262, 0.24], [294, 0.34],
+        [330, 0.22], [294, 0.18], [262, 0.22], [220, 0.4],
+        [196, 0.28], [220, 0.18], [247, 0.22], [262, 0.32],
+        [294, 0.22], [262, 0.18], [220, 0.24], [196, 0.46],
+        [175, 0.28], [196, 0.18], [220, 0.22], [247, 0.28],
+        [262, 0.22], [247, 0.18], [220, 0.24], [196, 0.54]
+      ],
+      [
+        [110, 0.46, 'sine', 0.05], [110, 0.58, 'sine', 0.05],
+        [98, 0.46, 'sine', 0.05], [87, 0.58, 'sine', 0.048],
+        [110, 0.46, 'sine', 0.05], [131, 0.58, 'sine', 0.05],
+        [147, 0.46, 'sine', 0.048], [110, 0.58, 'sine', 0.05],
+        [98, 0.46, 'sine', 0.046], [87, 0.58, 'sine', 0.046],
+        [98, 0.46, 'sine', 0.046], [110, 0.78, 'sine', 0.048]
+      ]
     ],
     melancholy_victory: [ // 勝っても胸の奥に重さだけ残る後奏
       [294, 0.2], [330, 0.2], [349, 0.26], [330, 0.18],
@@ -228,10 +275,18 @@ Game.Audio = (function() {
       [220, 0.26], [247, 0.22], [220, 0.22], [196, 0.68]
     ],
     heroine_veil: [ // 白と青の少女が現れるときの細い祈り
-      [392, 0.34], [523, 0.18], [587, 0.38], [659, 0.22],
-      [587, 0.18], [523, 0.26], [440, 0.44], [0, 0.16],
-      [392, 0.26], [440, 0.2], [523, 0.34], [587, 0.22],
-      [659, 0.18], [523, 0.3], [440, 0.56]
+      [
+        [392, 0.34], [523, 0.18], [587, 0.38], [659, 0.22],
+        [587, 0.18], [523, 0.26], [440, 0.44], [0, 0.16],
+        [392, 0.26], [440, 0.2], [523, 0.34], [587, 0.22],
+        [659, 0.18], [523, 0.3], [440, 0.56]
+      ],
+      [
+        [196, 0.52, 'sine', 0.038], [262, 0.6, 'sine', 0.04],
+        [220, 0.44, 'sine', 0.036], [0, 0.16],
+        [196, 0.46, 'sine', 0.038], [220, 0.56, 'sine', 0.04],
+        [262, 0.48, 'sine', 0.04], [220, 0.56, 'sine', 0.038]
+      ]
     ],
     kusatsu_bushi: [
       [392, 0.2], [440, 0.2], [392, 0.2], [349, 0.2],
@@ -509,10 +564,18 @@ Game.Audio = (function() {
     melancholy_battle: [
       melodies.melancholy_battle,
       [
-        [175, 0.22], [196, 0.18], [220, 0.22], [247, 0.28],
-        [262, 0.2], [247, 0.18], [220, 0.22], [196, 0.4],
-        [165, 0.24], [175, 0.18], [196, 0.22], [220, 0.28],
-        [247, 0.2], [220, 0.18], [196, 0.24], [175, 0.48]
+        [
+          [175, 0.22], [196, 0.18], [220, 0.22], [247, 0.28],
+          [262, 0.2], [247, 0.18], [220, 0.22], [196, 0.4],
+          [165, 0.24], [175, 0.18], [196, 0.22], [220, 0.28],
+          [247, 0.2], [220, 0.18], [196, 0.24], [175, 0.48]
+        ],
+        [
+          [87, 0.4, 'sine', 0.044], [98, 0.5, 'sine', 0.046],
+          [110, 0.44, 'sine', 0.046], [98, 0.48, 'sine', 0.044],
+          [82, 0.42, 'sine', 0.042], [87, 0.46, 'sine', 0.044],
+          [98, 0.42, 'sine', 0.044], [87, 0.56, 'sine', 0.046]
+        ]
       ]
     ],
     melancholy_victory: [
@@ -595,10 +658,24 @@ Game.Audio = (function() {
     return bgmStyles[name] || { wave: 'square', gain: 0.1 };
   }
 
-  function getMelodyLength(melody) {
+  function isMultiTrackMelody(melody) {
+    return Array.isArray(melody) && Array.isArray(melody[0]) && Array.isArray(melody[0][0]);
+  }
+
+  function getTrackLength(track) {
     var length = 0;
-    for (var i = 0; i < melody.length; i++) length += melody[i][1];
+    for (var i = 0; i < track.length; i++) length += track[i][1];
     return length;
+  }
+
+  function getMelodyLength(melody) {
+    if (!Array.isArray(melody) || !melody.length) return 0;
+    if (!isMultiTrackMelody(melody)) return getTrackLength(melody);
+    var longest = 0;
+    for (var i = 0; i < melody.length; i++) {
+      longest = Math.max(longest, getTrackLength(melody[i]));
+    }
+    return longest;
   }
 
   function playBgm(name, options) {
@@ -616,12 +693,18 @@ Game.Audio = (function() {
     var initialDelay = Math.max(0, Number(options.startDelay) || 0);
 
     function scheduleSequence(melody, delay) {
-      var time = audioCtx.currentTime + 0.1 + Math.max(0, delay || 0);
-      melody.forEach(function(note) {
-        if (note[0] > 0) {
-          playBgmNote(note[0], note[1] * 0.92, style.wave, time, style.gain);
-        }
-        time += note[1];
+      var timeStart = audioCtx.currentTime + 0.1 + Math.max(0, delay || 0);
+      var tracks = isMultiTrackMelody(melody) ? melody : [melody];
+      tracks.forEach(function(track) {
+        var time = timeStart;
+        track.forEach(function(note) {
+          if (note[0] > 0) {
+            var wave = note[2] || style.wave;
+            var gain = typeof note[3] === 'number' ? note[3] : style.gain;
+            playBgmNote(note[0], note[1] * 0.92, wave, time, gain);
+          }
+          time += note[1];
+        });
       });
     }
 

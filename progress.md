@@ -1478,3 +1478,86 @@ Original prompt: そうだね。セーブできる村役場みたいなところ
       - 店フッターが `決定 購入  戻る` の短い表示に変わっていることを確認。
     - `output/web-game-20260410/control-guide-pass/battle-dice-state.json`
       - `phase: diceRoll`、`message: 決定で止める。まだなら戻る。` を確認。
+- 2026-04-11: 保存UI強化、序盤町の状態付きオブジェクト、`event.js` 重複章イベント削除を実施。
+  - 対応:
+    - `js/save_menu.js`
+      - 保存成功トーストを `保存完了` 見出し付きの強調パネルへ変更。
+      - メッセージ本文に `あいことばも かならず 控えてください。` を追加。
+      - あいことば表示画面の注意文を `スクリーンショットかメモで必ず残してください。` へ強化。
+    - `js/chapter_data.js`
+      - `maebashi / takasaki / tomioka` の環境ノートに `variants` を追加。
+      - `checkpoint_cleared / daruma_master_cleared_slice / thread_maiden_cleared_slice` に応じて、クリア後専用ノートを別フラグで一度だけ表示できるようにした。
+    - `js/npc.js`
+      - `showWhenFlag` を追加し、前後差し替えオブジェクトを同座標で切り替えられるようにした。
+    - `js/maps/maebashi.js`
+      - `checkpointCloth / checkpointClothAfter` を追加し、関所突破前後で赤布の見た目と文言が変わるようにした。
+    - `js/maps/takasaki.js`
+      - `darumaShelf` をクリア後に隠し、`darumaShelfAfter` を追加。
+      - 片目のだるま棚が減って見える後景へ差し替えた。
+    - `js/maps/tomioka.js`
+      - `silentReel` をクリア後に隠し、`silentReelAfter` を追加。
+      - 止まらない繰糸機から、静まり返った繰糸機へ差し替えた。
+    - `js/main.js`
+      - EVENT状態で `Game.Story` と `Game.Event` の両方を扱えるよう整理。
+      - 章開始演出と `event_chN_ending` 遷移を `Game.Story.startChapterEvent(...)` 経由へ変更。
+      - `render_game_to_text` の EVENT 出力で `source: story` を返すようにした。
+    - `js/event.js`
+      - `archive/legacy_10_chapter_flow.json` を基準に、`ch2_opening`、`ch3_opening/ch3_ending` から `ch10_opening`、`ch2_ending` までの重複章イベントを物理削除。
+      - 現行でまだ使う `ch10_ending` と個別特殊演出は残した。
+    - `docs/polish_todo.md`
+      - 高崎・富岡の町変化と状態付きオブジェクト項目を完了へ更新。
+  - 検証:
+    - `node --check js/save_menu.js js/npc.js js/chapter_data.js js/main.js js/maps/maebashi.js js/maps/takasaki.js js/maps/tomioka.js js/event.js` 通過。
+    - `output/web-game-20260411/save-stateful-story-qa/summary.json`
+      - `consoleErrorCount: 0 / pageErrorCount: 0`。
+      - 保存UIは `save-warning-final.png` で下部警告トーストが表示されることを確認。
+      - 可視NPC検証で `checkpointCloth -> checkpointClothAfter`、`darumaShelf -> darumaShelfAfter`、`silentReel -> silentReelAfter` の差し替えを確認。
+      - 章遷移検証で `story-route-event-final.json` が `mode: event / event.source: story`、`story-route-after-final.json` が `mode: exploring / map: shirane_trail / chapter: 3` になり、`event.js` 削除後も `Game.Story` 経由の章導入が完走することを確認。
+- 2026-04-11: Web AudioベースのBGMを空間系寄りに強化。
+  - `js/audio.js`
+    - BGM専用の出力経路を追加し、`lowpass + delay + feedback` を通して、効果音は従来どおり輪郭を保つよう分離した。
+    - `playBgmNote` の音量エンベロープをやわらかく変更し、立ち上がりノイズを抑えて余韻が残るようにした。
+    - BGM再生処理をマルチトラック対応に拡張し、`[freq, duration, wave?, gain?]` 形式のノートと複数トラックの同時再生に対応。
+    - `melancholy_battle` と `heroine_veil` に低音トラックを追加し、`melancholy_battle` の別バリアント側も裏ベースつきでループするようにした。
+- 2026-04-11: 哀愁・慈悲寄りの新規通常敵を追加し、通常戦の差別化を強化。
+  - `js/battle_data.js`
+    - `弾かれ蒟蒻 / 忘れ湯の桶 / 飛び立てぬ白蛾 / 雪待ちの甘葉 / のっぺら木地 / 錆びたカンテラ` を追加。
+    - `pride / sorrow / echoText / silhouetteDiff / mapTags / dropItem` を含めて登録し、既存の読み取りUIへ自然に乗る形にした。
+  - `js/encounters.js`
+    - 下仁田、草津、富岡、嬬恋、草津深部の遭遇テーブルへ新規敵と専用群れ編成を追加。
+    - `弾かれ蒟蒻 + 箱詰めの亡霊`、`忘れ湯の桶 + 湯治帰りの残り火`、`飛び立てぬ白蛾 + 紡ぎ続ける影` など、土地ごとの群れプロフィールも増やした。
+  - `js/battle.js`
+    - 新規敵の `tag / intent` を読み取りチップへ追加。
+    - 通常敵の個体差を出すため、専用の敵ターン後処理を実装。
+      - `弾かれ蒟蒻`: 攻撃後に守りを固める。
+      - `忘れ湯の桶`: 攻撃後に敵側を少量回復。
+      - `飛び立てぬ白蛾`: 攻撃後にプレイヤーへ鈍り。
+      - `雪待ちの甘葉`: 攻撃後に防御を厚くする。
+      - `のっぺら木地`: 攻撃後にプレイヤーへ鈍り。
+      - `錆びたカンテラ`: 攻撃後に回復封印。
+    - 敵側 `defense_up` を被ダメ計算へ反映し、敵ステータス表示にも `防↑` を追加。
+    - `showEffectFeedback` に `slow / heal_seal` を追加して、通常敵ギミックの手応えが見えるようにした。
+  - 検証:
+    - `node --check js/battle_data.js js/encounters.js js/battle.js` と `git diff --check -- js/battle_data.js js/encounters.js js/battle.js` 通過。
+    - `output/web-game-20260411/new-enemy-pass/summary.json`
+      - `弾かれ蒟蒻` 単体戦と `忘れ湯の桶 + 錆びたカンテラ` 群れ戦の開始、タグ表示、群れプロフィール表示を確認。
+      - `consoleErrorCount: 0 / pageErrorCount: 0`。
+    - 追加手動確認:
+      - `忘れ湯の桶の攻撃！ 10ダメージ！ 忘れ湯の桶の湯気が、敵の傷をぬるく塞いだ。`
+      - `錆びたカンテラの攻撃！ 13ダメージ！ 錆びた灯りが、回復の呼吸を曇らせた。`
+      - `飛び立てぬ白蛾の攻撃！ 11ダメージ！ 白蛾の鱗粉で、手元の景色が少し鈍る。`
+    - `のっぺら木地` は伊香保が現状セーフティ寄りの町マップのため、今回はデータ実装までに留めた。必要なら次段で任意遭遇や町内イベント戦へ出せる。
+- 2026-04-11: 懸念点チェックリストのうち、保存導線・詰み救済・儀式戦の静寂・群れの見た目差を横展開。
+  - `js/save_menu.js`
+    - あいことば生成時の `window.prompt` 文言を `スクリーンショット か メモ` 前提へ強化。
+    - あいことば表示画面の下段を `バックアップ` パネルへ差し替え、別PCへ持ち出す際は控えが唯一の戻り道だとUI内で強調。
+    - 生成直後のメッセージも `控えを確認` タイトルつきにして、単なる表示ではなく確認ステップとして扱うようにした。
+  - `js/main.js` / `js/encounters.js`
+    - 低HP・所持金ほぼなし・回復アイテム0の探索中に限り、遭遇マップごと一度だけ `薬草` を拾える低確率救済を追加。
+    - `道端の供え` という環境ノート表示で渡し、遭遇直前の詰みを少しだけ緩和。
+    - `main.js` に残っていた `startChapter2-10` の薄いラッパーを整理し、章開始は `startChapter(n)` へ直接寄せた。
+  - `js/battle.js`
+    - 通常の儀式戦勝利でも `ritual_release -> 無音の間 -> ritual_afterglow -> 戦果` へ入るようにし、終章奉納だけでなく儀式全体で静寂が自動発火するようにした。
+    - 群れ戦の各個体へ、役割や敵IDに応じた微細な揺れ・明滅・浮遊・弾みを追加。`錆びたカンテラ` の灯り揺れ、`飛び立てぬ白蛾` の浮遊、`弾かれ蒟蒻` の弾みなど、同じ群れの中でも印象差が出るようにした。
+  - `docs/polish_todo.md`
+    - `あいことば生成後に記録したか確認するワンクッション` を完了へ更新。

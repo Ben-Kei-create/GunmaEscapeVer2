@@ -6,6 +6,8 @@ Game.SaveMenu = (function() {
     action: '',
     selection: 0,
     message: '',
+    messageTitle: '',
+    messageAccent: '#8fb8ff',
     messageTimer: 0,
     passphrase: ''
   };
@@ -23,6 +25,8 @@ Game.SaveMenu = (function() {
     state.action = options.action || '';
     state.selection = 0;
     state.message = '';
+    state.messageTitle = '';
+    state.messageAccent = '#8fb8ff';
     state.messageTimer = 0;
     state.passphrase = '';
 
@@ -45,8 +49,11 @@ Game.SaveMenu = (function() {
     return state.context === 'title' ? Game.Config.STATE.TITLE : Game.Config.STATE.EXPLORING;
   }
 
-  function setMessage(text, timer) {
+  function setMessage(text, timer, options) {
+    options = options || {};
     state.message = text;
+    state.messageTitle = options.title || '';
+    state.messageAccent = options.accent || '#8fb8ff';
     state.messageTimer = timer || 70;
   }
 
@@ -145,10 +152,14 @@ Game.SaveMenu = (function() {
     var slot = state.selection + 1;
     if (state.action === 'save') {
       if (Game.Save.save(slot)) {
-        setMessage(getSlotLabel(slot) + ' に きろくした。', 70);
+        setMessage(
+          getSlotLabel(slot) + ' に きろくした。あいことばも かならず 控えてください。',
+          130,
+          { title: '保存完了', accent: '#ffd66b' }
+        );
         Game.Audio.playSfx('save');
       } else {
-        setMessage('きろくに しっぱいした。', 70);
+        setMessage('きろくに しっぱいした。', 80, { title: '保存失敗', accent: '#d97777' });
         Game.Audio.playSfx('cancel');
       }
       return null;
@@ -202,9 +213,12 @@ Game.SaveMenu = (function() {
       state.page = 'passphrase_view';
       state.selection = 0;
       if (window.prompt) {
-        window.prompt('この あいことば を かならず メモ してください。', state.passphrase);
+        window.prompt('この あいことば を スクリーンショット か メモ で 残してください。', state.passphrase);
       }
-      setMessage('あいことばを うつした。', 70);
+      setMessage('スクリーンショット か メモ で 残したら、もどって 旅を続けてください。', 100, {
+        title: '控えを確認',
+        accent: '#ffd66b'
+      });
       Game.Audio.playSfx('save');
       return null;
     }
@@ -245,8 +259,11 @@ Game.SaveMenu = (function() {
 
   function updatePassphraseViewPage() {
     if (Game.Input.isPressed('confirm') && window.prompt) {
-      window.prompt('この あいことば を かならず メモ してください。', state.passphrase);
-      setMessage('もういちど ひらいた。', 60);
+      window.prompt('この あいことば を スクリーンショット か メモ で 残してください。', state.passphrase);
+      setMessage('控えを もういちど ひらいた。', 70, {
+        title: 'バックアップ',
+        accent: '#ffd66b'
+      });
       Game.Audio.playSfx('confirm');
       return null;
     }
@@ -299,11 +316,12 @@ Game.SaveMenu = (function() {
     }
 
     if (state.messageTimer > 0 && state.message) {
-      var messageLines = wrapText(state.message, 38, 2);
-      var messageHeight = 12 + messageLines.length * 9;
-      drawInsetPanel(68, 292 - messageHeight, 344, messageHeight, '', '#8fb8ff', '#8fb8ff');
+      var messageLines = wrapText(state.message, 36, state.messageTitle ? 3 : 2);
+      var messageHeight = (state.messageTitle ? 24 : 12) + messageLines.length * 9;
+      var messageY = 292 - messageHeight;
+      drawInsetPanel(68, messageY, 344, messageHeight, state.messageTitle, state.messageAccent, state.messageAccent);
       for (var mi = 0; mi < messageLines.length; mi++) {
-        R.drawTextJP(messageLines[mi], 80, 296 - messageHeight + mi * 9, '#fff', 8);
+        R.drawTextJP(messageLines[mi], 80, messageY + (state.messageTitle ? 16 : 4) + mi * 9, '#fff', 8);
       }
     }
   }
@@ -359,7 +377,7 @@ Game.SaveMenu = (function() {
     drawOptionList(options, 80, 88, 18, 128);
     drawInsetPanel(234, 70, 164, 126, '説明', '#8fb8ff', '#8fb8ff');
     drawWrappedParagraph('あいことばは PC が変わっても使える持ち運び用の記録です。', 244, 90, 18, 3, 12, '#ddd', 9);
-    drawWrappedParagraph('ただし手書きミスに弱いので、区切りごとに丁寧に写してください。', 244, 132, 18, 3, 12, '#b7c3e3', 9);
+    drawWrappedParagraph('スクリーンショット推奨。手書きなら区切りごとに丁寧に写してください。', 244, 132, 18, 3, 12, '#fff2b3', 9);
     R.drawTextJP(getUiControlHint('openLegend', '決定 ひらく  戻る'), 244, 180, '#7e8cac', 8);
   }
 
@@ -368,17 +386,17 @@ Game.SaveMenu = (function() {
     var lines = wrapText(state.passphrase, 28);
 
     drawInsetPanel(70, 68, 328, 132, '控え用のあいことば', Game.Config.COLORS.GOLD, Game.Config.COLORS.GOLD);
-    R.drawTextJP('この あいことば を かならず メモ してください。', 82, 88, '#fff', 10);
+    R.drawTextJP('この あいことば を かならず 控えてください。', 82, 88, '#fff', 10);
     R.drawRectAbsolute(82, 108, 304, 1, '#446');
 
     for (var i = 0; i < lines.length && i < 6; i++) {
       R.drawText(lines[i], 88, 118 + i * 16, '#ffefaa', 12);
     }
 
-    drawInsetPanel(70, 212, 328, 46, '注意', '#8fb8ff', '#8fb8ff');
-    drawWrappedParagraph('同じPC・同じブラウザなら「つづきから」でも戻れます。', 82, 230, 32, 2, 10, '#aaa', 8);
-    drawWrappedParagraph('でも環境が変わると消えることがあるので、必ず控えてください。', 82, 242, 32, 2, 10, '#aaa', 8);
-    R.drawTextJP('決定 もう一度ひらく  戻る', 82, 274, '#888', 8);
+    drawInsetPanel(70, 210, 328, 56, 'バックアップ', '#ffd66b', '#ffd66b');
+    drawWrappedParagraph('同じPC・同じブラウザなら「つづきから」でも戻れます。', 82, 228, 32, 2, 10, '#aaa', 8);
+    drawWrappedParagraph('別のPCへ持ち出すなら、この文字列をスクリーンショットかメモで必ず残してください。', 82, 240, 32, 3, 10, '#fff2b3', 8);
+    R.drawTextJP('決定 もう一度ひらく  戻る', 82, 276, '#888', 8);
   }
 
   function drawHelpPage() {

@@ -175,6 +175,27 @@ Game.Main = (function() {
     });
   }
 
+  function hasStoryChapterEvent(eventId) {
+    var chapterEvents = Game.Story && Game.Story.getChapterEvents ? Game.Story.getChapterEvents() : null;
+    return !!(eventId && chapterEvents && chapterEvents[eventId]);
+  }
+
+  function startChapterStoryEvent(eventId, onComplete) {
+    if (!eventId || !Game.Story || !Game.Story.startChapterEvent || !hasStoryChapterEvent(eventId)) {
+      return false;
+    }
+    setState(Game.Config.STATE.EVENT);
+    Game.Story.startChapterEvent(eventId, function() {
+      if (onComplete) {
+        onComplete();
+      } else if (state === Game.Config.STATE.EVENT) {
+        setState(Game.Config.STATE.EXPLORING);
+        if (!Game.Audio.isBgmPlaying()) Game.Audio.playBgm('field');
+      }
+    });
+    return true;
+  }
+
   function getChapterStartPlan(chapterNumber) {
     if (!Game.Story || !Game.Story.getChapterStartPlan) return null;
     return Game.Story.getChapterStartPlan(chapterNumber);
@@ -308,12 +329,15 @@ Game.Main = (function() {
         applyChapterStartPlan(plan, chapterNumber);
       },
       onComplete: function() {
-        setState(Game.Config.STATE.EVENT);
-        Game.Event.start(plan.openingEventId, function() {
+        if (!startChapterStoryEvent(plan.openingEventId, function() {
           setState(Game.Config.STATE.EXPLORING);
           showChapterArrivalBanner(plan.mapId, chapterNumber);
           Game.Audio.playBgm('field');
-        });
+        })) {
+          setState(Game.Config.STATE.EXPLORING);
+          showChapterArrivalBanner(plan.mapId, chapterNumber);
+          Game.Audio.playBgm('field');
+        }
       }
     });
     return true;
@@ -323,10 +347,11 @@ Game.Main = (function() {
     var match = /^event_ch([2-9])_ending$/.exec(action || '');
     if (!match) return false;
     var chapterNumber = parseInt(match[1], 10);
-    setState(Game.Config.STATE.EVENT);
-    Game.Event.start('ch' + chapterNumber + '_ending', function() {
+    if (!startChapterStoryEvent('ch' + chapterNumber + '_ending', function() {
       startChapter(chapterNumber + 1);
-    });
+    })) {
+      startChapter(chapterNumber + 1);
+    }
     return true;
   }
 
@@ -346,8 +371,41 @@ Game.Main = (function() {
     return true;
   }
 
+  function resolveEnvironmentSpot(mapId, spot) {
+    if (!spot) return null;
+    var resolved = {};
+    var key;
+    for (key in spot) {
+      if (key === 'variants') continue;
+      resolved[key] = spot[key];
+    }
+    resolved.variantId = '';
+
+    if (!spot.variants || !spot.variants.length || !Game.Story || !Game.Story.hasFlag) {
+      return resolved;
+    }
+
+    for (var i = 0; i < spot.variants.length; i++) {
+      var variant = spot.variants[i];
+      if (!variant) continue;
+      if (variant.whenFlag && !Game.Story.hasFlag(variant.whenFlag)) continue;
+      if (variant.unlessFlag && Game.Story.hasFlag(variant.unlessFlag)) continue;
+      for (key in variant) {
+        if (key === 'whenFlag' || key === 'unlessFlag') continue;
+        resolved[key] = variant[key];
+      }
+      resolved.variantId = variant.id || '';
+      break;
+    }
+
+    return resolved;
+  }
+
   function getEnvironmentSpotFlag(mapId, spot) {
-    return spot && spot.flag ? spot.flag : 'env_' + mapId + '_' + (spot && spot.id ? spot.id : 'spot');
+    if (!spot) return 'env_' + mapId + '_spot';
+    if (spot.flag) return spot.flag;
+    var variantSuffix = spot.variantId ? '_' + spot.variantId : '';
+    return 'env_' + mapId + '_' + (spot.id || 'spot') + variantSuffix;
   }
 
   function isEnvironmentSpotReached(tileX, tileY, spot) {
@@ -371,8 +429,8 @@ Game.Main = (function() {
     if (!spots || !spots.length) return false;
 
     for (var i = 0; i < spots.length; i++) {
-      var spot = spots[i];
-      if (!isEnvironmentSpotReached(stepInfo.tileX, stepInfo.tileY, spot)) continue;
+      var spot = resolveEnvironmentSpot(mapId, spots[i]);
+      if (!spot || !isEnvironmentSpotReached(stepInfo.tileX, stepInfo.tileY, spot)) continue;
       var flag = getEnvironmentSpotFlag(mapId, spot);
       if (Game.Story.hasFlag(flag)) continue;
       Game.Story.setFlag(flag);
@@ -381,6 +439,53 @@ Game.Main = (function() {
       return true;
     }
     return false;
+  }
+
+  function countHealingItems(inventory) {
+    if (!inventory || !inventory.length || !Game.Items || !Game.Items.get) return 0;
+    var count = 0;
+    for (var i = 0; i < inventory.length; i++) {
+      var item = Game.Items.get(inventory[i]);
+      if (item && item.type === 'heal') count++;
+    }
+    return count;
+  }
+
+  function maybeTriggerEmergencyOffering(stepInfo) {
+    if (!stepInfo || !Game.Player || !Game.Player.getData || !Game.Player.addItem) return false;
+    if (!Game.Story || !Game.Story.hasFlag || !Game.Story.setFlag) return false;
+    var mapId = Game.Map && Game.Map.getCurrentMapId ? Game.Map.getCurrentMapId() : '';
+    if (!mapId || !Game.Encounters || !Game.Encounters.hasTable || !Game.Encounters.hasTable(mapId)) return false;
+
+    var pd = Game.Player.getData();
+    if (!pd || pd.maxHp <= 0) return false;
+    var hpThreshold = Math.max(16, Math.floor(pd.maxHp * 0.28));
+    var criticalThreshold = Math.max(8, Math.floor(pd.maxHp * 0.16));
+    if (pd.hp > hpThreshold) return false;
+    if ((pd.gold || 0) > 12) return false;
+    if (countHealingItems(pd.inventory || []) > 0) return false;
+
+    var mercyFlag = 'mercy_cache_' + mapId;
+    if (Game.Story.hasFlag(mercyFlag)) return false;
+
+    var chance = pd.hp <= criticalThreshold ? 0.14 : 0.07;
+    if (Math.random() >= chance) return false;
+
+    Game.Player.addItem('healHerb');
+    Game.Story.setFlag(mercyFlag);
+    if (Game.Story.saveFlags) Game.Story.saveFlags();
+    if (Game.UI && Game.UI.showEnvironmentNote) {
+      Game.UI.showEnvironmentNote({
+        title: '道端の供え',
+        lines: [
+          '足元に、小さな包みが置かれていた。',
+          '薬草をひとつ手に入れた。'
+        ],
+        accent: '#f4eed7'
+      }, mapId);
+    }
+    Game.Audio.playSfx('item');
+    return true;
   }
 
   function continuePendingSkillFlow() {
@@ -682,7 +787,7 @@ Game.Main = (function() {
             Game.Audio.stopBgm();
             setState(Game.Config.STATE.EVENT);
             Game.Event.start('ch1_ending', function() {
-              startChapter2();
+              startChapter(2);
             });
           } else {
             if (Game.Achievements && Game.Achievements.check) {
@@ -706,6 +811,9 @@ Game.Main = (function() {
 
         if (stepInfo) {
           maybeTriggerEnvironmentSpot(stepInfo);
+          if (maybeTriggerEmergencyOffering(stepInfo)) {
+            break;
+          }
         }
 
         if (stepInfo && Game.Encounters && Game.Encounters.consumeStep) {
@@ -855,16 +963,23 @@ Game.Main = (function() {
         break;
 
       case Game.Config.STATE.EVENT:
+        if (Game.Story && Game.Story.isActive && Game.Story.isActive()) {
+          Game.Story.update();
+          if ((!Game.Story.isActive || !Game.Story.isActive()) &&
+              state === Game.Config.STATE.EXPLORING &&
+              !Game.Audio.isBgmPlaying()) {
+            Game.Audio.playBgm('field');
+          }
+          break;
+        }
         var eventResult = Game.Event.update();
-        if (eventResult) {
-          if (eventResult.result === 'done') {
-            var eventStillActive = Game.Event && Game.Event.isActive ? Game.Event.isActive() : false;
-            if (!eventStillActive && state === Game.Config.STATE.EVENT) {
-              setState(Game.Config.STATE.EXPLORING);
-            }
-            if (state === Game.Config.STATE.EXPLORING && !Game.Audio.isBgmPlaying()) {
-              Game.Audio.playBgm('field');
-            }
+        if (eventResult && eventResult.result === 'done') {
+          var eventStillActive = Game.Event && Game.Event.isActive ? Game.Event.isActive() : false;
+          if (!eventStillActive && state === Game.Config.STATE.EVENT) {
+            setState(Game.Config.STATE.EXPLORING);
+          }
+          if (state === Game.Config.STATE.EXPLORING && !Game.Audio.isBgmPlaying()) {
+            Game.Audio.playBgm('field');
           }
         }
         break;
@@ -1209,18 +1324,21 @@ Game.Main = (function() {
         break;
       case 'event_gururin_network_midgame':
         if (Game.Story && Game.Story.hasFlag && Game.Story.hasFlag('gururin_network_unlocked')) {
-          setState(Game.Config.STATE.EVENT);
-          Game.Event.start('ch5_ending', function() {
+          if (!startChapterStoryEvent('ch5_ending', function() {
             startChapter(6);
-          });
+          })) {
+            startChapter(6);
+          }
           break;
         }
         unlockGururinNetwork();
         setState(Game.Config.STATE.EVENT);
         Game.Event.start('gururin_network', function() {
-          Game.Event.start('ch5_ending', function() {
+          if (!startChapterStoryEvent('ch5_ending', function() {
             startChapter(6);
-          });
+          })) {
+            startChapter(6);
+          }
         });
         break;
       case 'event_gururin':
@@ -1359,42 +1477,6 @@ Game.Main = (function() {
     });
   }
 
-  function startChapter2() {
-    startChapter(2);
-  }
-
-  function startChapter3() {
-    startChapter(3);
-  }
-
-  function startChapter4() {
-    startChapter(4);
-  }
-
-  function startChapter5() {
-    startChapter(5);
-  }
-
-  function startChapter6() {
-    startChapter(6);
-  }
-
-  function startChapter7() {
-    startChapter(7);
-  }
-
-  function startChapter8() {
-    startChapter(8);
-  }
-
-  function startChapter9() {
-    startChapter(9);
-  }
-
-  function startChapter10() {
-    startChapter(10);
-  }
-
   function startTransition(target, spawnX, spawnY) {
     beginTravelTransition({
       sourceMapId: Game.Map && Game.Map.getCurrentMapId ? Game.Map.getCurrentMapId() : '',
@@ -1437,7 +1519,11 @@ Game.Main = (function() {
         break;
 
       case Game.Config.STATE.EVENT:
-        Game.Event.draw();
+        if (Game.Story && Game.Story.isActive && Game.Story.isActive()) {
+          Game.Story.draw();
+        } else {
+          Game.Event.draw();
+        }
         break;
 
       case Game.Config.STATE.SKILL_LEARN:
@@ -1647,8 +1733,12 @@ Game.Main = (function() {
     if (state === Game.Config.STATE.PUZZLE && Game.Puzzle && Game.Puzzle.getDebugState) {
       payload.puzzle = Game.Puzzle.getDebugState();
     }
-    if (state === Game.Config.STATE.EVENT && Game.Event && Game.Event.getStateSnapshot) {
-      payload.event = Game.Event.getStateSnapshot();
+    if (state === Game.Config.STATE.EVENT) {
+      if (Game.Story && Game.Story.isActive && Game.Story.isActive()) {
+        payload.event = { source: 'story' };
+      } else if (Game.Event && Game.Event.getStateSnapshot) {
+        payload.event = Game.Event.getStateSnapshot();
+      }
     }
     if (state === Game.Config.STATE.DIALOG) {
       payload.dialog = {

@@ -115,13 +115,20 @@ Game.Battle = (function() {
     ferryBellEcho: { tag: '渡し鐘', color: '#9fd8ff', intent: '遠い呼び声を響かせ、判断を一拍遅らせる。' },
     marshPathShade: { tag: '木道残り', color: '#c9d79b', intent: '沈みかけた道順だけを頼りに、足元へ寄ってくる。' },
     mudWisp: { tag: '泥灯', color: '#d5bf8c', intent: '濁りを揺らして足場の感覚を鈍らせる。' },
+    shimonita_reject: { tag: 'はぐれ蒟蒻', color: '#b9c3cf', intent: '弾み直しながら、捨てられた形をまだ支えようとする。' },
+    kusatsu_bucket: { tag: '忘れ湯桶', color: '#efc29e', intent: 'ぬるい湯気で仲間の傷をやわらげ、熱の壁を押し出す。' },
+    tomioka_moth: { tag: '白蛾残響', color: '#f1edf7', intent: '飛べない羽から白い粉を散らし、手元の拍を乱す。' },
+    tsumagoi_cabbage: { tag: '雪待ち葉', color: '#b9dfb2', intent: '凍った葉を閉じ、寒さごと身を固めて耐える。' },
+    shibukawa_kokeshi: { tag: '木地残り', color: '#d8a784', intent: '表情のない気配だけで、こちらの拍を静かに狂わせる。' },
+    yokokawa_lantern: { tag: '峠灯', color: '#ffc778', intent: '残り火で息を曇らせ、回復の手つきを忘れさせる。' },
     ruined_checkpoint: { tag: '通行の遺志', color: '#8fb8ff', intent: '止まれの形を崩さず、進路を拒み続ける。' }
   };
   var enemyFamilyStyles = {
     daruma: { tag: '願掛け', color: '#ff8d7a', intent: '空洞の願いがぶつかり合い、熱だけが残る。' },
     guard: { tag: '検め役', color: '#8fe0ff', intent: '役目だけを頼りに、境目を見張っている。' },
     mud: { tag: '澱み', color: '#d2b27a', intent: '濁りに足を取らせ、動きを鈍らせる。' },
-    thread: { tag: '製糸残響', color: '#d8c3ff', intent: '切らずに絡め取り、呼吸ごと引き寄せる。' }
+    thread: { tag: '製糸残響', color: '#d8c3ff', intent: '切らずに絡め取り、呼吸ごと引き寄せる。' },
+    mistBeast: { tag: '白霧羽', color: '#dfe7ff', intent: '淡い粉を散らしながら、視線と呼吸をやさしく狂わせる。' }
   };
 
   function createTrainingEnemy(baseId, overrides) {
@@ -1278,11 +1285,27 @@ Game.Battle = (function() {
       );
     }
 
+    return startRitualSilenceMoment('五つの記憶は返され、境界の息が静かに整った。', {
+      totalFrames: ritualRuntime.ritualParams ? (ritualRuntime.ritualParams.silentFrames || 84) : 84,
+      generic: false
+    });
+  }
+
+  function startRitualSilenceMoment(victoryText, options) {
+    if (!ritualRuntime || !ritualRuntime.ritualState) return false;
+    options = options || {};
+    ritualRuntime.ritualState.lightReleased = true;
+    ritualRuntime.ritualState.lightReleaseFrames = Math.max(18, options.totalFrames || 42);
+    ritualRuntime.ritualState.silenceTotalFrames = ritualRuntime.ritualState.lightReleaseFrames;
+    ritualRuntime.ritualState.afterglowCuePlayed = false;
+    ritualRuntime.ritualState.pendingVictoryText = victoryText || '';
+    ritualRuntime.ritualState.genericSilence = options.generic !== false;
+    ritualRuntime.uiFlags.silentMoment = true;
     message = '';
     messageTimer = 0;
     phase = 'ritualMoment';
-    Game.Audio.stopBgm({ fadeOut: 0.18 });
-    Game.Audio.playSfx('ritual_release');
+    Game.Audio.stopBgm({ fadeOut: typeof options.fadeOut === 'number' ? options.fadeOut : 0.18 });
+    Game.Audio.playSfx(options.releaseSfx || 'ritual_release');
     return true;
   }
 
@@ -1295,6 +1318,13 @@ Game.Battle = (function() {
       var ritualVictoryText = ritualRuntime.ritualMode === 'offering'
         ? '五つの記憶は返され、境界の息が静かに整った。'
         : (enemy.name + 'を鎮めた。');
+      if (ritualRuntime.ritualMode !== 'offering') {
+        startRitualSilenceMoment(ritualVictoryText, {
+          totalFrames: ritualRuntime.ritualParams ? (ritualRuntime.ritualParams.silentFrames || 42) : 42,
+          generic: true
+        });
+        return 'ritualMoment';
+      }
       enterVictoryPhase(ritualVictoryText);
       if (Game.Particles) Game.Particles.emit('victory', 240, 100, { count: 20 });
       return 'victory';
@@ -1390,6 +1420,9 @@ Game.Battle = (function() {
       case 'slow_roll':
         config = { text: '緩', color: '#8fe0ff', particle: 'dice_roll', particleOptions: { count: 5 } };
         break;
+      case 'slow':
+        config = { text: '遅', color: '#9ba7c7', particle: 'dice_roll', particleOptions: { count: 4 } };
+        break;
       case 'steady_floor':
         config = { text: '底' + value, color: '#dfe6ff', particle: 'dice_roll', particleOptions: { count: 5 } };
         break;
@@ -1398,6 +1431,9 @@ Game.Battle = (function() {
         break;
       case 'ailment_guard':
         config = { text: '護', color: '#f5efe2', particle: 'heal', particleOptions: { count: 4 } };
+        break;
+      case 'heal_seal':
+        config = { text: '封', color: '#cf8de1', particle: 'onsen_steam', particleOptions: { count: 4 } };
         break;
       case 'low_roll_bias':
         config = { text: '低', color: '#9baec4', particle: 'dice_roll', particleOptions: { count: 4 } };
@@ -1495,11 +1531,75 @@ Game.Battle = (function() {
     for (var i = 0; i < enemyParty.length; i++) {
       var foe = enemyParty[i];
       if (!foe || foe.hp <= 0) continue;
+      var before = foe.hp;
       foe.hp = Math.min(foe.maxHp || foe.hp, foe.hp + amount);
-      healed++;
+      if (foe.hp > before) healed++;
     }
     syncCurrentEnemy();
     return healed;
+  }
+
+  function applyEnemyAttackAftermath(preview) {
+    var activeFoes = preview && preview.activeFoes ? preview.activeFoes : [];
+    var notes = [];
+    var triggered = {};
+    var changed = false;
+    for (var i = 0; i < activeFoes.length; i++) {
+      var foe = activeFoes[i];
+      if (!foe || foe.hp <= 0) continue;
+      switch (foe._enemyId) {
+        case 'shimonita_reject':
+          addEffect(foe._effects, 'defense_up', 2, 3);
+          changed = true;
+          if (!triggered.shimonita_reject) {
+            notes.push('弾かれ蒟蒻は身を弾ませ、守りを固めた。');
+            showEffectFeedback('enemy', 'defense_up', 3, { offsetY: 12 });
+            triggered.shimonita_reject = true;
+          }
+          break;
+        case 'kusatsu_bucket':
+          if (healLivingEnemies(5) > 0 && !triggered.kusatsu_bucket) {
+            notes.push('忘れ湯の桶の湯気が、敵の傷をぬるく塞いだ。');
+            showEffectFeedback('enemy', 'heal', 5, { offsetY: 12 });
+            triggered.kusatsu_bucket = true;
+          }
+          break;
+        case 'tomioka_moth':
+          if (addEffect(playerEffects, 'slow', 1, 0) && !triggered.tomioka_moth) {
+            notes.push('白蛾の鱗粉で、手元の景色が少し鈍る。');
+            showEffectFeedback('player', 'slow', 0, { offsetY: 24 });
+            triggered.tomioka_moth = true;
+          }
+          break;
+        case 'tsumagoi_cabbage':
+          addEffect(foe._effects, 'defense_up', 2, 4);
+          changed = true;
+          if (!triggered.tsumagoi_cabbage) {
+            notes.push('雪待ちの甘葉は葉を閉じ、冷えた守りを厚くした。');
+            showEffectFeedback('enemy', 'defense_up', 4, { offsetY: 12 });
+            triggered.tsumagoi_cabbage = true;
+          }
+          break;
+        case 'shibukawa_kokeshi':
+          if (addEffect(playerEffects, 'slow', 1, 0) && !triggered.shibukawa_kokeshi) {
+            notes.push('のっぺら木地の無表情に、拍が少しだけ狂う。');
+            showEffectFeedback('player', 'slow', 0, { offsetY: 36 });
+            triggered.shibukawa_kokeshi = true;
+          }
+          break;
+        case 'yokokawa_lantern':
+          if (addEffect(playerEffects, 'heal_seal', 1, 0) && !triggered.yokokawa_lantern) {
+            notes.push('錆びた灯りが、回復の呼吸を曇らせた。');
+            showEffectFeedback('player', 'heal_seal', 0, { offsetY: 24 });
+            triggered.yokokawa_lantern = true;
+          }
+          break;
+        default:
+          break;
+      }
+    }
+    if (changed) syncCurrentEnemy();
+    return notes;
   }
 
   function removeEffectsByType(list, types) {
@@ -2000,6 +2100,7 @@ Game.Battle = (function() {
     }
     var defBonus = getEffectBonus(playerEffects, 'defense_up');
     var activeAttackers = [];
+    var activeFoes = [];
     var stunnedNames = [];
     var slowedNames = [];
     var totalDamage = 0;
@@ -2013,7 +2114,8 @@ Game.Battle = (function() {
         continue;
       }
       var attackDown = getEffectBonus(foeEffects, 'attack_down');
-      var damage = Math.max(1, foe.attack - attackDown - (Game.Player.getDefense() + defBonus) + Math.floor(Math.random() * 5));
+      var attackUp = getEffectBonus(foeEffects, 'attack_up');
+      var damage = Math.max(1, foe.attack + attackUp - attackDown - (Game.Player.getDefense() + defBonus) + Math.floor(Math.random() * 5));
       var slowRoll = hasEffect(foeEffects, 'enemy_roll_slow');
       if (slowRoll) {
         damage = Math.max(0, damage - (slowRoll.value || 4));
@@ -2021,10 +2123,12 @@ Game.Battle = (function() {
       }
       totalDamage += damage;
       activeAttackers.push(foe.name);
+      activeFoes.push(foe);
     }
 
     return {
       activeAttackers: activeAttackers,
+      activeFoes: activeFoes,
       stunnedNames: stunnedNames,
       slowedNames: slowedNames,
       totalDamage: totalDamage
@@ -2162,6 +2266,7 @@ Game.Battle = (function() {
     var stunnedNames = preview.stunnedNames;
     var slowedNames = preview.slowedNames || [];
     var totalDamage = preview.totalDamage;
+    var aftermathNotes = applyEnemyAttackAftermath(preview);
     var wardBonus = getEffectBonus(playerEffects, 'ward');
     var mirrorGuard = hasEffect(playerEffects, 'mirror_guard');
 
@@ -2187,6 +2292,9 @@ Game.Battle = (function() {
       if (slowedNames.length) {
         message += ' ' + slowedNames.join(' / ') + 'の賽は重く鈍っている。';
       }
+      if (aftermathNotes.length) {
+        message += ' ' + aftermathNotes.join(' ');
+      }
       messageTimer = 54;
       Game.Audio.playSfx('confirm');
       showEffectFeedback('player', 'mirror_guard', 0, { text: '鏡' });
@@ -2201,6 +2309,9 @@ Game.Battle = (function() {
       if (stunnedNames.length) {
         message += ' ' + stunnedNames.join(' / ') + 'は動けない。';
       }
+      if (aftermathNotes.length) {
+        message += ' ' + aftermathNotes.join(' ');
+      }
       messageTimer = 54;
       Game.Audio.playSfx('enemy_strike');
       return false;
@@ -2213,6 +2324,9 @@ Game.Battle = (function() {
     }
     if (stunnedNames.length) {
       message += ' ' + stunnedNames.join(' / ') + 'は動けない。';
+    }
+    if (aftermathNotes.length) {
+      message += ' ' + aftermathNotes.join(' ');
     }
     messageTimer = 54;
     Game.Audio.playSfx(activeAttackers.length >= 2 || totalDamage >= 20 ? 'enemy_strike_heavy' : 'enemy_strike');
@@ -3090,6 +3204,29 @@ Game.Battle = (function() {
 
         var ritualState = ritualRuntime.ritualState || {};
         var totalFrames = ritualRuntime.ritualParams ? (ritualRuntime.ritualParams.silentFrames || 84) : 84;
+        if (ritualState.genericSilence) {
+          if (ritualState.lightReleaseFrames > 0) {
+            ritualState.lightReleaseFrames--;
+          }
+          totalFrames = ritualState.silenceTotalFrames || totalFrames;
+          var genericAfterglowThreshold = Math.max(10, Math.floor(totalFrames * 0.24));
+          if (!ritualState.afterglowCuePlayed &&
+              ritualState.lightReleaseFrames > 0 &&
+              ritualState.lightReleaseFrames <= genericAfterglowThreshold) {
+            ritualState.afterglowCuePlayed = true;
+            Game.Audio.playSfx('ritual_afterglow');
+          }
+          if (ritualState.lightReleaseFrames <= 0) {
+            ritualRuntime.uiFlags.silentMoment = false;
+            ritualState.genericSilence = false;
+            var pendingVictoryText = ritualState.pendingVictoryText || (enemy ? enemy.name + 'を鎮めた。' : '静けさが戻った。');
+            ritualState.pendingVictoryText = '';
+            enterVictoryPhase(pendingVictoryText);
+            if (Game.Particles) Game.Particles.emit('ritual_glow', 240, 96, { count: 18 });
+            return 'victory';
+          }
+          return;
+        }
         var afterglowThreshold = Math.max(14, Math.floor(totalFrames * 0.22));
         if (!ritualState.afterglowCuePlayed &&
             ritualState.lightReleaseFrames > 0 &&
@@ -4123,6 +4260,81 @@ Game.Battle = (function() {
     }
   }
 
+  function getEnemyVisualProfile(foe, partyIndex) {
+    var profile = {
+      offsetX: 0,
+      offsetY: 0,
+      alpha: 1,
+      shadowAlpha: 0.12,
+      haloColor: ''
+    };
+    if (!foe) return profile;
+    var tick = turnCount + (partyIndex || 0) * 11;
+    var role = foe._formationRole || '';
+
+    if (/掠め|散らし|揺らし|忍び|先風|返し風/.test(role)) {
+      profile.offsetX += Math.round(Math.sin(tick / 7) * 2);
+    }
+    if (/受け|抱え|押し返し|ぬくもり|守り|縫い手/.test(role)) {
+      profile.offsetY += Math.round(Math.sin(tick / 18));
+      profile.shadowAlpha = 0.18;
+    }
+    if (/灯|見張り/.test(role)) {
+      profile.alpha = 0.82 + (tick % 18 < 8 ? 0.18 : 0.05);
+      profile.haloColor = 'rgba(242, 166, 65, 0.14)';
+    }
+
+    switch (foe._enemyId) {
+      case 'shimonita_reject':
+        profile.offsetY -= Math.round(Math.abs(Math.sin(tick / 6)) * 2);
+        break;
+      case 'kusatsu_bucket':
+        profile.haloColor = 'rgba(214, 235, 245, 0.12)';
+        break;
+      case 'tomioka_moth':
+        profile.offsetX += Math.round(Math.sin(tick / 9) * 2);
+        profile.offsetY -= Math.round(Math.cos(tick / 13));
+        profile.alpha *= 0.96;
+        break;
+      case 'tsumagoi_cabbage':
+        profile.offsetX += Math.round(Math.sin(tick / 15));
+        profile.offsetY += Math.round(Math.sin(tick / 5) * 0.8);
+        break;
+      case 'shibukawa_kokeshi':
+        profile.offsetY += tick % 32 < 3 ? 1 : 0;
+        profile.haloColor = 'rgba(230, 117, 117, 0.10)';
+        break;
+      case 'yokokawa_lantern':
+        profile.alpha = 0.78 + (tick % 16 < 6 ? 0.24 : 0.08);
+        profile.haloColor = 'rgba(242, 166, 65, 0.18)';
+        break;
+    }
+
+    return profile;
+  }
+
+  function drawGenericRitualSilenceOverlay(R, ctx, C, runtime) {
+    if (!runtime || runtime.ritualMode === 'offering' || !runtime.uiFlags || !runtime.uiFlags.silentMoment) return;
+    var state = runtime.ritualState || {};
+    var totalFrames = state.silenceTotalFrames || (runtime.ritualParams ? (runtime.ritualParams.silentFrames || 42) : 42);
+    var remainingFrames = Math.max(0, state.lightReleaseFrames || 0);
+    var progress = 1 - (remainingFrames / Math.max(1, totalFrames));
+    var dots = '';
+    var dotCount = 3 + Math.min(4, Math.floor(progress * 5));
+    var guideText = progress < 0.28
+      ? '音が、ひとつずつ遠ざかる。'
+      : (progress < 0.76 ? '何も足さない。風だけを通す。' : '返り音だけが、遠くで小さく残る。');
+    var panelAlpha = 0.14 + progress * 0.14;
+    var panelY = 26;
+
+    for (var i = 0; i < dotCount; i++) dots += '・';
+    ctx.fillStyle = 'rgba(5, 8, 16, ' + panelAlpha.toFixed(3) + ')';
+    ctx.fillRect(146, panelY, 188, 38);
+    R.drawRectAbsolute(146, panelY, 188, 1, 'rgba(244, 238, 215, 0.26)');
+    R.drawTextJP(dots, 224, panelY + 7, '#c7cfdf', 11);
+    R.drawTextJP(clampBattleText(guideText, 18), 156, panelY + 21, '#f4eed7', 8);
+  }
+
   function isBattleMessageVisible() {
     return !!(message && phase !== 'reward' && !isBossActionOverlayVisible());
   }
@@ -4278,12 +4490,20 @@ Game.Battle = (function() {
     for (var i = 0; i < drawEntries.length; i++) {
       var entry = drawEntries[i];
       var foe = entry.foe;
-      var ex = entry.x;
-      var ey = entry.y;
+      var visual = getEnemyVisualProfile(foe, entry.partyIndex);
+      var ex = entry.x + visual.offsetX;
+      var ey = entry.y + visual.offsetY;
       var foeStyle = getEnemyReadStyle(foe);
-      ctx.fillStyle = hexToRgba(foeStyle.color, entry.partyIndex === currentTargetIndex ? 0.22 : 0.12);
+      ctx.fillStyle = hexToRgba(foeStyle.color, entry.partyIndex === currentTargetIndex ? Math.max(0.22, visual.shadowAlpha + 0.08) : visual.shadowAlpha);
       ctx.fillRect(ex + 8, ey + spriteH - 6, spriteW - 16, 8);
+      if (visual.haloColor) {
+        ctx.fillStyle = visual.haloColor;
+        ctx.fillRect(ex - 3, ey - 3, spriteW + 6, spriteH + 6);
+      }
+      ctx.save();
+      ctx.globalAlpha = visual.alpha;
       R.drawSpriteAbsolute(foe.sprite, ex, ey, foe.palette, scale);
+      ctx.restore();
       if (!minimalIntro && entry.partyIndex === currentTargetIndex) {
         R.drawTextJP('▼', ex + Math.floor(spriteW / 2) - 4, ey - 12, '#ffd66b', 10);
       }
@@ -5304,6 +5524,7 @@ Game.Battle = (function() {
       if (ritualRuntime && ritualRuntime.ritualMode === 'repair_eye') {
         drawRitualEyeSlot(R, ritualRuntime, ex);
       }
+      drawGenericRitualSilenceOverlay(R, ctx, C, ritualRuntime);
 
       // Enemy status effect icons
       var esx = 160;
@@ -5315,6 +5536,7 @@ Game.Battle = (function() {
           case 'stun': eLabel = '痺'; eCol = '#ffdd22'; break;
           case 'enemy_roll_slow': eLabel = '鈍'; eCol = '#a6e7ff'; break;
           case 'attack_down': eLabel = '攻↓'; eCol = '#d2c2ff'; break;
+          case 'defense_up': eLabel = '防↑'; eCol = '#7bb8ff'; break;
         }
         if (eLabel) {
           R.drawRectAbsolute(esx, 164, 16, 14, 'rgba(0,0,0,0.6)');
@@ -5749,13 +5971,15 @@ Game.Battle = (function() {
             // Apply status effect bonuses
             var atkBonus = getEffectBonus(playerEffects, 'attack_up');
             var diceBonus = getEffectBonus(playerEffects, 'dice_bonus');
-            var enemyDefReduction = hasEffect(enemyEffects, 'stun') ? Math.floor(enemy.defense / 2) : 0;
+            var enemyDefBonus = getEffectBonus(enemyEffects, 'defense_up');
+            var enemyDefenseTotal = enemy.defense + enemyDefBonus;
+            var enemyDefReduction = hasEffect(enemyEffects, 'stun') ? Math.floor(enemyDefenseTotal / 2) : 0;
 
             phase = 'diceResult';
             animTimer = PLAYER_DICE_RESULT_FRAMES;
 
             // Apply damage with combo multiplier
-            var baseDmg = damageTotal + diceBonus + Game.Player.getAttack() + atkBonus - (enemy.defense - enemyDefReduction);
+            var baseDmg = damageTotal + diceBonus + Game.Player.getAttack() + atkBonus - (enemyDefenseTotal - enemyDefReduction);
             var dmg = Math.max(0, Math.floor(baseDmg * comboMultiplier));
             if (damageTotal > 0 && dmg < 1) dmg = 1;
             var actionResult = {

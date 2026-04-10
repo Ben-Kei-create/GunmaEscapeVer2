@@ -176,6 +176,18 @@ Game.Chapters = (function() {
         lines: [
           '乾いた白線だけが、',
           'まだ県境の冷たさを靴裏へ残している。'
+        ],
+        variants: [
+          {
+            id: 'after',
+            whenFlag: 'checkpoint_cleared',
+            title: 'ほどけた白線',
+            lines: [
+              '止まれと書かれていた白線が、',
+              '今は東へ進めと薄く背中を押してくる。'
+            ],
+            accent: '#ffd27a'
+          }
         ]
       }
     ],
@@ -189,6 +201,18 @@ Game.Chapters = (function() {
         lines: [
           '赤い殻が並ぶほど、',
           '言えなかった願いの数まで町が重くなる。'
+        ],
+        variants: [
+          {
+            id: 'after',
+            whenFlag: 'daruma_master_cleared_slice',
+            title: '空きの増えた棚',
+            lines: [
+              '抜けた赤殻のぶんだけ、',
+              '町がようやく息を継ぎ直した気がした。'
+            ],
+            accent: '#ffc98c'
+          }
         ]
       }
     ],
@@ -241,6 +265,18 @@ Game.Chapters = (function() {
         lines: [
           '回らないはずの輪が、',
           '風のたびにほどけ損ねた名前を返してくる。'
+        ],
+        variants: [
+          {
+            id: 'after',
+            whenFlag: 'thread_maiden_cleared_slice',
+            title: '止まった機械音',
+            lines: [
+              'もう軋みは返ってこない。',
+              '静けさのほうが、ここではようやく正常だった。'
+            ],
+            accent: '#c7d9ff'
+          }
         ]
       }
     ],

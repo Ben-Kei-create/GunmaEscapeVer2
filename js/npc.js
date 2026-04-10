@@ -933,6 +933,7 @@ Game.NPC = (function() {
 
   function shouldHideNpc(npc) {
     if (!npc) return false;
+    if (npc.showWhenFlag && (!Game.Story || !Game.Story.hasFlag || !Game.Story.hasFlag(npc.showWhenFlag))) return true;
     if (npc.hideWhenDefeated && npc.defeated) return true;
     if (npc.hideWhenFlag && Game.Story && Game.Story.hasFlag && Game.Story.hasFlag(npc.hideWhenFlag)) return true;
     if (npc.hideWhenPartyMember && Game.Player && Game.Player.hasPartyMember && Game.Player.hasPartyMember(npc.hideWhenPartyMember)) {

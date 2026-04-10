@@ -10,7 +10,17 @@ Game.Skills = (function() {
     'tsumugibreathe',
     'kaminariyobi',
     'kaeriashi',
-    'yukuguri'
+    'yukuguri',
+    'tomuraiuta',
+    'mayugomori',
+    'nurebane',
+    'mizukagami',
+    'sasagebi',
+    'hozureyubi',
+    'tsuchinone',
+    'namidagasa',
+    'kazeokuri',
+    'yomichigaeshi'
   ];
 
   var victoryOffers = {
@@ -37,6 +47,30 @@ Game.Skills = (function() {
     threadMaiden: {
       skillId: 'itoyurai',
       sourceText: '絡んだ白糸の震えを追ううち、相手の賽を鈍らせる揺らぎを掴んだ。'
+    },
+    shimonita_packer: {
+      skillId: 'hozureyubi',
+      sourceText: '空っぽの荷箱を撫でるうち、絡まった無念をそっと解く指の動きを覚えた。'
+    },
+    tomioka_weaver: {
+      skillId: 'mayugomori',
+      sourceText: '止まらぬ機械の哀鳴を聞き、自らを白い糸で包み込んで外界から守る術を知った。'
+    },
+    yubatake_guardian: {
+      skillId: 'namidagasa',
+      sourceText: '沸き立つ孤独な湯に触れ、相手の熱をやわらげる「慈悲の傘」の差し方を学んだ。'
+    },
+    haruna_lake_beast: {
+      skillId: 'mizukagami',
+      sourceText: '霧深き湖畔の獣を鎮め、相手の悲哀を水面に映して静かに逸らす型を得た。'
+    },
+    oze_mud_wraith: {
+      skillId: 'tsuchinone',
+      sourceText: '泥に沈んだ記憶の重みを知り、大地の鼓動を次の一投へ添える祈りを身につけた。'
+    },
+    echo_guardian: {
+      skillId: 'tomuraiuta',
+      sourceText: '終わらない残響に耳を澄ませ、迷える影を慰める古い弔い唄を口ずさめるようになった。'
     }
   };
 
@@ -175,6 +209,96 @@ Game.Skills = (function() {
       stockGain: 2,
       stockCap: 5,
       color: '#f0f2ff'
+    },
+    tomuraiuta: {
+      id: 'tomuraiuta',
+      name: '弔い唄',
+      desc: '寂しい土着の唄を口ずさみ、場を覆う敵意を静める。相手の攻めを削ぎ、自らの守りも整える。',
+      shortDesc: '敵の攻撃低下、自身の防御上昇',
+      stockGain: 1,
+      stockCap: 4,
+      color: '#b6a1b8'
+    },
+    mayugomori: {
+      id: 'mayugomori',
+      name: '繭ごもり',
+      desc: '見えない糸で己を包み込み、悪い熱や封じをはじく。少しだけHPも立て直す。',
+      shortDesc: '状態異常防御、HP8回復',
+      stockGain: 1,
+      stockCap: 3,
+      color: '#faf6eb'
+    },
+    nurebane: {
+      id: 'nurebane',
+      name: '濡れ羽',
+      desc: '涙で濡れた羽みたいに、次の高い目をしずかに寝かせる。手加減が要る儀式でも使いやすい。',
+      shortDesc: '次の高いダメージ目を低く抑える',
+      stockGain: 2,
+      stockCap: 5,
+      color: '#8193a8'
+    },
+    mizukagami: {
+      id: 'mizukagami',
+      name: '水鏡',
+      desc: '水面の揺らぎに相手の悲哀を映し出し、次に来る痛みをそのまま受けずに逸らす。',
+      shortDesc: '次の一撃を無効化',
+      stockGain: 1,
+      stockCap: 2,
+      color: '#9baec4'
+    },
+    sasagebi: {
+      id: 'sasagebi',
+      name: '捧げ火',
+      desc: '己の生命を少し灯りへ差し出し、次の一投を引き寄せ直す。HPを削る代わりに賽筋を大きく整える。',
+      shortDesc: 'HP消費、次の一投を大きく強化',
+      stockGain: 1,
+      stockCap: 3,
+      color: '#d96c4a'
+    },
+    hozureyubi: {
+      id: 'hozureyubi',
+      name: 'ほつれ指',
+      desc: '絡まった無念を指先で優しくなぞる。儀式の張りつめたゲージをほどき、通常戦では敵の拍も鈍らせる。',
+      shortDesc: '儀式ゲージ低下、通常戦では敵鈍化',
+      stockGain: 1,
+      stockCap: 4,
+      color: '#e0ccba'
+    },
+    tsuchinone: {
+      id: 'tsuchinone',
+      name: '土の音',
+      desc: '大地に耳を澄まし、土地の記憶を拾い上げる。次の一投に小さな回復と返しの余白を添える。',
+      shortDesc: '次の一投に回復と返しを付与',
+      stockGain: 2,
+      stockCap: 4,
+      color: '#73614e'
+    },
+    namidagasa: {
+      id: 'namidagasa',
+      name: '涙傘',
+      desc: '悲しみの雨を凌ぐため、そっと傘を差し出す。ダメージを与えず、敵味方の痛みを少しだけやわらげる。',
+      shortDesc: '敵味方のHPを少し回復',
+      stockGain: 1,
+      stockCap: 3,
+      color: '#a4b1d6'
+    },
+    kazeokuri: {
+      id: 'kazeokuri',
+      name: '風送り',
+      desc: '乾いた空っ風に乗せて、相手の勢いを空へ還す。敵の強まりを払い、その攻め手も鈍らせる。',
+      shortDesc: '敵強化を解除し、攻撃低下',
+      stockGain: 2,
+      stockCap: 4,
+      color: '#bccabf'
+    },
+    yomichigaeshi: {
+      id: 'yomichigaeshi',
+      name: '黄泉返し',
+      desc: '境界の理を逆手に取り、倒れゆく体を一度だけ引き戻す。次に致命打を受けてもHP1で踏みとどまる。',
+      shortDesc: '一度だけ致死ダメージをHP1で耐える',
+      stockGain: 1,
+      stockCap: 1,
+      color: '#554261'
     }
   };
 

@@ -1310,6 +1310,11 @@ Game.Battle = (function() {
 
   // Status effect helpers
   function addEffect(list, type, turnsLeft, value, options) {
+    if (list === playerEffects && hasEffect(playerEffects, 'ailment_guard') &&
+        (type === 'slow' || type === 'heal_seal' || type === 'stun' || type === 'burn')) {
+      showEffectFeedback('player', 'ailment_guard', 0, { text: '護' });
+      return false;
+    }
     var delayTick = options && options.delayTick ? Math.max(0, options.delayTick | 0) : 0;
     // Don't stack same type, refresh instead
     for (var i = 0; i < list.length; i++) {
@@ -1317,10 +1322,11 @@ Game.Battle = (function() {
         list[i].turnsLeft = turnsLeft;
         list[i].value = value;
         list[i].delayTick = delayTick;
-        return;
+        return true;
       }
     }
     list.push({ type: type, turnsLeft: turnsLeft, value: value, delayTick: delayTick });
+    return true;
   }
 
   function addCarryPlayerEffect(type, turnsLeft, value) {
@@ -1369,6 +1375,9 @@ Game.Battle = (function() {
       case 'attack_up':
         config = { text: '攻+' + value, color: '#ff8c66', particle: 'thunder', particleOptions: { count: 6 } };
         break;
+      case 'attack_down':
+        config = { text: '攻-' + value, color: '#c8b8ff', particle: 'dice_roll', particleOptions: { count: 5 } };
+        break;
       case 'defense_up':
         config = { text: '防+' + value, color: '#66aaff', particle: 'heal', particleOptions: { count: 4 } };
         break;
@@ -1384,8 +1393,23 @@ Game.Battle = (function() {
       case 'ward':
         config = { text: '返+' + value, color: '#d9b7ff', particle: 'heal', particleOptions: { count: 4 } };
         break;
+      case 'ailment_guard':
+        config = { text: '護', color: '#f5efe2', particle: 'heal', particleOptions: { count: 4 } };
+        break;
+      case 'low_roll_bias':
+        config = { text: '低', color: '#9baec4', particle: 'dice_roll', particleOptions: { count: 4 } };
+        break;
+      case 'mirror_guard':
+        config = { text: '鏡', color: '#b9dfff', particle: 'heal', particleOptions: { count: 5 } };
+        break;
       case 'ignite_next':
         config = { text: '火付', color: '#ff915c', particle: 'fire', particleOptions: { count: 7 } };
+        break;
+      case 'earth_echo':
+        config = { text: '土', color: '#b89a72', particle: 'heal', particleOptions: { count: 4 } };
+        break;
+      case 'last_stand':
+        config = { text: '境', color: '#9d87bf', particle: 'thunder', particleOptions: { count: 4 } };
         break;
       case 'enemy_roll_slow':
         config = { text: '敵鈍', color: '#b8edff', particle: 'dice_roll', particleOptions: { count: 5 } };
@@ -1456,6 +1480,71 @@ Game.Battle = (function() {
   function getEffectBonus(list, type) {
     var e = hasEffect(list, type);
     return e ? e.value : 0;
+  }
+
+  function appendBattleMessage(text) {
+    if (!text) return;
+    message = message ? (message + ' ' + text) : text;
+  }
+
+  function healLivingEnemies(amount) {
+    var healed = 0;
+    for (var i = 0; i < enemyParty.length; i++) {
+      var foe = enemyParty[i];
+      if (!foe || foe.hp <= 0) continue;
+      foe.hp = Math.min(foe.maxHp || foe.hp, foe.hp + amount);
+      healed++;
+    }
+    syncCurrentEnemy();
+    return healed;
+  }
+
+  function removeEffectsByType(list, types) {
+    var removed = 0;
+    if (!list || !types || !types.length) return removed;
+    for (var i = list.length - 1; i >= 0; i--) {
+      if (types.indexOf(list[i].type) >= 0) {
+        list.splice(i, 1);
+        removed++;
+      }
+    }
+    return removed;
+  }
+
+  function clearLivingEnemyEnhancements() {
+    var removed = 0;
+    var purgeTargets = ['attack_up', 'defense_up', 'ward', 'mirror_guard'];
+    for (var i = 0; i < enemyParty.length; i++) {
+      var foe = enemyParty[i];
+      if (!foe || foe.hp <= 0 || !foe._effects) continue;
+      removed += removeEffectsByType(foe._effects, purgeTargets);
+    }
+    syncCurrentEnemy();
+    return removed;
+  }
+
+  function adjustRitualGaugeFromSkill(delta) {
+    if (!ritualRuntime || typeof ritualRuntime.ritualGauge !== 'number' || !delta) return 0;
+    var before = ritualRuntime.ritualGauge;
+    if (ritualRuntime.ritualMode === 'untangle') {
+      var untangleMax = enemy && enemy.ritualParams ? (enemy.ritualParams.maxTangle || 12) : 12;
+      ritualRuntime.ritualGauge = Math.max(0, Math.min(untangleMax + 4, ritualRuntime.ritualGauge + delta));
+    } else if (ritualRuntime.ritualMode === 'temperature') {
+      ritualRuntime.ritualGauge = Math.max(0, ritualRuntime.ritualGauge + delta);
+    } else {
+      return 0;
+    }
+    return ritualRuntime.ritualGauge - before;
+  }
+
+  function consumeLastStand(triggerText) {
+    var playerData = Game.Player.getData();
+    if (!playerData || playerData.hp > 0 || !hasEffect(playerEffects, 'last_stand')) return false;
+    playerData.hp = 1;
+    removeEffect(playerEffects, 'last_stand');
+    appendBattleMessage(triggerText || '黄泉返しが働き、HP1で踏みとどまった！');
+    showEffectFeedback('player', 'last_stand', 1, { text: '耐' });
+    return true;
   }
 
   // Combo detection: count matching dice values
@@ -1920,7 +2009,8 @@ Game.Battle = (function() {
         stunnedNames.push(foe.name);
         continue;
       }
-      var damage = Math.max(1, foe.attack - (Game.Player.getDefense() + defBonus) + Math.floor(Math.random() * 5));
+      var attackDown = getEffectBonus(foeEffects, 'attack_down');
+      var damage = Math.max(1, foe.attack - attackDown - (Game.Player.getDefense() + defBonus) + Math.floor(Math.random() * 5));
       var slowRoll = hasEffect(foeEffects, 'enemy_roll_slow');
       if (slowRoll) {
         damage = Math.max(0, damage - (slowRoll.value || 4));
@@ -2070,6 +2160,7 @@ Game.Battle = (function() {
     var slowedNames = preview.slowedNames || [];
     var totalDamage = preview.totalDamage;
     var wardBonus = getEffectBonus(playerEffects, 'ward');
+    var mirrorGuard = hasEffect(playerEffects, 'mirror_guard');
 
     if (!activeAttackers.length) {
       if (ritualRuntime && ritualRuntime.ritualMode === 'offering') {
@@ -2085,6 +2176,18 @@ Game.Battle = (function() {
     if (wardBonus > 0) {
       totalDamage = Math.max(0, totalDamage - wardBonus);
       removeEffect(playerEffects, 'ward');
+    }
+
+    if (mirrorGuard && totalDamage > 0) {
+      removeEffect(playerEffects, 'mirror_guard');
+      message = activeAttackers.join(' / ') + 'の攻撃！ だが水鏡が痛みをそらした。';
+      if (slowedNames.length) {
+        message += ' ' + slowedNames.join(' / ') + 'の賽は重く鈍っている。';
+      }
+      messageTimer = 54;
+      Game.Audio.playSfx('confirm');
+      showEffectFeedback('player', 'mirror_guard', 0, { text: '鏡' });
+      return false;
     }
 
     if (totalDamage <= 0) {
@@ -2114,6 +2217,11 @@ Game.Battle = (function() {
     if (Game.Particles) Game.Particles.emit('damage', 100, 220, { count: 6 + activeAttackers.length });
 
     if (playerData.hp <= 0) {
+      if (consumeLastStand('黄泉返しが働き、HP1で踏みとどまった！')) {
+        messageTimer = 64;
+        Game.Audio.playSfx('confirm');
+        return false;
+      }
       playerData.hp = 0;
       phase = 'defeat';
       message = '力尽きた...';
@@ -2896,10 +3004,14 @@ Game.Battle = (function() {
               if (Game.Particles) Game.Particles.emit('damage', 100, 220, { count: 10 });
               specialParts.push(finalSpDmg + 'ダメージ');
               if (playerData3.hp <= 0) {
-                playerData3.hp = 0;
-                phase = 'defeat';
-                message = '力尽きた...';
-                messageTimer = 90;
+                if (consumeLastStand('黄泉返しが働き、HP1で踏みとどまった！')) {
+                  specialParts.push('HP1で踏みとどまる');
+                } else {
+                  playerData3.hp = 0;
+                  phase = 'defeat';
+                  message = '力尽きた...';
+                  messageTimer = 90;
+                }
               }
             }
             if (sm.effect) {
@@ -3327,6 +3439,7 @@ Game.Battle = (function() {
 
     var skill = selected.skill;
     var skillSfx = 'confirm';
+    var immediateOutcome = null;
     if (!Game.Player || !Game.Player.consumeSkillCharge || !Game.Player.consumeSkillCharge(skill.id, 1)) {
       message = skill.name + 'はもう使い切った。';
       messageTimer = 40;
@@ -3424,13 +3537,111 @@ Game.Battle = (function() {
       message = '糸ゆらい。敵の白い賽が細く揺れて鈍る。';
       showEffectFeedback('enemy', 'enemy_roll_slow', 6, { offsetY: 12 });
       showEffectFeedback('player', 'dice_bonus', 1);
+    } else if (skill.id === 'tomuraiuta') {
+      addEffectToLivingEnemies('attack_down', 2, 5);
+      addEffect(playerEffects, 'defense_up', 2, 3);
+      message = '弔い唄。敵意がしずみ、自分の守りも静かに固まる。';
+      showEffectFeedback('enemy', 'attack_down', 5, { offsetY: 12 });
+      showEffectFeedback('player', 'defense_up', 3);
+    } else if (skill.id === 'mayugomori') {
+      var soothedByCocoon = removeEffect(playerEffects, 'slow');
+      soothedByCocoon = removeEffect(playerEffects, 'heal_seal') || soothedByCocoon;
+      Game.Player.heal(8);
+      addEffect(playerEffects, 'ailment_guard', 2, 0);
+      message = soothedByCocoon ? '繭ごもり。悪い熱をはじき、呼吸を立て直した。' : '繭ごもり。白い殻がまとわり、しばらく災いを通さない。';
+      if (soothedByCocoon) {
+        showEffectFeedback('player', 'cleanse', 0, { offsetY: 24 });
+      }
+      showEffectFeedback('player', 'heal', 8, { offsetY: 12 });
+      showEffectFeedback('player', 'ailment_guard', 0);
+      skillSfx = 'item';
+    } else if (skill.id === 'nurebane') {
+      addCarryPlayerEffect('low_roll_bias', 1, 2);
+      message = '濡れ羽。次の高い目は、重たく低い側へ寝かされる。';
+      showEffectFeedback('player', 'low_roll_bias', 2);
+    } else if (skill.id === 'mizukagami') {
+      addEffect(playerEffects, 'mirror_guard', 1, 0);
+      message = '水鏡。次に来る痛みを、水面へそらす。';
+      showEffectFeedback('player', 'mirror_guard', 0);
+    } else if (skill.id === 'sasagebi') {
+      var playerDataFire = Game.Player.getData();
+      var lifeCost = Math.max(0, Math.min(8, playerDataFire.hp - 1));
+      if (lifeCost > 0) {
+        playerDataFire.hp -= lifeCost;
+        showEffectFeedback('player', 'recoil', lifeCost, { offsetY: 12 });
+      }
+      addCarryPlayerEffect('slow_roll', 1, 1);
+      addCarryPlayerEffect('dice_bonus', 1, 4);
+      addCarryPlayerEffect('steady_floor', 1, 3);
+      message = lifeCost > 0
+        ? '捧げ火。HPを' + lifeCost + '削り、次の一投へ火を寄せた。'
+        : '捧げ火。残る灯で、次の一投へ火を寄せた。';
+      showEffectFeedback('player', 'dice_bonus', 4);
+      showEffectFeedback('player', 'slow_roll', 1, { offsetY: 24 });
+      skillSfx = 'ritual_chime';
+    } else if (skill.id === 'hozureyubi') {
+      var gaugeShift = 0;
+      if (ritualRuntime && ritualRuntime.ritualMode === 'untangle') {
+        gaugeShift = adjustRitualGaugeFromSkill(-3);
+      } else if (ritualRuntime && ritualRuntime.ritualMode === 'temperature') {
+        gaugeShift = adjustRitualGaugeFromSkill(-10);
+      }
+      if (gaugeShift !== 0) {
+        message = ritualRuntime.ritualMode === 'untangle'
+          ? 'ほつれ指。絡まりが少しだけほどけた。'
+          : 'ほつれ指。張りつめた熱が少しだけ下がった。';
+        showEffectFeedback('enemy', 'cleanse', Math.abs(gaugeShift), {
+          text: ritualRuntime.ritualMode === 'untangle' ? '絡-' + Math.abs(gaugeShift) : '温-' + Math.abs(gaugeShift),
+          color: ritualRuntime.ritualMode === 'untangle' ? '#e6d7c6' : '#9be4ff',
+          offsetY: 12
+        });
+        immediateOutcome = evaluateRitualOutcome();
+        skillSfx = 'ritual_chime';
+      } else {
+        addEffectToLivingEnemies('enemy_roll_slow', 1, 4);
+        addEffectToLivingEnemies('attack_down', 1, 4);
+        message = 'ほつれ指。敵の拍が少しだけほどけた。';
+        showEffectFeedback('enemy', 'enemy_roll_slow', 4, { offsetY: 12 });
+        showEffectFeedback('enemy', 'attack_down', 4);
+      }
+    } else if (skill.id === 'tsuchinone') {
+      addCarryPlayerEffect('earth_echo', 1, 4);
+      message = '土の音。次の一投へ、土地の返しが宿る。';
+      showEffectFeedback('player', 'earth_echo', 4);
+    } else if (skill.id === 'namidagasa') {
+      Game.Player.heal(10);
+      var healedEnemies = healLivingEnemies(8);
+      message = healedEnemies > 0
+        ? '涙傘。争いを止め、互いの痛みを少しだけやわらげた。'
+        : '涙傘。自分の痛みを静かにやわらげた。';
+      showEffectFeedback('player', 'heal', 10, { offsetY: 12 });
+      if (healedEnemies > 0) {
+        showEffectFeedback('enemy', 'heal', 8);
+      }
+      skillSfx = 'item';
+    } else if (skill.id === 'kazeokuri') {
+      var clearedEnhancements = clearLivingEnemyEnhancements();
+      addEffectToLivingEnemies('attack_down', 2, 6);
+      message = clearedEnhancements > 0
+        ? '風送り。敵の勢いを吹き払い、その攻め手も鈍らせた。'
+        : '風送り。乾いた風が敵の勢いを鈍らせた。';
+      if (clearedEnhancements > 0) {
+        showEffectFeedback('enemy', 'cleanse', clearedEnhancements, { text: '散', offsetY: 12 });
+      }
+      showEffectFeedback('enemy', 'attack_down', 6);
+    } else if (skill.id === 'yomichigaeshi') {
+      addEffect(playerEffects, 'last_stand', 1, 1);
+      message = '黄泉返し。境界の気配が、一度だけ倒れゆく体を引き戻す。';
+      showEffectFeedback('player', 'last_stand', 1);
     } else {
       message = skill.name + 'を放った。';
     }
 
-    messageTimer = 45;
-    phase = 'playerAttack';
-    animTimer = PLAYER_ACTION_RECOVERY_FRAMES;
+    if (!immediateOutcome) {
+      messageTimer = 45;
+      phase = 'playerAttack';
+      animTimer = PLAYER_ACTION_RECOVERY_FRAMES;
+    }
     Game.Audio.playSfx(skillSfx);
   }
 
@@ -5073,6 +5284,7 @@ Game.Battle = (function() {
           case 'burn': eLabel = '炎'; eCol = '#ff4422'; break;
           case 'stun': eLabel = '痺'; eCol = '#ffdd22'; break;
           case 'enemy_roll_slow': eLabel = '鈍'; eCol = '#a6e7ff'; break;
+          case 'attack_down': eLabel = '攻↓'; eCol = '#d2c2ff'; break;
         }
         if (eLabel) {
           R.drawRectAbsolute(esx, 164, 16, 14, 'rgba(0,0,0,0.6)');
@@ -5122,6 +5334,11 @@ Game.Battle = (function() {
         case 'steady_floor': pLabel = '底'; pCol = '#cdd7ff'; break;
         case 'ignite_next': pLabel = '火'; pCol = '#ff8855'; break;
         case 'ward': pLabel = '返'; pCol = '#d9b7ff'; break;
+        case 'ailment_guard': pLabel = '護'; pCol = '#f5efe2'; break;
+        case 'low_roll_bias': pLabel = '低'; pCol = '#9baec4'; break;
+        case 'mirror_guard': pLabel = '鏡'; pCol = '#b9dfff'; break;
+        case 'earth_echo': pLabel = '土'; pCol = '#b89a72'; break;
+        case 'last_stand': pLabel = '境'; pCol = '#9d87bf'; break;
       }
       if (pLabel) {
         R.drawRectAbsolute(psx, 242, 20, 14, 'rgba(0,0,0,0.6)');
@@ -5459,9 +5676,18 @@ Game.Battle = (function() {
             var damageTotal = 0;
             healTotal = 0;
             var steadyFloor = getEffectBonus(playerEffects, 'steady_floor');
+            var lowRollBias = getEffectBonus(playerEffects, 'low_roll_bias');
+            var earthEcho = getEffectBonus(playerEffects, 'earth_echo');
             var steadyFloorBoosted = 0;
+            var lowRollSoftened = 0;
+            var earthEchoTriggered = false;
+            var adjustedDiceValues = [];
             for (var j = 0; j < diceResults.length; j++) {
               var parsed = parseFace(diceResults[j]);
+              if (parsed.type === 'damage' && parsed.value > 0 && lowRollBias > 0 && parsed.value > lowRollBias) {
+                parsed.value = lowRollBias;
+                lowRollSoftened++;
+              }
               if (parsed.type === 'damage' && parsed.value > 0 && steadyFloor > 0 && parsed.value < steadyFloor) {
                 parsed.value = steadyFloor;
                 steadyFloorBoosted++;
@@ -5471,6 +5697,13 @@ Game.Battle = (function() {
               } else if (parsed.type === 'heal') {
                 healTotal += parsed.value;
               }
+              adjustedDiceValues.push(parsed.value);
+            }
+            if (earthEcho > 0) {
+              healTotal += earthEcho;
+              addEffect(playerEffects, 'ward', 1, 4);
+              earthEchoTriggered = true;
+              showEffectFeedback('player', 'ward', 4, { offsetY: 28 });
             }
 
             // Combo detection
@@ -5480,7 +5713,7 @@ Game.Battle = (function() {
             comboTimer = combo.text ? 60 : 0;
 
             var ritualDefinition = getRitualDefinition();
-            var ritualDiceValues = getDiceResultValues();
+            var ritualDiceValues = adjustedDiceValues.slice();
             var ritualAudioBefore = getRitualAudioSnapshot();
 
             // Apply status effect bonuses
@@ -5538,12 +5771,16 @@ Game.Battle = (function() {
                 Game.Audio.playSfx('damage');
                 if (Game.Particles) Game.Particles.emit('damage', 100, 220, { count: 6 });
                 if (playerDataHI.hp <= 0) {
-                  playerDataHI.hp = 0;
-                  phase = 'defeat';
-                  message = '力尽きた...';
-                  messageTimer = 90;
-                  Game.Audio.stopBgm();
-                  Game.Audio.playSfx('gameover');
+                  if (consumeLastStand('黄泉返しが働き、HP1で踏みとどまった！')) {
+                    Game.Audio.playSfx('confirm');
+                  } else {
+                    playerDataHI.hp = 0;
+                    phase = 'defeat';
+                    message = '力尽きた...';
+                    messageTimer = 90;
+                    Game.Audio.stopBgm();
+                    Game.Audio.playSfx('gameover');
+                  }
                 }
               } else {
                 Game.Player.heal(healTotal + onsenHeal);
@@ -5604,6 +5841,12 @@ Game.Battle = (function() {
             }
             if (steadyFloorBoosted > 0) {
               msgParts.push('低い目を整えた');
+            }
+            if (lowRollSoftened > 0) {
+              msgParts.push('高い目を寝かせた');
+            }
+            if (earthEchoTriggered) {
+              msgParts.push('土が返しを残した');
             }
             if (comboText) {
               msgParts.push(comboText);

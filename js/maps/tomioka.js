@@ -179,7 +179,7 @@ Game.Maps.tomioka = (function() {
         '日本の近代化を支えた「絹の国」群馬の誇りです。',
         'お土産もありますよ。古いサイコロポーチがひとつだけ残っています。'
       ],
-      afterDialog: 'shop_富岡製糸場_healHerb,silkBookmark,silkWeight,diceSlot',
+      afterDialog: 'shop_富岡製糸場_healHerb,silkBookmark,silkWeight,diceSlot,silkDice,cocoonDice',
       sprite: [
         [0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0],
         [0,0,1,2,2,2,2,1,0,0,0,0,0,0,0,0],

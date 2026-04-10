@@ -377,19 +377,19 @@ Game.Items = (function() {
       faces: [2, 3, 4, 5, 6, 7],
       color: '#ffdddd',
       dotColor: '#cc2222',
-      price: 60
+      price: 500
     },
 
     // Gambler dice: high risk high reward
     gamblerDice: {
       id: 'gamblerDice',
       name: 'ギャンブルサイコロ',
-      desc: '出目: 1-1-1-8-8-12 一か八か！',
+      desc: '出目: 0-0-0-8-8-8 一か八か！',
       type: 'dice',
-      faces: [1, 1, 1, 8, 8, 12],
+      faces: [1, 1, 1, 8, 8, 8],
       color: '#ffffcc',
       dotColor: '#cc8800',
-      price: 80
+      price: 777
     },
 
     // Steady dice: consistent damage
@@ -401,7 +401,7 @@ Game.Items = (function() {
       faces: [3, 3, 4, 4, 5, 5],
       color: '#ddddff',
       dotColor: '#2222cc',
-      price: 70
+      price: 555
     },
 
     breatherDice: {
@@ -412,20 +412,20 @@ Game.Items = (function() {
       faces: [1, 2, 2, 3, 'H2', 'H3'],
       color: '#dfffea',
       dotColor: '#2b8d63',
-      price: 45
+      price: 1500
     },
 
     // Heal dice: some faces heal instead of damage
     healDice: {
       id: 'healDice',
       name: '回復サイコロ',
-      desc: '出目: 0-0-0-H3-H5-H8 Hは回復',
+      desc: '出目: 7-0-0-H3-H5-H8 Hは回復',
       type: 'dice',
-      faces: [0, 0, 0, 'H3', 'H5', 'H8'],
+      faces: [7, 0, 0, 'H3', 'H5', 'H8'],
       color: '#ddffdd',
       dotColor: '#22aa22',
       effect: 'heal',
-      price: 90
+      price: 2500
     },
 
     // Fire dice: damage + burn bonus
@@ -437,19 +437,19 @@ Game.Items = (function() {
       faces: [3, 4, 5, 6, 7, 8],
       color: '#ffccaa',
       dotColor: '#ff4400',
-      price: 150
+      price: 2500
     },
 
     // Daruma dice: lucky, tends high
     darumaDice: {
       id: 'darumaDice',
       name: 'だるまサイコロ',
-      desc: '出目: 3-5-5-7-7-7 七転び八起き',
+      desc: '出目: 7-7-7-8-8-8 七転び八起き',
       type: 'dice',
-      faces: [3, 5, 5, 7, 7, 7],
+      faces: [7, 7, 7, 8, 8, 8],
       color: '#ffcccc',
       dotColor: '#882222',
-      price: 120
+      price: 7788
     },
 
     // Onsen dice: heals a bit on each roll
@@ -462,7 +462,7 @@ Game.Items = (function() {
       color: '#cceeFF',
       dotColor: '#2266aa',
       effect: 'onsen',
-      price: 130
+      price: 2626
     },
 
     // Konnyaku dice: bouncy, can reroll
@@ -474,7 +474,7 @@ Game.Items = (function() {
       faces: [1, 4, 4, 6, 6, 10],
       color: '#ddddcc',
       dotColor: '#555544',
-      price: 110
+      price: 5290
     },
 
     // Cabbage dice: massive but rare
@@ -486,7 +486,7 @@ Game.Items = (function() {
       faces: [0, 0, 5, 5, 10, 15],
       color: '#ccffcc',
       dotColor: '#228822',
-      price: 200
+      price: 8310
     },
 
     // Gunma ultimate dice
@@ -498,7 +498,163 @@ Game.Items = (function() {
       faces: [5, 6, 7, 8, 9, 10],
       color: '#ffeedd',
       dotColor: '#cc6600',
-      price: 350
+      price: 35000
+    },
+
+    // ── 哀愁・慈悲のサイコロ（低い出目・回復・寄り添い） ──
+    silkDice: {
+      id: 'silkDice',
+      name: '絹糸のサイコロ',
+      desc: '出目: 1-1-1-2-2-3 傷つけるより、絡まりを静かにほどくための賽',
+      type: 'dice',
+      faces: [1, 1, 1, 2, 2, 3],
+      color: '#f8f9fa',
+      dotColor: '#8b92a5',
+      price: 2200
+    },
+    tearDice: {
+      id: 'tearDice',
+      name: '涙雨のサイコロ',
+      desc: '出目: 0-1-1-H1-H2-2 痛みに寄り添い、少しだけ立て直す賽',
+      type: 'dice',
+      faces: [0, 1, 1, 'H1', 'H2', 2],
+      color: '#d4e4f7',
+      dotColor: '#4a6b8c',
+      price: 2600
+    },
+    cocoonDice: {
+      id: 'cocoonDice',
+      name: '繭のサイコロ',
+      desc: '出目: 0-0-1-1-2-2 柔らかい殻で悲しみを包み、攻めを急がない賽',
+      type: 'dice',
+      faces: [0, 0, 1, 1, 2, 2],
+      color: '#fffdf9',
+      dotColor: '#d1c7b8',
+      price: 2400
+    },
+    offeringDice: {
+      id: 'offeringDice',
+      name: '供物のサイコロ',
+      desc: '出目: 0-0-0-H2-H4-H6 攻めを捨て、祈りそのものを差し出す器',
+      type: 'dice',
+      faces: [0, 0, 0, 'H2', 'H4', 'H6'],
+      color: '#2a2826',
+      dotColor: '#d8b97d',
+      price: 5600
+    },
+
+    // ── 民族要素・フォークロア（祭具・儀式用） ──
+    kaguraBellDice: {
+      id: 'kaguraBellDice',
+      name: '神楽鈴のサイコロ',
+      desc: '出目: 1-1-3-3-5-5 澄んだ拍で場を整える、祓いの賽',
+      type: 'dice',
+      faces: [1, 1, 3, 3, 5, 5],
+      color: '#c23a41',
+      dotColor: '#e0c38c',
+      price: 4200
+    },
+    foxMaskDice: {
+      id: 'foxMaskDice',
+      name: '狐面のサイコロ',
+      desc: '出目: 0-1-5-5-9-0 祭りの夜みたいに、極端な顔を見せる化かしの賽',
+      type: 'dice',
+      faces: [0, 1, 5, 5, 9, 0],
+      color: '#fafafa',
+      dotColor: '#d62d2d',
+      price: 5200
+    },
+    mukaebiDice: {
+      id: 'mukaebiDice',
+      name: '迎え火のサイコロ',
+      desc: '出目: 1-2-H1-H2-3-4 迷う影を照らし、少しずつ連れ戻す賽',
+      type: 'dice',
+      faces: [1, 2, 'H1', 'H2', 3, 4],
+      color: '#402a24',
+      dotColor: '#e66a35',
+      price: 3600
+    },
+    higanbanaDice: {
+      id: 'higanbanaDice',
+      name: '彼岸花のサイコロ',
+      desc: '出目: 4-4-4-4-4-0 境界に咲く赤。安定しながら、ときどき虚無に落ちる',
+      type: 'dice',
+      faces: [4, 4, 4, 4, 4, 0],
+      color: '#8f1a1a',
+      dotColor: '#120b0b',
+      price: 4300
+    },
+    kokeshiDice: {
+      id: 'kokeshiDice',
+      name: '木地玩具のサイコロ',
+      desc: '出目: 2-2-3-3-4-4 郷土の子らの記憶を刻んだ、丸みのある賽',
+      type: 'dice',
+      faces: [2, 2, 3, 3, 4, 4],
+      color: '#d4ad7b',
+      dotColor: '#5c3116',
+      price: 2400
+    },
+
+    // ── 土地の記憶・環境（風景を模した出目） ──
+    stoneStepDice: {
+      id: 'stoneStepDice',
+      name: '石段のサイコロ',
+      desc: '出目: 3-4-4-4-4-5 伊香保の重みみたいに、じわりと圧をかける賽',
+      type: 'dice',
+      faces: [3, 4, 4, 4, 4, 5],
+      color: '#6e7378',
+      dotColor: '#2b2d30',
+      price: 3900
+    },
+    karakkazeDice: {
+      id: 'karakkazeDice',
+      name: '空っ風のサイコロ',
+      desc: '出目: 0-0-1-6-7-0 乾いた風のように空振りが多く、ときどき強く吹く',
+      type: 'dice',
+      faces: [0, 0, 1, 6, 7, 0],
+      color: '#c9d1d6',
+      dotColor: '#627b8a',
+      price: 3100
+    },
+    peatMudDice: {
+      id: 'peatMudDice',
+      name: '泥炭のサイコロ',
+      desc: '出目: 1-1-2-2-H1-H1 尾瀬の底みたいに熱を吸って、静かに鎮める賽',
+      type: 'dice',
+      faces: [1, 1, 2, 2, 'H1', 'H1'],
+      color: '#38322c',
+      dotColor: '#1a1815',
+      price: 3300
+    },
+    powderSnowDice: {
+      id: 'powderSnowDice',
+      name: '粉雪のサイコロ',
+      desc: '出目: 0-1-1-2-3-0 手に落ちては消える雪みたいに、静かで軽い賽',
+      type: 'dice',
+      faces: [0, 1, 1, 2, 3, 0],
+      color: '#eef5f7',
+      dotColor: '#88a9c2',
+      price: 2900
+    },
+    abandonedRailDice: {
+      id: 'abandonedRailDice',
+      name: '廃線のサイコロ',
+      desc: '出目: 2-2-3-3-4-4 もう走らない路線の拍で、一定の哀愁を刻む',
+      type: 'dice',
+      faces: [2, 2, 3, 3, 4, 4],
+      color: '#52433d',
+      dotColor: '#a15b3c',
+      price: 2800
+    },
+    sunsetDice: {
+      id: 'sunsetDice',
+      name: '茜空のサイコロ',
+      desc: '出目: 2-3-3-4-4-H3 帰る景色を思い出させる、やわらかな夕暮れの賽',
+      type: 'dice',
+      faces: [2, 3, 3, 4, 4, 'H3'],
+      color: '#cc5c43',
+      dotColor: '#ffe5a3',
+      price: 4700
     },
 
     // Slot expander
@@ -508,7 +664,7 @@ Game.Items = (function() {
       desc: '装備枠を1つ増やす希少なポーチ（最大5）',
       type: 'diceSlot',
       uniqueStock: true,
-      price: 100
+     price: 1000
     }
   };
 

@@ -77,7 +77,7 @@ Game.Maps.kusatsu = (function() {
       '源泉は毎分三万リットル以上湧いてるんだ。',
       '温泉パワーの装備はいかがですか？'
     ],
-    afterDialog: 'shop_温泉土産屋_superYakimanju,yunohanaVial,emberIncense,konnyakuArmor',
+    afterDialog: 'shop_温泉土産屋_superYakimanju,yunohanaVial,emberIncense,konnyakuArmor,mukaebiDice',
     sprite: [
       [0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0],
       [0,0,1,2,2,2,2,1,0,0,0,0,0,0,0,0],

@@ -45,7 +45,7 @@ Game.Maps.konuma = (function() {
           ]
         }
       ],
-      afterDialog: 'shop_闇サイコロ屋_superYakimanju,gamblerDice,cabbageDice',
+      afterDialog: 'shop_闇サイコロ屋_superYakimanju,gamblerDice,cabbageDice,foxMaskDice,higanbanaDice,abandonedRailDice',
       sprite: [
         [0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0],
         [0,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0],

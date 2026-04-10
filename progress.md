@@ -28,6 +28,33 @@ Original prompt: そうだね。セーブできる村役場みたいなところ
     - `node --check js/ui.js js/main.js js/player.js` と `git diff --check` 通過。
     - Playwright client でタイトルの `設定` オーバーレイを確認し、`gameSpeed: きびきび` 反映状態のスクリーンショットを `output/web-game-20260410/title-speed-settings/` に保存。
     - 追加のPlaywright検証で `ゆっくり` は `moveSpeed: 10`、`きびきび` は `moveSpeed: 6` として反映され、同じ 7 フレーム入力でも `x` 座標の進みが異なることを `output/web-game-20260410/title-speed-movement-check/summary.json` に記録。
+- 2026-04-10: 物語の芯を固定するため、`docs/white_maiden_and_emotion_bible.md` を追加。
+  - 白い少女の正体を `母親の想いが結晶化した精霊` として整理。ただし本編では明かしすぎない方針を明文化。
+  - 白い少女の台詞ルール、ジュークの動機、仲間4人の会話軸、6章 + 終章の感情設計を実装向けに整理。
+  - 環境ストーリーテリングの3軸、リアル寄り静止画の優先順位、自由質問UIの配分、エンディングの余韻方針も同資料へ統合。
+- 2026-04-10: 仲間へ話しかけたときの `質問会話UI` の第一弾を実装。
+  - `js/npc.js`
+    - アカギ / 山川 / 古谷に、`世界観 / 心情 / 攻略 / 雑学 / ギャグ` の5カテゴリを持つ質問会話データを追加。
+    - 質問カテゴリを選ぶ `companionQuestionState` と、聞いた項目に `既` を付けて戻れる会話ループを実装。
+    - 返答を読み終えると質問メニューへ戻る内部アクションを追加し、1回の会話で複数項目を聞けるようにした。
+  - `js/ui.js`
+    - ダイアログ中に質問カテゴリを表示する小型の選択ボックスを追加。
+    - 通常会話時は従来どおり、質問選択時だけ `選択 ↑↓  決定  戻る` 表示へ切り替えるようにした。
+  - `js/main.js`
+    - `DIALOG` ステートで、通常のページ送りと質問選択入力の両方を扱えるように更新。
+    - `render_game_to_text` の `dialog.choice` に選択中の質問状態を含めるようにした。
+  - 検証
+    - `node --check js/npc.js js/main.js js/ui.js` と `git diff --check` 通過。
+    - Playwright検証で、アカギ会話の `質問一覧表示 -> 心情選択 -> 返答 -> 質問一覧へ復帰` を確認。
+    - 記録は `output/web-game-20260410/companion-question-pass-events/summary.json` とスクリーンショット群へ保存。
+- 2026-04-10: 新規DICE群を追加し、町ごとのテーマに合わせて入手導線も配置。
+  - `js/items.js`
+    - `絹糸 / 涙雨 / 繭 / 供物 / 神楽鈴 / 狐面 / 迎え火 / 彼岸花 / 木地玩具 / 石段 / 空っ風 / 泥炭 / 粉雪 / 廃線 / 茜空` の15種を追加。
+    - 既存の `H` 回復面ルールへそのまま乗るよう、説明文は実装済み挙動に寄せて整理。
+  - `js/maps/tamura.js`, `js/maps/tomioka.js`, `js/maps/kusatsu.js`, `js/maps/ikaho.js`, `js/maps/konuma.js`, `js/maps/akagi_ranch.js`, `js/maps/minakami_valley.js`
+    - 新DICEを各ショップへ分配。前半は富岡・工房のやさしい賽、後半は伊香保・闇商人・峠の土地記憶系へ寄せた。
+  - `js/maps/akagi_shrine.js`, `js/maps/oze_marsh.js`
+    - `供物のサイコロ` と `泥炭のサイコロ` を探索拾得にして、儀式 / 湿原の文脈でも手に入るようにした。
 - 2026-04-05: すぐ効く改善を実装。
   - `js/ui.js`
     - フィールドメニューの `記録と設定` に `記録帳` を追加し、探索中のどこからでも記録帳を開けるようにした。

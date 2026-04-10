@@ -103,7 +103,9 @@ Game.Maps.akagi_shrine = (function() {
     }
   ];
 
-  var items = [];
+  var items = [
+    { id: 'offeringDice', x: 14, y: 16, taken: false }
+  ];
 
   var exits = [
     // North back to akagi_ranch

@@ -747,18 +747,19 @@ Game.Main = (function() {
         break;
 
       case Game.Config.STATE.DIALOG:
-        if (Game.Input.isPressed('confirm')) {
-          var result = Game.NPC.advance();
-          if (result.done) {
-            if (result.action) {
-              handleAction(result.action, result.npc);
+        var dialogResult = Game.NPC.updateDialogInput ? Game.NPC.updateDialogInput() : null;
+        if (dialogResult) {
+          if (dialogResult.sound) {
+            Game.Audio.playSfx(dialogResult.sound);
+          }
+          if (dialogResult.done) {
+            if (dialogResult.action) {
+              handleAction(dialogResult.action, dialogResult.npc);
             } else {
               setState(Game.Config.STATE.EXPLORING);
-              Game.Audio.playSfx('cancel');
             }
           } else {
-            dialogText = result.text;
-            Game.Audio.playSfx('confirm');
+            dialogText = dialogResult.text;
           }
         }
         break;
@@ -1628,7 +1629,8 @@ Game.Main = (function() {
     if (state === Game.Config.STATE.DIALOG) {
       payload.dialog = {
         speaker: Game.NPC && Game.NPC.getCurrentNpcDisplayName ? Game.NPC.getCurrentNpcDisplayName() : null,
-        text: dialogText || (Game.NPC && Game.NPC.getCurrentDialog ? Game.NPC.getCurrentDialog() : '')
+        text: dialogText || (Game.NPC && Game.NPC.getCurrentDialog ? Game.NPC.getCurrentDialog() : ''),
+        choice: Game.NPC && Game.NPC.getDialogChoiceState ? Game.NPC.getDialogChoiceState() : null
       };
     }
     if (state === Game.Config.STATE.SKILL_LEARN && Game.UI && Game.UI.getSkillLearnDebugState) {

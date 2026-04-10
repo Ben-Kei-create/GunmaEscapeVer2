@@ -77,7 +77,7 @@ Game.Maps.ikaho = (function() {
       '竹久夢二も伊香保を愛した芸術家の一人さ。',
       'お土産もあるよ！'
     ],
-    afterDialog: 'shop_伊香保温泉_ishidanSenbei,mizusawaUdon,tempoCharm',
+    afterDialog: 'shop_伊香保温泉_ishidanSenbei,mizusawaUdon,tempoCharm,stoneStepDice,sunsetDice',
     sprite: [
       [0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0],
       [0,0,0,1,2,2,1,0,0,0,0,0,0,0,0,0],

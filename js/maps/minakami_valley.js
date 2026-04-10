@@ -86,7 +86,7 @@ Game.Maps.minakami_valley = (function() {
           ]
         }
       ],
-      afterDialog: 'shop_峠の行商_superYakimanju,kaeshiOmamori,silkWeight',
+      afterDialog: 'shop_峠の行商_superYakimanju,kaeshiOmamori,silkWeight,powderSnowDice',
       defeatedDialog: [
         '谷を越えるなら、手数より保ち方だ。',
         '最後の境界は、軽装じゃもたないよ。'

@@ -70,7 +70,10 @@ Game.Maps.oze_marsh = (function() {
       defeated: false, sprite: humanSprite, palette: { 1:'#ddccaa', 2:'#228833', 3:'#443322' }
     }
   ];
-  var items = [{ id: 'yakimanju', x: 23, y: 14, taken: false }];
+  var items = [
+    { id: 'yakimanju', x: 23, y: 14, taken: false },
+    { id: 'peatMudDice', x: 24, y: 13, taken: false }
+  ];
   var exits = [
     { x: 14, y: 19, target: 'haruna_lake', spawnX: 14, spawnY: 1, dir: 'down' },
     { x: 15, y: 19, target: 'haruna_lake', spawnX: 15, spawnY: 1, dir: 'down' },

@@ -272,6 +272,8 @@ Game.UI = (function() {
         return '決定で到着を早める';
       case 'dialogLegend':
         return '決定';
+      case 'dialogChoiceLegend':
+        return '選択 ' + CONTROL_KEYS.vertical + '  決定  戻る';
       case 'fieldMenuLegend':
         return '切替 ' + CONTROL_KEYS.horizontal + '  選択 ' + CONTROL_KEYS.vertical + '  決定  戻る';
       case 'titleLegend':
@@ -1059,6 +1061,7 @@ Game.UI = (function() {
   function drawDialog(text) {
     var R = Game.Renderer;
     var npc = Game.NPC.getCurrentNpc();
+    var choiceState = Game.NPC.getDialogChoiceState ? Game.NPC.getDialogChoiceState() : null;
     var speakerName = Game.NPC.getCurrentNpcDisplayName
       ? Game.NPC.getCurrentNpcDisplayName()
       : (npc ? npc.name : '');
@@ -1081,11 +1084,37 @@ Game.UI = (function() {
       R.drawTextJP(lines[i], 24, Game.Config.CANVAS_HEIGHT - 77 + i * DIALOG_LINE_HEIGHT, '#fff', DIALOG_TEXT_SIZE);
     }
 
+    if (choiceState && choiceState.options && choiceState.options.length) {
+      var choiceBoxW = 162;
+      var choiceBoxH = 38 + choiceState.options.length * 14;
+      var choiceBoxX = Game.Config.CANVAS_WIDTH - choiceBoxW - 14;
+      var choiceBoxY = Game.Config.CANVAS_HEIGHT - 94 - choiceBoxH;
+      R.drawDialogBox(choiceBoxX, choiceBoxY, choiceBoxW, choiceBoxH);
+      drawPanelAccent(choiceBoxX, choiceBoxY, choiceBoxW, choiceBoxH, '#8fb8ff');
+      R.drawTextJP(choiceState.title || '聞くこと', choiceBoxX + 12, choiceBoxY + 8, '#8fb8ff', 9);
+      for (var c = 0; c < choiceState.options.length; c++) {
+        var option = choiceState.options[c];
+        var selected = c === choiceState.index;
+        var lineY = choiceBoxY + 22 + c * 14;
+        var color = selected ? Game.Config.COLORS.GOLD : (option.asked ? '#b7c4e0' : '#ffffff');
+        if (selected) {
+          R.drawRectAbsolute(choiceBoxX + 8, lineY - 2, choiceBoxW - 16, 12, 'rgba(255,204,0,0.12)');
+        }
+        R.drawTextJP((selected ? '▶ ' : '  ') + option.label, choiceBoxX + 12, lineY, color, 8);
+        if (option.asked) {
+          R.drawTextJP('既', choiceBoxX + choiceBoxW - 18, lineY, '#8fe0ff', 7);
+        }
+      }
+      if (choiceState.description) {
+        R.drawTextJP(clampText(choiceState.description, 18), choiceBoxX + 12, choiceBoxY + choiceBoxH - 12, '#91a2c8', 7);
+      }
+    }
+
     // Advance indicator
-    if (blinkTimer % 40 < 25) {
+    if (!choiceState && blinkTimer % 40 < 25) {
       R.drawTextJP('▼', Game.Config.CANVAS_WIDTH - 36, Game.Config.CANVAS_HEIGHT - 24, '#fff', 12);
     }
-    R.drawTextJP(getControlHint('dialogLegend'), Game.Config.CANVAS_WIDTH - 94, Game.Config.CANVAS_HEIGHT - 24, '#8092ba', 8);
+    R.drawTextJP(getControlHint(choiceState ? 'dialogChoiceLegend' : 'dialogLegend'), Game.Config.CANVAS_WIDTH - 124, Game.Config.CANVAS_HEIGHT - 24, '#8092ba', 8);
     blinkTimer++;
   }
 

@@ -8,6 +8,9 @@ Game.NPC = (function() {
   var onDialogEnd = null;
   var npcMovement = {};
   var AUTO_DIALOG_KEY = '__gunmaNpcAutoDialogText';
+  var INTERNAL_DIALOG_ACTIONS = {
+    RESUME_COMPANION_TOPICS: '__resume_companion_topics'
+  };
   var SERVICE_ICONS = {
     dice_shop: {
       sprite: [
@@ -53,6 +56,14 @@ Game.NPC = (function() {
     }
   };
   var companionDialogState = {};
+  var companionQuestionState = null;
+  var companionTopicMeta = [
+    { id: 'world', label: '世界観', description: '土地や掟のことを聞く。' },
+    { id: 'feelings', label: '心情', description: '今の気持ちを聞く。' },
+    { id: 'hint', label: '攻略', description: '進み方や勝ち筋を聞く。' },
+    { id: 'trivia', label: '雑学', description: '群馬の小話を聞く。' },
+    { id: 'joke', label: 'ギャグ', description: '少し力を抜いた話を聞く。' }
+  ];
   var companionDialogDefs = {
     akagi: {
       defaultLines: [
@@ -180,6 +191,218 @@ Game.NPC = (function() {
       ]
     }
   };
+  var companionQuestionDefs = {
+    akagi: {
+      promptLines: [
+        'アカギは風向きを確かめている。何を聞く？',
+        'アカギが歩幅を少しゆるめた。聞くなら今だ。'
+      ],
+      topics: {
+        world: {
+          defaultResponses: [
+            ['群馬は地図より先に、掟で区切られてる。', '同じ道でも、通っていい日と悪い日があるんだ。'],
+            ['県境ってのは線じゃない。', '敬意が薄れた場所から、先にほころぶ。']
+          ],
+          contextEntries: [
+            {
+              mapIds: ['maebashi', 'takasaki'],
+              responses: [
+                ['町場は人の顔が多いぶん、気配も混ざる。', '派手な看板より、人が避ける角を見ろ。']
+              ]
+            },
+            {
+              mapIds: ['forest', 'konuma', 'onuma', 'akagi_ranch', 'akagi_shrine'],
+              responses: [
+                ['山の奥は、道より先に風が境目を知らせる。', '静かすぎたら、だいたい誰かが見てる。']
+              ]
+            }
+          ]
+        },
+        feelings: {
+          defaultResponses: [
+            ['……心配はしてる。', '口に出すと鈍る気がするだけだ。'],
+            ['お前が景色を見るようになったのは助かる。', '前みたいに突っ走るだけじゃなくなった。']
+          ],
+          contextEntries: [
+            {
+              flags: ['daruma_master_cleared'],
+              responses: [
+                ['最初の関所を越えて、少し安心した。', 'ようやく同じ旅をしてる感じがしてきた。']
+              ]
+            },
+            {
+              minChapter: 6,
+              responses: [
+                ['ここまで来ると、急ぐだけじゃ駄目だって分かる。', '戻るためにも、無事でいてくれ。']
+              ]
+            }
+          ]
+        },
+        hint: {
+          defaultResponses: [
+            ['迷ったら、広い道じゃなく戻れる道を選べ。', '帰り道を残したやつから生き残る。'],
+            ['敵の一手目は、だいたい見栄だ。', '先に息を整えると、次が読みやすい。']
+          ],
+          contextEntries: [
+            {
+              mapIds: ['takasaki'],
+              responses: [
+                ['高崎は見た目より音が先に来る。', '焦って踏み込むと、向こうの拍に飲まれるぞ。']
+              ]
+            },
+            {
+              mapIds: ['forest', 'konuma', 'onuma'],
+              responses: [
+                ['霧の中では近道ほど罠だ。', '見えた道より、戻れる道を先に覚えろ。']
+              ]
+            }
+          ]
+        },
+        trivia: {
+          defaultResponses: [
+            ['ハルナは天気を読むのがうまい。', 'ミョウギは逆に、天気を煽るのがうまい。'],
+            ['赤城おろしの日は、火より音が遠くへ飛ぶ。', '昔はそれで合図を回してた。']
+          ]
+        },
+        joke: {
+          defaultResponses: [
+            ['群馬で迷ったらどうするか知ってるか。', '迷ってる顔を隠す。だいたいそれで半分助かる。'],
+            ['褒めても何も出ない。', '……いや、次の助言くらいは出るか。']
+          ]
+        }
+      }
+    },
+    yamakawa: {
+      promptLines: [
+        '山川が足元を見ながら歩いている。何を聞く？',
+        '山川は地面の湿り気を確かめていた。何を聞こうか。'
+      ],
+      topics: {
+        world: {
+          defaultResponses: [
+            ['土地の名前って、残ったものより失ったものをよく記録してるんです。', '古い呼び名ほど、その土地の癖が残りやすいんですよ。'],
+            ['群馬の道具は、生活と博打が近すぎるんです。', '便利さと危うさが同じところから生まれてる。']
+          ],
+          contextEntries: [
+            {
+              mapIds: ['haruna_lake', 'oze_marsh'],
+              responses: [
+                ['同じ水辺でも、榛名は迷わせて、尾瀬は沈ませます。', '水の顔つきで土地の性格が違うんです。']
+              ]
+            }
+          ]
+        },
+        feelings: {
+          defaultResponses: [
+            ['父の仕事が、今の群馬の土台になったのは事実です。', '誇りと後ろめたさ、両方あります。'],
+            ['正しいものを残したかった人たちが、少しずつ使い方を間違えた。', 'その重さは、僕も無視できません。']
+          ],
+          contextEntries: [
+            {
+              minChapter: 5,
+              responses: [
+                ['ここまで来ると、継いだものから逃げるのも違う気がします。', 'せめて、良かった部分まで潰さないようにしたいです。']
+              ]
+            }
+          ]
+        },
+        hint: {
+          defaultResponses: [
+            ['足場は見た目より、音と湿り気の方が正直です。', '迷ったら、まず足裏で読んでください。'],
+            ['真っ直ぐな道ほど、逃げ道を先に決めておくべきです。', '退き方が決まると、進み方も安定します。']
+          ],
+          contextEntries: [
+            {
+              mapIds: ['tanigawa_tunnel', 'minakami_valley', 'border_tunnel'],
+              responses: [
+                ['トンネルや谷は、見えた位置より半歩ぶん遠いと思ってください。', '音の跳ね返りで距離感が狂いやすいです。']
+              ]
+            },
+            {
+              mapIds: ['jomo_gakuen'],
+              responses: [
+                ['廃校は直線が多いぶん、追い込まれやすいです。', '角を曲がる前に、逃げる先だけ決めておきましょう。']
+              ]
+            }
+          ]
+        },
+        trivia: {
+          defaultResponses: [
+            ['父はサイコロの角の削り方だけで、一日中話せる人でした。', '良い意味でも、悪い意味でも職人だったんです。'],
+            ['地名は発音より、どこで息継ぎするかが大事なんです。', 'そこに土地の古い癖が残ります。']
+          ]
+        },
+        joke: {
+          defaultResponses: [
+            ['僕の冗談って、冗談に聞こえないらしいんですよ。', '今のは一応、ちゃんと冗談です。'],
+            ['足元ばかり見てるってよく言われます。', 'でも転ばないのは、そのおかげですから。']
+          ]
+        }
+      }
+    },
+    furuya: {
+      promptLines: [
+        '古谷が壊れた看板を眺めている。何を聞く？',
+        '古谷は周囲の残骸を面白そうに見ている。何を聞こうか。'
+      ],
+      topics: {
+        world: {
+          defaultResponses: [
+            ['壊れた機械とか古い看板って、その土地の「やめ方」が残るんだよ。', '終われなかった場所ほど、生々しい。'],
+            ['群馬の深い方は、使う人を失った施設が急に別物になる。', '生活の形だけが残って、意味が抜けるんだ。']
+          ],
+          contextEntries: [
+            {
+              mapIds: ['jomo_gakuen', 'tanigawa_tunnel'],
+              responses: [
+                ['学校もトンネルも、人が通う前提で作られてるだろ。', '使う人が消えると、急に異界っぽさが増すんだよな。']
+              ]
+            }
+          ]
+        },
+        feelings: {
+          defaultResponses: [
+            ['父さんが始めたことのせいで、今の荒れ方に繋がったならさ。', '無関係な顔はしたくない。'],
+            ['理屈は後からいくらでも付くんだ。', 'でも嫌な感じがした場所って、だいたい当たる。']
+          ],
+          contextEntries: [
+            {
+              minChapter: 5,
+              responses: [
+                ['ここまで来ると、責任って言葉も軽く使えないな。', 'せめて、見なかったことにはしないつもり。']
+              ]
+            }
+          ]
+        },
+        hint: {
+          defaultResponses: [
+            ['何かある場所って、物の置かれ方が不自然なんだ。', '先に「誰が最後に触ったか」を考えると見つけやすい。'],
+            ['音が一拍遅れて返る場所は、だいたい仕掛けがある。', '壁より、空気の返り方を見た方が早い。']
+          ],
+          contextEntries: [
+            {
+              mapIds: ['minakami_valley', 'border_tunnel'],
+              responses: [
+                ['終わりに近い場所ほど落とし物が増える。', '戻る気だったやつほど、最後に重い物を手放すから。']
+              ]
+            }
+          ]
+        },
+        trivia: {
+          defaultResponses: [
+            ['沈んだスマホって、画面が割れてても妙に生々しいんだ。', '持ち主の時間だけ、そこに置きっぱなしになる感じがする。'],
+            ['古いネオンって切れても完全には死なないんだよ。', 'ごくたまに、忘れたみたいに一瞬だけ戻る。']
+          ]
+        },
+        joke: {
+          defaultResponses: [
+            ['俺、理系っぽいって言われるけどさ。', '壊れた物を見てわくわくする時点で、だいぶ駄目だよな。'],
+            ['安心しろ。今日はまだ怪しい物を拾ってない。', '……たぶんだけど。']
+          ]
+        }
+      }
+    }
+  };
 
   function clampText(text, maxChars) {
     if (!text || text.length <= maxChars) return text || '';
@@ -290,6 +513,144 @@ Game.NPC = (function() {
     return pool[(companionDialogState[memberId] - 1) % pool.length].slice();
   }
 
+  function hasCompanionQuestionDialog(memberId) {
+    var def = companionQuestionDefs[memberId];
+    return !!(def && def.topics);
+  }
+
+  function chooseSequentialCompanionEntry(key, pool) {
+    if (!pool || !pool.length) return null;
+    companionDialogState[key] = (companionDialogState[key] || 0) + 1;
+    var entry = pool[(companionDialogState[key] - 1) % pool.length];
+    if (Array.isArray(entry)) return entry.slice();
+    return [entry];
+  }
+
+  function getCompanionQuestionPrompt(memberId) {
+    var def = companionQuestionDefs[memberId];
+    if (!def || !def.promptLines || !def.promptLines.length) {
+      return '何を聞く？';
+    }
+    var lines = chooseSequentialCompanionEntry(memberId + ':prompt', def.promptLines);
+    return lines && lines.length ? lines[0] : '何を聞く？';
+  }
+
+  function chooseCompanionTopicLines(memberId, topicId) {
+    var def = companionQuestionDefs[memberId];
+    var topicDef = def && def.topics ? def.topics[topicId] : null;
+    if (!topicDef) return chooseCompanionDialogLines(memberId);
+
+    var pool = [];
+    var i;
+    if (topicDef.contextEntries && topicDef.contextEntries.length) {
+      for (i = 0; i < topicDef.contextEntries.length; i++) {
+        if (companionContextMatches(topicDef.contextEntries[i])) {
+          pool.push(topicDef.contextEntries[i].responses);
+        }
+      }
+    }
+    if (!pool.length && topicDef.defaultResponses && topicDef.defaultResponses.length) {
+      pool = topicDef.defaultResponses.slice();
+    }
+    if (!pool.length) return chooseCompanionDialogLines(memberId);
+
+    var selectionPool = [];
+    for (i = 0; i < pool.length; i++) {
+      if (Array.isArray(pool[i]) && Array.isArray(pool[i][0])) {
+        for (var j = 0; j < pool[i].length; j++) {
+          selectionPool.push(pool[i][j]);
+        }
+      } else {
+        selectionPool.push(pool[i]);
+      }
+    }
+    return chooseSequentialCompanionEntry(memberId + ':' + topicId, selectionPool) || ['……。'];
+  }
+
+  function getCompanionQuestionChoices(memberId) {
+    var def = companionQuestionDefs[memberId];
+    if (!def || !def.topics) return [];
+    var choices = [];
+    for (var i = 0; i < companionTopicMeta.length; i++) {
+      var meta = companionTopicMeta[i];
+      if (!def.topics[meta.id]) continue;
+      choices.push({
+        id: meta.id,
+        label: meta.label,
+        description: meta.description
+      });
+    }
+    return choices;
+  }
+
+  function clearCompanionQuestionState() {
+    companionQuestionState = null;
+  }
+
+  function showCompanionQuestionMenu(memberId, preserveState) {
+    var choices = getCompanionQuestionChoices(memberId);
+    if (!choices.length) {
+      clearCompanionQuestionState();
+      dialogIndex = 0;
+      dialogLines = chooseCompanionDialogLines(memberId);
+      onDialogEnd = null;
+      setCurrentDialogPages();
+      return getCurrentDialog();
+    }
+
+    if (!preserveState || !companionQuestionState || companionQuestionState.memberId !== memberId) {
+      companionQuestionState = {
+        active: true,
+        memberId: memberId,
+        index: 0,
+        askedTopics: {}
+      };
+    } else {
+      companionQuestionState.active = true;
+      companionQuestionState.index = Math.max(0, Math.min(companionQuestionState.index || 0, choices.length - 1));
+      companionQuestionState.askedTopics = companionQuestionState.askedTopics || {};
+    }
+    companionQuestionState.choices = choices;
+    dialogIndex = 0;
+    dialogLines = [getCompanionQuestionPrompt(memberId)];
+    onDialogEnd = null;
+    setCurrentDialogPages();
+    window[AUTO_DIALOG_KEY] = getCurrentDialog();
+    return getCurrentDialog();
+  }
+
+  function closeCurrentDialog(actionOverride) {
+    var action = typeof actionOverride === 'undefined' ? onDialogEnd : actionOverride;
+    var npc = currentNpc;
+    currentNpc = null;
+    dialogIndex = 0;
+    dialogLines = [];
+    resetDialogPagination();
+    onDialogEnd = null;
+    clearCompanionQuestionState();
+    window[AUTO_DIALOG_KEY] = null;
+    return { done: true, action: action || null, npc: npc };
+  }
+
+  function getDialogChoiceState() {
+    if (!companionQuestionState || !companionQuestionState.active) return null;
+    var options = companionQuestionState.choices || getCompanionQuestionChoices(companionQuestionState.memberId);
+    if (!options.length) return null;
+    var current = options[companionQuestionState.index] || options[0];
+    return {
+      title: '聞くこと',
+      index: companionQuestionState.index,
+      description: current ? current.description : '',
+      options: options.map(function(option) {
+        return {
+          id: option.id,
+          label: option.label,
+          asked: !!(companionQuestionState.askedTopics && companionQuestionState.askedTopics[option.id])
+        };
+      })
+    };
+  }
+
   function resetDialogPagination() {
     dialogPages = [];
     dialogPageIndex = 0;
@@ -369,6 +730,7 @@ Game.NPC = (function() {
     currentNpc = npc;
     dialogIndex = 0;
     resetDialogPagination();
+    clearCompanionQuestionState();
 
     var checkpointFailedOnce = Game.Story && Game.Story.hasFlag && Game.Story.hasFlag('checkpoint_failed_once');
     var contextDialog = getContextDialogEntry(npc, !!npc.defeated);
@@ -424,6 +786,7 @@ Game.NPC = (function() {
     dialogIndex = 0;
     dialogLines = (lines || []).slice ? lines.slice() : [lines || ''];
     onDialogEnd = action || null;
+    clearCompanionQuestionState();
     setCurrentDialogPages();
     return getCurrentDialog();
   }
@@ -431,14 +794,16 @@ Game.NPC = (function() {
   function openCompanionDialog(memberId) {
     var member = getPartyCompanionById(memberId);
     if (!member) return '';
-    return openDialog(
-      chooseCompanionDialogLines(memberId),
-      null,
-      {
-        id: 'companion_' + member.id,
-        name: member.name
-      }
-    );
+    currentNpc = {
+      id: 'companion_' + member.id,
+      name: member.name
+    };
+    dialogIndex = 0;
+    resetDialogPagination();
+    if (hasCompanionQuestionDialog(memberId)) {
+      return showCompanionQuestionMenu(memberId, false);
+    }
+    return openDialog(chooseCompanionDialogLines(memberId), null, currentNpc);
   }
 
   function advance() {
@@ -451,16 +816,60 @@ Game.NPC = (function() {
     dialogIndex++;
     if (dialogIndex >= dialogLines.length) {
       var action = onDialogEnd;
-      var npc = currentNpc;
-      currentNpc = null;
-      dialogIndex = 0;
-      dialogLines = [];
-      resetDialogPagination();
-      onDialogEnd = null;
-      return { done: true, action: action, npc: npc };
+      if (action && action.internal === INTERNAL_DIALOG_ACTIONS.RESUME_COMPANION_TOPICS) {
+        return {
+          done: false,
+          text: showCompanionQuestionMenu(action.memberId, true)
+        };
+      }
+      return closeCurrentDialog(action);
     }
     setCurrentDialogPages();
     return { done: false, text: getCurrentDialog() };
+  }
+
+  function updateDialogInput() {
+    if (companionQuestionState && companionQuestionState.active) {
+      var options = companionQuestionState.choices || [];
+      if (Game.Input.isPressed('up')) {
+        companionQuestionState.index = (companionQuestionState.index - 1 + options.length) % options.length;
+        return { done: false, text: getCurrentDialog(), sound: 'confirm' };
+      }
+      if (Game.Input.isPressed('down')) {
+        companionQuestionState.index = (companionQuestionState.index + 1) % options.length;
+        return { done: false, text: getCurrentDialog(), sound: 'confirm' };
+      }
+      if (Game.Input.isPressed('cancel')) {
+        var closeResult = closeCurrentDialog(null);
+        closeResult.sound = 'cancel';
+        return closeResult;
+      }
+      if (!Game.Input.isPressed('confirm')) return null;
+      var selected = options[companionQuestionState.index];
+      if (!selected) return null;
+      companionQuestionState.askedTopics[selected.id] = true;
+      companionQuestionState.active = false;
+      dialogIndex = 0;
+      dialogLines = chooseCompanionTopicLines(companionQuestionState.memberId, selected.id);
+      onDialogEnd = {
+        internal: INTERNAL_DIALOG_ACTIONS.RESUME_COMPANION_TOPICS,
+        memberId: companionQuestionState.memberId
+      };
+      setCurrentDialogPages();
+      window[AUTO_DIALOG_KEY] = null;
+      return { done: false, text: getCurrentDialog(), sound: 'confirm' };
+    }
+
+    if (!Game.Input.isPressed('confirm')) return null;
+    var result = advance();
+    if (result) {
+      if (!result.done) {
+        result.sound = 'confirm';
+      } else if (!result.action) {
+        result.sound = 'cancel';
+      }
+    }
+    return result;
   }
 
   function showDefeatedDialog(npc) {
@@ -469,6 +878,7 @@ Game.NPC = (function() {
     dialogIndex = 0;
     npc.defeated = true;
     dialogLines = npc.defeatedDialog.slice();
+    clearCompanionQuestionState();
 
     var rewardItems = [];
     if (npc.giveItem) rewardItems.push(npc.giveItem);
@@ -905,10 +1315,12 @@ Game.NPC = (function() {
   return {
     interact: interact,
     advance: advance,
+    updateDialogInput: updateDialogInput,
     showDefeatedDialog: showDefeatedDialog,
     getCurrentDialog: getCurrentDialog,
     getCurrentNpc: getCurrentNpc,
     getCurrentNpcDisplayName: getCurrentNpcDisplayName,
+    getDialogChoiceState: getDialogChoiceState,
     shouldHideNpc: shouldHideNpc,
     getNpcServiceType: getNpcServiceType,
     openDialog: openDialog,

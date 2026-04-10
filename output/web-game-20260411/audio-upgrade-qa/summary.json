@@ -1,0 +1,20 @@
+{
+  "url": "http://127.0.0.1:4173/",
+  "initialState": {
+    "currentBgm": null
+  },
+  "melancholyState": {
+    "currentBgm": "melancholy_battle"
+  },
+  "heroineState": {
+    "currentBgm": "heroine_veil"
+  },
+  "finalState": {
+    "currentBgm": "heroine_veil",
+    "audioMuted": null
+  },
+  "consoleErrorCount": 0,
+  "pageErrorCount": 0,
+  "consoleMessages": [],
+  "pageErrors": []
+}

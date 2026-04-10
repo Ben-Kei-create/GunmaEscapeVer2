@@ -1,0 +1,81 @@
+{
+  "consoleErrorCount": 0,
+  "pageErrorCount": 0,
+  "saveWarning": {
+    "mode": "save",
+    "context": "field"
+  },
+  "visibleNpcs": {
+    "maebashiPre": [
+      "grandma",
+      "ruined_checkpoint",
+      "shopkeeper",
+      "akagiGuide",
+      "save_priest",
+      "maebashiInnkeeper",
+      "signpost",
+      "poet",
+      "boundaryPaint",
+      "nimonoCook",
+      "checkpointCloth"
+    ],
+    "maebashiPost": [
+      "grandma",
+      "ruined_checkpoint",
+      "shopkeeper",
+      "akagiGuide",
+      "save_priest",
+      "maebashiInnkeeper",
+      "signpost",
+      "poet",
+      "boundaryPaint",
+      "nimonoCook",
+      "checkpointClothAfter"
+    ],
+    "takasakiPre": [
+      "darumaMaster",
+      "weaponShop",
+      "musician",
+      "takasakiTrainer",
+      "gururinStop",
+      "darumaShelf",
+      "darumaBinder"
+    ],
+    "takasakiPost": [
+      "darumaMaster",
+      "weaponShop",
+      "musician",
+      "takasakiTrainer",
+      "gururinStop",
+      "darumaShelfAfter",
+      "darumaBinder"
+    ],
+    "tomiokaPre": [
+      "brunat",
+      "factoryHead",
+      "cocoonGuard",
+      "threadMaiden",
+      "heritageGuide",
+      "tomiokaInnkeeper",
+      "silkworm",
+      "silentReel"
+    ],
+    "tomiokaPost": [
+      "brunat",
+      "factoryHead",
+      "cocoonGuard",
+      "threadMaiden",
+      "heritageGuide",
+      "tomiokaInnkeeper",
+      "silkworm",
+      "silentReelAfter"
+    ]
+  },
+  "storyRoute": {
+    "eventMode": "event",
+    "eventSource": "story",
+    "afterMode": "exploring",
+    "afterMap": "shirane_trail",
+    "afterChapter": 3
+  }
+}

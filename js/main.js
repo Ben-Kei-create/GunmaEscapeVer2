@@ -769,9 +769,33 @@ Game.Main = (function() {
         if (battleResult) {
           if (battleResult.result === 'victory') {
             resolveBattleVictory(battleResult);
-          } else if (battleResult.result === 'defeat') {
-            storyBattleContext = null;
-            setState(Game.Config.STATE.GAMEOVER);
+} else if (battleResult.result === 'defeat') {
+            // 【死に戻り処理】タイトルに戻さず、直前のマップにシームレスに巻き戻す
+            var pd = Game.Player.getData();
+            pd.hp = Math.max(1, Math.floor(pd.maxHp * 0.5)); // HP半分で復活
+            
+            var currentMapId = Game.Map.getCurrentMapId();
+            
+            // 画面を一瞬赤黒く染め、空間が割れるような音を鳴らす
+            Game.Renderer.screenTint('#4a0000', 0.8);
+            Game.Audio.playSfx('reality_glitch');
+            
+            // 暗転して時間を巻き戻す演出
+            Game.Renderer.screenFade(1.0, 20, function() {
+              Game.Renderer.screenTint('#000000', 0); // ティント解除
+              
+              // マップを初期状態（入り口）でリロード
+              Game.Map.load(currentMapId);
+              Game.Audio.playBgm('field');
+              
+              // 少しタメてからフェードインして探索再開
+              setTimeout(function() {
+                Game.Renderer.screenFade(0.0, 30);
+                currentState = STATE.EXPLORING;
+              }, 500);
+            });
+            
+            currentState = STATE.TRANSITION; // 演出中は操作をロック
           } else if (battleResult.result === 'ritual_fail') {
             storyBattleContext = null;
             if (battleResult.enemyId === 'ruined_checkpoint' && Game.Story && Game.Story.setFlag) {
@@ -787,10 +811,10 @@ Game.Main = (function() {
               setState(Game.Config.STATE.EXPLORING);
               Game.Audio.playBgm('field');
             }
-          } else if (battleResult.result === 'flee') {
-            storyBattleContext = null;
-            setState(Game.Config.STATE.EXPLORING);
-          }
+              } else if (battleResult.result === 'flee') {
+                storyBattleContext = null;
+                setState(Game.Config.STATE.EXPLORING);
+              }
         }
         break;
 

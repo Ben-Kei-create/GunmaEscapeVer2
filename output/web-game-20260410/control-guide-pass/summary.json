@@ -1,0 +1,19 @@
+{
+  "settings": {
+    "mode": "menu",
+    "selectedSetting": 2
+  },
+  "shop": {
+    "mode": "shop",
+    "shopName": "前橋商店",
+    "message": ""
+  },
+  "battleDice": {
+    "mode": "battle",
+    "phase": "diceRoll"
+  },
+  "battleReward": {
+    "mode": "battle",
+    "phase": "menu"
+  }
+}

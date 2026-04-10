@@ -599,8 +599,11 @@ Game.Main = (function() {
         }
         titleLocked = Game.UI.isTitleIntroLocked ? Game.UI.isTitleIntroLocked() : false;
         if (titleLocked) break;
-        if (Game.UI.updateTitleMenu) Game.UI.updateTitleMenu();
-        if (Game.UI.isAchievementListOpen && Game.UI.isAchievementListOpen()) {
+        var titleMenuHandled = Game.UI.updateTitleMenu ? Game.UI.updateTitleMenu() : false;
+        if (titleMenuHandled) {
+          break;
+        }
+        if (Game.UI.isTitleOverlayOpen && Game.UI.isTitleOverlayOpen()) {
           break;
         }
         if (Game.Input.isPressed('confirm')) {
@@ -617,6 +620,9 @@ Game.Main = (function() {
             Game.SaveMenu.open({ context: 'title', action: 'passphrase' });
             setState(Game.Config.STATE.SAVE);
           } else if (sel === 3) {
+            Game.Audio.playSfx('confirm');
+            if (Game.UI.openTitleSettings) Game.UI.openTitleSettings();
+          } else if (sel === 4) {
             Game.Audio.playSfx('confirm');
             if (Game.UI.openAchievementList) Game.UI.openAchievementList();
           }
@@ -877,7 +883,10 @@ Game.Main = (function() {
         if (shouldFastForwardTransition()) {
           transitionAlpha = 1;
         } else {
-          transitionAlpha += TRANSITION_SPEED;
+          var transitionSpeed = Game.UI && Game.UI.getTransitionSpeedMultiplier
+            ? Game.UI.getTransitionSpeedMultiplier()
+            : 1;
+          transitionAlpha += TRANSITION_SPEED * transitionSpeed;
         }
         if (!transitionLoaded && transitionAlpha >= TRANSITION_LOAD_PROGRESS) {
           transitionLoaded = true;
@@ -1586,6 +1595,7 @@ Game.Main = (function() {
     }
     payload.ui = {
       showJourneyBadge: Game.UI && Game.UI.isJourneyBadgeEnabled ? Game.UI.isJourneyBadgeEnabled() : true,
+      gameSpeed: Game.UI && Game.UI.getGameSpeedLabel ? Game.UI.getGameSpeedLabel() : 'ふつう',
       eventTextSpeed: Game.UI && Game.UI.getEventTextSpeedLabel ? Game.UI.getEventTextSpeedLabel() : 'ふつう',
       battleDialogueSpeed: Game.UI && Game.UI.getBattleDialogueSpeedLabel ? Game.UI.getBattleDialogueSpeedLabel() : 'ふつう',
       areaBanner: Game.UI && Game.UI.getAreaBannerDebugState ? Game.UI.getAreaBannerDebugState() : null,

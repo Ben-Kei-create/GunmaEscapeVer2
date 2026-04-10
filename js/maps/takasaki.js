@@ -41,6 +41,17 @@ Game.Maps.takasaki = (function() {
         'この目と、願いの癖を刻んだだるまサイコロを持って行け。',
         '次の土地でも、お前の手つきが試される。'
       ],
+      contextDialog: [
+        {
+          flag: 'special_dice_intro_seen',
+          defeatedOnly: true,
+          lines: [
+            'だるまサイコロは、もうお前の手に馴染み始めているはずじゃ。',
+            '高い目より、どの願いを拾い上げるかを見失うな。',
+            '次の土地でも、空白の重さだけは置いていくでないぞ。'
+          ]
+        }
+      ],
       afterDefeat: 'event_special_dice_intro',
       defeated: false,
       giveItems: ['darumaEye', 'darumaDice'],

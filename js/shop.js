@@ -18,6 +18,13 @@ Game.Shop = (function() {
   var slotIndex = 0;
   var pendingDiceId = null;
 
+  function getUiControlHint(id, fallback) {
+    if (Game.UI && Game.UI.getControlHint) {
+      return Game.UI.getControlHint(id) || fallback || '';
+    }
+    return fallback || '';
+  }
+
   function clone(value) {
     return JSON.parse(JSON.stringify(value));
   }
@@ -263,7 +270,7 @@ Game.Shop = (function() {
           return null;
         }
         confirmBuy = true;
-        message = item.name + '（' + item.price + 'G）を買う？ Z:はい X:いいえ';
+        message = item.name + '（' + item.price + 'G）を買う？ 決定で買う / 戻る';
         Game.Audio.playSfx('confirm');
         return null;
       }
@@ -308,7 +315,7 @@ Game.Shop = (function() {
         pendingDiceId = itemId;
         selectingSlot = true;
         slotIndex = 0;
-        message = 'どのスロットに装備する？ ←→で選択 Zで決定';
+        message = 'どのスロットに装備する？ ←→で選ぶ / ' + getUiControlHint('equipLegend', '決定で装備');
         Game.Audio.playSfx('item');
         return null;
       }
@@ -474,7 +481,7 @@ Game.Shop = (function() {
       }
     } else {
       R.drawDialogBox(10, 274, C.CANVAS_WIDTH - 20, 40);
-      R.drawTextJP('Zキー: 購入  Xキー: 戻る', 20, 286, '#888', 10);
+      R.drawTextJP(getUiControlHint('buyLegend', '決定 購入  戻る'), 20, 286, '#888', 10);
     }
   }
 

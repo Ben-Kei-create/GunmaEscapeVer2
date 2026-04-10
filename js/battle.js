@@ -2330,7 +2330,7 @@ Game.Battle = (function() {
       if (!Game.Story.hasFlag('dice_battle_explained')) {
         checkpointIntroLines.push(
           { speaker: '主人公', text: 'ダイスが浮いた……。出したい目で止め、その数を関所へ重ねる。' },
-          { speaker: '主人公', text: '慌てるな。回る目を見て、SpaceかEnterで止める。' }
+          { speaker: '主人公', text: '慌てるな。回る目を見て、決定で止める。' }
         );
         if (Game.Story.setFlag) Game.Story.setFlag('dice_battle_explained');
       }
@@ -2550,6 +2550,13 @@ Game.Battle = (function() {
     return p.value;
   }
 
+  function getUiControlHint(id, fallback) {
+    if (Game.UI && Game.UI.getControlHint) {
+      return Game.UI.getControlHint(id) || fallback || '';
+    }
+    return fallback || '';
+  }
+
   function startDiceRoll() {
     phase = 'diceRoll';
     var equipped = Game.Player.getEquippedDice();
@@ -2575,7 +2582,7 @@ Game.Battle = (function() {
       diceStopped.push(false);
       diceResults.push(null);
     }
-    message = 'スペース/エンターで止めろ！ まだならX/Escで戻れる。';
+    message = getUiControlHint('diceStopStart', '決定で止める。まだなら戻る。');
   }
 
   function canCancelDiceRoll() {
@@ -3902,7 +3909,7 @@ Game.Battle = (function() {
 
   function getItemMenuFooter(selectedEntry) {
     if (!selectedEntry || !selectedEntry.item) {
-      return { leftText: '', leftColor: '#88dd88', rightText: 'Xで戻る' };
+      return { leftText: '', leftColor: '#88dd88', rightText: getUiControlHint('cancel', '戻る') };
     }
 
     if (itemMenuMode === 'ritual') {
@@ -3915,7 +3922,7 @@ Game.Battle = (function() {
             ? (matchesOffering ? slotLabel + ' へ返せる' : '次は ' + slotLabel)
             : '五つの記憶は揃っている',
           leftColor: !nextSlot ? '#f4eed7' : (matchesOffering ? '#ffd66b' : '#d59b9b'),
-          rightText: 'Xで戻る'
+          rightText: getUiControlHint('cancel', '戻る')
         };
       }
       var requiredId = ritualRuntime && ritualRuntime.ritualItemRequirement ? ritualRuntime.ritualItemRequirement : null;
@@ -3923,7 +3930,7 @@ Game.Battle = (function() {
       return {
         leftText: matches ? '欠け目に応える' : 'まだ噛み合わない',
         leftColor: matches ? '#ffd66b' : '#d59b9b',
-        rightText: 'Xで戻る'
+        rightText: getUiControlHint('cancel', '戻る')
       };
     }
 
@@ -3931,14 +3938,14 @@ Game.Battle = (function() {
       return {
         leftText: selectedEntry.item.desc,
         leftColor: '#8fe0ff',
-        rightText: 'Xで戻る'
+        rightText: getUiControlHint('cancel', '戻る')
       };
     }
 
     return {
       leftText: 'HP+' + selectedEntry.item.healAmount,
       leftColor: '#88dd88',
-      rightText: 'Xで戻る'
+      rightText: getUiControlHint('cancel', '戻る')
     };
   }
 
@@ -5174,7 +5181,7 @@ Game.Battle = (function() {
       }
       if (phase === 'diceRoll') {
         if (canCancelDiceRoll()) {
-          R.drawTextJP('X / Escで戻る', 332, 216, '#8b96b6', 10);
+          R.drawTextJP(getUiControlHint('cancel', '戻る'), 332, 216, '#8b96b6', 10);
         } else if (battleDice.length > 1) {
           R.drawTextJP('1個でも止めると戻れない', 292, 216, '#886d6d', 10);
         }
@@ -5208,7 +5215,7 @@ Game.Battle = (function() {
         '#ffffff',
         BATTLE_DIALOG_TEXT_SIZE
       );
-      R.drawTextJP('Space / Z / Enter', 448, dialogueY + dialogueBoxH - 12, '#c8d0e8', 8, 'right');
+      R.drawTextJP(getUiControlHint('confirm', '決定'), 448, dialogueY + dialogueBoxH - 12, '#c8d0e8', 8, 'right');
     }
 
     // Menu
@@ -5383,7 +5390,7 @@ Game.Battle = (function() {
         rewardY += 18 + Math.min(3, supportLogs.length) * 12;
       }
 
-      R.drawTextJP('Space / Z / Enter で進む', 240, panelY + panelH - 18, '#b7bfd8', 9, 'center');
+      R.drawTextJP(getUiControlHint('advance', '決定で進む'), 240, panelY + panelH - 18, '#b7bfd8', 9, 'center');
     }
 
     drawCompanionSupportOverlay(R, ctx, C);

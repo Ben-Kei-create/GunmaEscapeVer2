@@ -22,6 +22,24 @@ Game.UI = (function() {
     { id: 'normal', label: 'ふつう', frames: 70, color: '#ffd66b' },
     { id: 'slow', label: 'ゆっくり', frames: 94, color: '#cdb7ff' }
   ];
+  var GAME_SPEED_CHOICES = [
+    { id: 'slow', label: 'ゆっくり', moveFrames: 10, transitionMultiplier: 0.82, color: '#cdb7ff' },
+    { id: 'normal', label: 'ふつう', moveFrames: 8, transitionMultiplier: 1, color: '#ffd66b' },
+    { id: 'fast', label: 'きびきび', moveFrames: 6, transitionMultiplier: 1.18, color: '#8fe0ff' }
+  ];
+  var CONTROL_KEYS = {
+    confirm: 'Z / Enter / Space',
+    cancel: 'X / Esc',
+    horizontal: '←→',
+    vertical: '↑↓',
+    move: '矢印 / WASD'
+  };
+  var CONTROL_GUIDE_ROWS = [
+    { label: '決定', value: CONTROL_KEYS.confirm },
+    { label: '戻る', value: CONTROL_KEYS.cancel },
+    { label: '選択', value: CONTROL_KEYS.vertical },
+    { label: '切替', value: CONTROL_KEYS.horizontal }
+  ];
   var uiSettings = loadUiSettings();
   var areaBanner = {
     active: false,
@@ -57,6 +75,10 @@ Game.UI = (function() {
     messageTimer: 0
   };
   var titleAchievementListOpen = false;
+  var titleSettingsState = {
+    open: false,
+    index: 0
+  };
   var skillLearnState = {
     active: false,
     skillId: null,
@@ -70,6 +92,7 @@ Game.UI = (function() {
     '県境の向こうへ、最初の一歩を踏み出す。',
     '残した記録から旅を再開する。',
     'あいことばで旅の続きへ戻る。',
+    '速度や表示テンポをタイトルで整える。',
     '実績と解放状況を確認する。'
   ];
   var DIALOG_TEXT_MAX_CHARS = 36;
@@ -101,9 +124,25 @@ Game.UI = (function() {
   function getDefaultUiSettings() {
     return {
       showJourneyBadge: true,
+      gameSpeed: 'normal',
       eventTextSpeed: 'normal',
       battleDialogueSpeed: 'normal'
     };
+  }
+
+  function normalizeGameSpeed(id) {
+    for (var i = 0; i < GAME_SPEED_CHOICES.length; i++) {
+      if (GAME_SPEED_CHOICES[i].id === id) return GAME_SPEED_CHOICES[i].id;
+    }
+    return 'normal';
+  }
+
+  function getGameSpeedChoice() {
+    var currentId = normalizeGameSpeed(uiSettings.gameSpeed);
+    for (var i = 0; i < GAME_SPEED_CHOICES.length; i++) {
+      if (GAME_SPEED_CHOICES[i].id === currentId) return GAME_SPEED_CHOICES[i];
+    }
+    return GAME_SPEED_CHOICES[1];
   }
 
   function normalizeEventTextSpeed(id) {
@@ -144,6 +183,7 @@ Game.UI = (function() {
       var parsed = JSON.parse(raw);
       return {
         showJourneyBadge: parsed.showJourneyBadge !== false,
+        gameSpeed: normalizeGameSpeed(parsed.gameSpeed || defaults.gameSpeed),
         eventTextSpeed: normalizeEventTextSpeed(parsed.eventTextSpeed || defaults.eventTextSpeed),
         battleDialogueSpeed: normalizeBattleDialogueSpeed(parsed.battleDialogueSpeed || defaults.battleDialogueSpeed)
       };
@@ -216,6 +256,102 @@ Game.UI = (function() {
   function clampText(text, maxChars) {
     if (!text || text.length <= maxChars) return text || '';
     return text.substring(0, Math.max(0, maxChars - 1)) + '…';
+  }
+
+  function getControlHint(id) {
+    switch (id) {
+      case 'confirm':
+        return '決定';
+      case 'cancel':
+        return '戻る';
+      case 'advance':
+        return '決定で進む';
+      case 'titleAdvance':
+        return '決定でタイトルへ';
+      case 'transitionSkip':
+        return '決定で到着を早める';
+      case 'dialogLegend':
+        return '決定';
+      case 'fieldMenuLegend':
+        return '切替 ' + CONTROL_KEYS.horizontal + '  選択 ' + CONTROL_KEYS.vertical + '  決定  戻る';
+      case 'titleLegend':
+        return '移動 ' + CONTROL_KEYS.move + '  決定  メニュー';
+      case 'buyLegend':
+        return '決定 購入  戻る';
+      case 'openLegend':
+        return '決定 ひらく  戻る';
+      case 'titleSettingsLegend':
+        return '選択 ' + CONTROL_KEYS.vertical + '  切替 ' + CONTROL_KEYS.horizontal + '  戻る';
+      case 'learnLegend':
+        return '決定 習得';
+      case 'skipLegend':
+        return '戻る 見送る';
+      case 'replaceLegend':
+        return '決定 入れ替え  戻る 覚えない';
+      case 'busLegend':
+        return '決定で乗る / 戻る';
+      case 'diceStop':
+        return '決定で止める';
+      case 'diceStopStart':
+        return '決定で止める。まだなら戻る。';
+      case 'equipLegend':
+        return '決定で装備';
+      default:
+        return '';
+    }
+  }
+
+  function drawControlGuideSummary(R, x, y) {
+    for (var i = 0; i < CONTROL_GUIDE_ROWS.length; i++) {
+      var row = CONTROL_GUIDE_ROWS[i];
+      var rowY = y + i * 9;
+      R.drawTextJP(row.label, x, rowY, i < 2 ? '#8fe0ff' : '#9fb6dc', 8);
+      R.drawTextJP(row.value, x + 34, rowY, '#ffffff', 8);
+    }
+  }
+
+  function getTitleMenuOptions() {
+    return ['はじめから', 'つづきから', 'あいことば', '設定', '実績'];
+  }
+
+  function getTitleSettingsOptions() {
+    var gameSpeed = getGameSpeedChoice();
+    var eventTextSpeed = getEventTextSpeedChoice();
+    var battleDialogueSpeed = getBattleDialogueSpeedChoice();
+    return [
+      {
+        id: 'gameSpeed',
+        label: 'ゲーム進行',
+        valueLabel: gameSpeed.label,
+        valueColor: gameSpeed.color,
+        description: '歩行と回送ムービーのテンポを切り替える。'
+      },
+      {
+        id: 'eventTextSpeed',
+        label: '文字速度',
+        valueLabel: eventTextSpeed.label,
+        valueColor: eventTextSpeed.color,
+        description: '章イベントと会話送りの表示テンポを整える。'
+      },
+      {
+        id: 'battleDialogueSpeed',
+        label: '戦闘会話',
+        valueLabel: battleDialogueSpeed.label,
+        valueColor: battleDialogueSpeed.color,
+        description: '戦闘中の台詞や演出文の流れを切り替える。'
+      }
+    ];
+  }
+
+  function getTitleDescription(selectedIndex, continueInfo, hasSave) {
+    var description = titleDescriptions[selectedIndex] || '';
+    if (selectedIndex === 1 && continueInfo) {
+      return (continueInfo.mapLabel || continueInfo.mapName || '不明') + ' から旅を再開する。';
+    }
+    if (selectedIndex === 1 && !hasSave) {
+      return 'まだ記録がない。前橋の牧師で旅を記す。';
+    }
+    return description;
   }
 
   function shouldCountNpc(npc) {
@@ -360,7 +496,7 @@ Game.UI = (function() {
     R.drawTextJP(scene.title, titleX, titleY, scene.accent || '#fff', 18);
     drawWrappedTextBlock(scene.subtitle, titleX, titleY + 20, 28, 2, 12, '#f1f5ff', 9);
     R.drawRectAbsolute(304, 282, 158, 12, 'rgba(4,8,18,0.72)');
-    R.drawTextJP('クリック / Space / Z / Enter でタイトルへ', 458, 284, '#ecf1ff', 8, 'right');
+    R.drawTextJP('クリック / ' + getControlHint('titleAdvance'), 458, 284, '#ecf1ff', 8, 'right');
   }
 
   function drawIntroHighwayScene(ctx, t) {
@@ -565,6 +701,7 @@ Game.UI = (function() {
     var scene = getCurrentIntroScene();
     return {
       mode: introMovie.active ? 'intro_movie' : (introMovie.titleRevealTimer > 0 ? 'title_reveal' : 'title_menu'),
+      overlay: titleSettingsState.open ? 'settings' : (titleAchievementListOpen ? 'achievements' : ''),
       sceneId: scene ? scene.id : null,
       sceneTitle: scene ? scene.title : null,
       sceneIndex: introMovie.sceneIndex,
@@ -787,13 +924,14 @@ Game.UI = (function() {
 
     // Menu selection
     blinkTimer++;
-    var menuOptions = ['はじめから', 'つづきから', 'あいことば', '実績'];
+    var menuOptions = getTitleMenuOptions();
     var continueInfo = Game.Save && Game.Save.getSlotInfo ? Game.Save.getSlotInfo(1) : null;
     var hasSave = Game.Save && Game.Save.hasAnySave && Game.Save.hasAnySave();
     var menuX = 148;
-    var menuY = 176;
-    R.drawDialogBox(menuX, menuY, 184, 92);
-    drawPanelAccent(menuX, menuY, 184, 92, Game.Config.COLORS.GOLD);
+    var menuY = 168;
+    var menuH = 108;
+    R.drawDialogBox(menuX, menuY, 184, menuH);
+    drawPanelAccent(menuX, menuY, 184, menuH, Game.Config.COLORS.GOLD);
     var highlightY = menuY + 14 + titleSelectionVisual * 18;
     var pulse = (Math.sin(titleTimer / 7) + 1) * 0.5;
     var flash = titleHighlightFlash / 8;
@@ -823,19 +961,47 @@ Game.UI = (function() {
 
     R.drawDialogBox(108, 278, 264, 18);
     drawPanelAccent(108, 278, 264, 18, '#6e7ea7');
-    var titleDescription = titleDescriptions[titleSelection] || '';
-    if (titleSelection === 1 && continueInfo) {
-      titleDescription = (continueInfo.mapLabel || continueInfo.mapName || '不明') + ' から旅を再開する。';
-    } else if (titleSelection === 1 && !hasSave) {
-      titleDescription = 'まだ記録がない。前橋の牧師で旅を記す。';
-    }
+    var titleDescription = getTitleDescription(titleSelection, continueInfo, hasSave);
     R.drawTextJP(titleDescription, 240, 282, '#dbe5ff', 8, 'center');
-    R.drawTextJP('矢印/WASD: 移動  Z/Enter: 決定  X/Esc: メニュー', 240, 306, '#616c8a', 8, 'center');
+    R.drawTextJP(getControlHint('titleLegend'), 240, 306, '#616c8a', 8, 'center');
+
+    if (titleSettingsState.open) {
+      drawTitleSettingsPanel();
+    }
 
     R.drawText('v2.1', 430, 318, '#444', 10);
     if (introMovie.titleRevealTimer > 0) {
       R.fadeOverlay(introMovie.titleRevealTimer / INTRO_TITLE_FADE_FRAMES);
     }
+  }
+
+  function drawTitleSettingsPanel() {
+    var R = Game.Renderer;
+    var options = getTitleSettingsOptions();
+    var current = options[titleSettingsState.index];
+    if (!current) return;
+
+    R.drawRectAbsolute(0, 0, Game.Config.CANVAS_WIDTH, Game.Config.CANVAS_HEIGHT, 'rgba(4, 6, 18, 0.52)');
+    R.drawDialogBox(88, 102, 304, 120);
+    drawPanelAccent(88, 102, 304, 120, '#8fe0ff');
+    R.drawTextJP('タイトル設定', 240, 114, '#8fe0ff', 12, 'center');
+    R.drawTextJP('開始前にテンポを整える。', 240, 128, '#cfd7f2', 8, 'center');
+    drawInsetPanel(102, 142, 118, 60, '項目', Game.Config.COLORS.GOLD, Game.Config.COLORS.GOLD);
+    drawInsetPanel(232, 142, 146, 60, '内容', '#8fb8ff', '#8fb8ff');
+
+    for (var i = 0; i < options.length; i++) {
+      var selected = i === titleSettingsState.index;
+      var lineY = 158 + i * 13;
+      if (selected) {
+        R.drawRectAbsolute(108, lineY - 1, 104, 12, 'rgba(255,204,0,0.12)');
+      }
+      R.drawTextJP((selected ? '▶ ' : '  ') + options[i].label, 112, lineY, selected ? Game.Config.COLORS.GOLD : '#ffffff', 9);
+    }
+
+    R.drawTextJP(current.label, 242, 158, '#ffffff', 10);
+    R.drawTextJP(current.valueLabel, 366, 158, current.valueColor, 9, 'right');
+    drawWrappedTextBlock(current.description, 242, 172, 14, 3, 10, '#cfd7f2', 8);
+    R.drawTextJP(getControlHint('titleSettingsLegend'), 240, 208, '#7e8cac', 8, 'center');
   }
 
   function drawHUD() {
@@ -919,7 +1085,7 @@ Game.UI = (function() {
     if (blinkTimer % 40 < 25) {
       R.drawTextJP('▼', Game.Config.CANVAS_WIDTH - 36, Game.Config.CANVAS_HEIGHT - 24, '#fff', 12);
     }
-    R.drawTextJP('Z / Enter', Game.Config.CANVAS_WIDTH - 94, Game.Config.CANVAS_HEIGHT - 24, '#8092ba', 8);
+    R.drawTextJP(getControlHint('dialogLegend'), Game.Config.CANVAS_WIDTH - 94, Game.Config.CANVAS_HEIGHT - 24, '#8092ba', 8);
     blinkTimer++;
   }
 
@@ -1031,11 +1197,17 @@ Game.UI = (function() {
     }
 
     var sectionHints = ['使う・捨てるで持ち物を整理', '役目に応じてサイコロを組み替える', '防具で守りを整える', '見つけた停留所へ高速移動する', '表示と現在地図を整える'];
+    if (fieldMenuState.section === 4) {
+      var currentSetting = getSettingsOptions()[fieldMenuState.settingIndex];
+      if (currentSetting && currentSetting.id === 'controlGuide') {
+        sectionHints[4] = '決定と戻るの基本操作をここで確認する';
+      }
+    }
     var footerText = fieldMenuState.messageTimer > 0 && fieldMenuState.message
       ? clampText(fieldMenuState.message, 40)
       : sectionHints[fieldMenuState.section];
     R.drawTextJP(footerText, 72, 286, fieldMenuState.messageTimer > 0 ? '#ffffff' : '#9aa7c9', 8);
-    R.drawTextJP('←→ 切替  ↑↓ 選択  Z/Space 決定  X 戻る', 240, 296, '#6f7c9d', 8, 'center');
+    R.drawTextJP(getControlHint('fieldMenuLegend'), 240, 296, '#6f7c9d', 8, 'center');
   }
 
   function drawItemMenuSection(R, C, pd) {
@@ -1211,6 +1383,7 @@ Game.UI = (function() {
     var detailW = 186;
     var panelH = 62;
     var settingsOptions = getSettingsOptions();
+    var visibleSettings = 4;
     var mapInfo = getMapInfo();
     var map = Game.Map.getCurrentMap();
     var continueInfo = Game.Save && Game.Save.getSlotInfo ? Game.Save.getSlotInfo(1) : null;
@@ -1224,24 +1397,42 @@ Game.UI = (function() {
       }
     }
 
-    drawInsetPanel(listX, panelY, listW, panelH, '記録と設定', C.COLORS.GOLD, C.COLORS.GOLD);
-    drawInsetPanel(detailX, panelY, detailW, panelH, '項目詳細 / 現在地図', '#8fb8ff', '#8fb8ff');
+    var detailTitle = (settingsOptions[fieldMenuState.settingIndex] && settingsOptions[fieldMenuState.settingIndex].id === 'controlGuide')
+      ? '項目詳細 / 基本操作'
+      : '項目詳細 / 現在地図';
 
-    for (var i = 0; i < settingsOptions.length; i++) {
+    drawInsetPanel(listX, panelY, listW, panelH, '記録と設定', C.COLORS.GOLD, C.COLORS.GOLD);
+    drawInsetPanel(detailX, panelY, detailW, panelH, detailTitle, '#8fb8ff', '#8fb8ff');
+
+    var maxOffset = Math.max(0, settingsOptions.length - visibleSettings);
+    var scrollOffset = Math.min(maxOffset, Math.max(0, fieldMenuState.settingIndex - visibleSettings + 1));
+
+    for (var i = scrollOffset; i < settingsOptions.length && i < scrollOffset + visibleSettings; i++) {
       var option = settingsOptions[i];
       var selected = (i === fieldMenuState.settingIndex);
-      var lineY = panelY + 18 + i * 10;
+      var lineY = panelY + 18 + (i - scrollOffset) * 10;
       if (selected) {
         R.drawRectAbsolute(listX + 6, lineY - 1, listW - 12, 11, 'rgba(255,204,0,0.12)');
       }
       R.drawTextJP((selected ? '▶ ' : '  ') + clampText(option.label, 8), listX + 10, lineY, selected ? C.COLORS.GOLD : '#fff', 10);
       R.drawTextJP(option.valueLabel, listX + listW - 10, lineY, option.valueColor, 9, 'right');
     }
+    if (scrollOffset > 0) {
+      R.drawTextJP('▲', listX + listW - 18, panelY + 8, '#7e8cac', 8);
+    }
+    if (scrollOffset + visibleSettings < settingsOptions.length) {
+      R.drawTextJP('▼', listX + listW - 18, panelY + panelH - 9, '#7e8cac', 8);
+    }
 
     var current = settingsOptions[fieldMenuState.settingIndex];
     if (!current) return;
     R.drawTextJP(current.label, detailX + 10, panelY + 18, '#ffffff', 10);
     R.drawTextJP(current.valueLabel, detailX + 102, panelY + 18, current.valueColor, 9, 'right');
+    if (current.id === 'controlGuide') {
+      drawControlGuideSummary(R, detailX + 10, panelY + 30);
+      R.drawTextJP('会話・戦闘・習得は 基本「決定」', detailX + 10, panelY + 56, '#9fb6dc', 7);
+      return;
+    }
     drawWrappedTextBlock(current.description, detailX + 10, panelY + 30, 10, 2, 10, '#b7c3e3', 9);
     R.drawTextJP(clampText(currentMapLabel, 8), detailX + 10, panelY + 52, '#8fe0ff', 8);
     if (current.id === 'saveBook' && continueInfo) {
@@ -1313,7 +1504,7 @@ Game.UI = (function() {
     if (!current) return;
     R.drawTextJP(current.label, detailX + 10, panelY + 18, '#ffffff', 11);
     R.drawTextJP('停留所 ' + (fieldMenuState.busIndex + 1) + '/' + destinations.length, detailX + detailW - 10, panelY + 18, '#8fe0ff', 8, 'right');
-    R.drawTextJP('Zで乗る / Xで閉じる', detailX + 10, panelY + 30, '#8fe0ff', 9);
+    R.drawTextJP(getControlHint('busLegend'), detailX + 10, panelY + 30, '#8fe0ff', 9);
     R.drawTextJP(current.mapId === currentMapId ? 'いまいる停留所' : 'ぐるりんは群馬じゅうを巡る。', detailX + 10, panelY + 42, '#dbe3ff', 9);
     R.drawTextJP('訪れた停留所へ瞬時に移動できる。', detailX + 10, panelY + 52, '#dbe3ff', 9);
   }
@@ -1357,8 +1548,8 @@ Game.UI = (function() {
       if (alreadyKnown) {
         R.drawTextJP('重ねて覚えると残り回数が増える。', 82, 182, '#ffcf9d', 9);
       }
-      R.drawTextJP('Z: おぼえる', 82, panelY + panelH - 18, '#ffd66b', 10);
-      R.drawTextJP('X: みおくる', 238, panelY + panelH - 18, '#9aa7c9', 10);
+      R.drawTextJP(getControlHint('learnLegend'), 82, panelY + panelH - 18, '#ffd66b', 10);
+      R.drawTextJP(getControlHint('skipLegend'), 238, panelY + panelH - 18, '#9aa7c9', 10);
       return;
     }
 
@@ -1372,7 +1563,7 @@ Game.UI = (function() {
       }
       R.drawTextJP((selected ? '▶ ' : '  ') + (known ? known.name : knownSkills[i]), 84, rowY, selected ? C.COLORS.GOLD : '#dce6ff', 8);
     }
-    R.drawTextJP('Z: 入れ替え  X: 覚えない', 82, panelY + panelH - 14, '#9aa7c9', 9);
+    R.drawTextJP(getControlHint('replaceLegend'), 82, panelY + panelH - 14, '#9aa7c9', 9);
   }
 
   function clampFieldMenuSelection() {
@@ -1484,6 +1675,7 @@ Game.UI = (function() {
   }
 
   function getSettingsOptions() {
+    var gameSpeed = getGameSpeedChoice();
     var eventTextSpeed = getEventTextSpeedChoice();
     var battleDialogueSpeed = getBattleDialogueSpeedChoice();
     return [
@@ -1502,6 +1694,22 @@ Game.UI = (function() {
         valueLabel: 'ひらく',
         valueColor: '#8fe0ff',
         description: '町で受けた依頼と達成状況をまとめて確認する。'
+      },
+      {
+        id: 'controlGuide',
+        label: '操作ガイド',
+        value: 'guide',
+        valueLabel: '確認',
+        valueColor: '#cfd7f2',
+        description: '決定や戻るなどの基本操作をまとめて確認する。'
+      },
+      {
+        id: 'gameSpeed',
+        label: '進行速度',
+        value: gameSpeed.id,
+        valueLabel: gameSpeed.label,
+        valueColor: gameSpeed.color,
+        description: '歩行や回送ムービーの進み具合を切り替える。'
       },
       {
         id: 'showJourneyBadge',
@@ -1542,6 +1750,22 @@ Game.UI = (function() {
     var nextIndex = (currentIndex + dir + EVENT_TEXT_SPEED_CHOICES.length) % EVENT_TEXT_SPEED_CHOICES.length;
     var nextChoice = EVENT_TEXT_SPEED_CHOICES[nextIndex];
     uiSettings.eventTextSpeed = nextChoice.id;
+    saveUiSettings();
+    return nextChoice;
+  }
+
+  function cycleGameSpeed(dir) {
+    var current = getGameSpeedChoice();
+    var currentIndex = 0;
+    for (var i = 0; i < GAME_SPEED_CHOICES.length; i++) {
+      if (GAME_SPEED_CHOICES[i].id === current.id) {
+        currentIndex = i;
+        break;
+      }
+    }
+    var nextIndex = (currentIndex + dir + GAME_SPEED_CHOICES.length) % GAME_SPEED_CHOICES.length;
+    var nextChoice = GAME_SPEED_CHOICES[nextIndex];
+    uiSettings.gameSpeed = nextChoice.id;
     saveUiSettings();
     return nextChoice;
   }
@@ -1867,10 +2091,22 @@ Game.UI = (function() {
       }
       return null;
     }
+    if (current.id === 'controlGuide') {
+      if (Game.Input.isPressed('confirm')) {
+        setFieldMenuMessage('右の欄に基本操作をまとめてある。', 36);
+        Game.Audio.playSfx('confirm');
+      }
+      return null;
+    }
     var shouldToggle = Game.Input.isPressed('confirm') || Game.Input.isPressed('left') || Game.Input.isPressed('right');
     if (!shouldToggle) return null;
 
-    if (current.id === 'showJourneyBadge') {
+    if (current.id === 'gameSpeed') {
+      var gameDirection = Game.Input.isPressed('left') ? -1 : 1;
+      var nextGameSpeed = cycleGameSpeed(gameDirection);
+      setFieldMenuMessage('進行速度を「' + nextGameSpeed.label + '」にした。', 45);
+      Game.Audio.playSfx('confirm');
+    } else if (current.id === 'showJourneyBadge') {
       uiSettings.showJourneyBadge = !uiSettings.showJourneyBadge;
       saveUiSettings();
       setFieldMenuMessage('進行バッジを' + (uiSettings.showJourneyBadge ? '表示' : '非表示') + 'にした。', 45);
@@ -1910,7 +2146,7 @@ Game.UI = (function() {
 
     blinkTimer++;
     if (blinkTimer % 60 < 40) {
-      R.drawTextJP('Zキーでタイトルに戻る', 150, 258, '#fff', 14);
+      R.drawTextJP(getControlHint('titleAdvance'), 150, 258, '#fff', 14);
     }
   }
 
@@ -1944,7 +2180,7 @@ Game.UI = (function() {
 
     blinkTimer++;
     if (blinkTimer % 60 < 40) {
-      R.drawTextJP('Zキーでタイトルに戻る', 150, 308, '#fff', 10);
+      R.drawTextJP(getControlHint('titleAdvance'), 150, 308, '#fff', 10);
     }
   }
 
@@ -2070,7 +2306,7 @@ Game.UI = (function() {
       R.drawTextJP('次: ' + clampText(transitionInfo.targetLabel, 14), 404, 42, '#ffe08f', 9, 'right');
     }
     R.drawTextJP('停車所 ' + (Math.min(stops.length, Math.max(1, busState.stopIndex + 1))) + '/' + stops.length, 404, 58, '#8fb8ff', 8, 'right');
-    R.drawTextJP('Z / Enterで到着を早める', 404, 72, '#7e89ad', 7, 'right');
+    R.drawTextJP(getControlHint('transitionSkip'), 404, 72, '#7e89ad', 7, 'right');
 
     ctx.strokeStyle = 'rgba(95, 212, 151, ' + routeGlow.toFixed(3) + ')';
     ctx.lineWidth = 4;
@@ -2317,22 +2553,75 @@ Game.UI = (function() {
         titleAchievementListOpen = false;
         Game.Audio.playSfx('cancel');
       }
-      return;
+      return true;
     }
+    if (titleSettingsState.open) {
+      updateTitleSettingsMenu();
+      return true;
+    }
+    var optionCount = getTitleMenuOptions().length;
     if (Game.Input.isPressed('up')) {
-      titleSelection = (titleSelection - 1 + 4) % 4;
+      titleSelection = (titleSelection - 1 + optionCount) % optionCount;
       titleHighlightFlash = 8;
+      Game.Audio.playSfx('confirm');
+      return true;
+    }
+    if (Game.Input.isPressed('down')) {
+      titleSelection = (titleSelection + 1) % optionCount;
+      titleHighlightFlash = 8;
+      Game.Audio.playSfx('confirm');
+      return true;
+    }
+    return false;
+  }
+
+  function updateTitleSettingsMenu() {
+    var options = getTitleSettingsOptions();
+    if (!options.length) return;
+    if (Game.Input.isPressed('up')) {
+      titleSettingsState.index = (titleSettingsState.index - 1 + options.length) % options.length;
       Game.Audio.playSfx('confirm');
     }
     if (Game.Input.isPressed('down')) {
-      titleSelection = (titleSelection + 1) % 4;
-      titleHighlightFlash = 8;
+      titleSettingsState.index = (titleSettingsState.index + 1) % options.length;
       Game.Audio.playSfx('confirm');
     }
+    if (Game.Input.isPressed('cancel')) {
+      closeTitleSettings();
+      Game.Audio.playSfx('cancel');
+      return;
+    }
+    var shouldToggle = Game.Input.isPressed('confirm') || Game.Input.isPressed('left') || Game.Input.isPressed('right');
+    if (!shouldToggle) return;
+
+    var current = options[titleSettingsState.index];
+    if (!current) return;
+    if (current.id === 'gameSpeed') {
+      cycleGameSpeed(Game.Input.isPressed('left') ? -1 : 1);
+    } else if (current.id === 'eventTextSpeed') {
+      cycleEventTextSpeed(Game.Input.isPressed('left') ? -1 : 1);
+    } else if (current.id === 'battleDialogueSpeed') {
+      cycleBattleDialogueSpeed(Game.Input.isPressed('left') ? -1 : 1);
+    }
+    Game.Audio.playSfx('confirm');
+  }
+
+  function isTitleOverlayOpen() {
+    return !!(titleAchievementListOpen || titleSettingsState.open);
   }
 
   function isAchievementListOpen() {
     return titleAchievementListOpen;
+  }
+
+  function openTitleSettings() {
+    titleSettingsState.open = true;
+    titleSettingsState.index = 0;
+  }
+
+  function closeTitleSettings() {
+    titleSettingsState.open = false;
+    titleSettingsState.index = 0;
   }
 
   function openAchievementList() {
@@ -2433,6 +2722,18 @@ Game.UI = (function() {
     return getEventTextSpeedChoice().label;
   }
 
+  function getGameSpeedLabel() {
+    return getGameSpeedChoice().label;
+  }
+
+  function getMoveSpeedFrames() {
+    return getGameSpeedChoice().moveFrames;
+  }
+
+  function getTransitionSpeedMultiplier() {
+    return getGameSpeedChoice().transitionMultiplier;
+  }
+
   function getBattleDialogueSpeedFrames() {
     return getBattleDialogueSpeedChoice().frames;
   }
@@ -2450,6 +2751,7 @@ Game.UI = (function() {
       busDestinationCount: busDestinations.length,
       busSelection: busDestinations[fieldMenuState.busIndex] ? busDestinations[fieldMenuState.busIndex].mapId : null,
       settingIndex: fieldMenuState.settingIndex,
+      gameSpeed: uiSettings.gameSpeed,
       eventTextSpeed: uiSettings.eventTextSpeed,
       battleDialogueSpeed: uiSettings.battleDialogueSpeed
     };
@@ -2519,13 +2821,20 @@ Game.UI = (function() {
     paginateDialogText: paginateDialogText,
     isJourneyBadgeEnabled: isJourneyBadgeEnabled,
     setJourneyBadgeEnabled: setJourneyBadgeEnabled,
+    getGameSpeedLabel: getGameSpeedLabel,
+    getMoveSpeedFrames: getMoveSpeedFrames,
+    getTransitionSpeedMultiplier: getTransitionSpeedMultiplier,
     getEventTextSpeedFrames: getEventTextSpeedFrames,
     getEventTextSpeedLabel: getEventTextSpeedLabel,
     getBattleDialogueSpeedFrames: getBattleDialogueSpeedFrames,
     getBattleDialogueSpeedLabel: getBattleDialogueSpeedLabel,
+    getControlHint: getControlHint,
     getFieldMenuDebugState: getFieldMenuDebugState,
     getAreaBannerDebugState: getAreaBannerDebugState,
     getEnvironmentNoteDebugState: getEnvironmentNoteDebugState,
-    setFieldMenuSectionForDebug: setFieldMenuSectionForDebug
+    setFieldMenuSectionForDebug: setFieldMenuSectionForDebug,
+    isTitleOverlayOpen: isTitleOverlayOpen,
+    openTitleSettings: openTitleSettings,
+    closeTitleSettings: closeTitleSettings
   };
 })();

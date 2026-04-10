@@ -13,6 +13,21 @@ Original prompt: そうだね。セーブできる村役場みたいなところ
   - headless Playwright で `title / save_menu / regular_battle / group_battle / ritual_battle` の5シーンを取得。
   - 新規の console error / pageerror は 0 件。
   - タイトル、記録画面、通常戦、群れ戦、儀式戦の描画は成立している一方、保存導線の少なさと通常戦での敵の読み取りづらさが現在の体験上の弱点と判断。
+- 2026-04-10: タイトル画面から調整できる `設定` を追加し、`進行速度 / 文字速度 / 戦闘会話` をトップから切り替えられるようにした。
+  - `js/ui.js`
+    - タイトルメニューに `設定` を追加し、専用オーバーレイ `タイトル設定` を実装。
+    - `進行速度` の選択肢を `ゆっくり / ふつう / きびきび` で追加し、フィールド側の `記録と設定` にも同じ項目を並べた。
+    - UI設定の保存値へ `gameSpeed` を追加し、ローカル保存から復元するよう更新。
+  - `js/main.js`
+    - タイトル状態で `設定` オーバーレイを開閉できるよう分岐を追加。
+    - ぐるりん回送やマップ遷移のフェード速度にも `gameSpeed` を反映。
+    - `render_game_to_text` の `ui` に現在の進行速度ラベルを追加。
+  - `js/player.js`
+    - 歩行開始時と停止時に、UI設定から移動フレーム数を読み直すよう更新。
+  - 検証
+    - `node --check js/ui.js js/main.js js/player.js` と `git diff --check` 通過。
+    - Playwright client でタイトルの `設定` オーバーレイを確認し、`gameSpeed: きびきび` 反映状態のスクリーンショットを `output/web-game-20260410/title-speed-settings/` に保存。
+    - 追加のPlaywright検証で `ゆっくり` は `moveSpeed: 10`、`きびきび` は `moveSpeed: 6` として反映され、同じ 7 フレーム入力でも `x` 座標の進みが異なることを `output/web-game-20260410/title-speed-movement-check/summary.json` に記録。
 - 2026-04-05: すぐ効く改善を実装。
   - `js/ui.js`
     - フィールドメニューの `記録と設定` に `記録帳` を追加し、探索中のどこからでも記録帳を開けるようにした。
@@ -1386,3 +1401,45 @@ Original prompt: そうだね。セーブできる村役場みたいなところ
       - 章移動シナリオでは `transitionProgress` が即進み、ボタン入力で到着待ちを短縮できることを確認。
     - `develop-web-game` の Playwright client を `output/web-game-20260410/post-fix-opening-client-2` で再実行し、`state-0.json` が `mode: exploring / map: maebashi / currentBgm: field_maebashi` になることを確認。
     - `output/web-game-20260410/post-fix-opening-client-2/shot-0.png` を目視し、前橋の初期表示まで正常に到達することを確認。
+- 2026-04-10: 実戦経由 / 実会話経由の手動寄りQAを追加。
+  - 対象:
+    - `だるま師匠` に話しかける -> `battle_daruma_master` -> 儀式戦勝利 -> 撃破後会話 -> `special_dice_intro` -> フィールド復帰 -> 再会話
+    - `ぐるりん停留所` に話しかける -> `event_gururin` -> フィールド復帰 -> 再会話
+  - 結果:
+    - `output/web-game-20260410/qa-phase5-actual-paths/summary.json` で2観点とも完走、`console error / pageerror = 0`。
+    - だるま導線では `battle intro -> menu -> diceRoll -> diceResult(hpZeroReached) -> victory -> reward -> skill_learn -> defeated dialog -> special_dice_intro -> exploring` の実遷移を確認。
+    - ぐるりん導線では `dialog -> gururin event -> exploring -> defeatedDialog` の実遷移を確認。
+  - 修正:
+    - `js/maps/takasaki.js`
+      - `だるま師匠` に `special_dice_intro_seen` 後専用の `contextDialog` を追加。
+      - これでクリア後の再会話が報酬再配布っぽい文面を繰り返さず、使用感の会話へ切り替わる。
+  - 目視メモ:
+    - `qa-phase5-actual-paths/daruma-actual-15-battle-resolve.png`: 儀式戦報酬後に `skill_learn` が挟まることを確認。
+    - `qa-phase5-actual-paths/daruma-actual-16-battle-resolve.png`: `skill_learn` 後に撃破後会話へ戻ることを確認。
+    - `qa-phase5-actual-paths/daruma-actual-26-repeat-talk-open.png`: 再会話が `だるまサイコロは、もうお前の手に馴染み始めているはずじゃ。` へ切り替わることを確認。
+    - `qa-phase5-actual-paths/gururin-actual-05-repeat-talk.png`: 停留所の再会話が車内灯の余韻台詞に変わっていることを確認。
+- 2026-04-10: 操作案内を共通化し、設定から基本操作を確認できるよう整理。
+  - 対応:
+    - `js/ui.js`
+      - `getControlHint()` を追加し、`決定 / 戻る / 進む / 止める` などの案内文を共通化。
+      - 設定に `操作ガイド` 項目を追加し、右欄へ `決定 / 戻る / 選択 / 切替` の対応表を常設表示。
+      - フィールドメニュー、タイトル、会話、スキル習得、ぐるりん回送の表記を短い共通ラベルへ変更。
+    - `js/event.js`
+      - イベント送りの表示を `決定で進む` に統一。
+    - `js/battle.js`
+      - ダイス停止案内を `決定で止める。まだなら戻る。` に整理。
+      - 会話送り、アイテム欄の戻り表記、勝利後送りの文言を共通ラベルへ変更。
+    - `js/save_menu.js`
+      - 記録帳 / あいことば画面のフッター表記を `決定 ひらく  戻る` 系へ整理。
+    - `js/shop.js`
+      - 店のフッターを `決定 購入  戻る` に整理。
+      - サイコロ装備先の案内を `←→で選ぶ / 決定で装備` に変更。
+  - 検証:
+    - `node --check js/ui.js js/battle.js js/event.js js/save_menu.js js/shop.js` 通過。
+    - `git diff --check` 通過。
+    - `output/web-game-20260410/control-guide-pass/settings-state.json`
+      - `mode: menu / selectedSetting: 2` で `操作ガイド` が選択されていることを確認。
+    - `output/web-game-20260410/control-guide-pass/shop-shot.png`
+      - 店フッターが `決定 購入  戻る` の短い表示に変わっていることを確認。
+    - `output/web-game-20260410/control-guide-pass/battle-dice-state.json`
+      - `phase: diceRoll`、`message: 決定で止める。まだなら戻る。` を確認。

@@ -10,6 +10,13 @@ Game.SaveMenu = (function() {
     passphrase: ''
   };
 
+  function getUiControlHint(id, fallback) {
+    if (Game.UI && Game.UI.getControlHint) {
+      return Game.UI.getControlHint(id) || fallback || '';
+    }
+    return fallback || '';
+  }
+
   function open(options) {
     options = options || {};
     state.context = options.context || 'field';
@@ -312,7 +319,7 @@ Game.SaveMenu = (function() {
     drawWrappedParagraph('この世界の記録は ここで預かる。', 228, 86, 22, 2, 11, '#ddd', 9);
     drawWrappedParagraph('同じPC・同じブラウザなら「つづきから」でも戻れる。', 228, 112, 24, 2, 11, '#b7c3e3', 8);
     drawWrappedParagraph('べつのPCへ移るなら、あいことばを必ずメモすること。', 228, 142, 24, 3, 11, '#b7c3e3', 8);
-    R.drawTextJP('Z 決定  X 戻る', 228, 192, '#7e8cac', 8);
+    R.drawTextJP(getUiControlHint('openLegend', '決定 ひらく  戻る'), 228, 192, '#7e8cac', 8);
   }
 
   function drawSlotPage() {
@@ -353,7 +360,7 @@ Game.SaveMenu = (function() {
     drawInsetPanel(234, 70, 164, 126, '説明', '#8fb8ff', '#8fb8ff');
     drawWrappedParagraph('あいことばは PC が変わっても使える持ち運び用の記録です。', 244, 90, 18, 3, 12, '#ddd', 9);
     drawWrappedParagraph('ただし手書きミスに弱いので、区切りごとに丁寧に写してください。', 244, 132, 18, 3, 12, '#b7c3e3', 9);
-    R.drawTextJP('Z 決定  X 戻る', 244, 180, '#7e8cac', 8);
+    R.drawTextJP(getUiControlHint('openLegend', '決定 ひらく  戻る'), 244, 180, '#7e8cac', 8);
   }
 
   function drawPassphraseViewPage() {
@@ -371,7 +378,7 @@ Game.SaveMenu = (function() {
     drawInsetPanel(70, 212, 328, 46, '注意', '#8fb8ff', '#8fb8ff');
     drawWrappedParagraph('同じPC・同じブラウザなら「つづきから」でも戻れます。', 82, 230, 32, 2, 10, '#aaa', 8);
     drawWrappedParagraph('でも環境が変わると消えることがあるので、必ず控えてください。', 82, 242, 32, 2, 10, '#aaa', 8);
-    R.drawTextJP('Z もう一度ひらく  X 戻る', 82, 274, '#888', 8);
+    R.drawTextJP('決定 もう一度ひらく  戻る', 82, 274, '#888', 8);
   }
 
   function drawHelpPage() {
@@ -390,7 +397,7 @@ Game.SaveMenu = (function() {
     for (var i = 0; i < lines.length; i++) {
       R.drawTextJP(lines[i], 82, 82 + i * 20, i === 0 || i === 4 ? Game.Config.COLORS.GOLD : '#ddd', 9);
     }
-    R.drawTextJP('Z / X で 戻る', 82, 258, '#888', 8);
+    R.drawTextJP('決定 / 戻る', 82, 258, '#888', 8);
   }
 
   function drawOptionList(options, startX, startY, lineHeight, highlightW) {

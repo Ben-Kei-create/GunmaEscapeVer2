@@ -1,0 +1,584 @@
+{
+  "timestamp": "2026-04-09T23:06:52.152Z",
+  "errors": [],
+  "scenarios": {
+    "daruma_actual_flow": {
+      "attacked": 1,
+      "insertedEye": true,
+      "rewardSeen": true,
+      "finalMode": "exploring",
+      "finalMap": "takasaki",
+      "finalAudio": "field_takasaki",
+      "repeatDialog": "だるまサイコロは、もうお前の手に馴染み始めているはずじゃ。",
+      "storyFlags": {
+        "checkpointFailedOnce": false,
+        "checkpointCleared": false,
+        "akagiJoinedSlice": false,
+        "darumaCleared": true,
+        "threadCleared": false,
+        "trainingTakasaki": false,
+        "trainingOnuma": false,
+        "trainingShirane": false,
+        "trainingHaruna": false,
+        "trainingMinakami": false
+      },
+      "inventory": [
+        "darumaEye",
+        "darumaDice"
+      ],
+      "timeline": [
+        {
+          "marker": "setup",
+          "mode": "exploring",
+          "map": "takasaki",
+          "dialog": null,
+          "event": null,
+          "battle": null
+        },
+        {
+          "marker": "open-dialog",
+          "mode": "exploring",
+          "map": "takasaki",
+          "dialog": null,
+          "event": null,
+          "battle": null
+        },
+        {
+          "marker": "open-dialog",
+          "mode": "dialog",
+          "map": "takasaki",
+          "dialog": {
+            "speaker": "だるま師匠",
+            "text": "ワシは、願いの抜け殻を見続けてきただるま師匠じゃ。"
+          },
+          "event": null,
+          "battle": null
+        },
+        {
+          "marker": "advance-to-battle",
+          "mode": "dialog",
+          "map": "takasaki",
+          "dialog": {
+            "speaker": "だるま師匠",
+            "text": "ワシは、願いの抜け殻を見続けてきただるま師匠じゃ。"
+          },
+          "event": null,
+          "battle": null
+        },
+        {
+          "marker": "advance-to-battle",
+          "mode": "dialog",
+          "map": "takasaki",
+          "dialog": {
+            "speaker": "だるま師匠",
+            "text": "高崎のだるまは、人の願いを預かって立ち続ける。"
+          },
+          "event": null,
+          "battle": null
+        },
+        {
+          "marker": "advance-to-battle",
+          "mode": "dialog",
+          "map": "takasaki",
+          "dialog": {
+            "speaker": "だるま師匠",
+            "text": "だが願われぬまま朽ちる器もある。"
+          },
+          "event": null,
+          "battle": null
+        },
+        {
+          "marker": "advance-to-battle",
+          "mode": "dialog",
+          "map": "takasaki",
+          "dialog": {
+            "speaker": "だるま師匠",
+            "text": "その空白を埋められるなら、先へ進む資格をやろう。"
+          },
+          "event": null,
+          "battle": null
+        },
+        {
+          "marker": "advance-to-battle",
+          "mode": "battle",
+          "map": "takasaki",
+          "dialog": null,
+          "event": null,
+          "battle": {
+            "phase": "intro",
+            "turnFlow": "player",
+            "enemy": {
+              "name": "欠け目のだるま",
+              "hp": 84,
+              "maxHp": 84
+            },
+            "ritual": {
+              "eyeRepaired": false,
+              "hpZeroReached": false,
+              "lastLowDiceHit": false,
+              "overCoolPenalty": false,
+              "resonanceCreated": false,
+              "reviewPhaseIndex": 0,
+              "targetZoneRevealed": false,
+              "offeringOrder": [],
+              "lightDieReady": false,
+              "lightReleased": false,
+              "lightReleaseFrames": 0,
+              "afterglowCuePlayed": false,
+              "thankYouIndex": 0,
+              "lastAction": null
+            },
+            "rewardSummary": null
+          }
+        },
+        {
+          "marker": "battle-resolve",
+          "mode": "battle",
+          "map": "takasaki",
+          "dialog": null,
+          "event": null,
+          "battle": {
+            "phase": "intro",
+            "turnFlow": "player",
+            "enemy": {
+              "name": "欠け目のだるま",
+              "hp": 84,
+              "maxHp": 84
+            },
+            "ritual": {
+              "eyeRepaired": false,
+              "hpZeroReached": false,
+              "lastLowDiceHit": false,
+              "overCoolPenalty": false,
+              "resonanceCreated": false,
+              "reviewPhaseIndex": 0,
+              "targetZoneRevealed": false,
+              "offeringOrder": [],
+              "lightDieReady": false,
+              "lightReleased": false,
+              "lightReleaseFrames": 0,
+              "afterglowCuePlayed": false,
+              "thankYouIndex": 0,
+              "lastAction": null
+            },
+            "rewardSummary": null
+          }
+        },
+        {
+          "marker": "battle-resolve",
+          "mode": "battle",
+          "map": "takasaki",
+          "dialog": null,
+          "event": null,
+          "battle": {
+            "phase": "menu",
+            "turnFlow": "player",
+            "enemy": {
+              "name": "欠け目のだるま",
+              "hp": 84,
+              "maxHp": 84
+            },
+            "ritual": {
+              "eyeRepaired": false,
+              "hpZeroReached": false,
+              "lastLowDiceHit": false,
+              "overCoolPenalty": false,
+              "resonanceCreated": false,
+              "reviewPhaseIndex": 0,
+              "targetZoneRevealed": false,
+              "offeringOrder": [],
+              "lightDieReady": false,
+              "lightReleased": false,
+              "lightReleaseFrames": 0,
+              "afterglowCuePlayed": false,
+              "thankYouIndex": 0,
+              "lastAction": null
+            },
+            "rewardSummary": null
+          }
+        },
+        {
+          "marker": "battle-resolve",
+          "mode": "battle",
+          "map": "takasaki",
+          "dialog": null,
+          "event": null,
+          "battle": {
+            "phase": "diceRoll",
+            "turnFlow": "player",
+            "enemy": {
+              "name": "欠け目のだるま",
+              "hp": 84,
+              "maxHp": 84
+            },
+            "ritual": {
+              "eyeRepaired": false,
+              "hpZeroReached": false,
+              "lastLowDiceHit": false,
+              "overCoolPenalty": false,
+              "resonanceCreated": false,
+              "reviewPhaseIndex": 0,
+              "targetZoneRevealed": false,
+              "offeringOrder": [],
+              "lightDieReady": false,
+              "lightReleased": false,
+              "lightReleaseFrames": 0,
+              "afterglowCuePlayed": false,
+              "thankYouIndex": 0,
+              "lastAction": null
+            },
+            "rewardSummary": null
+          }
+        },
+        {
+          "marker": "battle-resolve",
+          "mode": "battle",
+          "map": "takasaki",
+          "dialog": null,
+          "event": null,
+          "battle": {
+            "phase": "diceResult",
+            "turnFlow": "player",
+            "enemy": {
+              "name": "欠け目のだるま",
+              "hp": 0,
+              "maxHp": 84
+            },
+            "ritual": {
+              "eyeRepaired": false,
+              "hpZeroReached": true,
+              "lastLowDiceHit": false,
+              "overCoolPenalty": false,
+              "resonanceCreated": false,
+              "reviewPhaseIndex": 0,
+              "targetZoneRevealed": false,
+              "offeringOrder": [],
+              "lightDieReady": false,
+              "lightReleased": false,
+              "lightReleaseFrames": 0,
+              "afterglowCuePlayed": false,
+              "thankYouIndex": 0,
+              "lastAction": null
+            },
+            "rewardSummary": null
+          }
+        },
+        {
+          "marker": "battle-resolve",
+          "mode": "battle",
+          "map": "takasaki",
+          "dialog": null,
+          "event": null,
+          "battle": {
+            "phase": "victory",
+            "turnFlow": "player",
+            "enemy": {
+              "name": "欠け目のだるま",
+              "hp": 0,
+              "maxHp": 84
+            },
+            "ritual": {
+              "eyeRepaired": true,
+              "hpZeroReached": true,
+              "lastLowDiceHit": false,
+              "overCoolPenalty": false,
+              "resonanceCreated": false,
+              "reviewPhaseIndex": 0,
+              "targetZoneRevealed": false,
+              "offeringOrder": [],
+              "lightDieReady": false,
+              "lightReleased": false,
+              "lightReleaseFrames": 0,
+              "afterglowCuePlayed": false,
+              "thankYouIndex": 0,
+              "lastAction": null
+            },
+            "rewardSummary": null
+          }
+        },
+        {
+          "marker": "battle-resolve",
+          "mode": "battle",
+          "map": "takasaki",
+          "dialog": null,
+          "event": null,
+          "battle": {
+            "phase": "reward",
+            "turnFlow": "player",
+            "enemy": {
+              "name": "欠け目のだるま",
+              "hp": 0,
+              "maxHp": 84
+            },
+            "ritual": {
+              "eyeRepaired": true,
+              "hpZeroReached": true,
+              "lastLowDiceHit": false,
+              "overCoolPenalty": false,
+              "resonanceCreated": false,
+              "reviewPhaseIndex": 0,
+              "targetZoneRevealed": false,
+              "offeringOrder": [],
+              "lightDieReady": false,
+              "lightReleased": false,
+              "lightReleaseFrames": 0,
+              "afterglowCuePlayed": false,
+              "thankYouIndex": 0,
+              "lastAction": null
+            },
+            "rewardSummary": {
+              "gold": 0,
+              "exp": 36,
+              "items": [],
+              "supportLogs": [
+                {
+                  "text": "アカギ: 願いの空白を見抜き、乱れた呼吸を落ち着かせた。",
+                  "color": "#5db8ff"
+                }
+              ],
+              "afterglowText": "虚ろな器は満ち、震えが静かに止まった。",
+              "enemyEchoText": "空っぽの願いは拒絶ではなく、見つめ返されるのを待っていたのかもしれない。"
+            }
+          }
+        },
+        {
+          "marker": "battle-resolve",
+          "mode": "skill_learn",
+          "map": "takasaki",
+          "dialog": null,
+          "event": null,
+          "battle": null
+        },
+        {
+          "marker": "battle-resolve",
+          "mode": "dialog",
+          "map": "takasaki",
+          "dialog": {
+            "speaker": "だるま師匠",
+            "text": "……うむ。空っぽのまま終わらせなかったな。"
+          },
+          "event": null,
+          "battle": null
+        },
+        {
+          "marker": "advance-defeated-dialog",
+          "mode": "dialog",
+          "map": "takasaki",
+          "dialog": {
+            "speaker": "だるま師匠",
+            "text": "……うむ。空っぽのまま終わらせなかったな。"
+          },
+          "event": null,
+          "battle": null
+        },
+        {
+          "marker": "advance-defeated-dialog",
+          "mode": "dialog",
+          "map": "takasaki",
+          "dialog": {
+            "speaker": "だるま師匠",
+            "text": "この目と、願いの癖を刻んだだるまサイコロを持って行け。"
+          },
+          "event": null,
+          "battle": null
+        },
+        {
+          "marker": "advance-defeated-dialog",
+          "mode": "dialog",
+          "map": "takasaki",
+          "dialog": {
+            "speaker": "だるま師匠",
+            "text": "次の土地でも、お前の手つきが試される。"
+          },
+          "event": null,
+          "battle": null
+        },
+        {
+          "marker": "advance-defeated-dialog",
+          "mode": "event",
+          "map": "takasaki",
+          "dialog": null,
+          "event": {
+            "eventId": "special_dice_intro",
+            "sceneIndex": 0,
+            "lineIndex": 0
+          },
+          "battle": null
+        },
+        {
+          "marker": "advance-special-dice-event",
+          "mode": "event",
+          "map": "takasaki",
+          "dialog": null,
+          "event": {
+            "eventId": "special_dice_intro",
+            "sceneIndex": 0,
+            "lineIndex": 0
+          },
+          "battle": null
+        },
+        {
+          "marker": "advance-special-dice-event",
+          "mode": "event",
+          "map": "takasaki",
+          "dialog": null,
+          "event": {
+            "eventId": "special_dice_intro",
+            "sceneIndex": 1,
+            "lineIndex": 0
+          },
+          "battle": null
+        },
+        {
+          "marker": "advance-special-dice-event",
+          "mode": "event",
+          "map": "takasaki",
+          "dialog": null,
+          "event": {
+            "eventId": "special_dice_intro",
+            "sceneIndex": 2,
+            "lineIndex": 0
+          },
+          "battle": null
+        },
+        {
+          "marker": "advance-special-dice-event",
+          "mode": "exploring",
+          "map": "takasaki",
+          "dialog": null,
+          "event": null,
+          "battle": null
+        },
+        {
+          "marker": "repeat-talk-open",
+          "mode": "exploring",
+          "map": "takasaki",
+          "dialog": null,
+          "event": null,
+          "battle": null
+        },
+        {
+          "marker": "repeat-talk-open",
+          "mode": "dialog",
+          "map": "takasaki",
+          "dialog": {
+            "speaker": "だるま師匠",
+            "text": "だるまサイコロは、もうお前の手に馴染み始めているはずじゃ。"
+          },
+          "event": null,
+          "battle": null
+        },
+        {
+          "marker": "repeat-talk-close",
+          "mode": "dialog",
+          "map": "takasaki",
+          "dialog": {
+            "speaker": "だるま師匠",
+            "text": "だるまサイコロは、もうお前の手に馴染み始めているはずじゃ。"
+          },
+          "event": null,
+          "battle": null
+        },
+        {
+          "marker": "repeat-talk-close",
+          "mode": "dialog",
+          "map": "takasaki",
+          "dialog": {
+            "speaker": "だるま師匠",
+            "text": "高い目より、どの願いを拾い上げるかを見失うな。"
+          },
+          "event": null,
+          "battle": null
+        },
+        {
+          "marker": "repeat-talk-close",
+          "mode": "dialog",
+          "map": "takasaki",
+          "dialog": {
+            "speaker": "だるま師匠",
+            "text": "次の土地でも、空白の重さだけは置いていくでないぞ。"
+          },
+          "event": null,
+          "battle": null
+        },
+        {
+          "marker": "repeat-talk-close",
+          "mode": "exploring",
+          "map": "takasaki",
+          "dialog": null,
+          "event": null,
+          "battle": null
+        }
+      ],
+      "canvas": {
+        "avgLuma": 112.55,
+        "nonBlackFraction": 0.9964
+      },
+      "stage": "done",
+      "pass": true
+    },
+    "gururin_actual_flow": {
+      "finalMode": "exploring",
+      "finalMap": "takasaki",
+      "finalAudio": "field_takasaki",
+      "repeatDialog": "停留所のガラスには、さっきの車内灯だけがまだ揺れている。",
+      "timeline": [
+        {
+          "marker": "setup",
+          "mode": "exploring",
+          "map": "takasaki",
+          "dialog": null,
+          "event": null,
+          "battle": null
+        },
+        {
+          "marker": "dialog-open",
+          "mode": "dialog",
+          "map": "takasaki",
+          "dialog": {
+            "speaker": "ぐるりん停留所",
+            "text": "緑の小さな停留所だ。"
+          },
+          "event": null,
+          "battle": null
+        },
+        {
+          "marker": "gururin-event",
+          "mode": "event",
+          "map": "takasaki",
+          "dialog": null,
+          "event": {
+            "eventId": "gururin",
+            "sceneIndex": 0,
+            "lineIndex": 0
+          },
+          "battle": null
+        },
+        {
+          "marker": "back-to-field",
+          "mode": "exploring",
+          "map": "takasaki",
+          "dialog": null,
+          "event": null,
+          "battle": null
+        },
+        {
+          "marker": "repeat-talk",
+          "mode": "dialog",
+          "map": "takasaki",
+          "dialog": {
+            "speaker": "ぐるりん停留所",
+            "text": "停留所のガラスには、さっきの車内灯だけがまだ揺れている。"
+          },
+          "event": null,
+          "battle": null
+        }
+      ],
+      "canvas": {
+        "avgLuma": 112.47,
+        "nonBlackFraction": 0.9961
+      },
+      "pass": true
+    }
+  }
+}

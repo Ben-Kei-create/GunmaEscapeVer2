@@ -219,7 +219,15 @@ Game.Player = (function() {
     lastBlockedMove = null;
     blockedDirectionLatch = '';
     frameClock = 0;
+    data.moveSpeed = getConfiguredMoveSpeed();
     resetFollowerTrail();
+  }
+
+  function getConfiguredMoveSpeed() {
+    if (Game.UI && Game.UI.getMoveSpeedFrames) {
+      return Game.UI.getMoveSpeedFrames();
+    }
+    return data.moveSpeed || 8;
   }
 
   function getAttemptDirection(dx, dy) {
@@ -390,6 +398,7 @@ Game.Player = (function() {
     else if (Game.Input.isDown('right')) { dx = 1;  data.direction = 'right'; }
 
     if (dx === 0 && dy === 0) {
+      data.moveSpeed = getConfiguredMoveSpeed();
       blockedDirectionLatch = '';
       recordFollowerTrail();
       return;
@@ -410,6 +419,7 @@ Game.Player = (function() {
 
       if (Game.Map.isPassable(newX, newY)) {
         blockedDirectionLatch = '';
+        data.moveSpeed = getConfiguredMoveSpeed();
         data.tileX = newX;
         data.tileY = newY;
         data.moving = true;

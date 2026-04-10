@@ -1305,7 +1305,8 @@ Game.Event = (function() {
     if (textComplete) {
       var blinkT = Date.now() / 400;
       var promptColor = Math.sin(blinkT) > 0 ? '#d7dced' : '#939db8';
-      R.drawTextJP('Z / Enterで進む', C.CANVAS_WIDTH - 128, C.CANVAS_HEIGHT - 50, promptColor, 8);
+      var advanceLabel = Game.UI && Game.UI.getControlHint ? Game.UI.getControlHint('advance') : '決定で進む';
+      R.drawTextJP(advanceLabel, C.CANVAS_WIDTH - 128, C.CANVAS_HEIGHT - 50, promptColor, 8);
       if (scene.autoAdvance) {
         var remainingFrames = autoAdvanceTimer > 0 ? autoAdvanceTimer : scene.autoAdvance;
         var remainingSeconds = Math.max(0, remainingFrames / 60);

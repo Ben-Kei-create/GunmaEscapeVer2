@@ -31,6 +31,20 @@ Game.Save = (function() {
     runtime.sessionStartedAt = Date.now();
   }
 
+  function getStartingDiceSlots() {
+    return (Game.Config && Game.Config.STARTING_DICE_SLOTS) || 2;
+  }
+
+  function getMaxDiceSlots() {
+    return (Game.Config && Game.Config.MAX_DICE_SLOTS) || 5;
+  }
+
+  function normalizeDiceSlotCount(diceSlots) {
+    var parsed = Math.floor(diceSlots || 0);
+    if (!parsed) parsed = getStartingDiceSlots();
+    return Math.max(getStartingDiceSlots(), Math.min(getMaxDiceSlots(), parsed));
+  }
+
   function getKeyItemsFromInventory(inventory) {
     var result = [];
     for (var i = 0; i < inventory.length; i++) {
@@ -47,7 +61,7 @@ Game.Save = (function() {
       Game.Player.syncSkillState(true);
     }
     var playerData = Game.Player.getData();
-    var diceSlots = Math.max(1, playerData.diceSlots || 1);
+    var diceSlots = normalizeDiceSlotCount(playerData.diceSlots);
     return {
       hp: playerData.hp,
       maxHp: playerData.maxHp,
@@ -142,13 +156,10 @@ Game.Save = (function() {
     var partyMembers = player.partyMembers || [];
     var skillsKnown = player.skillsKnown || [];
     var keyItems = player.keyItems || [];
-    var diceSlots = Math.max(1, player.diceSlots || 1);
-
     return data.mapName === 'maebashi' &&
       chapter === 1 &&
       (player.experience || 0) === 0 &&
       !player.armor &&
-      diceSlots === 1 &&
       !inventory.length &&
       !partyMembers.length &&
       !skillsKnown.length &&
@@ -161,10 +172,12 @@ Game.Save = (function() {
     if (!isLegacyOpeningEconomySnapshot(data)) return data;
 
     var normalizedGold = 60;
-    if ((data.player.gold || 0) <= normalizedGold) return data;
-
     var normalized = clone(data);
-    normalized.player.gold = normalizedGold;
+    if ((normalized.player.gold || 0) > normalizedGold) {
+      normalized.player.gold = normalizedGold;
+    }
+    normalized.player.diceSlots = normalizeDiceSlotCount(normalized.player.diceSlots);
+    normalized.player.equippedDice = sanitizeEquippedDiceSlots(normalized.player.equippedDice || ['normalDice'], normalized.player.diceSlots);
     return normalized;
   }
 
@@ -302,7 +315,7 @@ Game.Save = (function() {
     playerData.inventory = clone(savedPlayer.inventory || []);
     playerData.keyItems = clone(savedPlayer.keyItems || getKeyItemsFromInventory(playerData.inventory));
     playerData.armor = savedPlayer.armor || null;
-    playerData.diceSlots = savedPlayer.diceSlots || 1;
+    playerData.diceSlots = normalizeDiceSlotCount(savedPlayer.diceSlots);
     playerData.chapter = savedPlayer.chapter || 1;
     playerData.partyMembers = clone(savedPlayer.partyMembers || []);
     playerData.skillsKnown = clone(savedPlayer.skillsKnown || []);
@@ -427,7 +440,7 @@ Game.Save = (function() {
   function encodeDiceLoadout(ids, catalog, diceSlots) {
     var encoded = [];
     var sanitized = sanitizeEquippedDiceSlots(ids || [], diceSlots);
-    for (var i = 0; i < Math.max(1, diceSlots || 1); i++) {
+    for (var i = 0; i < normalizeDiceSlotCount(diceSlots); i++) {
       var index = catalog.indexOf(sanitized[i]);
       encoded.push(index >= 0 ? index : -1);
     }
@@ -436,7 +449,7 @@ Game.Save = (function() {
 
   function decodeDiceLoadout(indexes, catalog, diceSlots) {
     var result = [];
-    var slotCount = Math.max(1, diceSlots || 1);
+    var slotCount = normalizeDiceSlotCount(diceSlots);
     indexes = indexes || [];
     for (var i = 0; i < slotCount; i++) {
       var encoded = indexes[i];
@@ -446,7 +459,7 @@ Game.Save = (function() {
   }
 
   function sanitizeEquippedDiceSlots(equippedDice, diceSlots) {
-    var slotCount = Math.max(1, diceSlots || 1);
+    var slotCount = normalizeDiceSlotCount(diceSlots);
     var result = Array.isArray(equippedDice) ? equippedDice.slice(0, slotCount) : [];
     if (!result.length || !result[0]) {
       result[0] = 'normalDice';
@@ -623,10 +636,10 @@ Game.Save = (function() {
         player.tileX || 0,
         player.tileY || 0,
         indexOfOr(directions, player.direction || 'down', 1),
-        player.diceSlots || 1,
+        normalizeDiceSlotCount(player.diceSlots),
         player.chapter || 1,
         indexOfOr(itemCatalog, player.armor, -1),
-        encodeDiceLoadout(player.equippedDice || [], itemCatalog, player.diceSlots || 1),
+        encodeDiceLoadout(player.equippedDice || [], itemCatalog, normalizeDiceSlotCount(player.diceSlots)),
         encodeIdList(player.inventory || [], itemCatalog),
         encodeIdList(player.partyMembers || [], partyCatalog),
         encodeIdList(player.skillsKnown || [], skillCatalog),
@@ -660,7 +673,7 @@ Game.Save = (function() {
     var hasSkills = version >= 6;
     var hasSkillCharges = version >= 7;
     var hasDiceLoadout = version >= 9;
-    var diceSlots = playerData[legacyLayout ? 8 : 9] || 1;
+    var diceSlots = normalizeDiceSlotCount(playerData[legacyLayout ? 8 : 9]);
     var equippedDice = hasDiceLoadout
       ? decodeDiceLoadout(playerData[legacyLayout ? 11 : 12] || [], itemCatalog, diceSlots)
       : sanitizeEquippedDiceSlots(decodeIdList(playerData[legacyLayout ? 11 : 12] || [], itemCatalog), diceSlots);

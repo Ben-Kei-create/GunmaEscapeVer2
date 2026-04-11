@@ -123,6 +123,7 @@ Game.Main = (function() {
     Game.Renderer.init();
     Game.Input.init();
     Game.Audio.init();
+    if (Game.UI && Game.UI.applyAudioSettings) Game.UI.applyAudioSettings();
     setState(Game.Config.STATE.TITLE);
     if (Game.UI && Game.UI.startIntroMovie) Game.UI.startIntroMovie();
     window.advanceTime = advanceTime;
@@ -687,6 +688,14 @@ Game.Main = (function() {
     requestAnimationFrame(gameLoop);
   }
 
+  function ensureTitleBgm() {
+    if (!Game.Audio || !Game.Audio.playBgm) return;
+    var requestedName = Game.Audio.getRequestedBgmName ? Game.Audio.getRequestedBgmName() : null;
+    var currentName = Game.Audio.getCurrentBgmName ? Game.Audio.getCurrentBgmName() : null;
+    if (requestedName === 'title' && currentName === 'title') return;
+    Game.Audio.playBgm('title');
+  }
+
   function update(dt) {
     if (Game.Weather) Game.Weather.update();
     if (Game.Particles) Game.Particles.update();
@@ -698,6 +707,7 @@ Game.Main = (function() {
 
     switch (state) {
       case Game.Config.STATE.TITLE:
+        ensureTitleBgm();
         var titleLocked = false;
         if (Game.UI.updateIntroMovie) {
           Game.UI.updateIntroMovie();
@@ -1435,7 +1445,7 @@ Game.Main = (function() {
     pd.experience = 0;
     pd.gold = 60;
     pd.chapter = 1;
-    pd.diceSlots = 1;
+    pd.diceSlots = (Game.Config && Game.Config.STARTING_DICE_SLOTS) || 2;
     pd.equippedDice = ['normalDice'];
     pd.armor = null;
     pd.partyMembers = [];
@@ -1630,6 +1640,8 @@ Game.Main = (function() {
         nextRankExperience: Game.Player.previewExperienceGain ? Game.Player.previewExperienceGain(0).nextRankExperience : 80,
         gold: pd.gold,
         chapter: pd.chapter,
+        diceSlots: pd.diceSlots,
+        equippedDice: Game.Player.getDiceLoadout ? Game.Player.getDiceLoadout() : (pd.equippedDice || []).slice(),
         skillsKnown: Game.Player.getSkills ? Game.Player.getSkills() : [],
         skillCharges: Game.Player.getAllSkillCharges ? Game.Player.getAllSkillCharges() : {},
         inventory: (pd.inventory || []).slice()
@@ -1709,6 +1721,9 @@ Game.Main = (function() {
       gameSpeed: Game.UI && Game.UI.getGameSpeedLabel ? Game.UI.getGameSpeedLabel() : 'ふつう',
       eventTextSpeed: Game.UI && Game.UI.getEventTextSpeedLabel ? Game.UI.getEventTextSpeedLabel() : 'ふつう',
       battleDialogueSpeed: Game.UI && Game.UI.getBattleDialogueSpeedLabel ? Game.UI.getBattleDialogueSpeedLabel() : 'ふつう',
+      bgmVolume: Game.UI && Game.UI.getBgmVolumeStep ? Game.UI.getBgmVolumeStep() : 7,
+      sfxVolume: Game.UI && Game.UI.getSfxVolumeStep ? Game.UI.getSfxVolumeStep() : 8,
+      soundMode: Game.UI && Game.UI.getSoundModeLabel ? Game.UI.getSoundModeLabel() : 'ステレオ',
       areaBanner: Game.UI && Game.UI.getAreaBannerDebugState ? Game.UI.getAreaBannerDebugState() : null,
       environmentNote: Game.UI && Game.UI.getEnvironmentNoteDebugState ? Game.UI.getEnvironmentNoteDebugState() : null
     };

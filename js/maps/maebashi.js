@@ -76,10 +76,9 @@ Game.Maps.maebashi = (function() {
       afterDialog: 'battle_ruined_checkpoint',
       defeatedDialog: [
         '（瓦礫が崩れ、通れるようになった！）',
-        '（崩れた関所の足元から、小さなサイコロポーチが転がり出た）'
+        '（腰のポーチには、まだひとつぶんの余白がある。次は新しい賽を探してみよう）'
       ],
       hideWhenDefeated: true,
-      giveDiceSlot: true,
       sprite: [
         [0,0,0,1,1,1,1,1,1,1,1,1,0,0,0,0],
         [0,0,1,2,2,2,3,3,3,2,2,1,0,0,0,0],

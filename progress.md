@@ -1561,3 +1561,55 @@ Original prompt: そうだね。セーブできる村役場みたいなところ
     - 群れ戦の各個体へ、役割や敵IDに応じた微細な揺れ・明滅・浮遊・弾みを追加。`錆びたカンテラ` の灯り揺れ、`飛び立てぬ白蛾` の浮遊、`弾かれ蒟蒻` の弾みなど、同じ群れの中でも印象差が出るようにした。
   - `docs/polish_todo.md`
     - `あいことば生成後に記録したか確認するワンクッション` を完了へ更新。
+- 2026-04-11: サイコロポーチの開始タイミングをシステム基準へ整理。
+  - `js/config.js`
+    - `STARTING_DICE_SLOTS = 2` と `MAX_DICE_SLOTS = 5` を追加し、開始値と上限を定数化。
+  - `js/player.js`
+    - プレイヤー初期値を `2枠開始` へ変更。
+    - `normalizeDiceLoadout()` と `addDiceSlot()` も同じ定数を参照するようにして、開始時・ロード時・購入時の枠数ルールを統一。
+  - `js/save.js`
+    - セーブ / ロード / あいことば復元 / 旧オープニングセーブ補正で `diceSlots` を最低2へ正規化する処理を追加。
+    - 旧セーブで `1枠` のまま残っていたデータも、ロード時に `2枠` へ揃うようにした。
+  - `js/main.js`
+    - 新規ゲーム初期化を `2枠開始` へ変更。
+    - `render_game_to_text` に `player.diceSlots` と `player.equippedDice` を追加し、QAで開始基準を追えるようにした。
+  - `js/maps/maebashi.js`
+    - 最初の関所撃破で `サイコロポーチ` を即時付与していた導線を削除。
+    - 撃破後文言は `次は新しい賽を探してみよう` へ差し替え、早すぎる恒久強化を外した。
+  - 検証
+    - `node --check js/config.js js/player.js js/save.js js/main.js js/maps/maebashi.js` と `git diff --check` を通過。
+    - Playwright client の `output/web-game-20260411/dice-slot-baseline-check/state-0.json` で、開始時点が `diceSlots: 2 / equippedDice: [normalDice, null]` になっていることを確認。
+    - 追加のブラウザ検証で、`1枠` の旧セーブを書き込んで `Game.Save.load(1)` しても `diceSlots: 2` に補正されることを `output/web-game-20260411/dice-slot-legacy-load/state-0.json` で確認。
+- 2026-04-11: タイトルメニューで無音になっていたため、タイトル状態では `title` BGM を自動で要求するよう修正。
+  - `js/main.js`
+    - `ensureTitleBgm()` を追加し、タイトル導入中・通常メニュー・設定・実績オーバーレイを含めて `title` BGM が維持されるようにした。
+    - 既存の探索 / イベント / 戦闘側のBGM切り替えはそのまま残し、タイトル側だけ呼び出し漏れを補完した。
+  - 検証
+    - `node --check js/main.js` と `git diff --check` を通過。
+    - Playwright client でタイトル画面へ上げ、`output/web-game-20260411/title-bgm-fix/state-0.json` の `audio.requestedBgm/currentBgm` がともに `title` になることを確認。
+    - タイトルメニュー表示のスクリーンショットを `output/web-game-20260411/title-bgm-fix/shot-0.png` に保存。
+- 2026-04-11: 通常戦BGMを、少し遅めでクラシック寄りの編成へ調整。
+  - `js/audio.js`
+    - `battle` を単音ループから、主旋律 + 低音伴奏の2トラック構成へ変更。
+    - `melancholy_battle` は哀愁を残したまま音価を少し伸ばし、低音に加えて薄い上声トラックも足して、室内楽寄りの響きに寄せた。
+    - `bgmVariants.battle` と `bgmVariants.melancholy_battle` も同方向へ更新し、2周目以降だけ元の速さへ戻ることがないよう揃えた。
+    - `bgmStyles.battle` と `bgmStyles.boss` を追加し、デフォルト四角波の硬さを少しやわらげた。
+  - 検証
+    - `node --check js/audio.js` と `git diff --check` を通過。
+    - Playwright client で `?debugBattle=strayDaruma` を確認し、`output/web-game-20260411/battle-bgm-classic-generic/state-0.json` の `audio.requestedBgm/currentBgm` が `battle` になることを確認。
+    - Playwright client で `?debugBattle=chuji` を確認し、`output/web-game-20260411/battle-bgm-classic-chuji/state-0.json` の `audio.requestedBgm/currentBgm` が `melancholy_battle` になることを確認。
+- 2026-04-11: オプションへ `BGM音量 / 効果音量 / ステレオ・モノラル` を追加。
+  - `js/audio.js`
+    - `setBgmVolume / setSfxVolume / setOutputMode / applySettings` を追加し、音量と音の広がりをランタイム変更できるようにした。
+    - BGM直通、ディレイ、効果音に軽いパン制御を追加し、`ステレオ` は少し広がり、`モノラル` は中央へまとまるようにした。
+  - `js/ui.js`
+    - `uiSettings` に `bgmVolume / sfxVolume / soundMode` を追加し、ローカル保存と起動時復元へ接続。
+    - タイトル設定と探索中の `記録と設定` の両方から、左右入力で音量と音の広がりを変更できるようにした。
+    - タイトル設定パネルを拡張し、音量項目を増やしても見切れない高さへ調整。
+  - `js/main.js`
+    - `Game.Audio.init()` 後に `Game.UI.applyAudioSettings()` を呼び、保存済みの音量で起動するようにした。
+    - `render_game_to_text` の `ui` に `bgmVolume / sfxVolume / soundMode` を追加。
+  - 検証
+    - `node --check js/audio.js js/ui.js js/main.js` と `git diff --check` を通過。
+    - Playwright client でタイトル設定を開き、`BGM 80% / 効果音 90% / モノラル` へ変更できることを `output/web-game-20260411/audio-options-title/state-0.json` で確認。
+    - タイトル設定オーバーレイの見た目を `output/web-game-20260411/audio-options-title/shot-0.png` に保存。

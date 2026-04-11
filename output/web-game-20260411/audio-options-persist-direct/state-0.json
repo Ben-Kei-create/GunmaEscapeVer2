@@ -1,0 +1,30 @@
+{
+  "beforeReload": {
+    "ui": {
+      "showJourneyBadge": true,
+      "gameSpeed": "ふつう",
+      "eventTextSpeed": "ふつう",
+      "battleDialogueSpeed": "ふつう",
+      "bgmVolume": 7,
+      "sfxVolume": 8,
+      "soundMode": "ステレオ",
+      "areaBanner": null,
+      "environmentNote": null
+    },
+    "raw": null
+  },
+  "afterReload": {
+    "ui": {
+      "showJourneyBadge": true,
+      "gameSpeed": "ふつう",
+      "eventTextSpeed": "ふつう",
+      "battleDialogueSpeed": "ふつう",
+      "bgmVolume": 7,
+      "sfxVolume": 8,
+      "soundMode": "ステレオ",
+      "areaBanner": null,
+      "environmentNote": null
+    },
+    "raw": null
+  }
+}

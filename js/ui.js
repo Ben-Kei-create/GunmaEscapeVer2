@@ -27,6 +27,12 @@ Game.UI = (function() {
     { id: 'normal', label: 'ふつう', moveFrames: 8, transitionMultiplier: 1, color: '#ffd66b' },
     { id: 'fast', label: 'きびきび', moveFrames: 6, transitionMultiplier: 1.18, color: '#8fe0ff' }
   ];
+  var SOUND_MODE_CHOICES = [
+    { id: 'stereo', label: 'ステレオ', color: '#8fe0ff' },
+    { id: 'mono', label: 'モノラル', color: '#ffd66b' }
+  ];
+  var MIN_VOLUME_STEP = 0;
+  var MAX_VOLUME_STEP = 10;
   var CONTROL_KEYS = {
     confirm: 'Z / Enter / Space',
     cancel: 'X / Esc',
@@ -41,6 +47,7 @@ Game.UI = (function() {
     { label: '切替', value: CONTROL_KEYS.horizontal }
   ];
   var uiSettings = loadUiSettings();
+  applyAudioSettings();
   var areaBanner = {
     active: false,
     timer: 0,
@@ -92,7 +99,7 @@ Game.UI = (function() {
     '県境の向こうへ、最初の一歩を踏み出す。',
     '残した記録から旅を再開する。',
     'あいことばで旅の続きへ戻る。',
-    '速度や表示テンポをタイトルで整える。',
+    '音量や表示テンポをタイトルで整える。',
     '実績と解放状況を確認する。'
   ];
   var DIALOG_TEXT_MAX_CHARS = 36;
@@ -126,7 +133,10 @@ Game.UI = (function() {
       showJourneyBadge: true,
       gameSpeed: 'normal',
       eventTextSpeed: 'normal',
-      battleDialogueSpeed: 'normal'
+      battleDialogueSpeed: 'normal',
+      bgmVolume: 7,
+      sfxVolume: 8,
+      soundMode: 'stereo'
     };
   }
 
@@ -175,6 +185,51 @@ Game.UI = (function() {
     return BATTLE_DIALOGUE_SPEED_CHOICES[1];
   }
 
+  function clampVolumeStep(step) {
+    var value = parseInt(step, 10);
+    if (!isFinite(value)) return 7;
+    if (value < MIN_VOLUME_STEP) return MIN_VOLUME_STEP;
+    if (value > MAX_VOLUME_STEP) return MAX_VOLUME_STEP;
+    return value;
+  }
+
+  function getVolumeLabel(step) {
+    return String(clampVolumeStep(step) * 10) + '%';
+  }
+
+  function getVolumeColor(step) {
+    var value = clampVolumeStep(step);
+    if (value <= 0) return '#ff9b7d';
+    if (value <= 3) return '#cdb7ff';
+    if (value <= 7) return '#ffd66b';
+    return '#8fe0ff';
+  }
+
+  function normalizeSoundMode(id) {
+    return id === 'mono' ? 'mono' : 'stereo';
+  }
+
+  function getSoundModeChoice() {
+    var currentId = normalizeSoundMode(uiSettings.soundMode);
+    for (var i = 0; i < SOUND_MODE_CHOICES.length; i++) {
+      if (SOUND_MODE_CHOICES[i].id === currentId) return SOUND_MODE_CHOICES[i];
+    }
+    return SOUND_MODE_CHOICES[0];
+  }
+
+  function getAudioSettings() {
+    return {
+      bgmVolume: clampVolumeStep(uiSettings.bgmVolume) / MAX_VOLUME_STEP,
+      sfxVolume: clampVolumeStep(uiSettings.sfxVolume) / MAX_VOLUME_STEP,
+      outputMode: normalizeSoundMode(uiSettings.soundMode)
+    };
+  }
+
+  function applyAudioSettings() {
+    if (!Game.Audio || !Game.Audio.applySettings) return;
+    Game.Audio.applySettings(getAudioSettings());
+  }
+
   function loadUiSettings() {
     var defaults = getDefaultUiSettings();
     try {
@@ -185,7 +240,10 @@ Game.UI = (function() {
         showJourneyBadge: parsed.showJourneyBadge !== false,
         gameSpeed: normalizeGameSpeed(parsed.gameSpeed || defaults.gameSpeed),
         eventTextSpeed: normalizeEventTextSpeed(parsed.eventTextSpeed || defaults.eventTextSpeed),
-        battleDialogueSpeed: normalizeBattleDialogueSpeed(parsed.battleDialogueSpeed || defaults.battleDialogueSpeed)
+        battleDialogueSpeed: normalizeBattleDialogueSpeed(parsed.battleDialogueSpeed || defaults.battleDialogueSpeed),
+        bgmVolume: clampVolumeStep(parsed.bgmVolume != null ? parsed.bgmVolume : defaults.bgmVolume),
+        sfxVolume: clampVolumeStep(parsed.sfxVolume != null ? parsed.sfxVolume : defaults.sfxVolume),
+        soundMode: normalizeSoundMode(parsed.soundMode || defaults.soundMode)
       };
     } catch (err) {
       return defaults;
@@ -320,7 +378,29 @@ Game.UI = (function() {
     var gameSpeed = getGameSpeedChoice();
     var eventTextSpeed = getEventTextSpeedChoice();
     var battleDialogueSpeed = getBattleDialogueSpeedChoice();
+    var soundMode = getSoundModeChoice();
     return [
+      {
+        id: 'bgmVolume',
+        label: 'BGM音量',
+        valueLabel: getVolumeLabel(uiSettings.bgmVolume),
+        valueColor: getVolumeColor(uiSettings.bgmVolume),
+        description: '旅と戦闘の曲量を左右で細かく整える。'
+      },
+      {
+        id: 'sfxVolume',
+        label: '効果音量',
+        valueLabel: getVolumeLabel(uiSettings.sfxVolume),
+        valueColor: getVolumeColor(uiSettings.sfxVolume),
+        description: '決定音や戦闘音の大きさを左右で整える。'
+      },
+      {
+        id: 'soundMode',
+        label: '音の広がり',
+        valueLabel: soundMode.label,
+        valueColor: soundMode.color,
+        description: 'ステレオは余韻が広がり、モノラルは中央へまとまる。'
+      },
       {
         id: 'gameSpeed',
         label: 'ゲーム進行',
@@ -982,28 +1062,32 @@ Game.UI = (function() {
     var options = getTitleSettingsOptions();
     var current = options[titleSettingsState.index];
     if (!current) return;
+    var panelY = 84;
+    var panelH = 152;
+    var insetY = panelY + 40;
+    var insetH = panelH - 56;
 
     R.drawRectAbsolute(0, 0, Game.Config.CANVAS_WIDTH, Game.Config.CANVAS_HEIGHT, 'rgba(4, 6, 18, 0.52)');
-    R.drawDialogBox(88, 102, 304, 120);
-    drawPanelAccent(88, 102, 304, 120, '#8fe0ff');
-    R.drawTextJP('タイトル設定', 240, 114, '#8fe0ff', 12, 'center');
-    R.drawTextJP('開始前にテンポを整える。', 240, 128, '#cfd7f2', 8, 'center');
-    drawInsetPanel(102, 142, 118, 60, '項目', Game.Config.COLORS.GOLD, Game.Config.COLORS.GOLD);
-    drawInsetPanel(232, 142, 146, 60, '内容', '#8fb8ff', '#8fb8ff');
+    R.drawDialogBox(88, panelY, 304, panelH);
+    drawPanelAccent(88, panelY, 304, panelH, '#8fe0ff');
+    R.drawTextJP('タイトル設定', 240, panelY + 12, '#8fe0ff', 12, 'center');
+    R.drawTextJP('開始前に音とテンポを整える。', 240, panelY + 26, '#cfd7f2', 8, 'center');
+    drawInsetPanel(102, insetY, 118, insetH, '項目', Game.Config.COLORS.GOLD, Game.Config.COLORS.GOLD);
+    drawInsetPanel(232, insetY, 146, insetH, '内容', '#8fb8ff', '#8fb8ff');
 
     for (var i = 0; i < options.length; i++) {
       var selected = i === titleSettingsState.index;
-      var lineY = 158 + i * 13;
+      var lineY = insetY + 16 + i * 12;
       if (selected) {
         R.drawRectAbsolute(108, lineY - 1, 104, 12, 'rgba(255,204,0,0.12)');
       }
       R.drawTextJP((selected ? '▶ ' : '  ') + options[i].label, 112, lineY, selected ? Game.Config.COLORS.GOLD : '#ffffff', 9);
     }
 
-    R.drawTextJP(current.label, 242, 158, '#ffffff', 10);
-    R.drawTextJP(current.valueLabel, 366, 158, current.valueColor, 9, 'right');
-    drawWrappedTextBlock(current.description, 242, 172, 14, 3, 10, '#cfd7f2', 8);
-    R.drawTextJP(getControlHint('titleSettingsLegend'), 240, 208, '#7e8cac', 8, 'center');
+    R.drawTextJP(current.label, 242, insetY + 16, '#ffffff', 10);
+    R.drawTextJP(current.valueLabel, 366, insetY + 16, current.valueColor, 9, 'right');
+    drawWrappedTextBlock(current.description, 242, insetY + 30, 14, 3, 10, '#cfd7f2', 8);
+    R.drawTextJP(getControlHint('titleSettingsLegend'), 240, panelY + panelH - 14, '#7e8cac', 8, 'center');
   }
 
   function drawHUD() {
@@ -1707,6 +1791,7 @@ Game.UI = (function() {
     var gameSpeed = getGameSpeedChoice();
     var eventTextSpeed = getEventTextSpeedChoice();
     var battleDialogueSpeed = getBattleDialogueSpeedChoice();
+    var soundMode = getSoundModeChoice();
     return [
       {
         id: 'saveBook',
@@ -1731,6 +1816,30 @@ Game.UI = (function() {
         valueLabel: '確認',
         valueColor: '#cfd7f2',
         description: '決定や戻るなどの基本操作をまとめて確認する。'
+      },
+      {
+        id: 'bgmVolume',
+        label: 'BGM音量',
+        value: clampVolumeStep(uiSettings.bgmVolume),
+        valueLabel: getVolumeLabel(uiSettings.bgmVolume),
+        valueColor: getVolumeColor(uiSettings.bgmVolume),
+        description: '旅の曲や戦闘曲の大きさを左右で整える。'
+      },
+      {
+        id: 'sfxVolume',
+        label: '効果音量',
+        value: clampVolumeStep(uiSettings.sfxVolume),
+        valueLabel: getVolumeLabel(uiSettings.sfxVolume),
+        valueColor: getVolumeColor(uiSettings.sfxVolume),
+        description: '決定音、戦闘音、演出音の大きさを左右で整える。'
+      },
+      {
+        id: 'soundMode',
+        label: '音の広がり',
+        value: soundMode.id,
+        valueLabel: soundMode.label,
+        valueColor: soundMode.color,
+        description: 'ステレオは左右へ広がり、モノラルは中央へ寄せる。'
       },
       {
         id: 'gameSpeed',
@@ -1812,6 +1921,31 @@ Game.UI = (function() {
     var nextChoice = BATTLE_DIALOGUE_SPEED_CHOICES[nextIndex];
     uiSettings.battleDialogueSpeed = nextChoice.id;
     saveUiSettings();
+    return nextChoice;
+  }
+
+  function adjustBgmVolume(dir) {
+    uiSettings.bgmVolume = clampVolumeStep(uiSettings.bgmVolume + dir);
+    saveUiSettings();
+    applyAudioSettings();
+    return uiSettings.bgmVolume;
+  }
+
+  function adjustSfxVolume(dir) {
+    uiSettings.sfxVolume = clampVolumeStep(uiSettings.sfxVolume + dir);
+    saveUiSettings();
+    applyAudioSettings();
+    return uiSettings.sfxVolume;
+  }
+
+  function cycleSoundMode(dir) {
+    var current = getSoundModeChoice();
+    var currentIndex = current.id === 'mono' ? 1 : 0;
+    var nextIndex = (currentIndex + dir + SOUND_MODE_CHOICES.length) % SOUND_MODE_CHOICES.length;
+    var nextChoice = SOUND_MODE_CHOICES[nextIndex];
+    uiSettings.soundMode = nextChoice.id;
+    saveUiSettings();
+    applyAudioSettings();
     return nextChoice;
   }
 
@@ -2130,7 +2264,22 @@ Game.UI = (function() {
     var shouldToggle = Game.Input.isPressed('confirm') || Game.Input.isPressed('left') || Game.Input.isPressed('right');
     if (!shouldToggle) return null;
 
-    if (current.id === 'gameSpeed') {
+    if (current.id === 'bgmVolume') {
+      var bgmDirection = Game.Input.isPressed('left') ? -1 : 1;
+      var nextBgmVolume = adjustBgmVolume(bgmDirection);
+      setFieldMenuMessage('BGM音量を「' + getVolumeLabel(nextBgmVolume) + '」にした。', 45);
+      Game.Audio.playSfx('confirm');
+    } else if (current.id === 'sfxVolume') {
+      var sfxDirection = Game.Input.isPressed('left') ? -1 : 1;
+      var nextSfxVolume = adjustSfxVolume(sfxDirection);
+      setFieldMenuMessage('効果音量を「' + getVolumeLabel(nextSfxVolume) + '」にした。', 45);
+      Game.Audio.playSfx('confirm');
+    } else if (current.id === 'soundMode') {
+      var soundDirection = Game.Input.isPressed('left') ? -1 : 1;
+      var nextSoundMode = cycleSoundMode(soundDirection);
+      setFieldMenuMessage('音の広がりを「' + nextSoundMode.label + '」にした。', 45);
+      Game.Audio.playSfx('confirm');
+    } else if (current.id === 'gameSpeed') {
       var gameDirection = Game.Input.isPressed('left') ? -1 : 1;
       var nextGameSpeed = cycleGameSpeed(gameDirection);
       setFieldMenuMessage('進行速度を「' + nextGameSpeed.label + '」にした。', 45);
@@ -2625,7 +2774,13 @@ Game.UI = (function() {
 
     var current = options[titleSettingsState.index];
     if (!current) return;
-    if (current.id === 'gameSpeed') {
+    if (current.id === 'bgmVolume') {
+      adjustBgmVolume(Game.Input.isPressed('left') ? -1 : 1);
+    } else if (current.id === 'sfxVolume') {
+      adjustSfxVolume(Game.Input.isPressed('left') ? -1 : 1);
+    } else if (current.id === 'soundMode') {
+      cycleSoundMode(Game.Input.isPressed('left') ? -1 : 1);
+    } else if (current.id === 'gameSpeed') {
       cycleGameSpeed(Game.Input.isPressed('left') ? -1 : 1);
     } else if (current.id === 'eventTextSpeed') {
       cycleEventTextSpeed(Game.Input.isPressed('left') ? -1 : 1);
@@ -2771,6 +2926,18 @@ Game.UI = (function() {
     return getBattleDialogueSpeedChoice().label;
   }
 
+  function getBgmVolumeStep() {
+    return clampVolumeStep(uiSettings.bgmVolume);
+  }
+
+  function getSfxVolumeStep() {
+    return clampVolumeStep(uiSettings.sfxVolume);
+  }
+
+  function getSoundModeLabel() {
+    return getSoundModeChoice().label;
+  }
+
   function getFieldMenuDebugState() {
     var busDestinations = getBusDestinations();
     return {
@@ -2782,7 +2949,10 @@ Game.UI = (function() {
       settingIndex: fieldMenuState.settingIndex,
       gameSpeed: uiSettings.gameSpeed,
       eventTextSpeed: uiSettings.eventTextSpeed,
-      battleDialogueSpeed: uiSettings.battleDialogueSpeed
+      battleDialogueSpeed: uiSettings.battleDialogueSpeed,
+      bgmVolume: clampVolumeStep(uiSettings.bgmVolume),
+      sfxVolume: clampVolumeStep(uiSettings.sfxVolume),
+      soundMode: normalizeSoundMode(uiSettings.soundMode)
     };
   }
 
@@ -2857,6 +3027,11 @@ Game.UI = (function() {
     getEventTextSpeedLabel: getEventTextSpeedLabel,
     getBattleDialogueSpeedFrames: getBattleDialogueSpeedFrames,
     getBattleDialogueSpeedLabel: getBattleDialogueSpeedLabel,
+    getBgmVolumeStep: getBgmVolumeStep,
+    getSfxVolumeStep: getSfxVolumeStep,
+    getSoundModeLabel: getSoundModeLabel,
+    getAudioSettings: getAudioSettings,
+    applyAudioSettings: applyAudioSettings,
     getControlHint: getControlHint,
     getFieldMenuDebugState: getFieldMenuDebugState,
     getAreaBannerDebugState: getAreaBannerDebugState,

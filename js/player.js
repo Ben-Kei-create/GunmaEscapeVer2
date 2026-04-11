@@ -4,6 +4,15 @@ Game.Player = (function() {
   var FOLLOWER_DELAY_FRAMES = 10;
   var FOLLOWER_HISTORY_LIMIT = 96;
   var FOLLOWER_BOB_PERIOD = 18;
+
+  function getStartingDiceSlots() {
+    return (Game.Config && Game.Config.STARTING_DICE_SLOTS) || 2;
+  }
+
+  function getMaxDiceSlots() {
+    return (Game.Config && Game.Config.MAX_DICE_SLOTS) || 5;
+  }
+
   var companionDefs = {
     akagi: {
       id: 'akagi',
@@ -121,7 +130,7 @@ Game.Player = (function() {
     experience: 0,
     gold: 60,
     chapter: 1,                  // current chapter (1 or 2)
-    diceSlots: 1,                // max dice slots (1-5)
+    diceSlots: getStartingDiceSlots(), // max dice slots (2-5)
     equippedDice: ['normalDice'], // array of dice item IDs
     armor: null,    // equipped armor item ID
     partyMembers: [],
@@ -735,7 +744,7 @@ Game.Player = (function() {
   }
 
   function addDiceSlot() {
-    if (data.diceSlots >= 5) return false;
+    if (data.diceSlots >= getMaxDiceSlots()) return false;
     normalizeDiceLoadout();
     data.diceSlots++;
     return true;
@@ -790,7 +799,7 @@ Game.Player = (function() {
     if (!Array.isArray(data.equippedDice)) {
       data.equippedDice = [];
     }
-    data.diceSlots = Math.max(1, Math.min(5, data.diceSlots || 1));
+    data.diceSlots = Math.max(getStartingDiceSlots(), Math.min(getMaxDiceSlots(), data.diceSlots || getStartingDiceSlots()));
     if (!data.equippedDice.length || !data.equippedDice[0]) {
       data.equippedDice[0] = 'normalDice';
     }

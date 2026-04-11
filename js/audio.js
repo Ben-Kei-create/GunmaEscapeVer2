@@ -4,6 +4,9 @@ Game.Audio = (function() {
   var masterGain = null;
   var bgmGain = null;
   var sfxGain = null;
+  var bgmPanner = null;
+  var delayPanner = null;
+  var sfxPanner = null;
   var filterNode = null;
   var delayNode = null;
   var feedbackNode = null;
@@ -13,6 +16,53 @@ Game.Audio = (function() {
   var currentBgmRequestedName = null;
   var currentBgmResolvedName = null;
   var muted = false;
+  var bgmVolume = 0.72;
+  var sfxVolume = 0.84;
+  var outputMode = 'stereo';
+
+  function clampUnitVolume(value, fallback) {
+    var next = Number(value);
+    if (!isFinite(next)) return typeof fallback === 'number' ? fallback : 1;
+    if (next < 0) return 0;
+    if (next > 1) return 1;
+    return next;
+  }
+
+  function normalizeOutputMode(mode) {
+    return mode === 'mono' ? 'mono' : 'stereo';
+  }
+
+  function setGainValue(node, value) {
+    if (!node || !node.gain) return;
+    if (audioCtx) {
+      node.gain.cancelScheduledValues(audioCtx.currentTime);
+      node.gain.setValueAtTime(value, audioCtx.currentTime);
+      return;
+    }
+    node.gain.value = value;
+  }
+
+  function setPanValue(node, value) {
+    if (!node || !node.pan) return;
+    if (audioCtx) {
+      node.pan.cancelScheduledValues(audioCtx.currentTime);
+      node.pan.setValueAtTime(value, audioCtx.currentTime);
+      return;
+    }
+    node.pan.value = value;
+  }
+
+  function applyVolumeSettings() {
+    setGainValue(bgmGain, bgmVolume);
+    setGainValue(sfxGain, sfxVolume);
+  }
+
+  function applyOutputMode() {
+    var stereo = normalizeOutputMode(outputMode) === 'stereo';
+    setPanValue(bgmPanner, stereo ? -0.12 : 0);
+    setPanValue(delayPanner, stereo ? 0.18 : 0);
+    setPanValue(sfxPanner, stereo ? 0.05 : 0);
+  }
 
   function init() {
     try {
@@ -21,6 +71,9 @@ Game.Audio = (function() {
       masterGain.gain.value = 0.28;
       bgmGain = audioCtx.createGain();
       sfxGain = audioCtx.createGain();
+      bgmPanner = audioCtx.createStereoPanner ? audioCtx.createStereoPanner() : null;
+      delayPanner = audioCtx.createStereoPanner ? audioCtx.createStereoPanner() : null;
+      sfxPanner = audioCtx.createStereoPanner ? audioCtx.createStereoPanner() : null;
       filterNode = audioCtx.createBiquadFilter();
       filterNode.type = 'lowpass';
       filterNode.frequency.value = 2200;
@@ -32,15 +85,32 @@ Game.Audio = (function() {
       delayMixGain = audioCtx.createGain();
       delayMixGain.gain.value = 0.52;
 
-      bgmGain.connect(filterNode);
+      if (bgmPanner) {
+        bgmGain.connect(bgmPanner);
+        bgmPanner.connect(filterNode);
+      } else {
+        bgmGain.connect(filterNode);
+      }
       bgmGain.connect(delayNode);
       delayNode.connect(feedbackNode);
       feedbackNode.connect(delayNode);
       delayNode.connect(delayMixGain);
-      delayMixGain.connect(filterNode);
+      if (delayPanner) {
+        delayMixGain.connect(delayPanner);
+        delayPanner.connect(filterNode);
+      } else {
+        delayMixGain.connect(filterNode);
+      }
       filterNode.connect(masterGain);
-      sfxGain.connect(masterGain);
+      if (sfxPanner) {
+        sfxGain.connect(sfxPanner);
+        sfxPanner.connect(masterGain);
+      } else {
+        sfxGain.connect(masterGain);
+      }
       masterGain.connect(audioCtx.destination);
+      applyVolumeSettings();
+      applyOutputMode();
     } catch (e) {
       // Audio not supported
     }
@@ -148,10 +218,18 @@ Game.Audio = (function() {
       [440, 0.2], [349, 0.2], [294, 0.4]
     ],
     battle: [
-      [196, 0.15], [233, 0.15], [262, 0.15], [196, 0.15],
-      [233, 0.15], [262, 0.15], [294, 0.15], [262, 0.15],
-      [220, 0.15], [262, 0.15], [294, 0.15], [220, 0.15],
-      [262, 0.15], [294, 0.15], [330, 0.15], [294, 0.15]
+      [
+        [220, 0.24], [262, 0.2], [294, 0.24], [330, 0.36],
+        [294, 0.22], [262, 0.2], [247, 0.24], [220, 0.42],
+        [196, 0.24], [220, 0.2], [247, 0.24], [262, 0.34],
+        [294, 0.22], [262, 0.2], [247, 0.24], [220, 0.48]
+      ],
+      [
+        [110, 0.44, 'sine', 0.04], [147, 0.44, 'sine', 0.04],
+        [123, 0.44, 'sine', 0.038], [131, 0.48, 'sine', 0.04],
+        [98, 0.44, 'sine', 0.038], [110, 0.44, 'sine', 0.04],
+        [123, 0.44, 'sine', 0.038], [110, 0.52, 'sine', 0.04]
+      ]
     ],
     field: [
       [330, 0.3], [294, 0.3], [262, 0.3], [294, 0.3],
@@ -253,20 +331,28 @@ Game.Audio = (function() {
     ],
     melancholy_battle: [ // 霧の牧場に残った義賊の哀愁
       [
-        [220, 0.28], [247, 0.18], [262, 0.24], [294, 0.34],
-        [330, 0.22], [294, 0.18], [262, 0.22], [220, 0.4],
-        [196, 0.28], [220, 0.18], [247, 0.22], [262, 0.32],
-        [294, 0.22], [262, 0.18], [220, 0.24], [196, 0.46],
-        [175, 0.28], [196, 0.18], [220, 0.22], [247, 0.28],
-        [262, 0.22], [247, 0.18], [220, 0.24], [196, 0.54]
+        [220, 0.32], [247, 0.2], [262, 0.28], [294, 0.4],
+        [330, 0.24], [294, 0.2], [262, 0.24], [220, 0.46],
+        [196, 0.32], [220, 0.2], [247, 0.24], [262, 0.38],
+        [294, 0.24], [262, 0.2], [220, 0.26], [196, 0.52],
+        [175, 0.32], [196, 0.2], [220, 0.24], [247, 0.32],
+        [262, 0.24], [247, 0.2], [220, 0.26], [196, 0.62]
       ],
       [
-        [110, 0.46, 'sine', 0.05], [110, 0.58, 'sine', 0.05],
-        [98, 0.46, 'sine', 0.05], [87, 0.58, 'sine', 0.048],
-        [110, 0.46, 'sine', 0.05], [131, 0.58, 'sine', 0.05],
-        [147, 0.46, 'sine', 0.048], [110, 0.58, 'sine', 0.05],
-        [98, 0.46, 'sine', 0.046], [87, 0.58, 'sine', 0.046],
-        [98, 0.46, 'sine', 0.046], [110, 0.78, 'sine', 0.048]
+        [110, 0.5, 'sine', 0.048], [110, 0.64, 'sine', 0.048],
+        [98, 0.5, 'sine', 0.048], [87, 0.64, 'sine', 0.046],
+        [110, 0.5, 'sine', 0.048], [131, 0.64, 'sine', 0.048],
+        [147, 0.5, 'sine', 0.046], [110, 0.64, 'sine', 0.048],
+        [98, 0.5, 'sine', 0.044], [87, 0.64, 'sine', 0.044],
+        [98, 0.5, 'sine', 0.044], [110, 0.86, 'sine', 0.046]
+      ],
+      [
+        [330, 0.26, 'triangle', 0.026], [294, 0.26, 'triangle', 0.024],
+        [262, 0.3, 'triangle', 0.024], [247, 0.36, 'triangle', 0.022],
+        [262, 0.26, 'triangle', 0.024], [294, 0.26, 'triangle', 0.024],
+        [330, 0.34, 'triangle', 0.024], [294, 0.4, 'triangle', 0.022],
+        [262, 0.28, 'triangle', 0.022], [247, 0.28, 'triangle', 0.022],
+        [220, 0.34, 'triangle', 0.022], [247, 0.44, 'triangle', 0.022]
       ]
     ],
     melancholy_victory: [ // 勝っても胸の奥に重さだけ残る後奏
@@ -424,6 +510,23 @@ Game.Audio = (function() {
   };
 
   var bgmVariants = {
+    battle: [
+      melodies.battle,
+      [
+        [
+          [247, 0.22], [262, 0.2], [294, 0.24], [349, 0.34],
+          [330, 0.22], [294, 0.2], [262, 0.24], [247, 0.4],
+          [220, 0.22], [247, 0.2], [262, 0.24], [294, 0.34],
+          [330, 0.22], [294, 0.2], [262, 0.24], [220, 0.46]
+        ],
+        [
+          [123, 0.42, 'sine', 0.038], [147, 0.42, 'sine', 0.04],
+          [131, 0.42, 'sine', 0.038], [165, 0.48, 'sine', 0.04],
+          [110, 0.42, 'sine', 0.038], [123, 0.42, 'sine', 0.038],
+          [131, 0.42, 'sine', 0.038], [110, 0.5, 'sine', 0.04]
+        ]
+      ]
+    ],
     field_maebashi: [
       melodies.field_maebashi,
       [
@@ -565,16 +668,16 @@ Game.Audio = (function() {
       melodies.melancholy_battle,
       [
         [
-          [175, 0.22], [196, 0.18], [220, 0.22], [247, 0.28],
-          [262, 0.2], [247, 0.18], [220, 0.22], [196, 0.4],
-          [165, 0.24], [175, 0.18], [196, 0.22], [220, 0.28],
-          [247, 0.2], [220, 0.18], [196, 0.24], [175, 0.48]
+          [175, 0.26], [196, 0.2], [220, 0.24], [247, 0.34],
+          [262, 0.24], [247, 0.2], [220, 0.24], [196, 0.46],
+          [165, 0.28], [175, 0.2], [196, 0.24], [220, 0.34],
+          [247, 0.24], [220, 0.2], [196, 0.26], [175, 0.56]
         ],
         [
-          [87, 0.4, 'sine', 0.044], [98, 0.5, 'sine', 0.046],
-          [110, 0.44, 'sine', 0.046], [98, 0.48, 'sine', 0.044],
-          [82, 0.42, 'sine', 0.042], [87, 0.46, 'sine', 0.044],
-          [98, 0.42, 'sine', 0.044], [87, 0.56, 'sine', 0.046]
+          [87, 0.46, 'sine', 0.042], [98, 0.56, 'sine', 0.044],
+          [110, 0.5, 'sine', 0.044], [98, 0.54, 'sine', 0.042],
+          [82, 0.48, 'sine', 0.04], [87, 0.52, 'sine', 0.042],
+          [98, 0.48, 'sine', 0.042], [87, 0.64, 'sine', 0.044]
         ]
       ]
     ],
@@ -588,6 +691,8 @@ Game.Audio = (function() {
   };
 
   var bgmStyles = {
+    battle: { wave: 'triangle', gain: 0.072 },
+    boss: { wave: 'triangle', gain: 0.078 },
     field: { wave: 'triangle', gain: 0.09 },
     field_maebashi: { wave: 'triangle', gain: 0.09 },
     field_takasaki: { wave: 'square', gain: 0.09 },
@@ -956,6 +1061,43 @@ Game.Audio = (function() {
     return muted;
   }
 
+  function setBgmVolume(value) {
+    bgmVolume = clampUnitVolume(value, bgmVolume);
+    applyVolumeSettings();
+    return bgmVolume;
+  }
+
+  function setSfxVolume(value) {
+    sfxVolume = clampUnitVolume(value, sfxVolume);
+    applyVolumeSettings();
+    return sfxVolume;
+  }
+
+  function setOutputMode(mode) {
+    outputMode = normalizeOutputMode(mode);
+    applyOutputMode();
+    return outputMode;
+  }
+
+  function applySettings(settings) {
+    settings = settings || {};
+    if (Object.prototype.hasOwnProperty.call(settings, 'bgmVolume')) {
+      setBgmVolume(settings.bgmVolume);
+    } else {
+      applyVolumeSettings();
+    }
+    if (Object.prototype.hasOwnProperty.call(settings, 'sfxVolume')) {
+      setSfxVolume(settings.sfxVolume);
+    } else {
+      applyVolumeSettings();
+    }
+    if (Object.prototype.hasOwnProperty.call(settings, 'outputMode')) {
+      setOutputMode(settings.outputMode);
+    } else {
+      applyOutputMode();
+    }
+  }
+
   function isBgmPlaying() {
     return currentBgm !== null;
   }
@@ -974,8 +1116,15 @@ Game.Audio = (function() {
     stopBgm: stopBgm,
     playSfx: playSfx,
     toggleMute: toggleMute,
+    setBgmVolume: setBgmVolume,
+    setSfxVolume: setSfxVolume,
+    setOutputMode: setOutputMode,
+    applySettings: applySettings,
     isBgmPlaying: isBgmPlaying,
     refreshFieldBgm: refreshFieldBgm,
+    getBgmVolume: function() { return bgmVolume; },
+    getSfxVolume: function() { return sfxVolume; },
+    getOutputMode: function() { return outputMode; },
     getCurrentBgmName: function() { return currentBgmResolvedName; },
     getRequestedBgmName: function() { return currentBgmRequestedName; }
   };
